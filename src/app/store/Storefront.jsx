@@ -897,6 +897,17 @@ export default function Storefront({
                                 </div>
                               ) : null}
 
+                              {product.setListHref && product.setListLabel ? (
+                                <div className="mt-auto pt-4">
+                                  <Link
+                                    href={product.setListHref}
+                                    className="inline-flex min-h-10 w-full items-center justify-center rounded-xl border-2 border-cyan-700 bg-cyan-50 px-3 py-2 text-center text-sm font-black text-cyan-900 transition hover:bg-cyan-100 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200/70"
+                                  >
+                                    {product.setListLabel}
+                                  </Link>
+                                </div>
+                              ) : null}
+
                               <button
                                 type="button"
                                 disabled={!canAdd}

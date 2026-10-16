@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { buildGalleryData, getGalleryArtProgress } from "./galleryData.mjs";
-import { buildSetListData, filterSetListRows } from "./setListData.mjs";
+import { buildSetListData, filterSetListRows, normalizeSetListZone } from "./setListData.mjs";
 
 const master = JSON.parse(readFileSync(new URL("../data/gallery-set-list.json", import.meta.url)));
 const images = JSON.parse(readFileSync(new URL("../data/gallery-images.json", import.meta.url)));
@@ -53,6 +53,28 @@ test("search combines set and rarity filters and keeps baitball stages distinct"
   assert.equal(stage[0].stageLabel, "Stage 2");
   assert.equal(filterSetListRows(rows, { query: "no matching creature" }).length, 0);
   assert.equal(filterSetListRows(rows).length, 228);
+});
+
+test("Dive Pack links select only their canonical set and keep every artwork status", () => {
+  for (const zone of ["ocean", "reef", "deep"]) {
+    const linkedRows = filterSetListRows(rows, { zone: normalizeSetListZone(zone) });
+    assert.equal(linkedRows.length, sets.find((set) => set.zone === zone).totalPrintings);
+    assert.ok(linkedRows.every((row) => row.zone === zone));
+    assert.ok(linkedRows.some((row) => row.artwork === "Complete"));
+    assert.ok(linkedRows.some((row) => row.artwork === "Prerelease"));
+    assert.ok(linkedRows.some((row) => row.artwork === "Coming soon"));
+  }
+  const thresher = filterSetListRows(rows, {
+    zone: normalizeSetListZone("ocean"), query: "thresher", rarity: "Uncommon",
+  });
+  assert.deepEqual(thresher.map((row) => row.cardId), ["thresher-shark"]);
+});
+
+test("unknown or repeated set query values retain the unfiltered All sets default", () => {
+  for (const value of [undefined, null, "", "all", "oceanic", "Ocean", " reef ", "unknown", "__proto__", ["reef", "deep"]]) {
+    assert.equal(normalizeSetListZone(value), "all");
+    assert.equal(filterSetListRows(rows, { zone: normalizeSetListZone(value) }).length, rows.length);
+  }
 });
 
 test("rarity updates do not promote prerelease or missing artwork to completed cards", () => {

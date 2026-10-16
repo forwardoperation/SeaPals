@@ -630,6 +630,25 @@ test("the catalog exposes structured simulator trials for decks and the starter 
   );
 });
 
+test("Dive Packs expose their complete set lists in the public catalog", () => {
+  withStoreEnvironment({}, () => {
+    const catalog = getStoreConfiguration().products;
+    for (const [productId, set, label] of [
+      ["oceanic-dive-pack", "ocean", "View Oceanic set list"],
+      ["reef-dive-pack", "reef", "View Reef set list"],
+      ["deep-dive-pack", "deep", "View Deep set list"],
+    ]) {
+      const product = catalog.find((entry) => entry.id === productId);
+      assert.equal(product.setListHref, `/set-list?set=${set}`);
+      assert.equal(product.setListLabel, label);
+    }
+    for (const product of catalog.filter((entry) => entry.category !== "dive-packs")) {
+      assert.equal(product.setListHref, null);
+      assert.equal(product.setListLabel, null);
+    }
+  });
+});
+
 test("checkout rejects unrecognized Stripe key formats", () => {
   withStoreEnvironment(
     {

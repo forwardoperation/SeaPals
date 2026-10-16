@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { filterSetListRows, RARITY_ORDER, RARITY_SYMBOLS } from "@/lib/setListData.mjs";
+import { filterSetListRows, normalizeSetListZone, RARITY_ORDER, RARITY_SYMBOLS } from "@/lib/setListData.mjs";
 
 const RARITY_CLASSES = {
   Common: "border-slate-200 bg-slate-50 text-slate-700",
@@ -19,10 +19,13 @@ const ARTWORK_CLASSES = {
 
 const controlClass = "mt-2 min-h-11 w-full rounded-xl border border-cyan-200 bg-white px-3 py-2.5 text-base text-slate-900 outline-none focus:ring-4 focus:ring-cyan-100";
 
-export default function SetListTable({ rows, sets }) {
+export default function SetListTable({ rows, sets, initialZone = "all" }) {
   const [query, setQuery] = useState("");
-  const [zone, setZone] = useState("all");
+  const [zone, setZone] = useState(() => normalizeSetListZone(initialZone));
   const [rarity, setRarity] = useState("all");
+  useEffect(() => {
+    setZone(normalizeSetListZone(initialZone));
+  }, [initialZone]);
   const filtered = useMemo(
     () => filterSetListRows(rows, { query, zone, rarity }),
     [rows, query, zone, rarity]
@@ -39,6 +42,9 @@ export default function SetListTable({ rows, sets }) {
     <section aria-labelledby="set-list-table-title" className="min-w-0 rounded-[2rem] border border-cyan-100 bg-white/90 shadow-sm">
       <div className="p-5 md:p-8">
         <h2 id="set-list-table-title" className="text-2xl font-bold text-slate-900">Find a card</h2>
+        {zone !== "all" ? (
+          <p className="mt-2 text-sm leading-6 text-slate-600">Explore this set’s cards and artwork status. Individual pack contents vary.</p>
+        ) : null}
         <div className="mt-5 grid gap-4 md:grid-cols-[2fr_1fr_1fr]">
           <label className="text-sm font-semibold text-slate-700" htmlFor="set-list-search">
             Search cards

@@ -246,6 +246,8 @@ export const storeProductDefinitions = [
     description:
       "Add cards from the SeaRealm Oceanic Set with the whale-fronted Oceanic Dive Pack, inspired by fast schools, open water, and apex hunters.",
     details: "1 Oceanic Dive Pack",
+    setListHref: "/set-list?set=ocean",
+    setListLabel: "View Oceanic set list",
     checkoutDescription:
       "One Oceanic Dive Pack featuring cards from the SeaRealm Oceanic Set.",
     image: `${PRODUCT_PHOTO_DIRECTORY}/dive-pack-oceanic.png`,
@@ -268,6 +270,8 @@ export const storeProductDefinitions = [
     description:
       "Add cards from the SeaRealm Reef Set with the shark-fronted Reef Dive Pack, inspired by coral gardens, colorful fish, and reef defenders.",
     details: "1 Reef Dive Pack",
+    setListHref: "/set-list?set=reef",
+    setListLabel: "View Reef set list",
     checkoutDescription:
       "One Reef Dive Pack featuring cards from the SeaRealm Reef Set.",
     image: `${PRODUCT_PHOTO_DIRECTORY}/dive-pack-reef.png`,
@@ -290,6 +294,8 @@ export const storeProductDefinitions = [
     description:
       "Add cards from the SeaRealm Deep Set with the squid-fronted Deep Dive Pack, inspired by bioluminescent creatures and abyssal predators.",
     details: "1 Deep Dive Pack",
+    setListHref: "/set-list?set=deep",
+    setListLabel: "View Deep set list",
     checkoutDescription:
       "One Deep Dive Pack featuring cards from the SeaRealm Deep Set.",
     image: `${PRODUCT_PHOTO_DIRECTORY}/dive-pack-deep.png`,

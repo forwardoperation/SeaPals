@@ -121,6 +121,11 @@ export default function ProductDetails({
                   </li>
                 ))}
               </ul>
+              {product.setListHref && product.setListLabel ? (
+                <Link href={product.setListHref} className="mt-4 inline-flex min-h-10 items-center rounded font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 hover:text-cyan-950 focus:outline-none focus:ring-4 focus:ring-cyan-200/70">
+                  {product.setListLabel}
+                </Link>
+              ) : null}
             </section>
           ) : null}
 

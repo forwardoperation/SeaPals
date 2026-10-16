@@ -83,10 +83,12 @@ test("purchase terms separate production timing from carrier delivery", async ()
     "utf8"
   );
 
-  assert.match(terms, /Production timing is separate from carrier transit/);
+  assert.match(terms, /For items that are not pre-orders, production timing is separate from\s+carrier transit\./);
   assert.match(terms, /within five business days after payment/);
   assert.match(terms, /one-business-day production/);
   assert.match(terms, /does not promise one-business-day\s+delivery/);
+  assert.match(terms, /Orders containing pre-orders ship together when the pre-order is\s+ready/);
+  assert.match(terms, /Expedited production does not apply to pre-orders/);
 });
 
 test("legal links and direct notices are present at collection points", async () => {

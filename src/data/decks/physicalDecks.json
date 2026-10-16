@@ -1,0 +1,1102 @@
+{
+  "schemaVersion": 1,
+  "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
+  "provenanceNote": "Quantities, stages and printed names verified directly against all seven live Figma print sheets on 2026-10-16. Nested card templates and reference/summary cards are excluded.",
+  "decks": [
+    {
+      "id": "coral-garden",
+      "sourceName": "Coral Garden",
+      "pageId": "2310:498819",
+      "evidenceDate": "2026-10-16",
+      "verification": "live-figma-print-sheet",
+      "evidenceFile": "artifacts/deck-sync/physical-decks-2026-10-16.json",
+      "cards": [
+        {
+          "cardId": "coral-gardener",
+          "quantity": 2,
+          "printedName": "Coral Gardener"
+        },
+        {
+          "cardId": "coral-cement",
+          "quantity": 1,
+          "printedName": "Coral Cement"
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 2,
+          "printedName": "Scientist Jes"
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 1,
+          "printedName": "Dr. Evans"
+        },
+        {
+          "cardId": "restocking",
+          "quantity": 3,
+          "printedName": "Restocking"
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 2,
+          "printedName": "Remote Search"
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 2,
+          "printedName": "Fishing Rod"
+        },
+        {
+          "cardId": "recovery",
+          "quantity": 1,
+          "printedName": "Recovery"
+        },
+        {
+          "cardId": "manta-ray",
+          "quantity": 1,
+          "printedName": "Reef Manta Ray"
+        },
+        {
+          "cardId": "bottlenose-dolphin",
+          "quantity": 1,
+          "printedName": "Bottlenose Dolphin"
+        },
+        {
+          "cardId": "spinner-dolphins",
+          "quantity": 2,
+          "printedName": "Spinner Dolphin"
+        },
+        {
+          "cardId": "cleaner-shrimp",
+          "quantity": 3,
+          "printedName": "Cleaner Shrimp"
+        },
+        {
+          "cardId": "emerald-crab",
+          "quantity": 1,
+          "printedName": "Emerald Crab"
+        },
+        {
+          "cardId": "goliath-grouper",
+          "quantity": 2,
+          "printedName": "Goliath Grouper"
+        },
+        {
+          "cardId": "arrow-crab",
+          "quantity": 2,
+          "printedName": "Arrow Crab"
+        },
+        {
+          "cardId": "blue-crab",
+          "quantity": 1,
+          "printedName": "Blue Crab"
+        },
+        {
+          "cardId": "spectacled-parrotfish",
+          "quantity": 2,
+          "printedName": "Parrotfish (Spectacled)"
+        },
+        {
+          "cardId": "french-angelfish",
+          "quantity": 2,
+          "printedName": "French Angelfish"
+        },
+        {
+          "cardId": "bluestriped-grunt",
+          "quantity": 3,
+          "printedName": "Bluestriped Grunt"
+        },
+        {
+          "cardId": "spotfin-butterflyfish",
+          "quantity": 2,
+          "printedName": "Spotfin Butterflyfish"
+        },
+        {
+          "cardId": "boulder-star-coral-base",
+          "quantity": 3,
+          "printedName": "Boulder Star"
+        },
+        {
+          "cardId": "boulder-star-coral-stage-1",
+          "quantity": 2,
+          "printedName": "Boulder Star"
+        },
+        {
+          "cardId": "boulder-star-coral-stage-2",
+          "quantity": 1,
+          "printedName": "Boulder Star"
+        },
+        {
+          "cardId": "elkhorn-coral-base",
+          "quantity": 3,
+          "printedName": "Elkhorn Coral"
+        },
+        {
+          "cardId": "elkhorn-coral-stage-1",
+          "quantity": 2,
+          "printedName": "Elkhorn Coral"
+        },
+        {
+          "cardId": "elkhorn-coral-stage-2",
+          "quantity": 1,
+          "printedName": "Elkhorn Coral"
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "quantity": 2,
+          "printedName": "Lettuce Coral"
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "quantity": 2,
+          "printedName": "Lettuce Coral"
+        },
+        {
+          "cardId": "clubfinger-coral-base",
+          "quantity": 3,
+          "printedName": "Clubfinger Coral"
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "quantity": 2,
+          "printedName": "Mustard Hill Coral"
+        },
+        {
+          "cardId": "coral-reef",
+          "quantity": 1,
+          "printedName": "Coral Reef"
+        },
+        {
+          "cardId": "clubfinger-coral-stage-1",
+          "quantity": 2,
+          "printedName": "Clubfinger Coral"
+        }
+      ]
+    },
+    {
+      "id": "blue-water",
+      "sourceName": "Drop Off",
+      "pageId": "2224:257782",
+      "evidenceDate": "2026-10-16",
+      "verification": "live-figma-print-sheet",
+      "evidenceFile": "artifacts/deck-sync/physical-decks-2026-10-16.json",
+      "cards": [
+        {
+          "cardId": "coral-gardener",
+          "quantity": 2,
+          "printedName": "Coral Gardener"
+        },
+        {
+          "cardId": "capt-dani",
+          "quantity": 1,
+          "printedName": "Whale Watcher Dani"
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "quantity": 2,
+          "printedName": "Deep Sea Fishing Rod"
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 2,
+          "printedName": "Dr. Evans"
+        },
+        {
+          "cardId": "robotic-survey",
+          "quantity": 2,
+          "printedName": "Robotic Survey"
+        },
+        {
+          "cardId": "coral-cement",
+          "quantity": 1,
+          "printedName": "Coral Cement"
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 2,
+          "printedName": "Remote Search"
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 1,
+          "printedName": "Scientist Jes"
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2,
+          "printedName": "Crab Trap"
+        },
+        {
+          "cardId": "tiger-shark",
+          "quantity": 1,
+          "printedName": "Tiger Shark"
+        },
+        {
+          "cardId": "manta-ray",
+          "quantity": 1,
+          "printedName": "Reef Manta Ray"
+        },
+        {
+          "cardId": "poison-heal",
+          "quantity": 1,
+          "printedName": "Poison Heal"
+        },
+        {
+          "cardId": "green-moray-eel",
+          "quantity": 2,
+          "printedName": "Green Moray Eel"
+        },
+        {
+          "cardId": "arrow-crab",
+          "quantity": 2,
+          "printedName": "Arrow Crab"
+        },
+        {
+          "cardId": "octopus",
+          "quantity": 2,
+          "printedName": "Octopus"
+        },
+        {
+          "cardId": "oysters",
+          "quantity": 1,
+          "printedName": "Oysters"
+        },
+        {
+          "cardId": "blue-crab",
+          "quantity": 2,
+          "printedName": "Blue Crab"
+        },
+        {
+          "cardId": "spanish-hogfish",
+          "quantity": 3,
+          "printedName": "Spanish Hogfish"
+        },
+        {
+          "cardId": "picasso-triggerfish",
+          "quantity": 3,
+          "printedName": "Triggerfish (Picasso)"
+        },
+        {
+          "cardId": "winter-flounder",
+          "quantity": 3,
+          "printedName": "Winter Flounder"
+        },
+        {
+          "cardId": "fairy-parrotfish",
+          "quantity": 3,
+          "printedName": "Fairy Parrotfish"
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "quantity": 4,
+          "printedName": "Lettuce Coral"
+        },
+        {
+          "cardId": "blue-tang",
+          "quantity": 3,
+          "printedName": "Atlantic Blue Tang"
+        },
+        {
+          "cardId": "boulder-star-coral-base",
+          "quantity": 4,
+          "printedName": "Boulder Star"
+        },
+        {
+          "cardId": "boulder-star-coral-stage-1",
+          "quantity": 3,
+          "printedName": "Boulder Star"
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "quantity": 2,
+          "printedName": "Lettuce Coral"
+        },
+        {
+          "cardId": "coral-reef",
+          "quantity": 1,
+          "printedName": "Coral Reef"
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "quantity": 2,
+          "printedName": "Mustard Hill Coral"
+        },
+        {
+          "cardId": "boulder-star-coral-stage-2",
+          "quantity": 2,
+          "printedName": "Boulder Star"
+        }
+      ]
+    },
+    {
+      "id": "darkness-shroud",
+      "sourceName": "Darkness Shroud",
+      "pageId": "2068:245383",
+      "evidenceDate": "2026-10-16",
+      "verification": "live-figma-print-sheet",
+      "evidenceFile": "artifacts/deck-sync/physical-decks-2026-10-16.json",
+      "cards": [
+        {
+          "cardId": "abyss",
+          "quantity": 1,
+          "printedName": "Abyss"
+        },
+        {
+          "cardId": "chimera",
+          "quantity": 2,
+          "printedName": "Chimera"
+        },
+        {
+          "cardId": "giant-squid",
+          "quantity": 1,
+          "printedName": "Giant Squid"
+        },
+        {
+          "cardId": "goblin-shark",
+          "quantity": 2,
+          "printedName": "Goblin Shark"
+        },
+        {
+          "cardId": "cookie-cutter-shark",
+          "quantity": 2,
+          "printedName": "Cookie Cutter"
+        },
+        {
+          "cardId": "giant-red-shrimp",
+          "quantity": 2,
+          "printedName": "Giant Red Shrimp"
+        },
+        {
+          "cardId": "giant-isopod",
+          "quantity": 2,
+          "printedName": "Giant Isopod"
+        },
+        {
+          "cardId": "deep-cucumber",
+          "quantity": 2,
+          "printedName": "Deep Cucumber"
+        },
+        {
+          "cardId": "deep-sea-jelly",
+          "quantity": 2,
+          "printedName": "Deep Sea Jelly"
+        },
+        {
+          "cardId": "fangtooth-fish",
+          "quantity": 2,
+          "printedName": "Fangtooth Fish"
+        },
+        {
+          "cardId": "vampire-squid",
+          "quantity": 2,
+          "printedName": "Vampire Squid"
+        },
+        {
+          "cardId": "humpback-anglerfish",
+          "quantity": 2,
+          "printedName": "Anglerfish (Humpback)"
+        },
+        {
+          "cardId": "black-swallower",
+          "quantity": 2,
+          "printedName": "Black Swallower"
+        },
+        {
+          "cardId": "bristlemouth",
+          "quantity": 2,
+          "printedName": "Bristlemouth"
+        },
+        {
+          "cardId": "barrel-eye-fish",
+          "quantity": 2,
+          "printedName": "Barrel Eye Fish"
+        },
+        {
+          "cardId": "owlfish",
+          "quantity": 2,
+          "printedName": "Owlfish"
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 1,
+          "printedName": "Fishing Rod"
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 2,
+          "printedName": "Dr. Evans"
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "quantity": 2,
+          "printedName": "Deep Sea Fishing Rod"
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 3,
+          "printedName": "Remote Search"
+        },
+        {
+          "cardId": "coral-gardener",
+          "quantity": 2,
+          "printedName": "Coral Gardener"
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2,
+          "printedName": "Crab Trap"
+        },
+        {
+          "cardId": "bamboo_coral_base",
+          "quantity": 4,
+          "printedName": "Bamboo Coral"
+        },
+        {
+          "cardId": "bamboo_coral_stage1",
+          "quantity": 2,
+          "printedName": "Bamboo Coral"
+        },
+        {
+          "cardId": "bamboo_coral_stage2",
+          "quantity": 2,
+          "printedName": "Bamboo Coral"
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 2,
+          "printedName": "Scientist Jes"
+        },
+        {
+          "cardId": "deep_mushroom_base",
+          "quantity": 4,
+          "printedName": "Deep Mushroom"
+        },
+        {
+          "cardId": "deep_mushroom_stage1",
+          "quantity": 2,
+          "printedName": "Deep Mushroom"
+        },
+        {
+          "cardId": "deep_mushroom_stage2",
+          "quantity": 2,
+          "printedName": "Deep Mushroom"
+        }
+      ]
+    },
+    {
+      "id": "open-ocean-hunt",
+      "sourceName": "Open Ocean",
+      "pageId": "2296:82568",
+      "evidenceDate": "2026-10-16",
+      "verification": "live-figma-print-sheet",
+      "evidenceFile": "artifacts/deck-sync/physical-decks-2026-10-16.json",
+      "cards": [
+        {
+          "cardId": "cast-net",
+          "quantity": 2,
+          "printedName": "Cast Net"
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "quantity": 2,
+          "printedName": "Deep Sea Fishing Rod"
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 2,
+          "printedName": "Fishing Rod"
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 3,
+          "printedName": "Remote Search"
+        },
+        {
+          "cardId": "spearfishing",
+          "quantity": 2,
+          "printedName": "Spearfishing"
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2,
+          "printedName": "Crab Trap"
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 1,
+          "printedName": "Scientist Jes"
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 1,
+          "printedName": "Dr. Evans"
+        },
+        {
+          "cardId": "sardine-ball-base",
+          "quantity": 4,
+          "printedName": "Sardine Ball"
+        },
+        {
+          "cardId": "sardine-ball-stage1",
+          "quantity": 2,
+          "printedName": "Sardine Ball"
+        },
+        {
+          "cardId": "herring-ball-base",
+          "quantity": 4,
+          "printedName": "Herring Ball"
+        },
+        {
+          "cardId": "sardine-ball-stage2",
+          "quantity": 2,
+          "printedName": "Sardine Ball"
+        },
+        {
+          "cardId": "remora",
+          "quantity": 1,
+          "printedName": "Remora"
+        },
+        {
+          "cardId": "herring-ball-stage2",
+          "quantity": 2,
+          "printedName": "Herring Ball"
+        },
+        {
+          "cardId": "herring-ball-stage1",
+          "quantity": 3,
+          "printedName": "Herring Ball"
+        },
+        {
+          "cardId": "halfbeak",
+          "quantity": 3,
+          "printedName": "Halfbeak"
+        },
+        {
+          "cardId": "bluefin-tuna-juvenile",
+          "quantity": 1,
+          "printedName": "Bluefin Tuna (Juvenile)"
+        },
+        {
+          "cardId": "ocean-triggerfish",
+          "quantity": 1,
+          "printedName": "Ocean Triggerfish"
+        },
+        {
+          "cardId": "frigate-tuna",
+          "quantity": 1,
+          "printedName": "Frigate Tuna"
+        },
+        {
+          "cardId": "bonito-tuna",
+          "quantity": 2,
+          "printedName": "Bonito Tuna"
+        },
+        {
+          "cardId": "pompano",
+          "quantity": 1,
+          "printedName": "Pompano"
+        },
+        {
+          "cardId": "mahi-mahi",
+          "quantity": 3,
+          "printedName": "Mahi Mahi"
+        },
+        {
+          "cardId": "market-squid",
+          "quantity": 3,
+          "printedName": "Market Squid"
+        },
+        {
+          "cardId": "man-o-war",
+          "quantity": 2,
+          "printedName": "Man O’ War"
+        },
+        {
+          "cardId": "blue-sea-dragon",
+          "quantity": 2,
+          "printedName": "Blue Sea Dragon"
+        },
+        {
+          "cardId": "oceanic-manta-ray",
+          "quantity": 1,
+          "printedName": "Oceanic Manta Ray"
+        },
+        {
+          "cardId": "killer-whale-oceanic",
+          "quantity": 1,
+          "printedName": "Killer Whale"
+        },
+        {
+          "cardId": "yellowfin-tuna",
+          "quantity": 1,
+          "printedName": "Yellowfin Tuna"
+        },
+        {
+          "cardId": "open-ocean",
+          "quantity": 1,
+          "printedName": "Open Ocean"
+        },
+        {
+          "cardId": "silky-shark",
+          "quantity": 1,
+          "printedName": "Silky Shark"
+        },
+        {
+          "cardId": "sailfish",
+          "quantity": 1,
+          "printedName": "Sailfish"
+        },
+        {
+          "cardId": "loggerhead-sea-turtle",
+          "quantity": 2,
+          "printedName": "Loggerhead"
+        }
+      ]
+    },
+    {
+      "id": "murky-water",
+      "sourceName": "Murky Water",
+      "pageId": "2241:259772",
+      "evidenceDate": "2026-10-16",
+      "verification": "live-figma-print-sheet",
+      "evidenceFile": "artifacts/deck-sync/physical-decks-2026-10-16.json",
+      "cards": [
+        {
+          "cardId": "spearfishing",
+          "quantity": 2,
+          "printedName": "Spearfishing"
+        },
+        {
+          "cardId": "coral-gardener",
+          "quantity": 3,
+          "printedName": "Coral Gardener"
+        },
+        {
+          "cardId": "robotic-survey",
+          "quantity": 2,
+          "printedName": "Robotic Survey"
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 2,
+          "printedName": "Dr. Evans"
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "quantity": 2,
+          "printedName": "Deep Sea Fishing Rod"
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 2,
+          "printedName": "Remote Search"
+        },
+        {
+          "cardId": "poison-heal",
+          "quantity": 2,
+          "printedName": "Poison Heal"
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 1,
+          "printedName": "Crab Trap"
+        },
+        {
+          "cardId": "recovery",
+          "quantity": 2,
+          "printedName": "Recovery"
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 1,
+          "printedName": "Scientist Jes"
+        },
+        {
+          "cardId": "manta-ray",
+          "quantity": 1,
+          "printedName": "Reef Manta Ray"
+        },
+        {
+          "cardId": "bull-shark",
+          "quantity": 1,
+          "printedName": "Bull Shark"
+        },
+        {
+          "cardId": "reef-shark",
+          "quantity": 2,
+          "printedName": "Reef Shark (Blacktip)"
+        },
+        {
+          "cardId": "great-barracuda",
+          "quantity": 2,
+          "printedName": "Great Barracuda"
+        },
+        {
+          "cardId": "arrow-crab",
+          "quantity": 2,
+          "printedName": "Arrow Crab"
+        },
+        {
+          "cardId": "blue-crab",
+          "quantity": 2,
+          "printedName": "Blue Crab"
+        },
+        {
+          "cardId": "sea-urchin",
+          "quantity": 3,
+          "printedName": "Sea Urchin"
+        },
+        {
+          "cardId": "giant-triton",
+          "quantity": 2,
+          "printedName": "Giant Triton"
+        },
+        {
+          "cardId": "cleaner-wrasse",
+          "quantity": 3,
+          "printedName": "Wrasse (Cleaner)"
+        },
+        {
+          "cardId": "pillar-coral-base",
+          "quantity": 4,
+          "printedName": "Pillar Coral"
+        },
+        {
+          "cardId": "brain-coral-base",
+          "quantity": 4,
+          "printedName": "Brain Coral"
+        },
+        {
+          "cardId": "sargeant-major",
+          "quantity": 3,
+          "printedName": "Sergeant Major"
+        },
+        {
+          "cardId": "brain-coral-stage-1",
+          "quantity": 3,
+          "printedName": "Brain Coral"
+        },
+        {
+          "cardId": "brain-coral-stage-2",
+          "quantity": 2,
+          "printedName": "Brain Coral"
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "quantity": 3,
+          "printedName": "Lettuce Coral"
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "quantity": 2,
+          "printedName": "Lettuce Coral"
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "quantity": 1,
+          "printedName": "Mustard Hill Coral"
+        },
+        {
+          "cardId": "coral-reef",
+          "quantity": 1,
+          "printedName": "Coral Reef"
+        }
+      ]
+    },
+    {
+      "id": "stinging-fortress",
+      "sourceName": "Stinging Fortress",
+      "pageId": "2363:215185",
+      "evidenceDate": "2026-10-16",
+      "verification": "live-figma-print-sheet",
+      "evidenceFile": "artifacts/deck-sync/physical-decks-2026-10-16.json",
+      "cards": [
+        {
+          "cardId": "coral-gardener",
+          "quantity": 3,
+          "printedName": "Coral Gardener"
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 3,
+          "printedName": "Dr. Evans"
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 2,
+          "printedName": "Remote Search"
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 3,
+          "printedName": "Fishing Rod"
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2,
+          "printedName": "Crab Trap"
+        },
+        {
+          "cardId": "recovery",
+          "quantity": 2,
+          "printedName": "Recovery"
+        },
+        {
+          "cardId": "yellow-lipped-sea-krait",
+          "quantity": 2,
+          "printedName": "Sea Krait"
+        },
+        {
+          "cardId": "manta-ray",
+          "quantity": 1,
+          "printedName": "Reef Manta Ray"
+        },
+        {
+          "cardId": "anemone",
+          "quantity": 3,
+          "printedName": "Anemone"
+        },
+        {
+          "cardId": "box-jellyfish",
+          "quantity": 2,
+          "printedName": "Box Jellyfish"
+        },
+        {
+          "cardId": "crown-of-thorns",
+          "quantity": 2,
+          "printedName": "Crown of Thorns"
+        },
+        {
+          "cardId": "arrow-crab",
+          "quantity": 2,
+          "printedName": "Arrow Crab"
+        },
+        {
+          "cardId": "clownfish",
+          "quantity": 4,
+          "printedName": "Clownfish"
+        },
+        {
+          "cardId": "lionfish",
+          "quantity": 2,
+          "printedName": "Lionfish"
+        },
+        {
+          "cardId": "blue-crab",
+          "quantity": 1,
+          "printedName": "Blue Crab"
+        },
+        {
+          "cardId": "longhorn-cowfish",
+          "quantity": 3,
+          "printedName": "Longhorn Cowfish"
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "quantity": 4,
+          "printedName": "Lettuce Coral"
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "quantity": 3,
+          "printedName": "Lettuce Coral"
+        },
+        {
+          "cardId": "porcupine-fish",
+          "quantity": 3,
+          "printedName": "Porcupine Fish"
+        },
+        {
+          "cardId": "staghorn-coral-base",
+          "quantity": 4,
+          "printedName": "Staghorn Coral"
+        },
+        {
+          "cardId": "clubfinger-coral-base",
+          "quantity": 3,
+          "printedName": "Clubfinger Coral"
+        },
+        {
+          "cardId": "clubfinger-coral-stage-1",
+          "quantity": 2,
+          "printedName": "Clubfinger Coral"
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "quantity": 3,
+          "printedName": "Mustard Hill Coral"
+        },
+        {
+          "cardId": "coral-reef",
+          "quantity": 1,
+          "printedName": "Coral Reef"
+        }
+      ]
+    },
+    {
+      "id": "disruption",
+      "sourceName": "Disruption",
+      "pageId": "2404:505077",
+      "evidenceDate": "2026-10-16",
+      "verification": "live-figma-print-sheet",
+      "evidenceFile": "artifacts/deck-sync/physical-decks-2026-10-16.json",
+      "cards": [
+        {
+          "cardId": "spearfishing",
+          "quantity": 1,
+          "printedName": "Spearfishing"
+        },
+        {
+          "cardId": "coral-gardener",
+          "quantity": 3,
+          "printedName": "Coral Gardener"
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 1,
+          "printedName": "Dr. Evans"
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 2,
+          "printedName": "Scientist Jes"
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 2,
+          "printedName": "Remote Search"
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 2,
+          "printedName": "Fishing Rod"
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2,
+          "printedName": "Crab Trap"
+        },
+        {
+          "cardId": "recovery",
+          "quantity": 1,
+          "printedName": "Recovery"
+        },
+        {
+          "cardId": "hammerhead",
+          "quantity": 1,
+          "printedName": "Hammerhead"
+        },
+        {
+          "cardId": "nurse-shark",
+          "quantity": 3,
+          "printedName": "Nurse Shark"
+        },
+        {
+          "cardId": "manta-ray",
+          "quantity": 1,
+          "printedName": "Reef Manta Ray"
+        },
+        {
+          "cardId": "mantis-shrimp",
+          "quantity": 3,
+          "printedName": "Mantis Shrimp"
+        },
+        {
+          "cardId": "crown-of-thorns",
+          "quantity": 1,
+          "printedName": "Crown of Thorns"
+        },
+        {
+          "cardId": "goliath-grouper",
+          "quantity": 1,
+          "printedName": "Goliath Grouper"
+        },
+        {
+          "cardId": "arrow-crab",
+          "quantity": 1,
+          "printedName": "Arrow Crab"
+        },
+        {
+          "cardId": "blue-crab",
+          "quantity": 1,
+          "printedName": "Blue Crab"
+        },
+        {
+          "cardId": "emerald-crab",
+          "quantity": 1,
+          "printedName": "Emerald Crab"
+        },
+        {
+          "cardId": "lionfish",
+          "quantity": 2,
+          "printedName": "Lionfish"
+        },
+        {
+          "cardId": "picasso-triggerfish",
+          "quantity": 2,
+          "printedName": "Triggerfish (Picasso)"
+        },
+        {
+          "cardId": "frogfish",
+          "quantity": 3,
+          "printedName": "Frogfish"
+        },
+        {
+          "cardId": "nudibranch",
+          "quantity": 3,
+          "printedName": "Nudibranch"
+        },
+        {
+          "cardId": "elkhorn-coral-base",
+          "quantity": 4,
+          "printedName": "Elkhorn Coral"
+        },
+        {
+          "cardId": "spectacled-parrotfish",
+          "quantity": 3,
+          "printedName": "Parrotfish (Spectacled)"
+        },
+        {
+          "cardId": "french-angelfish",
+          "quantity": 2,
+          "printedName": "French Angelfish"
+        },
+        {
+          "cardId": "porcupine-fish",
+          "quantity": 2,
+          "printedName": "Porcupine Fish"
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "quantity": 3,
+          "printedName": "Lettuce Coral"
+        },
+        {
+          "cardId": "elkhorn-coral-stage-2",
+          "quantity": 2,
+          "printedName": "Elkhorn Coral"
+        },
+        {
+          "cardId": "elkhorn-coral-stage-1",
+          "quantity": 3,
+          "printedName": "Elkhorn Coral"
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "quantity": 2,
+          "printedName": "Lettuce Coral"
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "quantity": 1,
+          "printedName": "Mustard Hill Coral"
+        },
+        {
+          "cardId": "coral-reef",
+          "quantity": 1,
+          "printedName": "Coral Reef"
+        }
+      ]
+    }
+  ]
+}

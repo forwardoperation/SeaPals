@@ -1,0 +1,2148 @@
+{
+  "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
+  "readAt": "2026-10-16",
+  "method": "Figma Plugin API read-only outermost 720x1008 card-sized nodes; printed Name and Stage fields; excludes nested templates",
+  "pages": [
+    {
+      "id": "coral-garden",
+      "pageId": "2310:498819",
+      "pageName": "Decks - Coral Garden",
+      "excludedReferenceNodeIds": [
+        "2311:539101",
+        "2311:539152",
+        "2869:111771"
+      ],
+      "cards": [
+        {
+          "title": "Coral Gardener",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:519513",
+            "2311:519514"
+          ],
+          "cardId": "coral-gardener"
+        },
+        {
+          "title": "Coral Cement",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2311:519521"
+          ],
+          "cardId": "coral-cement"
+        },
+        {
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2587:181168",
+            "2587:181197"
+          ],
+          "cardId": "scientist-jes"
+        },
+        {
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2311:519516"
+          ],
+          "cardId": "dr-evans"
+        },
+        {
+          "title": "Restocking",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2311:519518",
+            "3578:475651",
+            "3578:475809"
+          ],
+          "cardId": "restocking"
+        },
+        {
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:520124",
+            "2311:520125"
+          ],
+          "cardId": "remote-search"
+        },
+        {
+          "title": "Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:520126",
+            "2311:520127"
+          ],
+          "cardId": "fishing"
+        },
+        {
+          "title": "Recovery",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2311:520128"
+          ],
+          "cardId": "recovery"
+        },
+        {
+          "title": "Reef Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3416:136483"
+          ],
+          "cardId": "manta-ray"
+        },
+        {
+          "title": "Bottlenose Dolphin",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3578:454361"
+          ],
+          "cardId": "bottlenose-dolphin"
+        },
+        {
+          "title": "Spinner Dolphin",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3578:454359",
+            "3578:454360"
+          ],
+          "cardId": "spinner-dolphins"
+        },
+        {
+          "title": "Cleaner Shrimp",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2311:527162",
+            "3578:456468",
+            "3749:732582"
+          ],
+          "cardId": "cleaner-shrimp"
+        },
+        {
+          "title": "Emerald Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3578:458463"
+          ],
+          "cardId": "emerald-crab"
+        },
+        {
+          "title": "Goliath Grouper",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:527165",
+            "3578:457629"
+          ],
+          "cardId": "goliath-grouper"
+        },
+        {
+          "title": "Arrow Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:527160",
+            "3749:731627"
+          ],
+          "cardId": "arrow-crab"
+        },
+        {
+          "title": "Blue Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3749:733150"
+          ],
+          "cardId": "blue-crab"
+        },
+        {
+          "title": "Parrotfish (Spectacled)",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:530500",
+            "2311:530501"
+          ],
+          "cardId": "spectacled-parrotfish"
+        },
+        {
+          "title": "French Angelfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:530495",
+            "2311:530494"
+          ],
+          "cardId": "french-angelfish"
+        },
+        {
+          "title": "Bluestriped Grunt",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3578:459054",
+            "3749:729780",
+            "3578:459740"
+          ],
+          "cardId": "bluestriped-grunt"
+        },
+        {
+          "title": "Spotfin Butterflyfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3749:737250",
+            "3749:737520"
+          ],
+          "cardId": "spotfin-butterflyfish"
+        },
+        {
+          "title": "Boulder Star",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "2311:535126",
+            "2311:535127",
+            "2311:535128"
+          ],
+          "cardId": "boulder-star-coral-base"
+        },
+        {
+          "title": "Boulder Star",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:535129",
+            "2311:535130"
+          ],
+          "cardId": "boulder-star-coral-stage-1"
+        },
+        {
+          "title": "Boulder Star",
+          "stage": "Stage 2",
+          "quantity": 1,
+          "nodeIds": [
+            "2311:535131"
+          ],
+          "cardId": "boulder-star-coral-stage-2"
+        },
+        {
+          "title": "Elkhorn Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "2311:535132",
+            "2311:535133",
+            "2311:535134"
+          ],
+          "cardId": "elkhorn-coral-base"
+        },
+        {
+          "title": "Elkhorn Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:536577",
+            "2311:536578"
+          ],
+          "cardId": "elkhorn-coral-stage-1"
+        },
+        {
+          "title": "Elkhorn Coral",
+          "stage": "Stage 2",
+          "quantity": 1,
+          "nodeIds": [
+            "2311:536579"
+          ],
+          "cardId": "elkhorn-coral-stage-2"
+        },
+        {
+          "title": "Lettuce Coral",
+          "stage": "Base",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:536580",
+            "2311:536581"
+          ],
+          "cardId": "lettuce-coral-base"
+        },
+        {
+          "title": "Lettuce Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:536582",
+            "3578:472380"
+          ],
+          "cardId": "lettuce-coral-stage-1"
+        },
+        {
+          "title": "Clubfinger Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "3578:467628",
+            "3578:469189",
+            "2311:539095"
+          ],
+          "cardId": "clubfinger-coral-base"
+        },
+        {
+          "title": "Mustard Hill Coral",
+          "stage": "Base",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:539098",
+            "2311:539099"
+          ],
+          "cardId": "mustard-hill-coral-base"
+        },
+        {
+          "title": "Coral Reef",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2311:539100"
+          ],
+          "cardId": "coral-reef"
+        },
+        {
+          "title": "Clubfinger Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2311:539097",
+            "3578:470749"
+          ],
+          "cardId": "clubfinger-coral-stage-1"
+        }
+      ]
+    },
+    {
+      "id": "blue-water",
+      "pageId": "2224:257782",
+      "pageName": "Decks - Drop Off",
+      "excludedReferenceNodeIds": [
+        "2224:353016",
+        "2224:353068",
+        "2849:131779"
+      ],
+      "cards": [
+        {
+          "title": "Coral Gardener",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:310887",
+            "2224:310908"
+          ],
+          "cardId": "coral-gardener"
+        },
+        {
+          "title": "Whale Watcher Dani",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2224:311125"
+          ],
+          "cardId": "capt-dani"
+        },
+        {
+          "title": "Deep Sea Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:311207",
+            "3143:610849"
+          ],
+          "cardId": "deep-sea-fishing"
+        },
+        {
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:311166",
+            "3578:366983"
+          ],
+          "cardId": "dr-evans"
+        },
+        {
+          "title": "Robotic Survey",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3143:614043",
+            "3143:613884"
+          ],
+          "cardId": "robotic-survey"
+        },
+        {
+          "title": "Coral Cement",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2224:312981"
+          ],
+          "cardId": "coral-cement"
+        },
+        {
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:313338",
+            "2224:315665"
+          ],
+          "cardId": "remote-search"
+        },
+        {
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2577:446775"
+          ],
+          "cardId": "scientist-jes"
+        },
+        {
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:326426",
+            "2224:322783"
+          ],
+          "cardId": "crab-trap"
+        },
+        {
+          "title": "Tiger Shark",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2409:596503"
+          ],
+          "cardId": "tiger-shark"
+        },
+        {
+          "title": "Reef Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3416:465077"
+          ],
+          "cardId": "manta-ray"
+        },
+        {
+          "title": "Poison Heal",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3578:366601"
+          ],
+          "cardId": "poison-heal"
+        },
+        {
+          "title": "Green Moray Eel",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3550:781651",
+            "3550:782352"
+          ],
+          "cardId": "green-moray-eel"
+        },
+        {
+          "title": "Arrow Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:331859",
+            "2224:331919"
+          ],
+          "cardId": "arrow-crab"
+        },
+        {
+          "title": "Octopus",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3578:266178",
+            "3578:266810"
+          ],
+          "cardId": "octopus"
+        },
+        {
+          "title": "Oysters",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3578:267442"
+          ],
+          "cardId": "oysters"
+        },
+        {
+          "title": "Blue Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3578:267495",
+            "3578:268526"
+          ],
+          "cardId": "blue-crab"
+        },
+        {
+          "title": "Spanish Hogfish",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3577:153452",
+            "3578:257730",
+            "3577:164063"
+          ],
+          "cardId": "spanish-hogfish"
+        },
+        {
+          "title": "Triggerfish (Picasso)",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3577:148565",
+            "3578:259170",
+            "3577:148566"
+          ],
+          "cardId": "picasso-triggerfish"
+        },
+        {
+          "title": "Winter Flounder",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3578:269557",
+            "3578:269558",
+            "3578:269559"
+          ],
+          "cardId": "winter-flounder"
+        },
+        {
+          "title": "Fairy Parrotfish",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3138:576304",
+            "3138:571220",
+            "3578:262269"
+          ],
+          "cardId": "fairy-parrotfish"
+        },
+        {
+          "title": "Lettuce Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "3143:610601",
+            "3577:154893",
+            "3577:156860",
+            "3577:158826"
+          ],
+          "cardId": "lettuce-coral-base"
+        },
+        {
+          "title": "Atlantic Blue Tang",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3578:317435",
+            "3578:346935",
+            "3578:356768"
+          ],
+          "cardId": "blue-tang"
+        },
+        {
+          "title": "Boulder Star",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "3134:553430",
+            "3134:561566",
+            "3134:561567",
+            "3134:561568"
+          ],
+          "cardId": "boulder-star-coral-base"
+        },
+        {
+          "title": "Boulder Star",
+          "stage": "Stage 1",
+          "quantity": 3,
+          "nodeIds": [
+            "3134:553431",
+            "3134:553432",
+            "3134:544828"
+          ],
+          "cardId": "boulder-star-coral-stage-1"
+        },
+        {
+          "title": "Lettuce Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "3143:610602",
+            "3577:160793"
+          ],
+          "cardId": "lettuce-coral-stage-1"
+        },
+        {
+          "title": "Coral Reef",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2231:163932"
+          ],
+          "cardId": "coral-reef"
+        },
+        {
+          "title": "Mustard Hill Coral",
+          "stage": "Base",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:353014",
+            "2224:353013"
+          ],
+          "cardId": "mustard-hill-coral-base"
+        },
+        {
+          "title": "Boulder Star",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "3134:544829",
+            "3134:544830"
+          ],
+          "cardId": "boulder-star-coral-stage-2"
+        }
+      ]
+    },
+    {
+      "id": "darkness-shroud",
+      "pageId": "2068:245383",
+      "pageName": "Decks - Darkness Shroud",
+      "excludedReferenceNodeIds": [
+        "2298:446034",
+        "2893:234348",
+        "2074:53602"
+      ],
+      "cards": [
+        {
+          "title": "Abyss",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2677:511507"
+          ],
+          "cardId": "abyss"
+        },
+        {
+          "title": "Chimera",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:318874",
+            "3994:529777"
+          ],
+          "cardId": "chimera"
+        },
+        {
+          "title": "Giant Squid",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2642:61708"
+          ],
+          "cardId": "giant-squid"
+        },
+        {
+          "title": "Goblin Shark",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:752641",
+            "3994:753190"
+          ],
+          "cardId": "goblin-shark"
+        },
+        {
+          "title": "Cookie Cutter",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:318249",
+            "3994:753738"
+          ],
+          "cardId": "cookie-cutter-shark"
+        },
+        {
+          "title": "Giant Red Shrimp",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:316184",
+            "2068:316629"
+          ],
+          "cardId": "giant-red-shrimp"
+        },
+        {
+          "title": "Giant Isopod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:754647",
+            "3994:755102"
+          ],
+          "cardId": "giant-isopod"
+        },
+        {
+          "title": "Deep Cucumber",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:315543",
+            "3994:756025"
+          ],
+          "cardId": "deep-cucumber"
+        },
+        {
+          "title": "Deep Sea Jelly",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:756479",
+            "2068:314901"
+          ],
+          "cardId": "deep-sea-jelly"
+        },
+        {
+          "title": "Fangtooth Fish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:312901",
+            "3994:757402"
+          ],
+          "cardId": "fangtooth-fish"
+        },
+        {
+          "title": "Vampire Squid",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:755556",
+            "3994:756934"
+          ],
+          "cardId": "vampire-squid"
+        },
+        {
+          "title": "Anglerfish (Humpback)",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:311848",
+            "2068:312375"
+          ],
+          "cardId": "humpback-anglerfish"
+        },
+        {
+          "title": "Black Swallower",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:314404",
+            "2068:313907"
+          ],
+          "cardId": "black-swallower"
+        },
+        {
+          "title": "Bristlemouth",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:311096",
+            "2068:311472"
+          ],
+          "cardId": "bristlemouth"
+        },
+        {
+          "title": "Barrel Eye Fish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:310515",
+            "2068:310224"
+          ],
+          "cardId": "barrel-eye-fish"
+        },
+        {
+          "title": "Owlfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:309707",
+            "3994:758038"
+          ],
+          "cardId": "owlfish"
+        },
+        {
+          "title": "Fishing Rod",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2068:309329"
+          ],
+          "cardId": "fishing"
+        },
+        {
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:250148",
+            "3994:767298"
+          ],
+          "cardId": "dr-evans"
+        },
+        {
+          "title": "Deep Sea Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:263222",
+            "2068:301847"
+          ],
+          "cardId": "deep-sea-fishing"
+        },
+        {
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2068:293337",
+            "2068:256813",
+            "2068:295664"
+          ],
+          "cardId": "remote-search"
+        },
+        {
+          "title": "Coral Gardener",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:250672",
+            "2068:250671"
+          ],
+          "cardId": "coral-gardener"
+        },
+        {
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:302043",
+            "3994:758773"
+          ],
+          "cardId": "crab-trap"
+        },
+        {
+          "title": "Bamboo Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2068:287679",
+            "2068:286859",
+            "2068:287269",
+            "2068:286449"
+          ],
+          "cardId": "bamboo_coral_base"
+        },
+        {
+          "title": "Bamboo Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:285102",
+            "2068:285551"
+          ],
+          "cardId": "bamboo_coral_stage1"
+        },
+        {
+          "title": "Bamboo Coral",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:281063",
+            "2068:284478"
+          ],
+          "cardId": "bamboo_coral_stage2"
+        },
+        {
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:288528",
+            "3994:758673"
+          ],
+          "cardId": "scientist-jes"
+        },
+        {
+          "title": "Deep Mushroom",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2068:288089",
+            "2068:280634",
+            "2068:280224",
+            "2068:284068"
+          ],
+          "cardId": "deep_mushroom_base"
+        },
+        {
+          "title": "Deep Mushroom",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:279759",
+            "2068:275035"
+          ],
+          "cardId": "deep_mushroom_stage1"
+        },
+        {
+          "title": "Deep Mushroom",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:283423",
+            "2068:252238"
+          ],
+          "cardId": "deep_mushroom_stage2"
+        }
+      ]
+    },
+    {
+      "id": "open-ocean-hunt",
+      "pageId": "2296:82568",
+      "pageName": "Decks - Open Ocean",
+      "excludedReferenceNodeIds": [
+        "2296:184870",
+        "2779:45793",
+        "2296:218512"
+      ],
+      "cards": [
+        {
+          "title": "Cast Net",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2296:262001",
+            "2749:175980"
+          ],
+          "cardId": "cast-net"
+        },
+        {
+          "title": "Deep Sea Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2296:262527",
+            "2296:262331"
+          ],
+          "cardId": "deep-sea-fishing"
+        },
+        {
+          "title": "Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2297:286038",
+            "2297:286059"
+          ],
+          "cardId": "fishing"
+        },
+        {
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2296:267415",
+            "2296:265089",
+            "2296:262723"
+          ],
+          "cardId": "remote-search"
+        },
+        {
+          "title": "Spearfishing",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2569:175373",
+            "3994:798918"
+          ],
+          "cardId": "spearfishing"
+        },
+        {
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2779:42137",
+            "2769:37930"
+          ],
+          "cardId": "crab-trap"
+        },
+        {
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2296:254509"
+          ],
+          "cardId": "scientist-jes"
+        },
+        {
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:864555"
+          ],
+          "cardId": "dr-evans"
+        },
+        {
+          "title": "Sardine Ball",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2749:172154",
+            "2749:172360",
+            "2749:172565",
+            "2749:172770"
+          ],
+          "cardId": "sardine-ball-base"
+        },
+        {
+          "title": "Sardine Ball",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2749:172975",
+            "2749:173282"
+          ],
+          "cardId": "sardine-ball-stage1"
+        },
+        {
+          "title": "Herring Ball",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2746:420473",
+            "2297:278114",
+            "2746:420267",
+            "3994:864647"
+          ],
+          "cardId": "herring-ball-base"
+        },
+        {
+          "title": "Sardine Ball",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2749:173588",
+            "3994:864963"
+          ],
+          "cardId": "sardine-ball-stage2"
+        },
+        {
+          "title": "Remora",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:797866"
+          ],
+          "cardId": "remora"
+        },
+        {
+          "title": "Herring Ball",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2297:272078",
+            "2746:420679"
+          ],
+          "cardId": "herring-ball-stage2"
+        },
+        {
+          "title": "Herring Ball",
+          "stage": "Stage 1",
+          "quantity": 3,
+          "nodeIds": [
+            "2297:278319",
+            "2297:272077",
+            "2746:421309"
+          ],
+          "cardId": "herring-ball-stage1"
+        },
+        {
+          "title": "Halfbeak",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2749:174008",
+            "2746:419647",
+            "2746:419855"
+          ],
+          "cardId": "halfbeak"
+        },
+        {
+          "title": "Bluefin Tuna (Juvenile)",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2297:283572"
+          ],
+          "cardId": "bluefin-tuna-juvenile"
+        },
+        {
+          "title": "Ocean Triggerfish",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:787477"
+          ],
+          "cardId": "ocean-triggerfish"
+        },
+        {
+          "title": "Frigate Tuna",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2298:422149"
+          ],
+          "cardId": "frigate-tuna"
+        },
+        {
+          "title": "Bonito Tuna",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2297:283574",
+            "3994:797632"
+          ],
+          "cardId": "bonito-tuna"
+        },
+        {
+          "title": "Pompano",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:798362"
+          ],
+          "cardId": "pompano"
+        },
+        {
+          "title": "Mahi Mahi",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2297:277288",
+            "3994:796681",
+            "3994:796454"
+          ],
+          "cardId": "mahi-mahi"
+        },
+        {
+          "title": "Market Squid",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2297:285294",
+            "2746:412340",
+            "3994:798125"
+          ],
+          "cardId": "market-squid"
+        },
+        {
+          "title": "Man O’ War",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:797388",
+            "3994:797144"
+          ],
+          "cardId": "man-o-war"
+        },
+        {
+          "title": "Blue Sea Dragon",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:795223",
+            "3994:914416"
+          ],
+          "cardId": "blue-sea-dragon"
+        },
+        {
+          "title": "Oceanic Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:793638"
+          ],
+          "cardId": "oceanic-manta-ray"
+        },
+        {
+          "title": "Killer Whale",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2297:280388"
+          ],
+          "cardId": "killer-whale-oceanic"
+        },
+        {
+          "title": "Yellowfin Tuna",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:793866"
+          ],
+          "cardId": "yellowfin-tuna"
+        },
+        {
+          "title": "Open Ocean",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2297:283209"
+          ],
+          "cardId": "open-ocean"
+        },
+        {
+          "title": "Silky Shark",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2297:278946"
+          ],
+          "cardId": "silky-shark"
+        },
+        {
+          "title": "Sailfish",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2297:278948"
+          ],
+          "cardId": "sailfish"
+        },
+        {
+          "title": "Loggerhead",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:794310",
+            "3994:794311"
+          ],
+          "cardId": "loggerhead-sea-turtle"
+        }
+      ]
+    },
+    {
+      "id": "murky-water",
+      "pageId": "2241:259772",
+      "pageName": "Decks - Murky Water",
+      "excludedReferenceNodeIds": [
+        "2241:486929",
+        "2241:486981"
+      ],
+      "cards": [
+        {
+          "title": "Spearfishing",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:430477",
+            "2241:430478"
+          ],
+          "cardId": "spearfishing"
+        },
+        {
+          "title": "Coral Gardener",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2241:430479",
+            "2241:430480",
+            "2241:430481"
+          ],
+          "cardId": "coral-gardener"
+        },
+        {
+          "title": "Robotic Survey",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:430485",
+            "3578:476019"
+          ],
+          "cardId": "robotic-survey"
+        },
+        {
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:430484",
+            "2241:430483"
+          ],
+          "cardId": "dr-evans"
+        },
+        {
+          "title": "Deep Sea Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:430996",
+            "2241:430997"
+          ],
+          "cardId": "deep-sea-fishing"
+        },
+        {
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:430999",
+            "2241:431000"
+          ],
+          "cardId": "remote-search"
+        },
+        {
+          "title": "Poison Heal",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:431001",
+            "2241:431002"
+          ],
+          "cardId": "poison-heal"
+        },
+        {
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2241:431003"
+          ],
+          "cardId": "crab-trap"
+        },
+        {
+          "title": "Recovery",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:431004",
+            "2241:449019"
+          ],
+          "cardId": "recovery"
+        },
+        {
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2587:230901"
+          ],
+          "cardId": "scientist-jes"
+        },
+        {
+          "title": "Reef Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3416:378787"
+          ],
+          "cardId": "manta-ray"
+        },
+        {
+          "title": "Bull Shark",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2656:298567"
+          ],
+          "cardId": "bull-shark"
+        },
+        {
+          "title": "Reef Shark (Blacktip)",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3578:479858",
+            "3578:479859"
+          ],
+          "cardId": "reef-shark"
+        },
+        {
+          "title": "Great Barracuda",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3578:479860",
+            "3578:490753"
+          ],
+          "cardId": "great-barracuda"
+        },
+        {
+          "title": "Arrow Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:449025",
+            "3578:491971"
+          ],
+          "cardId": "arrow-crab"
+        },
+        {
+          "title": "Blue Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3578:492926",
+            "3578:493957"
+          ],
+          "cardId": "blue-crab"
+        },
+        {
+          "title": "Sea Urchin",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3578:494987",
+            "3578:495931",
+            "3578:496874"
+          ],
+          "cardId": "sea-urchin"
+        },
+        {
+          "title": "Giant Triton",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:452452",
+            "3580:497817"
+          ],
+          "cardId": "giant-triton"
+        },
+        {
+          "title": "Wrasse (Cleaner)",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3581:504463",
+            "3581:505656",
+            "3581:506252"
+          ],
+          "cardId": "cleaner-wrasse"
+        },
+        {
+          "title": "Pillar Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2241:479331",
+            "2241:479332",
+            "2241:479330",
+            "3580:497867"
+          ],
+          "cardId": "pillar-coral-base"
+        },
+        {
+          "title": "Brain Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2241:479333",
+            "2241:484478",
+            "2241:484479",
+            "2241:484480"
+          ],
+          "cardId": "brain-coral-base"
+        },
+        {
+          "title": "Sergeant Major",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3581:512527",
+            "3581:518207",
+            "3581:523886"
+          ],
+          "cardId": "sargeant-major"
+        },
+        {
+          "title": "Brain Coral",
+          "stage": "Stage 1",
+          "quantity": 3,
+          "nodeIds": [
+            "2241:484481",
+            "2241:484482",
+            "2241:484483"
+          ],
+          "cardId": "brain-coral-stage-1"
+        },
+        {
+          "title": "Brain Coral",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:484484",
+            "2241:484485"
+          ],
+          "cardId": "brain-coral-stage-2"
+        },
+        {
+          "title": "Lettuce Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "2241:484486",
+            "2241:486923",
+            "2241:486924"
+          ],
+          "cardId": "lettuce-coral-base"
+        },
+        {
+          "title": "Lettuce Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:486925",
+            "2241:486926"
+          ],
+          "cardId": "lettuce-coral-stage-1"
+        },
+        {
+          "title": "Mustard Hill Coral",
+          "stage": "Base",
+          "quantity": 1,
+          "nodeIds": [
+            "2241:486927"
+          ],
+          "cardId": "mustard-hill-coral-base"
+        },
+        {
+          "title": "Coral Reef",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2241:486928"
+          ],
+          "cardId": "coral-reef"
+        }
+      ]
+    },
+    {
+      "id": "stinging-fortress",
+      "pageId": "2363:215185",
+      "pageName": "Decks - Stinging Fortress",
+      "excludedReferenceNodeIds": [
+        "2363:295083",
+        "2363:295134"
+      ],
+      "cards": [
+        {
+          "title": "Coral Gardener",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:240255",
+            "2363:240256",
+            "2363:240257"
+          ],
+          "cardId": "coral-gardener"
+        },
+        {
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:240258",
+            "2363:240259",
+            "2363:240260"
+          ],
+          "cardId": "dr-evans"
+        },
+        {
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2363:240261",
+            "2363:240262"
+          ],
+          "cardId": "remote-search"
+        },
+        {
+          "title": "Fishing Rod",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:240263",
+            "2363:273812",
+            "2363:273813"
+          ],
+          "cardId": "fishing"
+        },
+        {
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2363:273814",
+            "2363:273815"
+          ],
+          "cardId": "crab-trap"
+        },
+        {
+          "title": "Recovery",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2363:273816",
+            "2363:273817"
+          ],
+          "cardId": "recovery"
+        },
+        {
+          "title": "Sea Krait",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3483:142368",
+            "3524:663547"
+          ],
+          "cardId": "yellow-lipped-sea-krait"
+        },
+        {
+          "title": "Reef Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3524:656552"
+          ],
+          "cardId": "manta-ray"
+        },
+        {
+          "title": "Anemone",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3460:387910",
+            "3460:388958",
+            "3581:647599"
+          ],
+          "cardId": "anemone"
+        },
+        {
+          "title": "Box Jellyfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3492:179340",
+            "3492:178819"
+          ],
+          "cardId": "box-jellyfish"
+        },
+        {
+          "title": "Crown of Thorns",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3524:657066",
+            "2363:283085"
+          ],
+          "cardId": "crown-of-thorns"
+        },
+        {
+          "title": "Arrow Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3550:730473",
+            "3581:644210"
+          ],
+          "cardId": "arrow-crab"
+        },
+        {
+          "title": "Clownfish",
+          "stage": "",
+          "quantity": 4,
+          "nodeIds": [
+            "2363:285232",
+            "2363:285230",
+            "2363:285229",
+            "2363:285231"
+          ],
+          "cardId": "clownfish"
+        },
+        {
+          "title": "Lionfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3550:722959",
+            "3460:380838"
+          ],
+          "cardId": "lionfish"
+        },
+        {
+          "title": "Blue Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3550:728486"
+          ],
+          "cardId": "blue-crab"
+        },
+        {
+          "title": "Longhorn Cowfish",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3581:648646",
+            "3581:648723",
+            "3550:720290"
+          ],
+          "cardId": "longhorn-cowfish"
+        },
+        {
+          "title": "Lettuce Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2363:291392",
+            "2363:291393",
+            "2363:291394",
+            "3460:378209"
+          ],
+          "cardId": "lettuce-coral-base"
+        },
+        {
+          "title": "Lettuce Coral",
+          "stage": "Stage 1",
+          "quantity": 3,
+          "nodeIds": [
+            "3460:377938",
+            "2363:293886",
+            "3460:378074"
+          ],
+          "cardId": "lettuce-coral-stage-1"
+        },
+        {
+          "title": "Porcupine Fish",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:291387",
+            "2363:291386",
+            "3581:648799"
+          ],
+          "cardId": "porcupine-fish"
+        },
+        {
+          "title": "Staghorn Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2363:293887",
+            "2363:293888",
+            "2363:293889",
+            "2363:293890"
+          ],
+          "cardId": "staghorn-coral-base"
+        },
+        {
+          "title": "Clubfinger Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:293891",
+            "2363:293892",
+            "2363:293893"
+          ],
+          "cardId": "clubfinger-coral-base"
+        },
+        {
+          "title": "Clubfinger Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2363:295077",
+            "2363:295078"
+          ],
+          "cardId": "clubfinger-coral-stage-1"
+        },
+        {
+          "title": "Mustard Hill Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:295079",
+            "2363:295080",
+            "2363:295081"
+          ],
+          "cardId": "mustard-hill-coral-base"
+        },
+        {
+          "title": "Coral Reef",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3460:459862"
+          ],
+          "cardId": "coral-reef"
+        }
+      ]
+    },
+    {
+      "id": "disruption",
+      "pageId": "2404:505077",
+      "pageName": "Decks - Disruption",
+      "excludedReferenceNodeIds": [
+        "2404:556844",
+        "2404:556895"
+      ],
+      "cards": [
+        {
+          "title": "Spearfishing",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:533975"
+          ],
+          "cardId": "spearfishing"
+        },
+        {
+          "title": "Coral Gardener",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2404:533976",
+            "2404:533977",
+            "2404:533978"
+          ],
+          "cardId": "coral-gardener"
+        },
+        {
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:533979"
+          ],
+          "cardId": "dr-evans"
+        },
+        {
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2644:130534",
+            "2644:130505"
+          ],
+          "cardId": "scientist-jes"
+        },
+        {
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3493:261766",
+            "3493:261767"
+          ],
+          "cardId": "remote-search"
+        },
+        {
+          "title": "Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3493:266693",
+            "2404:534174"
+          ],
+          "cardId": "fishing"
+        },
+        {
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3152:789516",
+            "2404:534176"
+          ],
+          "cardId": "crab-trap"
+        },
+        {
+          "title": "Recovery",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3493:266852"
+          ],
+          "cardId": "recovery"
+        },
+        {
+          "title": "Hammerhead",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3150:715865"
+          ],
+          "cardId": "hammerhead"
+        },
+        {
+          "title": "Nurse Shark",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3582:164874",
+            "3582:164875",
+            "3582:167151"
+          ],
+          "cardId": "nurse-shark"
+        },
+        {
+          "title": "Reef Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3582:167911"
+          ],
+          "cardId": "manta-ray"
+        },
+        {
+          "title": "Mantis Shrimp",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3582:158430",
+            "2404:543580",
+            "2404:543581"
+          ],
+          "cardId": "mantis-shrimp"
+        },
+        {
+          "title": "Crown of Thorns",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:543583"
+          ],
+          "cardId": "crown-of-thorns"
+        },
+        {
+          "title": "Goliath Grouper",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:543586"
+          ],
+          "cardId": "goliath-grouper"
+        },
+        {
+          "title": "Arrow Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3582:159252"
+          ],
+          "cardId": "arrow-crab"
+        },
+        {
+          "title": "Blue Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3493:267011"
+          ],
+          "cardId": "blue-crab"
+        },
+        {
+          "title": "Emerald Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3605:613125"
+          ],
+          "cardId": "emerald-crab"
+        },
+        {
+          "title": "Lionfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3152:788693",
+            "3152:789242"
+          ],
+          "cardId": "lionfish"
+        },
+        {
+          "title": "Triggerfish (Picasso)",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2404:545921",
+            "3387:161203"
+          ],
+          "cardId": "picasso-triggerfish"
+        },
+        {
+          "title": "Frogfish",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3152:787434",
+            "3387:266442",
+            "3152:786175"
+          ],
+          "cardId": "frogfish"
+        },
+        {
+          "title": "Nudibranch",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3582:162486",
+            "3582:162487",
+            "3582:164077"
+          ],
+          "cardId": "nudibranch"
+        },
+        {
+          "title": "Elkhorn Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "3152:778913",
+            "2404:555405",
+            "3152:777021",
+            "3152:777967"
+          ],
+          "cardId": "elkhorn-coral-base"
+        },
+        {
+          "title": "Parrotfish (Spectacled)",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2404:553104",
+            "3581:748087",
+            "2404:553103"
+          ],
+          "cardId": "spectacled-parrotfish"
+        },
+        {
+          "title": "French Angelfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3152:779859",
+            "3152:781148"
+          ],
+          "cardId": "french-angelfish"
+        },
+        {
+          "title": "Porcupine Fish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3152:782437",
+            "3152:784306"
+          ],
+          "cardId": "porcupine-fish"
+        },
+        {
+          "title": "Lettuce Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "2404:555413",
+            "2404:556838",
+            "2404:556839"
+          ],
+          "cardId": "lettuce-coral-base"
+        },
+        {
+          "title": "Elkhorn Coral",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2404:555410",
+            "2404:555411"
+          ],
+          "cardId": "elkhorn-coral-stage-2"
+        },
+        {
+          "title": "Elkhorn Coral",
+          "stage": "Stage 1",
+          "quantity": 3,
+          "nodeIds": [
+            "2404:555408",
+            "2404:555407",
+            "2404:555406"
+          ],
+          "cardId": "elkhorn-coral-stage-1"
+        },
+        {
+          "title": "Lettuce Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2404:556840",
+            "2404:556841"
+          ],
+          "cardId": "lettuce-coral-stage-1"
+        },
+        {
+          "title": "Mustard Hill Coral",
+          "stage": "Base",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:556842"
+          ],
+          "cardId": "mustard-hill-coral-base"
+        },
+        {
+          "title": "Coral Reef",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:556843"
+          ],
+          "cardId": "coral-reef"
+        }
+      ]
+    }
+  ]
+}

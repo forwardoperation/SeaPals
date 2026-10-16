@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const handDockSource = await readFile(new URL("./MobileHandDock.jsx", import.meta.url), "utf8");
+const handDockSource = (await readFile(new URL("./MobileHandDock.jsx", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
 
 function functionSource(name, nextName) {
   const start = handDockSource.indexOf(`function ${name}`);

@@ -98,7 +98,7 @@ test("deck discovery, storefront trials, and post-game shopping complete the tri
   ]);
 
   assert.match(decksSource, /href=\{`\/simulator\?deck=\$\{deck\.id\}`\}/);
-  assert.match(decksSource, /Try this deck/);
+  assert.match(decksSource, /Open simulator/);
   assert.match(storefrontSource, /product\.trialDecks\?\.length/);
   assert.match(storefrontSource, /href=\{deck\.href\}/);
   assert.match(storefrontSource, /`Preview \$\{deckName\}` : "Preview deck"/);

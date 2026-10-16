@@ -377,6 +377,8 @@ export function getStoreConfiguration() {
       fullContentsHref: definition.deckId
         ? `/decks#${definition.deckId}`
         : null,
+      setListHref: definition.setListHref ?? null,
+      setListLabel: definition.setListLabel ?? null,
       priceCents,
       taxCode,
       priceConfigured,

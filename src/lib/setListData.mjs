@@ -56,6 +56,10 @@ function normalizeSearch(value) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
+export function normalizeSetListZone(value) {
+  return ["ocean", "reef", "deep"].includes(value) ? value : "all";
+}
+
 export function filterSetListRows(rows, { query = "", zone = "all", rarity = "all" } = {}) {
   const words = normalizeSearch(query).split(/\s+/).filter(Boolean);
   return rows.filter((row) => {

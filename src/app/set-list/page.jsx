@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getGalleryData } from "@/lib/gallery";
-import { buildSetListData, RARITY_ORDER, RARITY_SYMBOLS } from "@/lib/setListData.mjs";
+import { buildSetListData, normalizeSetListZone, RARITY_ORDER, RARITY_SYMBOLS } from "@/lib/setListData.mjs";
 import SetListTable from "./SetListTable";
 
 export const metadata = {
@@ -9,7 +9,9 @@ export const metadata = {
   alternates: { canonical: "/set-list" },
 };
 
-export default async function SetListPage() {
+export default async function SetListPage({ searchParams }) {
+  const params = await searchParams;
+  const initialZone = normalizeSetListZone(params?.set);
   const { rows, sets } = buildSetListData(await getGalleryData());
   const uniqueCards = sets.reduce((total, set) => total + set.uniqueCards, 0);
 
@@ -50,7 +52,7 @@ export default async function SetListPage() {
         </div>
       </section>
 
-      <SetListTable rows={rows} sets={sets} />
+      <SetListTable rows={rows} sets={sets} initialZone={initialZone} />
     </main>
   );
 }
