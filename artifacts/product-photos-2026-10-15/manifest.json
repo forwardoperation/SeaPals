@@ -1,0 +1,129 @@
+{
+  "title": "Sea Realm product mockups",
+  "created": "2026-10-15",
+  "generationMode": "Built-in image_gen",
+  "description": "Eleven AI-generated photographic packaging mockups based on the supplied Figma artwork, with no drawing dimensions. Transparent PNG, 4:3.",
+  "notes": [
+    "Printed packaging names follow the Figma artwork; Pelagic Zone differs from the current Open Ocean store title.",
+    "Generated mockups can contain small artwork, lettering and alpha-edge variations."
+  ],
+  "prompts": [
+    "prompts-starter-kit.json",
+    "prompts-starter-kit-cleanup.json",
+    "prompts-decks-a.json",
+    "prompts-decks-b.json",
+    "prompts-dive-packs.json"
+  ],
+  "images": [
+    {
+      "name": "Starter Kit",
+      "file": "starter-kit-v2.png",
+      "category": "Starter Kit",
+      "source": "https://www.figma.com/file/xeol2YE0jCE0N5vAD6tjzx?node-id=3316:817030",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1811493,
+      "transparentPixels": 427559
+    },
+    {
+      "name": "Coral Garden",
+      "file": "deck-coral-garden.png",
+      "category": "Deck box",
+      "source": "https://www.figma.com/file/xeol2YE0jCE0N5vAD6tjzx?node-id=3105:366106",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1293061,
+      "transparentPixels": 876523
+    },
+    {
+      "name": "Drop Off",
+      "file": "deck-drop-off-v2.png",
+      "category": "Deck box",
+      "source": "https://www.figma.com/file/xeol2YE0jCE0N5vAD6tjzx?node-id=3105:366106",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1355034,
+      "transparentPixels": 769996
+    },
+    {
+      "name": "Pelagic Zone",
+      "file": "deck-pelagic-zone.png",
+      "category": "Deck box",
+      "source": "https://www.figma.com/file/xeol2YE0jCE0N5vAD6tjzx?node-id=3105:366106",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1229449,
+      "transparentPixels": 887952
+    },
+    {
+      "name": "Murky Water",
+      "file": "deck-murky-water.png",
+      "category": "Deck box",
+      "source": "https://www.figma.com/file/xeol2YE0jCE0N5vAD6tjzx?node-id=3105:366106",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1450922,
+      "transparentPixels": 808697
+    },
+    {
+      "name": "Stinging Fortress",
+      "file": "deck-stinging-fortress.png",
+      "category": "Deck box",
+      "source": "https://www.figma.com/file/xeol2YE0jCE0N5vAD6tjzx?node-id=3105:366106",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1220945,
+      "transparentPixels": 920698
+    },
+    {
+      "name": "Disruption",
+      "file": "deck-disruption.png",
+      "category": "Deck box",
+      "source": "https://www.figma.com/file/xeol2YE0jCE0N5vAD6tjzx?node-id=3105:366106",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1277079,
+      "transparentPixels": 895321
+    },
+    {
+      "name": "Darkness Shroud",
+      "file": "deck-darkness-shroud.png",
+      "category": "Deck box",
+      "source": "https://www.figma.com/file/xeol2YE0jCE0N5vAD6tjzx?node-id=3105:366106",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1499314,
+      "transparentPixels": 791688
+    },
+    {
+      "name": "Reef Dive Pack",
+      "file": "dive-pack-reef.png",
+      "category": "Dive Pack",
+      "source": "https://www.figma.com/file/xeol2YE0jCE0N5vAD6tjzx?node-id=3342:839013",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1134988,
+      "transparentPixels": 1016864
+    },
+    {
+      "name": "Oceanic Dive Pack",
+      "file": "dive-pack-oceanic.png",
+      "category": "Dive Pack",
+      "source": "https://www.figma.com/file/xeol2YE0jCE0N5vAD6tjzx?node-id=3342:839013",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1242177,
+      "transparentPixels": 1007292
+    },
+    {
+      "name": "Deep Dive Pack",
+      "file": "dive-pack-deep.png",
+      "category": "Dive Pack",
+      "source": "https://www.figma.com/file/xeol2YE0jCE0N5vAD6tjzx?node-id=3342:839013",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 1060284,
+      "transparentPixels": 990590
+    }
+  ]
+}

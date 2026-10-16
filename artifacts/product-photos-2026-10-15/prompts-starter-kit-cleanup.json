@@ -1,0 +1,6 @@
+{
+  "mode": "built-in image_gen",
+  "input": "starter-kit.png",
+  "file": "starter-kit-v2.png",
+  "prompt": "Use case: precise-object-edit. Edit this SeaRealm Starter Kit product cutout only to clean its transparent silhouette. Preserve the product pixels, text, print, perspective, geometry, colors, lighting, position and 1448x1086 canvas exactly. Remove every isolated colored fleck or pixel outside the physical box: the blue fleck above it, cyan/blue blobs and ragged fringes above its top and outside the right edge, the red fleck below it. Leave a smooth natural antialiased product edge with no colored halo or residue. Keep fully transparent alpha outside the object. No new text or changes within the box, no background, no checkerboard, no cropping. Output the same complete box with clean alpha transparency."
+}
