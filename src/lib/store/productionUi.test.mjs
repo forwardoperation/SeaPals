@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [storefront, success, admin, shipping, terms] = await Promise.all(
+const [storefront, success, admin, shipping, terms, productDetails] = await Promise.all(
   [
     "../../app/store/Storefront.jsx",
     "../../app/store/success/page.jsx",
     "../../app/admin/orders/OrdersDashboard.jsx",
     "../../data/store/shipping.js",
     "../../app/terms/page.jsx",
+    "../../app/store/ProductDetails.jsx",
   ].map((path) => readFile(new URL(path, import.meta.url), "utf8"))
 );
 
@@ -30,9 +31,7 @@ test("the storefront keeps production speed independent from shipping or pickup"
     /subtotalCents \+ normalizedProductionCents \+ normalizedShippingCents/
   );
   assert.match(storefront, /Production speed/);
-  assert.match(storefront, /per order/);
-  assert.match(storefront, /Carrier transit time is additional/);
-  assert.match(storefront, /will be offered when ordering opens/);
+  assert.match(productDetails, /Carrier transit time is separate from production/);
   assert.match(storefront, /It is not a\s+delivery estimate/);
   assert.match(storefront, /expeditedProductionDailyOrderLimit/);
   assert.match(storefront, /expeditedProductionTimeZone/);

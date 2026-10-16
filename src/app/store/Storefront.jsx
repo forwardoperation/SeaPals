@@ -62,9 +62,6 @@ const CATEGORY_META = {
   },
   "dive-packs": {
     label: "Dive Packs",
-    eyebrow: "Discover a new current",
-    description:
-      "Choose an Oceanic, Reef, or Deep Dive Pack and add cards from your chosen set to your SeaRealm collection. Dive Pack-only mailed orders up to 1 lb qualify for $5 Standard or $10 Priority Shipping & Handling.",
   },
   "game-accessories": {
     label: "Game Accessories",
@@ -718,29 +715,6 @@ export default function Storefront({
         </p>
       ) : null}
 
-      <section
-        aria-label="Made-to-order production timing"
-        className="mt-6 rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 text-sm leading-6 text-cyan-950 shadow-sm"
-      >
-        <p>
-          <strong>Dive Packs &amp; accessories:</strong> standard production is
-          included, with dispatch within 5 business days.
-          {expeditedProductionOption ? (
-            <>
-              {" "}One-business-day production {checkoutEnabled
-                ? "can be requested at checkout"
-                : "will be offered when ordering opens"} for{" "}
-              <strong>
-                {formatMoney(expeditedProductionOption.amountCents, currency)}
-                {" per order"}
-              </strong>
-              {" "}when a daily rush slot remains.
-            </>
-          ) : null}{" "}
-          Carrier transit time is additional.
-        </p>
-      </section>
-
       </>) : null}
 
       {detailProduct && testCheckout ? (
@@ -828,18 +802,22 @@ export default function Storefront({
                     className="scroll-mt-8"
                   >
                     <div className="border-b border-cyan-100 pb-4">
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">
-                        {group.meta.eyebrow}
-                      </p>
+                      {group.meta.eyebrow ? (
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">
+                          {group.meta.eyebrow}
+                        </p>
+                      ) : null}
                       <h3
                         id={`category-${group.id}-heading`}
                         className="mt-1 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl"
                       >
                         {group.meta.label}
                       </h3>
-                      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                        {group.meta.description}
-                      </p>
+                      {group.meta.description ? (
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                          {group.meta.description}
+                        </p>
+                      ) : null}
                     </div>
 
                     <div className="mt-6 grid gap-6 sm:grid-cols-2">
