@@ -231,11 +231,14 @@ export async function POST(request) {
             : error instanceof OrderStoreError &&
                 error.code === "expedited_capacity_unavailable"
               ? "Expedited production is full for the next business day. Choose Standard production or try again."
+            : error instanceof OrderStoreError &&
+                error.code === "preorder_backend_not_ready"
+              ? "Pre-order checkout is being prepared. Please contact us or try again shortly."
             : status === 400
             ? "Checkout could not be prepared for that cart."
             : "Checkout is temporarily unavailable. Please try again shortly.",
         ...(error instanceof OrderStoreError &&
-        ["inventory_unavailable", "expedited_capacity_unavailable"].includes(
+        ["inventory_unavailable", "expedited_capacity_unavailable", "preorder_backend_not_ready"].includes(
           error.code
         )
           ? { code: error.code }

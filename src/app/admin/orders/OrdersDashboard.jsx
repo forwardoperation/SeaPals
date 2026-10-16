@@ -2,6 +2,10 @@
 
 import { useEffect, useId, useMemo, useState } from "react";
 import {
+  getStoreOrderPreorderFulfillmentLabel,
+  orderContainsStorePreorders,
+} from "@/data/store/preorders.js";
+import {
   STORE_FULFILLMENT_STATUS_VALUES,
   isFulfillmentStatusAllowedForMethod,
   isShippingQueueStatus,
@@ -160,6 +164,9 @@ function isExpeditedProduction(order) {
 }
 
 function productionName(order) {
+  if (orderContainsStorePreorders(order)) {
+    return getStoreOrderPreorderFulfillmentLabel(order);
+  }
   const configuredName = String(order?.production_option_name ?? "").trim();
   if (configuredName) return configuredName;
   return isExpeditedProduction(order)
@@ -168,6 +175,7 @@ function productionName(order) {
 }
 
 function productionMaxBusinessDays(order) {
+  if (orderContainsStorePreorders(order)) return null;
   const days = Number(order?.production_max_business_days);
   if (Number.isSafeInteger(days) && days > 0) return days;
   return isExpeditedProduction(order) ? 1 : 5;
@@ -199,7 +207,13 @@ function expeditedCapacityStateClasses(order) {
 }
 
 function productionDueDateKey(order) {
-  const value = String(order?.production_due_date ?? "").trim();
+  const value = String(
+    orderContainsStorePreorders(order)
+      ? order.preorder_delivery_guaranteed === true
+        ? order.preorder_fulfillment_date ?? ""
+        : ""
+      : order?.production_due_date ?? ""
+  ).trim();
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) return "";
 
@@ -443,6 +457,12 @@ function buildShippingCsv(orders) {
     "Production Fee",
     "Production Due Date",
     "Expedited Capacity State",
+    "Order Fulfillment Type",
+    "Pre-order Campaign",
+    "Pre-order Cutoff",
+    "Pre-order Dispatch / Ready Date",
+    "Pre-order Delivery By",
+    "Pre-order Delivery Guaranteed",
     "Address Line 1",
     "Address Line 2",
     "City",
@@ -485,8 +505,15 @@ function buildShippingCsv(orders) {
       productionName(order),
       productionMaxBusinessDays(order),
       centsToDecimal(order.production_cents),
-      order.production_due_date,
+      orderContainsStorePreorders(order) ? "" : order.production_due_date,
       order.expedited_capacity_state,
+      order.fulfillment_type ?? "regular",
+      order.preorder_campaign_id,
+      order.preorder_cutoff_at,
+      order.preorder_delivery_guaranteed === true ? order.preorder_fulfillment_date : "",
+      order.preorder_delivery_guaranteed === true ? order.preorder_delivery_by : "",
+      order.preorder_delivery_guaranteed === null || order.preorder_delivery_guaranteed === undefined
+        ? "" : order.preorder_delivery_guaranteed ? "Yes" : "No",
       address.line1,
       address.line2,
       address.city,
@@ -913,7 +940,7 @@ function OrderCard({ order, onSave, saving }) {
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-lg font-black text-slate-950">
-                    Production
+                    {orderContainsStorePreorders(order) ? "Pre-order fulfillment" : "Production"}
                   </h3>
                   {rushProduction ? (
                     <span className="rounded-full bg-amber-300 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-amber-950">
@@ -925,12 +952,24 @@ function OrderCard({ order, onSave, saving }) {
                   {productionName(order)}
                 </p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
+                  {orderContainsStorePreorders(order) ? (
+                    "Items in this order ship together when the pre-order is ready."
+                  ) : (
+                    <>
                   {pickupOrder ? "Build and mark ready" : "Build and dispatch"}{" "}
                   within {productionMaxBusinessDays(order)} business{" "}
                   {productionMaxBusinessDays(order) === 1 ? "day" : "days"}.
                   {!pickupOrder ? " Carrier transit is additional." : ""}
+                    </>
+                  )}
                 </p>
                 <dl className="mt-4 grid gap-2 text-sm">
+                  {orderContainsStorePreorders(order) && productionDueDate ? (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-amber-950">
+                      <dt className="text-xs font-black uppercase tracking-[0.12em]">Ship / ready by</dt>
+                      <dd className="mt-1 font-black">{productionDueLabel}</dd>
+                    </div>
+                  ) : null}
                   {rushProduction ? (
                     <div
                       className={`rounded-xl border px-3 py-3 ${

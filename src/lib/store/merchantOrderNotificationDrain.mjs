@@ -10,7 +10,7 @@ const MAX_BATCH_LIMIT = 50;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ORDER_SELECT =
-  "id,order_number,paid_at,customer_email,customer_name,shipping_address,currency,subtotal_cents,production_option_id,production_option_name,production_max_business_days,production_cents,production_due_date,fulfillment_method,fulfillment_option_id,fulfillment_option_name,pickup_location,shipping_cents,tax_cents,total_cents,payment_livemode,store_order_items(sku,product_name,unit_amount_cents,quantity,line_total_cents)";
+  "id,order_number,paid_at,fulfillment_type,preorder_campaign_id,preorder_cutoff_at,preorder_delivery_by,preorder_fulfillment_date,preorder_delivery_guaranteed,customer_email,customer_name,shipping_address,currency,subtotal_cents,production_option_id,production_option_name,production_max_business_days,production_cents,production_due_date,fulfillment_method,fulfillment_option_id,fulfillment_option_name,pickup_location,shipping_cents,tax_cents,total_cents,payment_livemode,store_order_items(fulfillment_type,sku,product_name,unit_amount_cents,quantity,line_total_cents)";
 
 function safeString(value) {
   return typeof value === "string" ? value.trim() : "";

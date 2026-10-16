@@ -2,6 +2,11 @@ import {
   defaultStoreProductionOptionId,
   storeProductionOptionDefinitions,
 } from "../../data/store/production.js";
+import {
+  cartContainsPreorders,
+  getStorePreorderCampaign,
+  getStoreOrderFulfillmentType,
+} from "../../data/store/preorders.js";
 
 const STRIPE_API_BASE = "https://api.stripe.com/v1";
 const STRIPE_API_VERSION = "2026-07-29.dahlia";
@@ -116,7 +121,7 @@ function appendCheckoutLineItem(
   );
   form.set(
     `${prefix}[price_data][product_data][name]`,
-    `SeaPals — ${item.name}`
+    `SeaPals — ${item.name}${item.preorder ? " (pre-order)" : ""}`
   );
   form.set(
     `${prefix}[price_data][product_data][description]`,
@@ -131,6 +136,16 @@ function appendCheckoutLineItem(
     form.set(
       `${prefix}[price_data][product_data][metadata][category]`,
       item.category
+    );
+  }
+  form.set(
+    `${prefix}[price_data][product_data][metadata][fulfillment_type]`,
+    item.fulfillmentType ?? "regular"
+  );
+  if (item.preorderCampaignId) {
+    form.set(
+      `${prefix}[price_data][product_data][metadata][preorder_campaign_id]`,
+      item.preorderCampaignId
     );
   }
 
@@ -400,6 +415,19 @@ export async function createStripeCheckoutSession({
   const currency = String(configuration.currency || "usd").toLowerCase();
   const checkoutExpiration = getStripeCheckoutExpiration(order);
   const productionOption = getQuotedProductionOption(quote);
+  const containsPreorders = cartContainsPreorders(quote.items);
+  if (containsPreorders && productionOption.expedited) {
+    throw new StripeApiError("Expedited production is unavailable for pre-orders.", {
+      status: 400,
+      code: "preorder_expedited_unavailable",
+    });
+  }
+  // Keep the Checkout parameters stable for retries of the same reservation,
+  // including retries that cross the holiday campaign cutoff.
+  const reservationCreatedAt = Date.parse(order.inventoryReservationExpiresAt) - 60 * 60 * 1000;
+  const preorderCampaign = containsPreorders
+    ? getStorePreorderCampaign(reservationCreatedAt)
+    : null;
   const fulfillmentOption = quote.fulfillmentOption ?? {
     id: "standard",
     displayName: "Standard Shipping & Handling",
@@ -500,6 +528,23 @@ export async function createStripeCheckoutSession({
     fulfillmentOption.fulfillmentMethod
   );
   form.set("payment_intent_data[description]", `SeaRealm order ${order.orderNumber}`);
+  for (const prefix of ["metadata", "payment_intent_data[metadata]"]) {
+    form.set(`${prefix}[fulfillment_type]`, getStoreOrderFulfillmentType(quote.items));
+  }
+  if (preorderCampaign) {
+    for (const prefix of ["metadata", "payment_intent_data[metadata]"]) {
+      form.set(`${prefix}[preorder_campaign_id]`, preorderCampaign.id);
+      form.set(`${prefix}[preorder_campaign_year]`, String(preorderCampaign.year));
+      form.set(`${prefix}[preorder_order_before]`, preorderCampaign.orderBefore);
+      form.set(`${prefix}[preorder_delivery_before]`, preorderCampaign.deliveryBefore);
+      form.set(`${prefix}[preorder_delivery_by]`, preorderCampaign.deliveryBy);
+      form.set(`${prefix}[preorder_fulfillment_date]`, preorderCampaign.fulfillmentDate);
+    }
+    form.set(
+      "custom_text[submit][message]",
+      `${preorderCampaign.message} Items in this order ship together when the pre-order is ready.`
+    );
+  }
   if (fulfillmentOption.pickupLocation) {
     form.set("metadata[pickup_location]", fulfillmentOption.pickupLocation);
     form.set(
@@ -508,7 +553,7 @@ export async function createStripeCheckoutSession({
     );
     form.set(
       "custom_text[submit][message]",
-      `Scheduled pickup in ${fulfillmentOption.pickupLocation} is free. We will email after your order is built to arrange a pickup time.`
+      `${preorderCampaign ? `${preorderCampaign.message} ` : ""}Scheduled pickup in ${fulfillmentOption.pickupLocation} is free. We will email after your order is built to arrange a pickup time.`
     );
   }
 
@@ -534,7 +579,9 @@ export async function createStripeCheckoutSession({
     });
   }
   appendShippingOption(form, fulfillmentOption, currency, configuration);
-  appendShippingEstimate(form, fulfillmentOption, productionOption);
+  if (!containsPreorders) {
+    appendShippingEstimate(form, fulfillmentOption, productionOption);
+  }
 
   const session = await stripeRequest("/checkout/sessions", {
     method: "POST",

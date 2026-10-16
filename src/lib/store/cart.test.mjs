@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { getPrebuiltDeckById } from "../../data/decks/prebuiltDecks.js";
 import {
   storeLaunchProductIds,
   storeProductDefinitions,
@@ -515,15 +516,17 @@ test("the twelve-product launch catalog preserves the eight-item cart limit", ()
       assert.equal(new Set(ids).size, 12);
       assert.equal(new Set(skus).size, 12);
       assert.equal(decks.length, 7);
-      assert.ok(configuration.products.every((product) => product.madeToOrder));
+      assert.ok(configuration.products.every((product) => product.preorder || product.madeToOrder));
       assert.equal(
         configuration.products.find((product) => product.id === "blue-water")
           ?.buildDispatchMaxBusinessDays,
-        5
+        null
       );
       assert.ok(
         configuration.products.every(
-          (product) => product.buildDispatchMaxBusinessDays === 5
+          (product) => product.preorder
+            ? product.buildDispatchMaxBusinessDays === null
+            : product.buildDispatchMaxBusinessDays === 5
         )
       );
       assert.ok(
@@ -596,12 +599,12 @@ test("the catalog exposes structured simulator trials for decks and the starter 
       assert.deepEqual(starterKit.trialDecks, [
         {
           id: "coral-garden",
-          name: "Coral Garden",
+          name: getPrebuiltDeckById("coral-garden").name,
           href: "/simulator?deck=coral-garden",
         },
         {
           id: "blue-water",
-          name: "Blue Water Deck",
+          name: getPrebuiltDeckById("blue-water").name,
           href: "/simulator?deck=blue-water",
         },
       ]);
@@ -617,7 +620,7 @@ test("the catalog exposes structured simulator trials for decks and the starter 
       assert.deepEqual(openOcean.trialDecks, [
         {
           id: "open-ocean-hunt",
-          name: "Open Ocean",
+          name: getPrebuiltDeckById("open-ocean-hunt").name,
           href: "/simulator?deck=open-ocean-hunt",
         },
       ]);

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { retrieveStripeCheckoutSession } from "@/lib/store/stripe.mjs";
 import { stripeReceiptUrl } from "@/lib/store/receiptUrl.mjs";
 import ClearCart from "./ClearCart";
+import { getStorePreorderConfirmation } from "@/data/store/preorders";
+import { getStorePreorderPaymentRecord } from "@/lib/store/orders";
 
 export const metadata = {
   title: "Order received | SeaRealm TCG",
@@ -132,6 +134,14 @@ export default async function StoreSuccessPage({ searchParams }) {
   const receiptUrl = stripeReceiptUrl(session);
   const fulfillment = getFulfillmentDetails(session);
   const production = getProductionDetails(session);
+  let preorderPaymentRecord = null;
+  try {
+    preorderPaymentRecord = await getStorePreorderPaymentRecord(session);
+  } catch {
+    // Webhook processing or the order store may still be catching up. Show
+    // preorder timing without claiming an individual Christmas guarantee.
+  }
+  const preorderConfirmation = getStorePreorderConfirmation(session, preorderPaymentRecord);
   const localPickup = fulfillment.method === "pickup";
   const paymentComplete =
     session?.payment_status === "paid" ||
@@ -194,7 +204,14 @@ export default async function StoreSuccessPage({ searchParams }) {
                 </dt>
                 <dd className="font-black text-white">{paymentState}</dd>
               </div>
-              {production ? (
+              {preorderConfirmation ? (
+                <div className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                  <dt className="text-sm font-bold text-cyan-100/70">Pre-order fulfillment</dt>
+                  <dd className="max-w-md text-right text-sm font-semibold text-white">
+                    {preorderConfirmation}
+                  </dd>
+                </div>
+              ) : production ? (
                 <div className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                   <dt className="text-sm font-bold text-cyan-100/70">
                     Production

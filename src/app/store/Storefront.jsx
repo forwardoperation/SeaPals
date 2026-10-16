@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveStoreShippingRateTier } from "@/data/store/shipping.js";
+import { getStorePreorderCampaign } from "@/data/store/preorders.js";
 import {
   STORE_MAX_CART_QUANTITY,
   STORE_MAX_PER_PRODUCT_QUANTITY,
@@ -34,9 +35,9 @@ const FALLBACK_PRODUCTION_OPTIONS = Object.freeze([
 ]);
 
 const CATEGORY_ORDER = [
+  "dive-packs",
   "starter-kits",
   "expansion-decks",
-  "dive-packs",
   "game-accessories",
   "apparel",
   "storage",
@@ -54,7 +55,7 @@ const CATEGORY_META = {
     label: "Expansion Decks",
     eyebrow: "Choose a strategy",
     description:
-      "Optional ready-to-play 60-card decks for different strategies. The Starter Kit already includes Coral Garden and Blue Water.",
+      "Optional ready-to-play 60-card decks for different strategies. The Starter Kit already includes Coral Garden and Drop Off.",
   },
   "dive-packs": {
     label: "Dive Packs",
@@ -88,12 +89,12 @@ const CATEGORY_META = {
   },
 };
 
-function unavailableButtonLabel(product) {
+function unavailableButtonLabel(product, checkoutEnabled) {
   if (product.requiresConfiguration) return "Options coming soon";
   if (!product.priceConfigured) {
     return "Price to confirm";
   }
-  return "Prelaunch";
+  return checkoutEnabled ? "Unavailable" : "Preview only";
 }
 
 function formatMoney(cents, currency) {
@@ -199,9 +200,19 @@ export default function Storefront({
   expeditedProductionTimeZone,
   automaticTaxEnabled,
   products,
+  preorderCampaign: initialPreorderCampaign,
   highlightedProductId,
 }) {
   const testCheckout = checkoutEnabled && paymentMode === "test";
+  const [preorderCampaign, setPreorderCampaign] = useState(
+    () => initialPreorderCampaign ?? getStorePreorderCampaign()
+  );
+  useEffect(() => {
+    const refreshCampaign = () => setPreorderCampaign(getStorePreorderCampaign());
+    refreshCampaign();
+    const timer = window.setInterval(refreshCampaign, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const catalogProducts = Array.isArray(products) ? products : [];
   const productById = useMemo(
     () => new Map(catalogProducts.map((product) => [product.id, product])),
@@ -256,6 +267,9 @@ export default function Storefront({
       })
       .filter((group) => group.products.length > 0);
   }, [catalogProducts, highlightedProduct]);
+  const firstPreorderCategoryId = categoryGroups.find((group) =>
+    group.products.some((product) => product.preorder)
+  )?.id;
 
   const fulfillmentOptions = useMemo(() => {
     const configuredOptions = (Array.isArray(shippingOptions)
@@ -414,6 +428,7 @@ export default function Storefront({
         .filter(({ product, quantity }) => product && quantity > 0),
     [cart, productById]
   );
+  const cartHasPreorders = cartItems.some(({ product }) => product.preorder);
 
   useEffect(() => {
     if (!cartReady) return;
@@ -487,10 +502,12 @@ export default function Storefront({
               selectedFulfillmentOption.amountCents
           )
         );
-  const selectedProductionOption =
-    productionChoices.find(
-      (option) => option.id === selectedProductionOptionId
-    ) ?? productionChoices[0];
+  const selectedProductionOption = cartHasPreorders
+    ? productionChoices.find((option) => option.id === "standard-production") ??
+      productionChoices.find((option) => !option.expedited) ?? productionChoices[0]
+    : productionChoices.find(
+        (option) => option.id === selectedProductionOptionId
+      ) ?? productionChoices[0];
   const normalizedProductionCents = Math.max(
     0,
     Number(selectedProductionOption.amountCents)
@@ -717,9 +734,9 @@ export default function Storefront({
               Master the Sea
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50/85">
-              The two-player Starter Kit, plus optional ready-to-play SeaRealm
-              decks, three set-specific Dive Packs, and the Accessories Kit,
-              built to order for your next reef.
+              Explore Oceanic, Reef, and Deep Dive Packs, or pre-order the
+              two-player Starter Kit and ready-to-play expansion decks for
+              Christmas. Add an Accessories Kit to complete your table.
             </p>
 
             {highlightedProduct ? (
@@ -767,8 +784,8 @@ export default function Storefront({
         className="mt-6 rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 text-sm leading-6 text-cyan-950 shadow-sm"
       >
         <p>
-          <strong>Made to order:</strong> standard production is included, and
-          launch products are dispatched within 5 business days.
+          <strong>Dive Packs &amp; accessories:</strong> standard production is
+          included, with dispatch within 5 business days.
           {expeditedProductionOption ? (
             <>
               {" "}One-business-day production {checkoutEnabled
@@ -827,8 +844,24 @@ export default function Storefront({
 
               <div className="mt-9 space-y-14">
                 {categoryGroups.map((group, categoryIndex) => (
+                  <div key={group.id}>
+                    {group.id === firstPreorderCategoryId ? (
+                      <aside
+                        aria-labelledby="preorder-heading"
+                        className="mb-9 overflow-hidden rounded-3xl border border-amber-300 bg-gradient-to-br from-amber-100 via-amber-50 to-white px-6 py-7 shadow-sm sm:px-8"
+                      >
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-800">
+                          Starter Kits &amp; Expansion Decks
+                        </p>
+                        <h3 id="preorder-heading" className="mt-2 text-3xl font-black tracking-tight text-[#073d58] sm:text-4xl">
+                          {preorderCampaign.headline}
+                        </h3>
+                        <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-slate-700">
+                          {preorderCampaign.message}
+                        </p>
+                      </aside>
+                    ) : null}
                   <section
-                    key={group.id}
                     id={`category-${group.id}`}
                     aria-labelledby={`category-${group.id}-heading`}
                     className="scroll-mt-8"
@@ -863,7 +896,7 @@ export default function Storefront({
                           ? "Options coming soon"
                           : !product.priceConfigured
                             ? "Price to confirm"
-                            : "Prelaunch";
+                            : checkoutEnabled ? "Unavailable" : "Preview only";
 
                         return (
                           <article
@@ -883,7 +916,7 @@ export default function Storefront({
                               />
                               <Image
                                 src={product.image}
-                                alt={`${product.name} product preview`}
+                                alt={product.imageAlt || `${product.name} product preview`}
                                 fill
                                 loading={
                                   categoryIndex === 0 && productIndex === 0
@@ -895,6 +928,11 @@ export default function Storefront({
                               />
 
                               <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+                                {product.preorder ? (
+                                  <span className="rounded-full bg-amber-300 px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-amber-950 shadow-sm">
+                                    Pre-order
+                                  </span>
+                                ) : null}
                                 {isHighlighted ? (
                                   <span className="rounded-full bg-[#f7c948] px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-[#082f49] shadow-sm">
                                     Your selection
@@ -943,7 +981,11 @@ export default function Storefront({
                                 </div>
                               ) : null}
 
-                              {product.madeToOrder ? (
+                              {product.preorder ? (
+                                <p className="mt-3 text-sm font-bold leading-6 text-amber-800">
+                                  {preorderCampaign.fulfillmentLabel}
+                                </p>
+                              ) : product.madeToOrder ? (
                                 <p className="mt-3 text-sm font-bold leading-6 text-cyan-800">
                                   Made to order
                                   {product.buildDispatchMaxBusinessDays
@@ -1045,7 +1087,7 @@ export default function Storefront({
                               >
                                 <CartGlyph />
                                 {!product.available
-                                  ? unavailableButtonLabel(product)
+                                  ? unavailableButtonLabel(product, checkoutEnabled)
                                   : !checkoutEnabled
                                     ? "Preview only"
                                     : quantityInCart >=
@@ -1053,8 +1095,8 @@ export default function Storefront({
                                         cartCount >= STORE_MAX_CART_QUANTITY
                                       ? "Cart limit reached"
                                     : quantityInCart
-                                      ? "Add another"
-                                      : "Add to cart"}
+                                      ? product.preorder ? "Add another pre-order" : "Add another"
+                                      : product.preorder ? "Pre-order" : "Add to cart"}
                               </button>
                             </div>
                           </article>
@@ -1062,6 +1104,7 @@ export default function Storefront({
                       })}
                     </div>
                   </section>
+                  </div>
                 ))}
               </div>
             </>
@@ -1143,6 +1186,11 @@ export default function Storefront({
                               )}
                             </span>
                           </div>
+                          {product.preorder ? (
+                            <p className="mt-1 text-xs font-bold leading-5 text-amber-800">
+                              {preorderCampaign.fulfillmentLabel}
+                            </p>
+                          ) : null}
                           <div className="mt-3 flex items-center justify-between gap-3">
                             <div
                               role="group"
@@ -1188,6 +1236,17 @@ export default function Storefront({
                   ))}
                 </ul>
 
+                {cartHasPreorders ? (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+                    <p className="font-black">Your order includes a pre-order</p>
+                    <p className="mt-1">{preorderCampaign.message}</p>
+                    <p className="mt-2 text-xs leading-5">
+                      Items in this order ship together when the pre-order is ready.
+                      Place a separate order for Dive Packs or accessories if you
+                      would like them sooner.
+                    </p>
+                  </div>
+                ) : (
                 <fieldset className="space-y-2 border-t border-slate-200 pt-4">
                   <legend className="text-sm font-black text-slate-950">
                     Production speed
@@ -1255,6 +1314,7 @@ export default function Storefront({
                     </p>
                   ) : null}
                 </fieldset>
+                )}
 
                 <fieldset className="space-y-2 border-t border-slate-200 pt-4">
                   <legend className="text-sm font-black text-slate-950">
@@ -1334,7 +1394,7 @@ export default function Storefront({
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4 text-slate-600">
-                    <dt>{selectedProductionOption.displayName}</dt>
+                    <dt>{cartHasPreorders ? "Pre-order fulfillment" : selectedProductionOption.displayName}</dt>
                     <dd className="font-bold text-slate-900">
                       {normalizedProductionCents
                         ? formatMoney(normalizedProductionCents, currency)

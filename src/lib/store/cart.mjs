@@ -3,6 +3,13 @@ import {
   storeProductionOptionDefinitions,
 } from "../../data/store/production.js";
 import {
+  cartContainsPreorders,
+  getStorePreorderCampaign,
+  getStorePreorderFulfillmentLabel,
+  getStoreItemFulfillmentSnapshot,
+  getStoreOrderFulfillmentType,
+} from "../../data/store/preorders.js";
+import {
   resolveStoreShippingRateTier,
   STORE_MAX_SHIPPING_WEIGHT_OUNCES,
   storeShippingOptionDefinitions,
@@ -215,6 +222,7 @@ export function quoteCart(
     shippingCents = null,
     maxPerProduct = STORE_MAX_PER_PRODUCT_QUANTITY,
     maxTotalQuantity = STORE_MAX_CART_QUANTITY,
+    now = new Date(),
   } = {}
 ) {
   const items = normalizeCartItems(requestedItems);
@@ -293,6 +301,8 @@ export function quoteCart(
       deckId: product.deckId,
       category: product.category,
       name: product.name,
+      preorder: Boolean(product.preorder),
+      ...getStoreItemFulfillmentSnapshot(product),
       description: product.description,
       checkoutDescription:
         product.checkoutDescription || product.description || product.name,
@@ -331,6 +341,13 @@ export function quoteCart(
   );
   const normalizedShipping = normalizedShippingOption.amountCents;
   const normalizedProductionOption = normalizeProductionOption(productionOption);
+  const containsPreorders = cartContainsPreorders(quotedItems);
+  if (containsPreorders && normalizedProductionOption.expedited) {
+    throw new CartValidationError(
+      "Expedited production is unavailable for pre-orders. Choose the included pre-order fulfillment option.",
+      "preorder_expedited_unavailable"
+    );
+  }
   const productionCents = normalizedProductionOption.amountCents;
 
   const totalCents = subtotalCents + productionCents + normalizedShipping;
@@ -340,6 +357,12 @@ export function quoteCart(
 
   return {
     items: quotedItems,
+    containsPreorders,
+    fulfillmentType: getStoreOrderFulfillmentType(quotedItems),
+    preorderCampaign: containsPreorders ? getStorePreorderCampaign(now) : null,
+    preorderFulfillmentLabel: containsPreorders
+      ? getStorePreorderFulfillmentLabel(now)
+      : null,
     totalQuantity,
     shippingWeightOunces,
     subtotalCents,

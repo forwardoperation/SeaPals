@@ -2,6 +2,10 @@ import {
   CANONICAL_SITE_ORIGIN,
   PUBLIC_SUPPORT_EMAIL,
 } from "../siteIdentity.mjs";
+import {
+  getStoreOrderPreorderFulfillmentLabel,
+  orderContainsStorePreorders,
+} from "../../data/store/preorders.js";
 
 const DEFAULT_MERCHANT_EMAIL = PUBLIC_SUPPORT_EMAIL;
 const DEFAULT_SITE_ORIGIN = CANONICAL_SITE_ORIGIN;
@@ -74,7 +78,7 @@ function orderItems(order) {
 
   return [...items]
     .map((item) => ({
-      name: safeText(item?.product_name, "Unnamed product"),
+      name: `${safeText(item?.product_name, "Unnamed product")}${item?.fulfillment_type === "preorder" ? " (pre-order)" : ""}`,
       sku: safeText(item?.sku, "SKU unavailable"),
       quantity: Math.max(1, safeInteger(item?.quantity, 1)),
       unitAmountCents: safeInteger(item?.unit_amount_cents),
@@ -110,6 +114,12 @@ function addressLines(order) {
 }
 
 function productionDescription(order) {
+  if (orderContainsStorePreorders(order)) {
+    const target = order.preorder_delivery_guaranteed === true
+      ? formatDate(order.preorder_fulfillment_date)
+      : null;
+    return `${getStoreOrderPreorderFulfillmentLabel(order)}${target ? ` — ready to dispatch by ${target}` : ""} — items ship together when the pre-order is ready`;
+  }
   const name = safeText(order?.production_option_name, "Standard production");
   const days = safeInteger(order?.production_max_business_days, 5);
   const window = days === 1 ? "1 business day" : `up to ${days} business days`;

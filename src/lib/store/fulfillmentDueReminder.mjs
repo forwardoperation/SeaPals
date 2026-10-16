@@ -1,5 +1,6 @@
 import { PUBLIC_SUPPORT_EMAIL } from "../siteIdentity.mjs";
 import { merchantOrderAdminUrl } from "./merchantOrderEmail.mjs";
+import { orderContainsStorePreorders } from "../../data/store/preorders.js";
 
 const DEFAULT_MERCHANT_EMAIL = PUBLIC_SUPPORT_EMAIL;
 const UUID_PATTERN =
@@ -175,6 +176,13 @@ function validReminderOrder(order) {
 }
 
 export function fulfillmentDueDateForOrder(order) {
+  // Use the persisted campaign target only once payment qualified for its
+  // delivery promise. Late payments need a merchant-confirmed schedule.
+  if (orderContainsStorePreorders(order)) {
+    return order.preorder_delivery_guaranteed === true
+      ? normalizedDateOnly(order.preorder_fulfillment_date)
+      : null;
+  }
   const productionOption = safeText(order?.production_option_id).toLowerCase();
   if (productionOption === "standard-production") {
     const businessDays = Number(order?.production_max_business_days);

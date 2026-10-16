@@ -142,8 +142,9 @@ test("the due-reminder drainer prepares, revalidates, sends, and completes a not
   assert.match(calls[2].url.searchParams.get("select"), /fulfillment_status/);
   assert.doesNotMatch(
     calls[2].url.searchParams.get("select"),
-    /customer_email|customer_name|shipping_address|internal_notes|store_order_items/
+    /customer_email|customer_name|shipping_address|internal_notes|unit_amount_cents|sku/
   );
+  assert.match(calls[2].url.searchParams.get("select"), /store_order_items\(product_name,fulfillment_type\)/);
   assert.equal(
     calls[4].body.p_notification_type,
     "merchant_fulfillment_due"

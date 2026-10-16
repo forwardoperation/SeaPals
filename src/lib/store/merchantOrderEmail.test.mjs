@@ -107,6 +107,27 @@ test("merchant email lists every quantity, total, production choice, shipping de
   assert.match(email.html, /Alex &lt;script&gt;alert\(1\)&lt;\/script&gt;/);
 });
 
+test("preorder purchase emails replace the regular five-day dispatch promise", () => {
+  const email = buildMerchantPurchaseEmail(paidOrder({
+    paid_at: "2026-10-16T12:00:00Z",
+    fulfillment_type: "preorder",
+    preorder_campaign_id: "christmas-2026",
+    preorder_fulfillment_date: "2026-12-11",
+    preorder_delivery_guaranteed: true,
+    store_order_items: [{
+      sku: "SP-KIT-STARTER",
+      product_name: "Starter Kit",
+      fulfillment_type: "preorder",
+      quantity: 1,
+      unit_amount_cents: 4400,
+      line_total_cents: 4400,
+    }],
+  }), configuredEnvironment);
+  assert.match(email.text, /Pre-order · Guaranteed delivery before Christmas 2026/);
+  assert.match(email.text, /ready to dispatch by Dec 11, 2026/);
+  assert.doesNotMatch(email.text, /up to 5 business days/);
+});
+
 test("rush scheduled-pickup email is explicit that the owner must arrange a time after the build", () => {
   const email = buildMerchantPurchaseEmail(
     paidOrder({

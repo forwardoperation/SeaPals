@@ -9,8 +9,8 @@ export function generateMetadata() {
       ? "Shop | SeaRealm TCG"
       : "Store Preview | SeaRealm TCG",
     description: checkoutEnabled
-      ? "Shop the made-to-order SeaRealm Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit with five-business-day standard production or optional one-business-day production."
-      : "Preview the made-to-order SeaRealm Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit before ordering opens.",
+      ? "Shop Oceanic, Reef, and Deep Dive Packs, game accessories, and Christmas pre-orders for the SeaRealm Starter Kit and expansion decks."
+      : "Preview Oceanic, Reef, and Deep Dive Packs, game accessories, and Christmas pre-orders for the SeaRealm Starter Kit and expansion decks.",
     alternates: { canonical: "/store" },
   };
 }

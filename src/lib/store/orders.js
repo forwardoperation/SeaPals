@@ -5,15 +5,18 @@ import {
   expeditedCapacityReservationIsUnavailable,
   inventoryReservationIsUnavailable,
   parseStoreOrderReservationResult,
+  reserveStoreOrderInventory,
+  storePreorderBackendIsMissing,
 } from "@/lib/store/inventory.mjs";
 import {
   isFulfillmentStatusAllowedForMethod,
   isPaidFulfillmentAdvancement,
 } from "@/lib/store/fulfillmentStatus.mjs";
 import { paQuarterPeriod } from "@/lib/store/paSalesTaxReturn.mjs";
+import { STORE_PREORDER_CAMPAIGN } from "@/data/store/preorders.js";
 
 const STORE_ORDER_ADMIN_SELECT =
-  "id, order_number, created_at, updated_at, paid_at, refunded_at, shipped_at, customer_email, customer_name, shipping_address, currency, subtotal_cents, production_option_id, production_option_name, production_max_business_days, production_cents, production_due_date, expedited_capacity_state, fulfillment_method, fulfillment_option_id, fulfillment_option_name, pickup_location, stripe_shipping_rate_id, shipping_cents, tax_cents, total_cents, amount_refunded_cents, payment_status, fulfillment_status, inventory_state, inventory_reserved_until, inventory_committed_at, inventory_released_at, inventory_release_reason, receipt_url, receipt_number, checkout_session_id, payment_intent_id, charge_id, payment_livemode, dispute_id, dispute_status, dispute_updated_at, tracking_number, tracking_url, internal_notes, store_order_items(id, sku, product_id, product_category, deck_id, product_name, unit_amount_cents, quantity, line_total_cents), store_refunds(id, provider_refund_id, amount_cents, currency, status, pending_reason, failure_reason, provider_created_at, provider_updated_at)";
+  "id, order_number, created_at, updated_at, paid_at, refunded_at, shipped_at, customer_email, customer_name, shipping_address, currency, subtotal_cents, production_option_id, production_option_name, production_max_business_days, production_cents, production_due_date, expedited_capacity_state, fulfillment_type, preorder_campaign_id, preorder_cutoff_at, preorder_delivery_by, preorder_fulfillment_date, preorder_delivery_guaranteed, fulfillment_method, fulfillment_option_id, fulfillment_option_name, pickup_location, stripe_shipping_rate_id, shipping_cents, tax_cents, total_cents, amount_refunded_cents, payment_status, fulfillment_status, inventory_state, inventory_reserved_until, inventory_committed_at, inventory_released_at, inventory_release_reason, receipt_url, receipt_number, checkout_session_id, payment_intent_id, charge_id, payment_livemode, dispute_id, dispute_status, dispute_updated_at, tracking_number, tracking_url, internal_notes, store_order_items(id, fulfillment_type, preorder_campaign_id, preorder_cutoff_at, preorder_delivery_by, preorder_fulfillment_date, sku, product_id, product_category, deck_id, product_name, unit_amount_cents, quantity, line_total_cents), store_refunds(id, provider_refund_id, amount_cents, currency, status, pending_reason, failure_reason, provider_created_at, provider_updated_at)";
 const STORE_ORDER_PA_TAX_SELECT =
   "id, order_number, paid_at, refunded_at, shipping_address, currency, subtotal_cents, production_cents, fulfillment_method, pickup_location, shipping_cents, tax_cents, total_cents, amount_refunded_cents, payment_status, payment_livemode, dispute_id, dispute_status, dispute_updated_at, store_order_items(line_total_cents), store_refunds(amount_cents, currency, status, provider_created_at, provider_updated_at)";
 
@@ -39,6 +42,30 @@ function createOrderNumber(now = new Date()) {
   return `SP-${date}-${suffix}`;
 }
 
+export async function getStorePreorderPaymentRecord(session) {
+  const orderId = String(session?.metadata?.order_id ?? "");
+  const sessionId = String(session?.id ?? "");
+  if (
+    (session?.metadata?.preorder_campaign_id !== STORE_PREORDER_CAMPAIGN.id &&
+      session?.metadata?.preorder_campaign_year !== String(STORE_PREORDER_CAMPAIGN.year)) ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId) ||
+    !/^cs_[A-Za-z0-9_]+$/.test(sessionId)
+  ) return null;
+
+  // Charge.created is the attempt's creation time. The ledger's paid_at is
+  // sourced from the signed completed-payment event and handles an attempt
+  // that starts before the campaign deadline but succeeds after it.
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("store_orders")
+    .select("payment_status, paid_at, fulfillment_type, preorder_campaign_id, preorder_cutoff_at, preorder_delivery_by, preorder_fulfillment_date, preorder_delivery_guaranteed")
+    .eq("id", orderId)
+    .eq("checkout_session_id", sessionId)
+    .maybeSingle();
+  if (error) return null;
+  return data;
+}
+
 export async function createPendingStoreOrder({
   quote,
   currency,
@@ -58,9 +85,10 @@ export async function createPendingStoreOrder({
     checkoutRequestId,
     inventoryReservedUntil,
   });
-  const { data, error } = await supabase.rpc(
-    "reserve_store_order_inventory",
-    rpcArguments
+  const { data, error } = await reserveStoreOrderInventory(
+    supabase,
+    rpcArguments,
+    { containsPreorders: quote.containsPreorders }
   );
 
   if (error) {
@@ -69,6 +97,13 @@ export async function createPendingStoreOrder({
       id,
       "Order creation did not complete"
     );
+
+    if (quote.containsPreorders && storePreorderBackendIsMissing(error)) {
+      throw new OrderStoreError(
+        "Pre-orders are being prepared. Please contact us or try again after pre-order checkout is enabled.",
+        { code: "preorder_backend_not_ready", status: 503, cause: error }
+      );
+    }
 
     if (expeditedCapacityReservationIsUnavailable(error)) {
       throw new OrderStoreError(
@@ -101,6 +136,7 @@ export async function createPendingStoreOrder({
       orderNumber,
       inventoryReservedUntil,
       productionOptionId: quote.productionOptionId,
+      fulfillmentType: quote.fulfillmentType,
     });
   } catch (error) {
     await releaseOrderInventoryBestEffort(

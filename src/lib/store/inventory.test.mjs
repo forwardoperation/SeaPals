@@ -8,7 +8,31 @@ import {
   parseCheckoutRequestStorage,
   parseStoreOrderReservationResult,
   serializeCheckoutRequestStorage,
+  reserveStoreOrderInventory,
 } from "./inventory.mjs";
+
+test("ordinary orders alone can fall back before the preorder migration is installed", async () => {
+  for (const containsPreorders of [false, true]) {
+    const calls = [];
+    const missing = { data: null, error: { code: "PGRST202" } };
+    const reserved = { data: { id: "reserved" }, error: null };
+    const supabase = { rpc: async (name, args) => {
+      calls.push({ name, args });
+      return calls.length === 1 ? missing : reserved;
+    } };
+    const args = { p_items: [] };
+    assert.equal(await reserveStoreOrderInventory(supabase, args, { containsPreorders }),
+      containsPreorders ? missing : reserved);
+    assert.deepEqual(calls.map((call) => call.name), containsPreorders
+      ? ["reserve_store_order_with_preorders"]
+      : ["reserve_store_order_with_preorders", "reserve_store_order_inventory"]);
+    assert.ok(calls.every((call) => call.args === args));
+  }
+  let attempts = 0;
+  const blocked = { data: null, error: { code: "42501" } };
+  assert.equal(await reserveStoreOrderInventory({ rpc: async () => { attempts++; return blocked; } }, {}), blocked);
+  assert.equal(attempts, 1);
+});
 
 test("inventory reservations use the same one-hour deadline for the ledger and Stripe", () => {
   assert.equal(
@@ -63,6 +87,11 @@ test("reservation RPC arguments retain immutable order item snapshots", () => {
       sku: "SP-KIT-STARTER",
       deck_id: null,
       product_name: "Starter Kit",
+      fulfillment_type: "regular",
+      preorder_campaign_id: null,
+      preorder_cutoff_at: null,
+      preorder_delivery_by: null,
+      preorder_fulfillment_date: null,
       unit_amount_cents: 4400,
       quantity: 1,
       line_total_cents: 4400,
@@ -237,4 +266,31 @@ test("checkout request storage survives a cancel/reload but expires safely", () 
     null
   );
   assert.equal(parseCheckoutRequestStorage("not-json", now), null);
+});
+
+
+test("typed reservation responses must match the immutable server campaign and mixed-cart type", () => {
+  const expected = {
+    orderId: "00000000-0000-4000-8000-000000000001", orderNumber: "SP-261016-MIXED",
+    inventoryReservedUntil: "2026-10-16T13:00:00.000Z", productionOptionId: "standard-production",
+    fulfillmentType: "mixed",
+  };
+  const response = {
+    id: expected.orderId, order_number: expected.orderNumber,
+    inventory_reserved_until: expected.inventoryReservedUntil, inventory_state: "reserved",
+    production_due_date: null, expedited_capacity_state: "not_applicable", created: true,
+    fulfillment_type: "mixed", preorder_campaign_id: "christmas-2026",
+    preorder_cutoff_at: "2026-12-11T05:00:00+00:00", preorder_delivery_by: "2026-12-24",
+    preorder_fulfillment_date: "2026-12-11", preorder_delivery_guaranteed: null,
+  };
+  assert.equal(parseStoreOrderReservationResult(response, expected).fulfillmentType, "mixed");
+  assert.equal(parseStoreOrderReservationResult(response, expected).preorderDeliveryGuaranteed, null);
+  for (const altered of [
+    { fulfillment_type: "regular" }, { preorder_campaign_id: "christmas-2027" },
+    { preorder_cutoff_at: "2026-12-12T05:00:00Z" }, { preorder_delivery_by: "2026-12-25" },
+    { preorder_fulfillment_date: "2026-10-23" }, { preorder_delivery_guaranteed: "true" },
+  ]) {
+    assert.throws(() => parseStoreOrderReservationResult({ ...response, ...altered }, expected),
+      /reservation response was invalid/);
+  }
 });

@@ -22,6 +22,26 @@ test("ambiguous retries reuse the request ID for the same cart and fulfillment",
   assert.deepEqual(retry, first);
 });
 
+test("the preorder rollout rotates a legacy stored request exactly once and keeps subsequent retries stable", () => {
+  const legacy = {
+    id: firstId,
+    fingerprint: JSON.stringify({
+      fulfillmentOptionId: input.fulfillmentOptionId,
+      items: input.items,
+      productionOptionId: input.productionOptionId,
+    }),
+  };
+  const original = structuredClone(legacy);
+  let mintedIds = 0;
+  const createId = () => { mintedIds++; return secondId; };
+  const next = getOrCreateCheckoutRequest(legacy, input, createId);
+  const retry = getOrCreateCheckoutRequest(next, input, createId);
+  assert.equal(next.id, secondId);
+  assert.equal(mintedIds, 1);
+  assert.deepEqual(retry, next);
+  assert.deepEqual(legacy, original);
+});
+
 test("quantity, product, fulfillment, or production changes invalidate the request ID", () => {
   const previous = getOrCreateCheckoutRequest(null, input, () => firstId);
   const variants = [

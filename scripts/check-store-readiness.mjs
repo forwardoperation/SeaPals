@@ -850,6 +850,33 @@ if (
     );
   }
 
+  if (availableProducts.some((id) => productDefinitions.get(id)?.preorder)) {
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/rpc/check_store_inventory_contract_v8`,
+        {
+          method: "POST",
+          headers: { ...supabaseHeaders, "Content-Type": "application/json" },
+          body: "{}",
+        }
+      );
+      if (!response.ok || (await response.json()) !== true) {
+        throw new Error("Store preorder RPC contract is unavailable.");
+      }
+      addCheck(
+        "Supabase preorder RPC contract",
+        true,
+        "Typed preorder snapshots, bounded reservations, and scheduled fulfillment are installed."
+      );
+    } catch {
+      addCheck(
+        "Supabase preorder RPC contract",
+        false,
+        "Run supabase/store-preorders.sql after the current store-orders.sql migration."
+      );
+    }
+  }
+
   if (paTaxReportEnabled) {
     try {
       const response = await fetch(

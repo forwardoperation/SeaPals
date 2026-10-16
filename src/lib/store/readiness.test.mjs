@@ -94,6 +94,11 @@ globalThis.fetch = async (input) => {
     payload = fixtures.supabaseInventoryContract;
   } else if (
     url.hostname === "example.supabase.co" &&
+    url.pathname === "/rest/v1/rpc/check_store_inventory_contract_v8"
+  ) {
+    payload = fixtures.supabasePreorderContract;
+  } else if (
+    url.hostname === "example.supabase.co" &&
     url.pathname === "/rest/v1/rpc/check_store_pa_quarterly_report_contract_v1"
   ) {
     payload = fixtures.supabasePaQuarterlyReportContract;
@@ -193,6 +198,7 @@ function runOnlineLiveCheck(fixtureOverrides = {}, environmentOverrides = {}) {
       },
     ],
     supabaseInventoryContract: true,
+    supabasePreorderContract: true,
     supabasePaQuarterlyReportContract: true,
     supabaseInventory: storeLaunchProductIds.map((productId) => ({
       sku: storeProductDefinitionsById.get(productId).sku,
@@ -546,6 +552,7 @@ test("online live readiness verifies active Stripe Tax settings and PA registrat
   assert.match(result.stdout, /PASS.*Supabase order inventory columns/);
   assert.match(result.stdout, /PASS.*Supabase inventory table/);
   assert.match(result.stdout, /PASS.*Supabase inventory RPC contract/);
+  assert.match(result.stdout, /PASS.*Supabase preorder RPC contract/);
 });
 
 test("readiness requires lease-backed paid-order merchant alerts", () => {
@@ -627,6 +634,40 @@ test("online readiness fails closed without the inventory RPC contract", () => {
   assert.equal(result.status, 1);
   assert.match(result.stdout, /TODO.*Supabase inventory RPC contract/);
   assert.doesNotMatch(result.stdout + result.stderr, /do-not-print-provider-payload/);
+});
+
+test("online readiness requires the preorder contract even when the regular inventory contract passes", () => {
+  for (const supabasePreorderContract of [
+    { __mockStatus: 404, error: "do-not-print-preorder-provider-payload" },
+    false,
+  ]) {
+    const result = runOnlineLiveCheck({ supabasePreorderContract });
+
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stdout, /PASS.*Supabase inventory RPC contract/);
+    assert.match(result.stdout, /TODO.*Supabase preorder RPC contract/);
+    assert.match(result.stdout, /Run supabase\/store-preorders\.sql/);
+    assert.doesNotMatch(
+      result.stdout + result.stderr,
+      /do-not-print-preorder-provider-payload/
+    );
+  }
+});
+
+test("online readiness keeps regular-only catalogs on the existing inventory contract", () => {
+  const regularProductIds = storeLaunchProductIds.filter(
+    (productId) => !storeProductDefinitionsById.get(productId).preorder
+  );
+  assert.ok(regularProductIds.length > 0);
+
+  const result = runOnlineLiveCheck(
+    { supabasePreorderContract: { __mockStatus: 404 } },
+    { STORE_AVAILABLE_PRODUCT_IDS: regularProductIds.join(",") }
+  );
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /PASS.*Supabase inventory RPC contract/);
+  assert.doesNotMatch(result.stdout, /Supabase preorder RPC contract/);
 });
 
 test("online readiness fails closed when an enabled SKU has no inventory row", () => {

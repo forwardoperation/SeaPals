@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { getStorePreorderCampaign } from "../../data/store/preorders.js";
 
 const storefrontSource = readFileSync(
   new URL("../../app/store/Storefront.jsx", import.meta.url),
@@ -19,20 +20,20 @@ const homePageSource = readFileSync(
   "utf8"
 );
 
-test("public launch copy advertises the Starter Kit, seven decks, three Dive Packs, and Accessories Kit", () => {
+test("public launch copy advertises Dive Packs, Christmas preorders, and accessories", () => {
   assert.match(storefrontSource, />\s*Master the Sea\s*</);
   assert.doesNotMatch(storefrontSource, /Choose how your reef grows\./);
   assert.match(
     storefrontSource,
-    /The two-player Starter Kit, plus optional ready-to-play SeaRealm\s+decks, three set-specific Dive Packs, and the Accessories Kit,\s+built to order for your next reef\./
+    /Oceanic, Reef, and Deep Dive Packs[\s\S]*pre-order[\s\S]*Starter Kit[\s\S]*expansion decks[\s\S]*Christmas/
   );
   assert.match(
     storePageSource,
-    /Shop the made-to-order SeaRealm Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit/
+    /Shop Oceanic, Reef, and Deep Dive Packs, game accessories, and Christmas pre-orders for the SeaRealm Starter Kit and expansion decks/
   );
   assert.match(
     storePageSource,
-    /Preview the made-to-order SeaRealm Starter Kit, seven ready-to-play decks, three set-specific Dive Packs, and the Accessories Kit/
+    /Preview Oceanic, Reef, and Deep Dive Packs, game accessories, and Christmas pre-orders for the SeaRealm Starter Kit and expansion decks/
   );
   assert.match(
     homePageSource,
@@ -43,6 +44,37 @@ test("public launch copy advertises the Starter Kit, seven decks, three Dive Pac
     [storefrontSource, storePageSource, homePageSource].join("\n"),
     /booster[ -]?packs?/i
   );
+  assert.doesNotMatch(
+    [storefrontSource, storePageSource].join("\n"),
+    /made-to-order SeaRealm Starter Kit|built to order for your next reef|Pelagic Rush|Coral Bloom|Abyssal Glow/
+  );
+});
+
+test("the holiday banner gives the December 11 cutoff and Christmas delivery guarantee", () => {
+  const campaign = getStorePreorderCampaign("2026-10-16T12:00:00.000Z");
+  assert.equal(campaign.headline, "Pre-Order Today!");
+  assert.match(
+    campaign.message,
+    /Starter Kits and Expansion Decks are pre-orders for Christmas 2026/
+  );
+  assert.match(
+    campaign.message,
+    /Orders placed before December 11, 2026 \(Eastern Time\) are guaranteed delivery before Christmas/
+  );
+  assert.match(storefrontSource, /preorderCampaign\.headline/);
+  assert.match(storefrontSource, /preorderCampaign\.message/);
+  assert.match(storefrontSource, /Starter Kits &amp; Expansion Decks/);
+});
+
+test("Dive Packs appear before the preorder products and preorder buttons identify the purchase", () => {
+  const categoryOrder = storefrontSource.match(/const CATEGORY_ORDER = \[([\s\S]*?)\];/)?.[1];
+  assert.ok(categoryOrder);
+  assert.deepEqual(
+    [...categoryOrder.matchAll(/"([^\"]+)"/g)].slice(0, 4).map((match) => match[1]),
+    ["dive-packs", "starter-kits", "expansion-decks", "game-accessories"]
+  );
+  assert.match(storefrontSource, /"Pre-order"/);
+  assert.match(storefrontSource, /"Add another pre-order"/);
 });
 
 test("the Starter Kit clearly explains the complete two-player setup and optional deck demos", () => {
@@ -66,6 +98,6 @@ test("the Starter Kit clearly explains the complete two-player setup and optiona
   );
   assert.match(
     storefrontSource,
-    /Optional ready-to-play 60-card decks for different strategies\. The Starter Kit already includes Coral Garden and Blue Water\./
+    /Optional ready-to-play 60-card decks for different strategies\. The Starter Kit already includes Coral Garden and Drop Off\./
   );
 });

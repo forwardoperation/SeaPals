@@ -192,7 +192,17 @@ export default function TermsPage() {
           confirmed.
         </p>
         <p>
-          Production timing is separate from carrier transit. Standard
+          Starter Kits and Expansion Decks marked as pre-orders follow the
+          fulfillment timing shown in the store and at checkout. For the 2026
+          Christmas pre-order release, orders placed before December 11, 2026
+          (Eastern Time) are guaranteed delivery before Christmas 2026. The
+          guarantee does not apply to orders placed on or after that deadline.
+          Orders containing pre-orders ship together when the pre-order is
+          ready. Expedited production does not apply to pre-orders.
+        </p>
+        <p>
+          For items that are not pre-orders, production timing is separate from
+          carrier transit. Standard
           production means we hand mailed orders to the carrier, or mark pickup
           orders ready, within five business days after payment. If purchased,
           one-business-day production changes that production window to one

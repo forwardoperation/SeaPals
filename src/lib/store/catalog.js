@@ -11,6 +11,7 @@ import {
   storeProductionOptionDefinitions,
 } from "../../data/store/production.js";
 import { prebuiltDecks } from "../../data/decks/prebuiltDecks.js";
+import { getStorePreorderCampaign } from "../../data/store/preorders.js";
 
 const TRUE_VALUES = new Set(["1", "true", "yes", "on"]);
 const EXPEDITED_PRODUCTION_DAILY_ORDER_LIMIT = 10;
@@ -343,6 +344,7 @@ export function getStoreConfiguration() {
     return {
       id: definition.id,
       sku: definition.sku,
+      preorder: Boolean(definition.preorder),
       madeToOrder: Boolean(definition.madeToOrder),
       buildDispatchMaxBusinessDays:
         Number.isSafeInteger(definition.buildDispatchMaxBusinessDays) &&
@@ -365,6 +367,7 @@ export function getStoreConfiguration() {
       includedDeckIds,
       trialDecks,
       image: definition.image,
+      imageAlt: definition.imageAlt ?? null,
       cardsIncluded: definition.cardsIncluded ?? null,
       shippingWeightOunces: definition.shippingWeightOunces ?? null,
       defaultPriceCents,
@@ -453,5 +456,6 @@ export function getStoreConfiguration() {
     collectPhone: readBoolean(process.env.STORE_COLLECT_PHONE),
     allowedCountries: readAllowedCountries(process.env.STORE_ALLOWED_COUNTRIES),
     products,
+    preorderCampaign: getStorePreorderCampaign(),
   };
 }

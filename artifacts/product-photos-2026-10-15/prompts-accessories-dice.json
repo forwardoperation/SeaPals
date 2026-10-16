@@ -1,0 +1,17 @@
+{
+  "mode": "built-in image_gen",
+  "intent": "generate, then background-extraction cleanup",
+  "use_case": "product-mockup",
+  "transparent_background": true,
+  "output": "public/images/store/product-photos/accessories-dice.png",
+  "prompts": [
+    {
+      "stage": "generate",
+      "prompt": "Use case: product-mockup\nAsset type: ecommerce catalog product photo for a tabletop card game's accessory set.\nPrimary request: a photorealistic studio product photograph of a pack of seven assorted multi-sided gaming dice, isolated on a genuinely transparent background.\nSubject: Exactly seven physical polyhedral dice: one tetrahedral D4, one cube D6, one D8, one ten-sided D10, one percentile tens D10 (00, 10, 20 etc., used for D100), one D12, and one D20. A small simple unbranded clear rectangular dice storage case sits behind them with its lid open; all seven dice are outside the case, arranged in a compact natural group in front of it, every die separately visible. No duplicate dice. Dice are ocean teal and deep blue translucent resin with subtle internal marbling and crisp engraved off-white numerals; realistic geometry, plausible readable numerals, and polished but restrained highlights.\nScene/backdrop: Actual transparent alpha background. Fully isolated product cutout with a clean silhouette and no stray pixels, no visible floor, no background color or gradient. Any contact shading is small and soft.\nComposition/framing: Landscape 4:3 canvas, approximately 1448 by 1086 pixels. Camera at a slightly elevated three-quarter product angle. Entire case and all seven dice fully within frame, centered horizontally and vertically as one compact product group, with at least 12 percent clear margin on all sides. Product occupies about 70 percent canvas width. Clear storage case is understated so the dice remain the focus.\nLighting/mood: Premium catalog photography, soft upper-left studio key light and gentle fill, balanced true colors, crisp focus across the full product, believable resin refraction.\nConstraints: No branding, logos, banners, printed labels, watermark, decorative text, cards, tokens, hands, people, props, dimension lines, or packaging graphics. Numerals on dice only. Clean commercial realism, no illustration, no toy-like cartoon rendering. Keep the alpha edge clean without grain or floating flecks."
+    },
+    {
+      "stage": "edit",
+      "prompt": "Use case: background-extraction\nAsset type: ecommerce product photo for tabletop game accessories.\nEdit target: the attached generated photo of seven blue/teal polyhedral dice.\nPrimary request: Keep the seven existing dice exactly the same and in the same compact arrangement, with their existing resin material, colors, numerals, geometry, photographic lighting, and relative size. Remove the clear plastic case entirely. Deliver only the seven dice as a clean catalog product cutout on actual transparent alpha.\nComposition: 4:3 landscape, approximately 1448x1086. Center the group and give all dice ample transparent margins on every side; ensure no object touches or leaves the frame.\nConstraints: Preserve all seven dice, no additions or duplicates, no cards or tokens, no case, no props, no logos or text outside the dice numerals. Remove all background residue and all isolated speckling/floating pixels; smooth clean antialiased silhouettes. Transparent pixels outside the dice must be genuinely fully clear. Preserve photorealism."
+    }
+  ]
+}

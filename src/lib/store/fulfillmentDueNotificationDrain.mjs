@@ -12,7 +12,7 @@ const UUID_PATTERN =
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const STORE_TIMEOUT_MS = 30_000;
 const ORDER_SELECT =
-  "id,order_number,paid_at,production_option_id,production_max_business_days,production_due_date,fulfillment_method,payment_status,fulfillment_status,payment_livemode";
+  "id,order_number,paid_at,fulfillment_type,preorder_campaign_id,preorder_cutoff_at,preorder_delivery_by,preorder_fulfillment_date,preorder_delivery_guaranteed,production_option_id,production_max_business_days,production_due_date,fulfillment_method,payment_status,fulfillment_status,payment_livemode,store_order_items(product_name,fulfillment_type)";
 
 function safeString(value) {
   return typeof value === "string" ? value.trim() : "";

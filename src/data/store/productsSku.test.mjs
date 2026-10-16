@@ -31,13 +31,13 @@ const EXPECTED_SKUS_BY_PRODUCT_ID = Object.freeze({
 
 const EXPECTED_LAUNCH_PRODUCT_IDS = Object.freeze([
   "starter-kit",
-  "blue-water",
-  "disruption",
   "coral-garden",
+  "blue-water",
   "darkness-shroud",
   "open-ocean-hunt",
   "murky-water",
   "stinging-fortress",
+  "disruption",
   "oceanic-dive-pack",
   "reef-dive-pack",
   "deep-dive-pack",
@@ -53,6 +53,21 @@ const EXPECTED_FUTURE_PRODUCT_IDS = Object.freeze([
   "plush-toy",
   "reef-point-tokens",
 ]);
+
+const EXPECTED_PRODUCT_PHOTOS = Object.freeze({
+  "starter-kit": "starter-kit-v2.png",
+  "coral-garden": "deck-coral-garden.png",
+  "blue-water": "deck-drop-off-v2.png",
+  "darkness-shroud": "deck-darkness-shroud.png",
+  "open-ocean-hunt": "deck-pelagic-zone.png",
+  "murky-water": "deck-murky-water.png",
+  "stinging-fortress": "deck-stinging-fortress.png",
+  disruption: "deck-disruption.png",
+  "oceanic-dive-pack": "dive-pack-oceanic.png",
+  "reef-dive-pack": "dive-pack-reef.png",
+  "deep-dive-pack": "dive-pack-deep.png",
+  "accessory-set": "accessories-dice.png",
+});
 
 const CANONICAL_SKU_PATTERN = /^SP-[A-Z0-9]+-[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
 
@@ -78,6 +93,27 @@ test("all canonical product IDs and SKUs are unique and well formed", () => {
   }
 });
 
+test("retail photo titles and descriptions remain complete without simulator deck copy", () => {
+  const productsById = new Map(storeProductDefinitions.map((product) => [product.id, product]));
+  for (const productId of storeLaunchProductIds) {
+    const product = productsById.get(productId);
+    assert.equal(typeof product.description, "string", `${productId} needs a description`);
+    assert.ok(product.description.trim().length > 0, `${productId} description is empty`);
+  }
+  for (const [productId, title] of Object.entries({
+    "coral-garden": "Coral Garden", "blue-water": "Drop Off",
+    "darkness-shroud": "Darkness Shroud", "open-ocean-hunt": "Pelagic Zone",
+    "murky-water": "Murky Water", "stinging-fortress": "Stinging Fortress",
+    disruption: "Disruption",
+  })) {
+    const product = productsById.get(productId);
+    assert.equal(product.name, `${title} Deck`);
+    assert.equal(product.shortName, title);
+    assert.equal(product.imageAlt, `${title} expansion deck box`);
+    assert.match(product.checkoutDescription, new RegExp(`^${title} 60-card`));
+  }
+});
+
 test("the catalog remains partitioned into twelve launch products and seven prepared future products", () => {
   const launchProductIds = new Set(storeLaunchProductIds);
   const futureProductIds = storeProductDefinitions
@@ -85,7 +121,10 @@ test("the catalog remains partitioned into twelve launch products and seven prep
     .filter((id) => !launchProductIds.has(id))
     .sort();
 
-  assert.deepEqual(storeLaunchProductIds, EXPECTED_LAUNCH_PRODUCT_IDS);
+  assert.deepEqual(
+    [...storeLaunchProductIds].sort(),
+    [...EXPECTED_LAUNCH_PRODUCT_IDS].sort()
+  );
   assert.equal(launchProductIds.size, 12);
   assert.deepEqual(futureProductIds, EXPECTED_FUTURE_PRODUCT_IDS);
 
@@ -94,16 +133,56 @@ test("the catalog remains partitioned into twelve launch products and seven prep
   }
 });
 
-test("all launch products publish the confirmed five-business-day standard production window", () => {
+test("Starter Kits and expansion decks are preorders while Dive Packs and accessories retain standard production", () => {
+  const productsById = new Map(
+    storeProductDefinitions.map((product) => [product.id, product])
+  );
+  const preorderProductIds = storeProductDefinitions
+    .filter((product) => product.preorder)
+    .map((product) => product.id);
+
+  assert.deepEqual(preorderProductIds, [
+    "starter-kit",
+    "coral-garden",
+    "blue-water",
+    "darkness-shroud",
+    "open-ocean-hunt",
+    "murky-water",
+    "stinging-fortress",
+    "disruption",
+  ]);
+
+  for (const productId of storeLaunchProductIds) {
+    const product = productsById.get(productId);
+    if (preorderProductIds.includes(productId)) {
+      assert.equal(product.preorder, true);
+      assert.equal(product.madeToOrder, undefined);
+      assert.equal(product.buildDispatchMaxBusinessDays, undefined);
+    } else {
+      assert.equal(product.preorder, undefined);
+      assert.equal(product.madeToOrder, true);
+      assert.equal(product.buildDispatchMaxBusinessDays, 5);
+    }
+  }
+});
+
+test("all twelve public products use the corresponding product photo assets", () => {
+  assert.deepEqual(
+    Object.keys(EXPECTED_PRODUCT_PHOTOS).sort(),
+    [...storeLaunchProductIds].sort()
+  );
   const productsById = new Map(
     storeProductDefinitions.map((product) => [product.id, product])
   );
 
-  for (const productId of storeLaunchProductIds) {
-    assert.equal(productsById.get(productId)?.madeToOrder, true);
-    assert.equal(
-      productsById.get(productId)?.buildDispatchMaxBusinessDays,
-      5
+  for (const [productId, filename] of Object.entries(EXPECTED_PRODUCT_PHOTOS)) {
+    const product = productsById.get(productId);
+    const expectedImage = `/images/store/product-photos/${filename}`;
+    assert.equal(product.image, expectedImage, productId);
+    assert.ok(product.imageAlt?.length > 0, `${productId} needs image alt text`);
+    assert.ok(
+      existsSync(new URL(`../../../public${expectedImage}`, import.meta.url)),
+      `${productId} product photo is missing from public/`
     );
   }
 });
@@ -140,31 +219,28 @@ test("launch decks, Dive Packs, and prepared products publish conservative ready
   }
 });
 
-test("the three set Dive Packs preserve their approved names, price, and card-product policies", () => {
+test("the three Dive Packs use their simple set names and packaging while preserving prices and policies", () => {
   const productsById = new Map(
     storeProductDefinitions.map((product) => [product.id, product])
   );
   const expectedDivePacks = Object.freeze({
     "oceanic-dive-pack": {
-      name: "Pelagic Rush Dive Pack",
+      name: "Oceanic Dive Pack",
       setName: "Oceanic",
       priceEnvKey: "STORE_PRICE_OCEANIC_DIVE_PACK_CENTS",
-      coverCard: "Killer Whale",
-      image: "/images/cards/apex/Oceanic/killer-whale.png",
+      image: "/images/store/product-photos/dive-pack-oceanic.png",
     },
     "reef-dive-pack": {
-      name: "Coral Bloom Dive Pack",
+      name: "Reef Dive Pack",
       setName: "Reef",
       priceEnvKey: "STORE_PRICE_REEF_DIVE_PACK_CENTS",
-      coverCard: "Great White",
-      image: "/images/cards/apex/Reef/great-white.png",
+      image: "/images/store/product-photos/dive-pack-reef.png",
     },
     "deep-dive-pack": {
-      name: "Abyssal Glow Dive Pack",
+      name: "Deep Dive Pack",
       setName: "Deep",
       priceEnvKey: "STORE_PRICE_DEEP_DIVE_PACK_CENTS",
-      coverCard: "Colossal Squid",
-      image: "/images/cards/apex/Deep/colossal-squid.png",
+      image: "/images/store/product-photos/dive-pack-deep.png",
     },
   });
 
@@ -172,10 +248,19 @@ test("the three set Dive Packs preserve their approved names, price, and card-pr
     const product = productsById.get(productId);
 
     assert.equal(product?.name, expected.name);
+    assert.equal(product?.shortName, expected.name);
+    assert.equal(product?.productLabel, expected.name);
     assert.equal(product?.category, "dive-packs");
-    assert.equal(product?.details, `1 ${expected.setName} Set Dive Pack`);
-    assert.match(product?.description ?? "", new RegExp(expected.coverCard));
-    assert.match(product?.checkoutDescription ?? "", new RegExp(expected.setName));
+    assert.equal(product?.details, `1 ${expected.name}`);
+    assert.match(product?.description ?? "", new RegExp(expected.name));
+    assert.equal(
+      product?.checkoutDescription,
+      `One ${expected.name} featuring cards from the SeaRealm ${expected.setName} Set.`
+    );
+    assert.doesNotMatch(
+      [product?.name, product?.shortName, product?.description, product?.checkoutDescription].join(" "),
+      /Pelagic Rush|Coral Bloom|Abyssal Glow|Killer Whale/
+    );
     assert.equal(product?.defaultPriceCents, 1000);
     assert.equal(product?.priceEnvKey, expected.priceEnvKey);
     assert.equal(product?.taxCodeEnvKey, "STRIPE_GAME_PRODUCT_TAX_CODE");
@@ -183,16 +268,11 @@ test("the three set Dive Packs preserve their approved names, price, and card-pr
     assert.equal(product?.buildDispatchMaxBusinessDays, 5);
     assert.equal(product?.shippingWeightOunces, 8);
     assert.equal(product?.image, expected.image);
-    assert.match(
-      product?.image ?? "",
-      new RegExp(`/images/cards/apex/${expected.setName}/`, "i"),
-      `${productId} must use a matching-set Apex card cover`
-    );
     const imageUrl = new URL(`../../../public${expected.image}`, import.meta.url);
     assert.equal(
       existsSync(imageUrl),
       true,
-      `${productId} ${expected.coverCard} cover is missing from public/`
+      `${productId} packaging photo is missing from public/`
     );
   }
 });
@@ -226,7 +306,7 @@ test("the Starter Kit, Accessories Kit, and prepared components preserve the own
   assert.equal(productsById.get("accessory-set")?.defaultPriceCents, 1200);
   assert.deepEqual(productsById.get("starter-kit")?.includedItems, [
     "1 Coral Garden 60-card ready-to-play deck",
-    "1 Blue Water 60-card ready-to-play deck",
+    "1 Drop Off 60-card ready-to-play deck",
     "1 Conditions Deck (18 cards)",
     "7 dice: D4, D6, D8, D10, D12, D20, and D100",
     "15 Reef Point tokens",

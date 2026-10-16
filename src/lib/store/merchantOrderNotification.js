@@ -7,7 +7,7 @@ import {
 const ORDER_NOTIFICATION_TYPE = "merchant_purchase";
 const ORDER_NOTIFICATION_LEASE_SECONDS = 300;
 const ORDER_NOTIFICATION_SELECT =
-  "id, order_number, paid_at, customer_email, customer_name, shipping_address, currency, subtotal_cents, production_option_id, production_option_name, production_max_business_days, production_cents, production_due_date, fulfillment_method, fulfillment_option_id, fulfillment_option_name, pickup_location, shipping_cents, tax_cents, total_cents, payment_livemode, store_order_items(sku, product_name, unit_amount_cents, quantity, line_total_cents)";
+  "id, order_number, paid_at,fulfillment_type,preorder_campaign_id,preorder_cutoff_at,preorder_delivery_by,preorder_fulfillment_date,preorder_delivery_guaranteed, customer_email, customer_name, shipping_address, currency, subtotal_cents, production_option_id, production_option_name, production_max_business_days, production_cents, production_due_date, fulfillment_method, fulfillment_option_id, fulfillment_option_name, pickup_location, shipping_cents, tax_cents, total_cents, payment_livemode, store_order_items(fulfillment_type,sku, product_name, unit_amount_cents, quantity, line_total_cents)";
 
 function notificationError(message, code, cause) {
   return new MerchantOrderNotificationError(message, { code, cause });
