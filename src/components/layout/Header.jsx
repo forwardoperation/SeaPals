@@ -37,7 +37,7 @@ export default function Header() {
           alt="SeaRealm Logo"
           width={1500}
           height={421}
-          className="h-12 w-auto"
+          className="h-12 w-auto drop-shadow-[0_2px_6px_#032e59]"
         />
       </Link>
 

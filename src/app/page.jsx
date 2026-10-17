@@ -138,7 +138,7 @@ const questions = [
 export default function HomePage() {
   return (
     <main className="pb-12 text-slate-900 md:pb-20">
-      <section className="relative isolate overflow-hidden rounded-[2rem] bg-[#062f46] px-5 py-10 text-white shadow-2xl shadow-cyan-950/15 sm:px-8 md:rounded-[2.75rem] md:px-12 md:py-14 lg:px-16 lg:py-16">
+      <section className="relative isolate overflow-hidden rounded-[2rem] border border-white/15 bg-[#032b49]/75 px-5 py-10 text-white shadow-2xl shadow-cyan-950/15 backdrop-blur-[2px] sm:px-8 md:rounded-[2.75rem] md:px-12 md:py-14 lg:px-16 lg:py-16">
         <div
           aria-hidden="true"
           className="absolute -right-32 -top-40 h-96 w-96 rounded-full bg-cyan-400/20 blur-3xl"

@@ -42,7 +42,7 @@ export default function RootLayout({ children }) {
         <OceanBackground />
         <div className="mx-auto max-w-6xl px-6 py-6 md:px-10">
           <Header />
-          <div className="mt-8">{children}</div>
+          <div className={oceanStyles.pageContent}>{children}</div>
           <SiteFooter />
         </div>
 
