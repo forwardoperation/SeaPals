@@ -216,15 +216,15 @@ export default function EncyclopediaExplorer({ creatures }) {
       </div>
 
       <div className="mt-8 flex items-center justify-between gap-4">
-        <p className="font-semibold text-slate-700" aria-live="polite">
-          Showing <span className="text-cyan-800">{filteredCreatures.length}</span>{" "}
+        <p className="font-semibold text-cyan-50" aria-live="polite">
+          Showing <span className="text-white">{filteredCreatures.length}</span>{" "}
           {filteredCreatures.length === 1 ? "creature" : "creatures"}
         </p>
         {(query || zone !== "All" || group !== "All") && (
           <button
             type="button"
             onClick={clearFilters}
-            className="rounded-full px-4 py-2 text-sm font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 transition hover:text-cyan-950 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+            className="rounded-full px-4 py-2 text-sm font-bold text-cyan-100 underline decoration-cyan-300 underline-offset-4 transition hover:text-white focus:outline-none focus:ring-4 focus:ring-cyan-100"
           >
             Clear filters
           </button>

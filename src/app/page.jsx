@@ -265,11 +265,11 @@ export default function HomePage() {
       <section className="py-16 md:py-24" id="what-it-is">
         <div className="grid gap-10 lg:grid-cols-[.82fr_1.18fr] lg:items-start">
           <div className="lg:sticky lg:top-8">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-700">Clarity for parents</p>
-            <h2 className="mt-4 max-w-xl font-serif text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl md:text-5xl">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-100">Clarity for parents</p>
+            <h2 className="mt-4 max-w-xl font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
               Know the world your kids are stepping into.
             </h2>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
+            <p className="mt-5 max-w-xl text-lg leading-8 text-cyan-50">
               SeaRealm has a clear focus: exploring creation through a genuinely fun strategy game about marine life. The theme, content, and worldview are stated plainly—so you can make a confident yes.
             </p>
           </div>
@@ -334,15 +334,15 @@ export default function HomePage() {
       <section className="py-16 md:py-24">
         <div className="grid gap-10 lg:grid-cols-[.9fr_1.1fr] lg:items-end">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-700">What young players think</p>
-            <h2 className="mt-4 font-serif text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl md:text-5xl">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-100">What young players think</p>
+            <h2 className="mt-4 font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
               Fun first. Learning comes along for the ride.
             </h2>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50">
               We asked the kids who have actually played SeaRealm, previously called SeaPals. Here is the small-sample result, with the numbers shown plainly.
             </p>
 
-            <p className="mt-8 border-l-4 border-[#f7c948] pl-5 font-serif text-xl leading-8 text-slate-800">
+            <p className="mt-8 border-l-4 border-[#f7c948] pl-5 font-serif text-xl leading-8 text-white">
               Their answers kept circling the same ideas: real creatures, strategy, learning, and getting to play with friends.
             </p>
           </div>
@@ -503,8 +503,8 @@ export default function HomePage() {
 
       <section className="py-16 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-700">Good to know</p>
-          <h2 className="mt-4 font-serif text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-100">Good to know</p>
+          <h2 className="mt-4 font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl">
             A short read before you say yes.
           </h2>
         </div>

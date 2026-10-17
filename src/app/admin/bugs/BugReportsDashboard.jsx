@@ -204,9 +204,9 @@ export default function BugReportsDashboard() {
   return (
     <main className="space-y-6 py-6">
       <section>
-        <p className="text-sm font-black uppercase tracking-[0.16em] text-sky-700">SeaPals staff</p>
-        <h1 className="mt-2 text-4xl font-black text-slate-950">Bug review</h1>
-        <p className="mt-3 max-w-3xl leading-7 text-slate-600">
+        <p className="text-sm font-black uppercase tracking-[0.16em] text-cyan-100">SeaPals staff</p>
+        <h1 className="mt-2 text-4xl font-black text-white">Bug review</h1>
+        <p className="mt-3 max-w-3xl leading-7 text-cyan-50">
           Triage reports from Reefbound and the Simulator. Priority, progress, and permission to change code are deliberately separate decisions.
         </p>
       </section>

@@ -61,7 +61,7 @@ function SurveyQuestion({ question, value, otherValue, onChange, onOtherChange }
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-3xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm">
       <div className="flex gap-3">
         <QuestionNumber number={question.number} />
         <div className="min-w-0 flex-1">
@@ -265,13 +265,13 @@ export default function SurveyPage() {
     <main className="mx-auto max-w-4xl space-y-6 py-6">
       <section className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-wide text-sky-700">
+          <p className="text-sm font-bold uppercase tracking-wide text-cyan-100">
             {SURVEY_TITLE}
           </p>
-          <h1 className="mt-2 text-4xl font-bold text-slate-900">
+          <h1 className="mt-2 text-4xl font-bold text-white">
             Help us make SeaRealm even better
           </h1>
-          <p className="mt-3 max-w-2xl text-slate-600">
+          <p className="mt-3 max-w-2xl text-cyan-100">
             Answer a few questions about what you like, what could improve, and what
             you would like to see next.
           </p>
@@ -331,9 +331,9 @@ export default function SurveyPage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-bold text-slate-900">{currentSection.title}</h2>
+        <h2 className="text-2xl font-bold text-white">{currentSection.title}</h2>
         {currentSection.description && (
-          <p className="mt-1 text-slate-600">{currentSection.description}</p>
+          <p className="mt-1 text-cyan-100">{currentSection.description}</p>
         )}
       </section>
 
@@ -361,7 +361,7 @@ export default function SurveyPage() {
           type="button"
           onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
           disabled={isFirstStep}
-          className="rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-xl border border-cyan-100/40 bg-white/10 px-5 py-3 font-bold text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Back
         </button>

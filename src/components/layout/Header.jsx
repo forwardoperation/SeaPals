@@ -33,7 +33,7 @@ export default function Header() {
         className="shrink-0 rounded-xl focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
       >
         <Image
-          src="/images/brand/searealm-tcg-logo-black.png"
+          src="/images/brand/searealm-tcg-logo.png"
           alt="SeaRealm Logo"
           width={1500}
           height={421}

@@ -288,7 +288,7 @@ function TypeSection({ title, slug, images }) {
   return (
     <section id={slug} className="scroll-mt-28">
       <div className="mb-6">
-        <h3 className="text-3xl font-bold text-slate-900">{title}</h3>
+        <h3 className="text-3xl font-bold text-white">{title}</h3>
       </div>
 
       <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
@@ -327,7 +327,7 @@ function ZoneSection({ zone }) {
   return (
     <section id={zone.slug} className="scroll-mt-28 space-y-10">
       <div>
-        <h2 className="text-4xl font-bold text-slate-900">{zone.title}</h2>
+        <h2 className="text-4xl font-bold text-white">{zone.title}</h2>
         {zone.images.length === 0 && (
           <div className="mt-6 rounded-[2rem] border border-dashed border-cyan-200 bg-white/75 p-8 text-slate-600 shadow-sm">
             <p className="text-lg font-semibold text-slate-900">

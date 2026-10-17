@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320" fill="none">
+  <defs>
+    <filter id="water" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency=".014 .022" numOctaves="2" seed="7" result="water"/>
+      <feDisplacementMap in="SourceGraphic" in2="water" scale="16" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation=".65"/>
+    </filter>
+    <pattern id="cells" width="480" height="320" patternUnits="userSpaceOnUse">
+      <g stroke="#d3fff1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M0 66C38 46 53 70 78 54S122 18 155 32S203 73 236 58S287 26 322 42S359 80 395 64S449 46 480 66M0 224C35 245 62 202 93 216S141 248 174 231S217 196 254 212S302 251 337 235S371 207 408 214S453 241 480 224"/>
+        <path d="M0 146C28 166 55 128 85 142S132 183 170 162S213 128 247 145S295 177 333 158S378 131 412 147S454 166 480 146"/>
+        <path d="M43 0C65 18 61 40 78 54C65 84 51 110 85 142C66 168 69 192 93 216C65 247 67 273 43 320M195 0C184 14 168 20 155 32C167 69 144 113 170 162C148 183 153 213 174 231C180 263 209 287 195 320M295 0C306 18 309 28 322 42C292 79 304 122 333 158C310 190 319 214 337 235C317 264 286 285 295 320M431 0C415 27 405 43 395 64C429 94 391 120 412 147C443 175 426 198 408 214C420 244 451 282 431 320"/>
+      </g>
+    </pattern>
+  </defs>
+  <path fill="url(#cells)" filter="url(#water)" d="M-40-40h560v400H-40z"/>
+</svg>

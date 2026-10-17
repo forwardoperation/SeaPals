@@ -741,19 +741,19 @@ export default function Storefront({
           ) : (<>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-700">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-100">
                 The SeaRealm collection
               </p>
               <h2
                 id="store-products-heading"
-                className="mt-2 font-serif text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl"
+                className="mt-2 font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl"
               >
                 {checkoutEnabled
                   ? "Shop the SeaRealm collection"
                   : "Preview the launch collection"}
               </h2>
             </div>
-            <p className="max-w-md text-sm leading-6 text-slate-500">
+            <p className="max-w-md text-sm leading-6 text-cyan-100">
               {checkoutEnabled
                 ? "Choose your products and add available items to your order. Prices and availability reflect the current catalog."
                 : "The approved $44 Starter Kit, seven $22 decks, three $10 Dive Packs, and $12 Accessories Kit are shown. Ordering remains disabled until the final launch checks are complete."}
@@ -801,20 +801,20 @@ export default function Storefront({
                     aria-labelledby={`category-${group.id}-heading`}
                     className="scroll-mt-8"
                   >
-                    <div className="border-b border-cyan-100 pb-4">
+                    <div className="border-b border-cyan-100/30 pb-4">
                       {group.meta.eyebrow ? (
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-700">
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-cyan-100">
                           {group.meta.eyebrow}
                         </p>
                       ) : null}
                       <h3
                         id={`category-${group.id}-heading`}
-                        className="mt-1 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl"
+                        className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl"
                       >
                         {group.meta.label}
                       </h3>
                       {group.meta.description ? (
-                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-cyan-100">
                           {group.meta.description}
                         </p>
                       ) : null}

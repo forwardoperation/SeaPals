@@ -35,7 +35,7 @@ export default function ProductDetails({
     <article className="min-w-0" aria-labelledby="product-detail-heading">
       <Link
         href="/store"
-        className="inline-flex min-h-10 items-center gap-2 rounded-lg text-sm font-bold text-cyan-800 underline-offset-4 transition hover:text-cyan-950 hover:underline focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
+        className="inline-flex min-h-10 items-center gap-2 rounded-lg text-sm font-bold text-cyan-100 underline-offset-4 transition hover:text-white hover:underline focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
       >
         <span aria-hidden="true">←</span> Back to shop
       </Link>

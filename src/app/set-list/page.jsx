@@ -31,7 +31,7 @@ export default async function SetListPage({ searchParams }) {
       </section>
 
       <section aria-labelledby="rarity-totals-title" className="space-y-4">
-        <h2 id="rarity-totals-title" className="text-2xl font-bold text-slate-900">Rarities by set</h2>
+        <h2 id="rarity-totals-title" className="text-2xl font-bold text-white">Rarities by set</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {sets.map((set) => (
             <div key={set.zone} className="rounded-2xl border border-cyan-100 bg-white/90 p-5 shadow-sm">

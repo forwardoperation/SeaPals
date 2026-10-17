@@ -367,13 +367,13 @@ export default function AdminSurveysPage() {
   return (
     <main className="space-y-6 py-6">
       <section>
-        <p className="text-sm font-bold uppercase tracking-wide text-sky-700">
+        <p className="text-sm font-bold uppercase tracking-wide text-cyan-100">
           Admin
         </p>
-        <h1 className="mt-2 text-4xl font-bold text-slate-900">
+        <h1 className="mt-2 text-4xl font-bold text-white">
           Survey Reward Tracker
         </h1>
-        <p className="mt-3 max-w-2xl text-slate-600">
+        <p className="mt-3 max-w-2xl text-cyan-50">
           Use this to count submitted names for the external rewards system.
         </p>
       </section>

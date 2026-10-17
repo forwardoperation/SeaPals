@@ -270,7 +270,7 @@ export default async function CreaturePage({ params }) {
       <nav aria-label="Breadcrumb" className="mb-5">
         <Link
           href="/encyclopedia"
-          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold text-cyan-800 transition hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold text-cyan-100 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-4 focus:ring-cyan-100"
         >
           <span aria-hidden="true">←</span> All creatures
         </Link>
@@ -361,12 +361,12 @@ export default async function CreaturePage({ params }) {
         <section aria-labelledby="passport-heading" className="mt-10">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-100">
                 Quick dive
               </p>
               <h2
                 id="passport-heading"
-                className="mt-2 font-serif text-3xl font-bold text-slate-950 md:text-4xl"
+                className="mt-2 font-serif text-3xl font-bold text-white md:text-4xl"
               >
                 Creature passport
               </h2>

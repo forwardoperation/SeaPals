@@ -178,14 +178,14 @@ const faqQuestions = [
 function SectionHeading({ number, title, children }) {
   return (
     <div className="max-w-3xl">
-      <h2 className="flex items-start gap-4 text-3xl font-bold tracking-tight text-slate-950 md:text-4xl">
+      <h2 className="flex items-start gap-4 text-3xl font-bold tracking-tight text-white md:text-4xl">
         <span className="mt-0.5 flex h-10 min-w-10 items-center justify-center rounded-full bg-cyan-100 px-2 text-sm font-black text-cyan-800">
           {number}
         </span>
         <span>{title}</span>
       </h2>
       {children ? (
-        <p className="mt-4 text-base leading-7 text-slate-600 md:text-lg">
+        <p className="mt-4 text-base leading-7 text-cyan-100 md:text-lg">
           {children}
         </p>
       ) : null}

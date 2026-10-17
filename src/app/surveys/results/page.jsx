@@ -45,13 +45,13 @@ export default function SurveyResultsPage() {
   return (
     <main className="mx-auto max-w-5xl space-y-6 py-6">
       <section>
-        <p className="text-sm font-bold uppercase tracking-wide text-sky-700">
+        <p className="text-sm font-bold uppercase tracking-wide text-cyan-100">
           Survey Summary
         </p>
-        <h1 className="mt-2 text-4xl font-bold text-slate-900">
+        <h1 className="mt-2 text-4xl font-bold text-white">
           What players are telling us
         </h1>
-        <p className="mt-3 text-slate-600">
+        <p className="mt-3 text-cyan-100">
           Public results are aggregated and do not show respondent names.
         </p>
       </section>
@@ -62,7 +62,7 @@ export default function SurveyResultsPage() {
         </p>
       )}
 
-      {!summary && !message && <p className="text-slate-500">Loading summary...</p>}
+      {!summary && !message && <p className="text-cyan-100">Loading summary...</p>}
 
       {summary && (
         <>

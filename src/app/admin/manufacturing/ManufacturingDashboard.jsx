@@ -407,16 +407,16 @@ export default function ManufacturingDashboard() {
               </div>
             </div>
           )}
-          <p className="text-sm font-bold uppercase tracking-widest text-cyan-800">
+          <p className="text-sm font-bold uppercase tracking-widest text-cyan-100">
             Sea Realm workshop
           </p>
-          <h1 className="mt-2 text-3xl font-black">Manufacturing</h1>
-          <p className="mt-2 text-slate-600">
+          <h1 className="mt-2 text-3xl font-black text-white">Manufacturing</h1>
+          <p className="mt-2 text-cyan-50">
             Print, finish, and pack each order.
           </p>
         </div>
         <a
-          className="text-sm font-bold text-cyan-800 underline"
+          className="text-sm font-bold text-cyan-100 underline hover:text-white"
           href="/admin/orders"
         >
           Orders & shipping
@@ -474,7 +474,7 @@ export default function ManufacturingDashboard() {
       )}
       {loggedIn && (
         <div className="min-w-0">
-          <p className={`mb-3 text-sm ${refreshError ? "text-amber-800" : "text-slate-500"}`}>
+          <p className={`mb-3 text-sm ${refreshError ? "text-amber-100" : "text-cyan-100"}`}>
             {refreshError || "Live updates every 5 seconds while this page is visible."}
             {lastUpdated && ` Last updated ${lastUpdated.toLocaleTimeString()}.`}
           </p>

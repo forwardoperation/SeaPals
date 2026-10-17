@@ -1,6 +1,8 @@
 import "../styles/globals.css";
 import Header from "@/components/layout/Header";
 import SiteFooter from "@/components/layout/SiteFooter";
+import OceanBackground from "@/components/layout/OceanBackground";
+import oceanStyles from "@/components/layout/OceanBackground.module.css";
 import RulesChat from "@/components/rules/RulesChat";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import { CANONICAL_SITE_ORIGIN } from "@/lib/siteIdentity.mjs";
@@ -36,7 +38,8 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="bg-gradient-to-b from-sky-50 via-cyan-50 to-white text-slate-800">
+      <body className={`${oceanStyles.site} text-slate-800`}>
+        <OceanBackground />
         <div className="mx-auto max-w-6xl px-6 py-6 md:px-10">
           <Header />
           <div className="mt-8">{children}</div>

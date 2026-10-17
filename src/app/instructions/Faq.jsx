@@ -46,7 +46,7 @@ export default function Faq({ questions }) {
         </span>
       </label>
 
-      <p aria-live="polite" className="mt-3 text-sm text-slate-500">
+      <p aria-live="polite" className="mt-3 text-sm text-cyan-100">
         {filteredQuestions.length === questions.length
           ? `${questions.length} common questions`
           : `${filteredQuestions.length} matching question${filteredQuestions.length === 1 ? "" : "s"}`}

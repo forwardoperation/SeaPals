@@ -84,12 +84,12 @@ function DeckList({ deck }) {
 
 function DeckSection({ deck }) {
   return (
-    <section id={deck.id} aria-labelledby={`deck-${deck.id}-heading`} className="scroll-mt-8 border-t border-slate-200 py-10 first:border-t-0">
+    <section id={deck.id} aria-labelledby={`deck-${deck.id}-heading`} className="scroll-mt-8 border-t border-cyan-100/25 py-10 first:border-t-0">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <h2 id={`deck-${deck.id}-heading`} className="text-3xl font-bold text-slate-950">{deck.name}</h2>
-          <p className="mt-2 max-w-3xl leading-7 text-slate-600">{deck.description}</p>
-          <p className="mt-3 text-sm font-bold text-cyan-900">{deck.totalCards} cards in this deck</p>
+          <h2 id={`deck-${deck.id}-heading`} className="text-3xl font-bold text-white">{deck.name}</h2>
+          <p className="mt-2 max-w-3xl leading-7 text-cyan-50">{deck.description}</p>
+          <p className="mt-3 text-sm font-bold text-cyan-100">{deck.totalCards} cards in this deck</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
               href={getStoreProductPath(deck.productId)}
@@ -104,7 +104,7 @@ function DeckSection({ deck }) {
               Open simulator
             </Link>
           </div>
-          <p className="mt-3 text-sm leading-6 text-slate-500">Simulator previews may differ from the physical contents listed here.</p>
+          <p className="mt-3 text-sm leading-6 text-cyan-100">Simulator previews may differ from the physical contents listed here.</p>
         </div>
         <Link href={getStoreProductPath(deck.productId)} className="relative block aspect-[4/3] w-44 shrink-0 self-center overflow-hidden rounded-2xl border border-cyan-100 bg-cyan-50 sm:self-start">
           <Image src={deck.image} alt={deck.imageAlt || `${deck.name} deck box`} fill sizes="176px" className="object-contain p-3" />
