@@ -2,7 +2,7 @@
   position: relative;
   isolation: isolate;
   min-height: 100svh;
-  background: #103541;
+  background: #071e3d;
 }
 
 /* Follow the document: scrolling travels from the surface to the seabed. */
@@ -14,81 +14,92 @@
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    #137b91 0%,
-    #0d647e 12%,
-    #0b4e6a 34%,
-    #083b58 58%,
-    #052940 82%,
-    #052337 94%,
-    #103541 100%
+    #125c99 0%,
+    #0d4d89 12%,
+    #0b3b70 34%,
+    #082c59 58%,
+    #061e40 82%,
+    #05182f 94%,
+    #0b2946 100%
   );
 }
 
 .surface {
   position: absolute;
   inset: 0 0 auto;
-  height: min(32rem, 35%);
+  height: min(56rem, 65%);
   overflow: hidden;
-  background: radial-gradient(ellipse at 38% 0%, #d4fff91c 0%, #a2f5ed0d 32%, transparent 72%);
-  mask-image: linear-gradient(#000, #000 20%, transparent);
+  background: radial-gradient(ellipse at 34% 0%, #8bcaff35, transparent 72%);
 }
 
-.surface::before,
-.surface::after {
+/* A light, moving fallback also covers devices without WebGL. */
+.surface::before {
   content: "";
   position: absolute;
-  inset: -22% -10%;
-  background-image:
-    radial-gradient(ellipse at 50% 50%, transparent 57%, #e7fffc38 60%, transparent 65%),
-    radial-gradient(ellipse at 50% 50%, transparent 55%, #f5fff72b 59%, transparent 65%);
-  background-size: 17rem 3.8rem, 25rem 5.6rem;
-  background-position: 0 0, 7rem 2rem;
-  transform: rotate(-5deg);
-  animation: surfaceDrift 17s ease-in-out infinite alternate;
+  inset: -12%;
+  opacity: .24;
+  filter: saturate(.45) hue-rotate(24deg);
+  background: url("/images/backgrounds/ocean-caustics.svg") repeat;
+  background-size: 34rem 10rem;
+  mask-image: linear-gradient(#000, transparent 78%);
+  animation: surfaceFallback 12s ease-in-out infinite alternate;
 }
 
-.surface::after {
-  opacity: .5;
-  background-size: 23rem 4.5rem, 15rem 3rem;
-  animation-duration: 23s;
-  animation-delay: -11s;
-  animation-direction: alternate-reverse;
+.waterCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
 }
+
+.waterCanvas[data-ready="true"] { opacity: 1; }
+
+.surface:has(.waterCanvas[data-ready="true"])::before { display: none; }
 
 .shafts {
   position: absolute;
   top: 0;
-  left: -15%;
-  width: 130%;
-  height: min(110rem, 72%);
+  left: -10%;
+  width: 120%;
+  height: min(240rem, 82%);
   overflow: hidden;
-  mask-image: linear-gradient(#000, #000 12%, transparent 95%);
+  mix-blend-mode: screen;
+  mask-image: linear-gradient(#000 0%, #000 24%, #0009 58%, transparent 100%);
 }
 
-.shafts::before,
-.shafts::after {
+.beam {
+  position: absolute;
+  top: -3%;
+  height: 110%;
+  width: 26%;
+  transform-origin: 50% 0;
+  filter: blur(12px);
+  animation: shaftSway 14s ease-in-out infinite alternate;
+}
+
+.beam::before {
   content: "";
   position: absolute;
-  inset: -10% 0;
-  transform-origin: 40% 0;
-  background: repeating-conic-gradient(
-    from 154deg at 40% -8%,
-    transparent 0deg 10deg,
-    #e1fff508 11deg,
-    #e1fff526 13deg,
-    #e1fff508 16deg,
-    transparent 18deg 27deg
-  );
-  animation: shaftDrift 24s ease-in-out infinite alternate;
+  inset: 0;
+  /* Soft edges around an irregular bright core; each beam widens with depth. */
+  background: linear-gradient(90deg,
+    transparent 0%,
+    #a5d4ff0a 15%,
+    #a5d4ff20 32%,
+    #c4e5ff40 43%,
+    #e1f2ff55 48%,
+    #b5daff38 53%,
+    #a5d4ff14 68%,
+    transparent 100%);
+  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
 }
 
-.shafts::after {
-  opacity: .35;
-  transform-origin: 75% 0;
-  animation-duration: 31s;
-  animation-delay: -15s;
-  animation-direction: alternate-reverse;
-}
+.beamOne { left: -4%; --angle: -12deg; --strength: .85; }
+.beamTwo { left: 16%; width: 18%; --angle: -18deg; --strength: .45; animation-delay: -8s; animation-duration: 19s; }
+.beamThree { left: 42%; width: 22%; --angle: 9deg; --strength: .35; animation-delay: -4s; animation-duration: 17s; }
+.beamFour { left: 67%; width: 30%; --angle: 16deg; --strength: .8; animation-delay: -11s; animation-duration: 21s; }
+.beamFive { left: 88%; width: 17%; --angle: 10deg; --strength: .5; animation-delay: -6s; animation-duration: 16s; }
 
 .floor {
   position: absolute;
@@ -96,19 +107,19 @@
   height: min(48rem, 24%);
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 18% 110%, #7f9c7d26, transparent 65%),
-    radial-gradient(ellipse at 85% 130%, #64978026, transparent 70%),
-    linear-gradient(transparent, #173f4c 68%, #244e56);
+    radial-gradient(ellipse at 18% 110%, #7ca7cd26, transparent 65%),
+    radial-gradient(ellipse at 85% 130%, #648db626, transparent 70%),
+    linear-gradient(transparent, #153650 68%, #24465f);
   mask-image: linear-gradient(transparent, #000 40%);
 }
 
 .caustics {
   position: absolute;
   inset: 5% -8% -8%;
-  /* Flatten the light patterns toward the distant edge of the seabed. */
   transform: perspective(36rem) rotateX(38deg) scale(1.3);
   transform-origin: center bottom;
   mask-image: linear-gradient(transparent, #000 48%);
+  filter: saturate(.45) hue-rotate(24deg);
 }
 
 .caustics::before,
@@ -119,26 +130,26 @@
   background: url("/images/backgrounds/ocean-caustics.svg") repeat;
   background-size: 28rem 19rem;
   opacity: .3;
-  animation: causticDrift 22s ease-in-out infinite alternate;
+  animation: causticDrift 16s ease-in-out infinite alternate;
 }
 
 .caustics::after {
   background-size: 35rem 23rem;
   background-position: 9rem 5rem;
   opacity: .18;
-  animation-duration: 29s;
+  animation-duration: 21s;
   animation-delay: -14s;
   animation-direction: alternate-reverse;
 }
 
-@keyframes surfaceDrift {
-  from { transform: translate3d(-2%, -2%, 0) rotate(-5deg) scale(1); }
-  to { transform: translate3d(3%, 3%, 0) rotate(-3deg) scale(1.06); }
+@keyframes surfaceFallback {
+  from { transform: translate3d(-2%, -1%, 0) scale(1.02, .94); }
+  to { transform: translate3d(3%, 2%, 0) scale(1.12, 1.06); }
 }
 
-@keyframes shaftDrift {
-  from { transform: rotate(-4deg) scaleX(.95); opacity: .45; }
-  to { transform: rotate(4deg) scaleX(1.05); opacity: .75; }
+@keyframes shaftSway {
+  from { transform: rotate(calc(var(--angle) - 2deg)) scaleX(.9); opacity: calc(var(--strength) * .65); }
+  to { transform: rotate(calc(var(--angle) + 2deg)) scaleX(1.1); opacity: var(--strength); }
 }
 
 @keyframes causticDrift {
@@ -147,19 +158,25 @@
 }
 
 @media (max-width: 639px) {
-  .surface { height: min(28rem, 30%); }
-  .shafts { height: min(80rem, 55%); }
+  .surface { height: min(42rem, 60%); }
+  .shafts { height: min(240rem, 80%); }
+  /* Small angles keep long rays inside the narrower phone viewport. */
+  .beamOne { left: -12%; width: 46%; --angle: -5deg; }
+  .beamTwo { left: 10%; --angle: -7deg; }
+  .beamThree { --angle: 3deg; }
+  .beamFour { left: 65%; width: 42%; --angle: 6deg; }
+  .beamFive { left: 83%; --angle: 3deg; }
   .caustics::before,
   .caustics::after { background-size: 18rem 12rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .surface::before,
-  .surface::after,
-  .shafts::before,
-  .shafts::after,
+  .beam,
   .caustics::before,
   .caustics::after {
     animation: none;
   }
+
+  .beam { transform: rotate(var(--angle)); opacity: var(--strength); }
 }
