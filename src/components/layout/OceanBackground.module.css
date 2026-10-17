@@ -2,7 +2,7 @@
   position: relative;
   isolation: isolate;
   min-height: 100svh;
-  background: #073b65;
+  background: #000;
 }
 
 /* Leave a view of the horizon between the navigation and the page. */
@@ -14,22 +14,20 @@
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  background: #073b65;
+  background: #000;
 }
 
-/* The camera follows page depth; motion within each scene is filmed footage. */
+/* Only the surface moves out of view. The underwater view stays level. */
 .world {
   position: relative;
   width: 100%;
   height: 310svh;
   overflow: hidden;
-  background: linear-gradient(#075a8b, #073b65 44%, #052e55 72%, #073b65);
   will-change: transform;
 }
 
 .surface,
-.water,
-.floor {
+.water {
   position: absolute;
   left: 0;
   width: 100%;
@@ -52,38 +50,54 @@
 .surface .footage { object-position: center bottom; }
 
 .water {
-  top: min(40svh, 24%);
-  bottom: min(45svh, 20%);
-  mask-image: linear-gradient(transparent, #000 14%, #000 82%, transparent);
+  /* Frame the open water below the surface, keeping bright wave undersides overhead. */
+  inset: -65svh 0 0;
 }
 
-.floor {
-  bottom: 0;
-  height: min(110svh, 40%);
-  mask-image: linear-gradient(transparent, #000 45%);
+.water .footage { object-position: 20% center; }
+
+.water::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #01263e14, #011b3440 28%, #011b344a 50%, #011b3440 72%, #01263e14);
 }
 
-/* A static blue grade keeps text readable without drawing artificial light. */
+/* Scroll fades the filmed light into darkness; no artificial light patterns. */
 .depthShade {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(90deg, #012c4c18, #011b344a 24%, #011b3459 50%, #011b344a 76%, #012c4c18),
-    linear-gradient(0deg, #012d53aa, #012d5333 32%, transparent 75%);
-  mask-image: linear-gradient(transparent 16svh, #000 65svh);
+  background: #000;
+  opacity: var(--depth-darkness, 0);
 }
+
+.ocean[data-at-depth='true']:not([data-reduced-motion='true']) .water,
+.ocean[data-at-depth='true']:not([data-reduced-motion='true']) .surface { display: none; }
 
 @media (max-width: 767px) {
   .pageContent { margin-top: 6rem; }
   .surface { height: min(70svh, 50%); }
-  .water { top: min(44svh, 25%); }
 }
 
 /* Reduced motion uses frames from the same footage and ordinary scrolling. */
 .ocean[data-reduced-motion='true'] { position: absolute; }
 .ocean[data-reduced-motion='true'] .world { will-change: auto; }
+.ocean[data-reduced-motion='true'] .water {
+  top: min(40svh, 24%);
+  height: min(170svh, 65%);
+  bottom: auto;
+  mask-image: linear-gradient(transparent, #000 15%, #000 55%, transparent);
+}
+.ocean[data-reduced-motion='true'] .depthShade { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .ocean { position: absolute; }
   .world { height: 100%; will-change: auto; }
+  .water {
+    top: min(40svh, 24%);
+    height: min(170svh, 65%);
+    bottom: auto;
+    mask-image: linear-gradient(transparent, #000 15%, #000 55%, transparent);
+  }
+  .depthShade { display: none; }
 }

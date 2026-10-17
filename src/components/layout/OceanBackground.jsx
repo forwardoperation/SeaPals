@@ -46,14 +46,19 @@ export default function OceanBackground() {
         world.style.height = `${reducedMotion ? documentHeight : viewportHeight + travel}px`;
       }
 
+      const progress = maxScroll > 0
+        ? Math.min(1, Math.max(0, window.scrollY / maxScroll))
+        : 0;
+      const depth = Math.min(1, Math.max(0, (progress - 0.1) / 0.85));
+      // Keep the underwater camera level, and lose daylight as the page deepens.
+      viewport.style.setProperty("--depth-darkness", String(depth * depth * (3 - 2 * depth)));
+      viewport.dataset.atDepth = String(depth === 1);
+
       if (reducedMotion) {
         world.style.removeProperty("transform");
         return;
       }
 
-      const progress = maxScroll > 0
-        ? Math.min(1, Math.max(0, window.scrollY / maxScroll))
-        : 0;
       world.style.transform = `translate3d(0, ${-progress * travel}px, 0)`;
     }
 
@@ -95,30 +100,23 @@ export default function OceanBackground() {
 
   return (
     <div ref={viewportRef} className={styles.ocean} data-ocean-viewport aria-hidden="true">
+      <div className={styles.water}>
+        <OceanFootage
+          src="/media/ocean/blue-water.mp4"
+          poster="/media/ocean/blue-water.webp"
+          className={styles.footage}
+        />
+      </div>
       <div ref={worldRef} className={styles.world}>
-        <div className={styles.water}>
-          <OceanFootage
-            src="/media/ocean/sunlight.mp4"
-            poster="/media/ocean/sunlight.webp"
-            className={styles.footage}
-          />
-        </div>
         <div className={styles.surface}>
           <OceanFootage
-            src="/media/ocean/surface.mp4"
-            poster="/media/ocean/surface.webp"
+            src="/media/ocean/surface-steady.mp4"
+            poster="/media/ocean/surface-steady.webp"
             className={styles.footage}
           />
         </div>
-        <div className={styles.floor}>
-          <OceanFootage
-            src="/media/ocean/seafloor.mp4"
-            poster="/media/ocean/seafloor.webp"
-            className={styles.footage}
-          />
-        </div>
-        <div className={styles.depthShade} />
       </div>
+      <div className={styles.depthShade} />
     </div>
   );
 }
