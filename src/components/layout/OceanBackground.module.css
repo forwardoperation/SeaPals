@@ -17,7 +17,7 @@
   background: #073b65;
 }
 
-/* Only the scenery moves. Content, fixed controls and native scrolling stay put. */
+/* The camera follows page depth; motion within each scene is filmed footage. */
 .world {
   position: relative;
   width: 100%;
@@ -28,155 +28,62 @@
 }
 
 .surface,
+.water,
 .floor {
   position: absolute;
   left: 0;
   width: 100%;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
+}
+
+.footage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .surface {
   top: 0;
-  height: min(145svh, 60%);
-  background-image: url('/images/backgrounds/ocean-dive-surface.webp');
-  background-position: center top;
+  height: min(75svh, 50%);
   mask-image: linear-gradient(#000 0%, #000 60%, transparent 100%);
 }
 
-.surfaceMotion,
-.floorMotion {
-  position: absolute;
-  inset: 0;
-  background: inherit;
-}
-
-/* Refraction moves only the water band; the sky and distant horizon stay still. */
-.surfaceMotion {
-  mask-image: linear-gradient(transparent 12%, #000 21%, #000 35%, transparent 59%);
-  transform-origin: center 24%;
-  animation: surfaceSwell 7s ease-in-out infinite alternate;
-}
-
-.sceneCanvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-}
-
-.sceneCanvas[data-ready='true'] { opacity: 1; }
-.surface:has(.sceneCanvas[data-ready='true']) .surfaceMotion,
-.floor:has(.sceneCanvas[data-ready='true']) .floorMotion { display: none; }
+.surface .footage { object-position: center bottom; }
 
 .water {
-  position: absolute;
-  inset: 70svh 0 35svh;
-  mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
-  background:
-    radial-gradient(ellipse at 3% 0%, #3ba3d324, transparent 65%),
-    radial-gradient(ellipse at 100% 90%, #011c3d40, transparent 65%);
+  top: min(40svh, 24%);
+  bottom: min(45svh, 20%);
+  mask-image: linear-gradient(transparent, #000 14%, #000 82%, transparent);
 }
-
-.water::before {
-  content: '';
-  position: absolute;
-  inset: -10%;
-  background: linear-gradient(108deg,
-    transparent 12%, #86d9ff12 20%, transparent 27%,
-    transparent 44%, #8cdcff0e 50%, transparent 57%,
-    transparent 73%, #86d9ff0c 78%, transparent 85%);
-  transform-origin: 20% 0;
-  animation: passingLight 11s ease-in-out infinite alternate;
-}
-
-.mote {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: #c5edff;
-  box-shadow: 0 0 5px #8edaff60;
-  animation: planktonDrift 16s linear infinite;
-}
-
-.mote:nth-child(3n) { width: 2px; height: 2px; }
 
 .floor {
   bottom: 0;
-  height: min(120svh, 40%);
-  background-image: url('/images/backgrounds/ocean-dive-floor.webp');
-  background-position: center bottom;
-  mask-image: linear-gradient(transparent 0%, #000 42%);
+  height: min(110svh, 40%);
+  mask-image: linear-gradient(transparent, #000 45%);
 }
 
-.floorMotion {
-  opacity: .12;
-  mix-blend-mode: screen;
-  mask-image: linear-gradient(transparent 45%, #000 80%);
-  transform-origin: center bottom;
-  animation: seabedShimmer 9s ease-in-out infinite alternate;
-}
-
-/* Keep the open water luminous at the edges and readable behind page copy. */
+/* A static blue grade keeps text readable without drawing artificial light. */
 .depthShade {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, transparent, #011b3433 24%, #011b344d 50%, #011b3433 76%, transparent),
-    linear-gradient(0deg, #01182e99, transparent 32%);
+    linear-gradient(90deg, #012c4c18, #011b344a 24%, #011b3459 50%, #011b344a 76%, #012c4c18),
+    linear-gradient(0deg, #012d53aa, #012d5333 32%, transparent 75%);
   mask-image: linear-gradient(transparent 16svh, #000 65svh);
-}
-
-@keyframes surfaceSwell {
-  from { transform: translate3d(-.15%, 0, 0) scale(1.004, 1); opacity: .55; }
-  to { transform: translate3d(.15%, .2%, 0) scale(1.014, 1.018); opacity: .85; }
-}
-
-@keyframes seabedShimmer {
-  from { transform: translate3d(-.15%, 0, 0) scale(1.005); opacity: .07; }
-  to { transform: translate3d(.2%, .15%, 0) scale(1.015); opacity: .15; }
-}
-
-@keyframes passingLight {
-  from { transform: translate3d(-3%, 0, 0) rotate(-2deg); opacity: .45; }
-  to { transform: translate3d(3%, 0, 0) rotate(2deg); opacity: .9; }
-}
-
-@keyframes planktonDrift {
-  0% { transform: translate3d(8px, 35px, 0); opacity: 0; }
-  18% { opacity: .4; }
-  75% { opacity: .25; }
-  100% { transform: translate3d(-18px, -65px, 0); opacity: 0; }
 }
 
 @media (max-width: 767px) {
   .pageContent { margin-top: 6rem; }
-  .surface {
-    background-image: url('/images/backgrounds/ocean-dive-surface-mobile.webp');
-  }
-  .surfaceMotion {
-    mask-image: linear-gradient(transparent 30%, #000 36%, #000 48%, transparent 65%);
-    transform-origin: center 38%;
-  }
-  .floor { background-image: url('/images/backgrounds/ocean-dive-floor-mobile.webp'); }
+  .surface { height: min(70svh, 50%); }
+  .water { top: min(44svh, 25%); }
 }
 
-/* Ordinary document scrolling avoids a moving camera for reduced-motion users. */
+/* Reduced motion uses frames from the same footage and ordinary scrolling. */
 .ocean[data-reduced-motion='true'] { position: absolute; }
 .ocean[data-reduced-motion='true'] .world { will-change: auto; }
-.ocean[data-reduced-motion='true'] .surfaceMotion,
-.ocean[data-reduced-motion='true'] .floorMotion,
-.ocean[data-reduced-motion='true'] .water::before { animation: none; }
-.ocean[data-reduced-motion='true'] .mote { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .ocean { position: absolute; }
   .world { height: 100%; will-change: auto; }
-  .surfaceMotion,
-  .floorMotion,
-  .water::before { animation: none; }
-  .mote { display: none; }
 }

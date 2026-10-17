@@ -2,15 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import OceanSceneMotion from "./OceanSceneMotion";
+import OceanFootage from "./OceanFootage";
 import styles from "./OceanBackground.module.css";
-
-const motes = [
-  [9, 12, 13, -4], [22, 42, 16, -10], [38, 18, 18, -8],
-  [57, 61, 15, -3], [75, 27, 20, -12], [89, 72, 14, -6],
-  [14, 79, 19, -14], [46, 84, 17, -7], [68, 45, 21, -15],
-  [93, 9, 16, -9], [31, 67, 22, -18], [81, 91, 18, -11],
-];
 
 export default function OceanBackground() {
   const pathname = usePathname();
@@ -101,23 +94,28 @@ export default function OceanBackground() {
   if (isGameRoute) return null;
 
   return (
-    <div ref={viewportRef} className={styles.ocean} aria-hidden="true">
+    <div ref={viewportRef} className={styles.ocean} data-ocean-viewport aria-hidden="true">
       <div ref={worldRef} className={styles.world}>
-        <div className={styles.surface}>
-          <div className={styles.surfaceMotion} />
-          <OceanSceneMotion kind="surface" className={styles.sceneCanvas} />
-        </div>
         <div className={styles.water}>
-          {motes.map(([x, y, duration, delay], index) => (
-            <span key={index} className={styles.mote} style={{
-              left: `${x}%`, top: `${y}%`,
-              animationDuration: `${duration}s`, animationDelay: `${delay}s`,
-            }} />
-          ))}
+          <OceanFootage
+            src="/media/ocean/sunlight.mp4"
+            poster="/media/ocean/sunlight.webp"
+            className={styles.footage}
+          />
+        </div>
+        <div className={styles.surface}>
+          <OceanFootage
+            src="/media/ocean/surface.mp4"
+            poster="/media/ocean/surface.webp"
+            className={styles.footage}
+          />
         </div>
         <div className={styles.floor}>
-          <div className={styles.floorMotion} />
-          <OceanSceneMotion kind="floor" className={styles.sceneCanvas} />
+          <OceanFootage
+            src="/media/ocean/seafloor.mp4"
+            poster="/media/ocean/seafloor.webp"
+            className={styles.footage}
+          />
         </div>
         <div className={styles.depthShade} />
       </div>

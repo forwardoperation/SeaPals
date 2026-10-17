@@ -1,6 +1,6 @@
-# Ocean background artwork
+# Legacy ocean background artwork
 
-The continuous dive background uses original artwork created with OpenAI's built-in `image_gen` image generation tool. Landscape and portrait compositions were generated for desktop and mobile screens.
+These images were used by an earlier version of the continuous dive background. The current background uses filmed ocean footage and posters extracted from that footage; see [Ocean background footage](ocean-background-footage.md). These generated images are no longer rendered by `OceanBackground`.
 
 | Web asset | Composition |
 | --- | --- |
@@ -9,7 +9,7 @@ The continuous dive background uses original artwork created with OpenAI's built
 | `public/images/backgrounds/ocean-dive-surface-mobile.webp` | Matching portrait ocean-surface composition. |
 | `public/images/backgrounds/ocean-dive-floor-mobile.webp` | Matching portrait reef-floor composition. |
 
-The surface artwork excludes characters and boats. The images provide the surface and floor scenery; the website supplies the connecting depth gradient and animated water effects.
+The legacy surface artwork excludes characters and boats. The images and their former shader animation have been replaced by real footage.
 
 ## Generation and preparation
 
