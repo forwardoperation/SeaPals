@@ -102,8 +102,8 @@ export default function OceanBackground() {
     <div ref={viewportRef} className={styles.ocean} data-ocean-viewport aria-hidden="true">
       <div className={styles.water}>
         <OceanFootage
-          src="/media/ocean/blue-water.mp4"
-          poster="/media/ocean/blue-water.webp"
+          src="/media/ocean/calm-blue-water.mp4"
+          poster="/media/ocean/calm-blue-water.webp"
           className={styles.footage}
         />
       </div>

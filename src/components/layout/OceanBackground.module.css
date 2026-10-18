@@ -50,17 +50,19 @@
 .surface .footage { object-position: center bottom; }
 
 .water {
-  /* Frame the open water below the surface, keeping bright wave undersides overhead. */
-  inset: -65svh 0 0;
+  /* Keep the distant surface small above a wide, steady view of open water. */
+  inset: 0;
 }
 
-.water .footage { object-position: 20% center; }
+.water .footage { object-position: center top; }
 
 .water::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, #01263e14, #011b3440 28%, #011b344a 50%, #011b3440 72%, #01263e14);
+  background:
+    linear-gradient(180deg, #00172c08, #00172c26 30%, #000d246b 65%, #000711d9),
+    linear-gradient(90deg, #00182e38, #00182e08 45%, #00182e38);
 }
 
 /* Scroll fades the filmed light into darkness; no artificial light patterns. */
