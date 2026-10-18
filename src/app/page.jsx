@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import HomeDive from "./HomeDive";
 import {
   parentTestimonials,
   youngPlayerSurvey,
@@ -8,45 +9,6 @@ import {
 export const metadata = {
   alternates: { canonical: "/" },
 };
-
-const heroCards = [
-  {
-    src: "/images/cards/fish/Reef/french-angelfish.png",
-    alt: "French Angelfish SeaRealm card",
-    className: "-rotate-7 translate-y-7",
-  },
-  {
-    src: "/images/cards/apex/Reef/bull-shark.png",
-    alt: "Bull Shark SeaRealm card",
-    className: "relative z-10 -translate-y-2",
-  },
-  {
-    src: "/images/cards/filter-feeders/Oceanic/blue-whale.png",
-    alt: "Blue Whale SeaRealm card",
-    className: "rotate-7 translate-y-7",
-  },
-];
-
-const heroCardStreams = [
-  {
-    src: "/images/promo/hero-card-stream-reef.jpg",
-    width: 3400,
-    height: 150,
-    className: "seapals-hero-card-stream--reef",
-  },
-  {
-    src: "/images/promo/hero-card-stream-oceanic.jpg",
-    width: 5750,
-    height: 150,
-    className: "seapals-hero-card-stream--oceanic",
-  },
-  {
-    src: "/images/promo/hero-card-stream-deep.jpg",
-    width: 4246,
-    height: 150,
-    className: "seapals-hero-card-stream--deep",
-  },
-];
 
 const familyBenefits = [
   {
@@ -138,119 +100,47 @@ const questions = [
 export default function HomePage() {
   return (
     <main className="pb-12 text-white md:pb-20">
-      <section className="relative isolate overflow-hidden px-1 py-10 text-white sm:px-4 md:py-14 lg:px-8 lg:py-16">
-        <div className="relative grid items-center gap-12 lg:grid-cols-[1.05fr_.95fr] lg:gap-10">
-          <div>
-            <p className="inline-flex rounded-full border border-cyan-200/25 bg-cyan-950/65 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-100">
-              Coming soon · Creation-focused family play
-            </p>
-            <h1 className="[text-shadow:0_2px_18px_#00172c,0_1px_3px_#00172c] mt-6 max-w-3xl font-serif text-4xl font-bold leading-[1.04] tracking-tight text-white sm:text-5xl md:text-6xl">
-              A card game your kids will love, and you will too.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-cyan-50/90 md:text-xl">
-              SeaRealm turns the wonder of God’s creation into fast, face-to-face fun. Kids build living reefs, discover real ocean creatures, and make strategic choices with siblings and friends.
-            </p>
+      <HomeDive />
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/store"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#f7c948] px-6 py-3 text-base font-bold text-[#082f49] shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/50"
-              >
-                Explore the Store
-              </Link>
-              <Link
-                href="/instructions"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-base font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
-              >
-                See how it plays
-              </Link>
-            </div>
-            <p className="mt-4 text-sm text-cyan-100/75">
-              Want launch news, card reveals, and early purchase updates?{" "}
-              <a
-                href="#signup"
-                className="font-bold text-white underline decoration-cyan-200/60 underline-offset-4 hover:text-[#f7c948]"
-              >
-                Join the crew.
-              </a>
-            </p>
-
-            <dl className="mt-9 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-white/15 pt-7 sm:grid-cols-3">
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Made for</dt>
-                <dd className="mt-1 font-semibold text-white">Families with kids 6–14</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Play time</dt>
-                <dd className="mt-1 font-semibold text-white">Under 30 min. for skilled players</dd>
-              </div>
-              <div className="col-span-2 sm:col-span-1">
-                <dt className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Setup</dt>
-                <dd className="mt-1 font-semibold text-white">Quick to start and pack up</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="seapals-hero-card-stage relative mx-auto min-h-[410px] w-full max-w-2xl overflow-hidden rounded-[1.75rem] border border-cyan-200/15 bg-[#062f46] shadow-inner sm:min-h-[460px] lg:-mr-8 lg:min-h-[500px]">
-            <div aria-hidden="true" className="absolute inset-0">
-              {heroCardStreams.map((stream) => (
-                <div
-                  key={stream.src}
-                  className={`seapals-hero-card-stream ${stream.className}`}
-                >
-                  <div className="seapals-hero-card-stream-track">
-                    <Image
-                      src={stream.src}
-                      alt=""
-                      width={stream.width}
-                      height={stream.height}
-                      sizes="1800px"
-                      className="seapals-hero-card-stream-image"
-                    />
-                    <Image
-                      src={stream.src}
-                      alt=""
-                      width={stream.width}
-                      height={stream.height}
-                      sizes="1800px"
-                      className="seapals-hero-card-stream-image"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div aria-hidden="true" className="seapals-hero-card-vignette absolute inset-0" />
-
-            <div className="relative z-10 flex min-h-[410px] flex-col items-center justify-center px-5 py-9 sm:min-h-[460px] sm:px-8 lg:min-h-[500px]">
-              <div className="grid w-full max-w-sm grid-cols-3 items-center gap-2 sm:max-w-md sm:gap-4">
-                {heroCards.map((card) => (
-                  <div
-                    key={card.src}
-                    className={`overflow-hidden rounded-xl bg-white p-1.5 shadow-2xl shadow-black/45 ring-1 ring-white/70 transition duration-300 hover:z-20 hover:-translate-y-2 sm:rounded-2xl sm:p-2 ${card.className}`}
-                  >
-                    <Image
-                      src={card.src}
-                      alt={card.alt}
-                      width={375}
-                      height={525}
-                      priority
-                      sizes="(max-width: 640px) 26vw, (max-width: 1024px) 150px, 140px"
-                      className="h-auto w-full rounded-lg sm:rounded-xl"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-7 max-w-sm px-5 py-4 text-center">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">What kids are building</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-white">
-                  A thriving reef—one coral, creature, and smart decision at a time.
-                </p>
-              </div>
-            </div>
-          </div>
+      <section aria-label="Explore SeaRealm" className="mx-auto max-w-3xl pb-10 pt-8 md:pb-16">
+        <div className="flex flex-col justify-center gap-3 sm:flex-row">
+          <Link
+            href="/store"
+            className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#f7c948] px-6 py-3 text-base font-bold text-[#082f49] shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/50"
+          >
+            Explore the Store
+          </Link>
+          <Link
+            href="/instructions"
+            className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-base font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
+          >
+            See how it plays
+          </Link>
         </div>
+        <p className="mt-4 text-center text-sm text-cyan-100/75">
+          Want launch news, card reveals, and early purchase updates?{" "}
+          <a
+            href="#signup"
+            className="font-bold text-white underline decoration-cyan-200/60 underline-offset-4 hover:text-[#f7c948]"
+          >
+            Join the crew.
+          </a>
+        </p>
+
+        <dl className="mt-9 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-white/15 pt-7 sm:grid-cols-3">
+          <div>
+            <dt className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Made for</dt>
+            <dd className="mt-1 font-semibold text-white">Families with kids 6–14</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Play time</dt>
+            <dd className="mt-1 font-semibold text-white">Under 30 min. for skilled players</dd>
+          </div>
+          <div className="col-span-2 sm:col-span-1">
+            <dt className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Setup</dt>
+            <dd className="mt-1 font-semibold text-white">Quick to start and pack up</dd>
+          </div>
+        </dl>
       </section>
 
       <section className="py-16 md:py-24" id="what-it-is">

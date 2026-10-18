@@ -59,7 +59,11 @@ export default function OceanBackground() {
         return;
       }
 
-      world.style.transform = `translate3d(0, ${-progress * travel}px, 0)`;
+      // The homepage invitation descends below the surface before the card passage.
+      const surfaceOffset = pathname === "/"
+        ? Math.min(travel, Math.max(0, window.scrollY))
+        : progress * travel;
+      world.style.transform = `translate3d(0, ${-surfaceOffset}px, 0)`;
     }
 
     function scheduleFrame() {

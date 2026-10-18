@@ -1,0 +1,119 @@
+.intro {
+  display: flex;
+  min-height: calc(100svh - 10.5rem);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0 clamp(3rem, 10svh, 6rem);
+  text-align: center;
+  color: #fff;
+}
+
+.headline {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.25rem, 6.2vw, 5.5rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+  text-shadow: 0 2px 24px rgb(0 20 40 / 60%);
+}
+.headline span { display: block; }
+
+.invitation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: clamp(1.75rem, 4svh, 2.75rem);
+  padding: .5rem 1rem;
+  border-radius: 1rem;
+  color: #e0faff;
+  text-decoration: none;
+  animation: appear 800ms ease-out 1s both;
+}
+.subtitle { font-size: clamp(1rem, 2.1vw, 1.375rem); letter-spacing: .04em; }
+.arrow {
+  display: grid;
+  width: 48px;
+  height: 54px;
+  place-items: center;
+  animation: beckon 2.4s ease-in-out 1.8s infinite;
+}
+.arrow svg { width: 26px; height: 40px; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.invitation:hover { color: #fff; }
+.invitation:focus-visible, .cardLink:focus-visible { outline: 3px solid #a5f3fc; outline-offset: 8px; }
+/* Keyboard users should never land on an invisible, delayed link. */
+.invitation:focus-visible { animation: none; }
+
+.cardPassage { padding-top: 10svh; padding-bottom: 4svh; scroll-margin-top: 3rem; }
+.cardPair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(.5rem, 4vw, 5rem);
+  padding-bottom: clamp(4rem, 12svh, 8rem);
+}
+.card {
+  width: clamp(8rem, 43vw, 18.75rem);
+  max-width: 100%;
+  margin: 0;
+  justify-self: start;
+  transform: rotate(-7deg);
+}
+.card:nth-child(2) {
+  justify-self: end;
+  margin-top: clamp(8rem, 22svh, 12rem);
+  transform: rotate(7deg);
+}
+.cardPair:nth-child(2) .card:first-child { transform: rotate(-4deg); }
+.cardPair:nth-child(2) .card:nth-child(2) { transform: rotate(5deg); }
+.cardPair:nth-child(3) .card:first-child { transform: rotate(-8deg); }
+.cardPair:nth-child(3) .card:nth-child(2) { transform: rotate(4deg); }
+.cardLink { display: block; border-radius: 5%; transition: transform 250ms ease; }
+.cardLink:hover { transform: translateY(-6px); }
+.cardImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 5%;
+  box-shadow: 0 18px 45px rgb(0 8 22 / 40%), 0 0 0 1px rgb(224 250 255 / 16%);
+}
+.cardName {
+  margin-top: 1.125rem;
+  color: #cffafe;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .16em;
+  line-height: 1.6;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+@media (min-width: 768px) {
+  .intro { min-height: calc(100svh - clamp(7rem, 18svh, 12rem) - 6rem); }
+  .cardPassage { padding-inline: 5%; }
+  .card { width: clamp(12rem, 28vw, 18.75rem); }
+  .cardPair:nth-child(2) { padding-inline: 7%; }
+}
+
+@media (max-width: 359px) {
+  .headline { font-size: 2rem; }
+  .cardName { letter-spacing: .08em; font-size: .625rem; }
+}
+
+@keyframes appear {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes beckon {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invitation, .arrow { animation: none; }
+  .cardLink { transition: none; }
+  .cardLink:hover { transform: none; }
+}
