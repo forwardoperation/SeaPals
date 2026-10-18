@@ -695,7 +695,7 @@ export default function Storefront({
   return (
     <main
       className={
-        "text-slate-900 " +
+        "text-white " +
         (checkoutEnabled && cartReady && cartCount > 0
           ? "pb-[calc(7rem+env(safe-area-inset-bottom))] lg:pb-24"
           : "pb-16 md:pb-24")
@@ -704,12 +704,12 @@ export default function Storefront({
       {!detailProduct ? (<>
       <StoreHero cards={heroCards} />
       {testCheckout ? (
-        <p role="status" className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-950">
+        <p role="status" className="mt-5 rounded-2xl border border-amber-200/40 bg-amber-950/45 px-5 py-4 text-sm font-semibold text-amber-100">
           Stripe sandbox mode is on. Use test payment details only; no real
           charge or payout will occur.
         </p>
       ) : !checkoutEnabled ? (
-        <p role="status" className="mt-5 rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 text-sm text-cyan-950">
+        <p role="status" className="mt-5 rounded-2xl border border-cyan-200/30 bg-cyan-300/10 px-5 py-4 text-sm text-cyan-50">
           Store preview is on. Ordering stays disabled while shipping-rate,
           inventory, tax, and fulfillment launch checks are completed.
         </p>
@@ -718,7 +718,7 @@ export default function Storefront({
       </>) : null}
 
       {detailProduct && testCheckout ? (
-        <p role="status" className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-950">
+        <p role="status" className="mb-6 rounded-2xl border border-amber-200/40 bg-amber-950/45 px-5 py-4 text-sm font-semibold text-amber-100">
           Stripe sandbox mode is on. Use test payment details only; no real
           charge or payout will occur.
         </p>
@@ -770,7 +770,7 @@ export default function Storefront({
                   <Link
                     key={group.id}
                     href={`#category-${group.id}`}
-                    className="rounded-full border border-cyan-200 bg-white px-4 py-2 text-sm font-bold text-cyan-800 shadow-sm transition hover:border-cyan-400 hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-cyan-200/60"
+                    className="rounded-full border border-cyan-200/30 bg-slate-950/40 px-4 py-2 text-sm font-bold text-cyan-100 shadow-sm transition hover:border-cyan-400 hover:bg-cyan-300/20 focus:outline-none focus:ring-4 focus:ring-cyan-200/60"
                   >
                     {group.meta.label}
                   </Link>
@@ -783,15 +783,15 @@ export default function Storefront({
                     {group.id === firstPreorderCategoryId ? (
                       <aside
                         aria-labelledby="preorder-heading"
-                        className="mb-9 overflow-hidden rounded-3xl border border-amber-300 bg-gradient-to-br from-amber-100 via-amber-50 to-white px-6 py-7 shadow-sm sm:px-8"
+                        className="mb-9 overflow-hidden rounded-3xl border border-amber-200/40 bg-slate-950/40 px-6 py-7 shadow-sm sm:px-8"
                       >
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-800">
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-200">
                           Starter Kits &amp; Expansion Decks
                         </p>
-                        <h3 id="preorder-heading" className="mt-2 text-3xl font-black tracking-tight text-[#073d58] sm:text-4xl">
+                        <h3 id="preorder-heading" className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
                           {preorderCampaign.headline}
                         </h3>
-                        <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-slate-700">
+                        <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-cyan-50">
                           {preorderCampaign.message}
                         </p>
                       </aside>
@@ -842,10 +842,10 @@ export default function Storefront({
                             key={product.id}
                             id={`product-${product.id}`}
                             className={
-                              "group flex scroll-mt-8 flex-col overflow-hidden rounded-[1.75rem] border bg-white shadow-lg shadow-cyan-950/5 transition duration-200 " +
+                              "group flex scroll-mt-8 flex-col overflow-hidden rounded-[1.75rem] border bg-slate-950/40 shadow-lg shadow-cyan-950/5 transition duration-200 " +
                               (isHighlighted
-                                ? "border-amber-400 ring-4 ring-amber-200/70"
-                                : "border-slate-200 hover:-translate-y-1 hover:border-cyan-300 hover:shadow-xl")
+                                ? "border-amber-300 ring-4 ring-amber-200/35"
+                                : "border-white/20 hover:-translate-y-1 hover:border-cyan-300 hover:shadow-xl")
                             }
                           >
                             <Link
@@ -870,12 +870,12 @@ export default function Storefront({
 
                             <div className="flex flex-1 flex-col p-5 sm:p-6">
                               <div className="flex items-start justify-between gap-4">
-                                <h4 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-                                  <Link href={getStoreProductPath(product.id)} className="rounded-sm transition hover:text-cyan-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200">
+                                <h4 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+                                  <Link href={getStoreProductPath(product.id)} className="rounded-sm transition hover:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200">
                                     {product.name}
                                   </Link>
                                 </h4>
-                                <p className="shrink-0 text-lg font-black text-[#075b7d]">
+                                <p className="shrink-0 text-lg font-black text-cyan-100">
                                   {formatCatalogPrice(product.priceCents, currency)}
                                 </p>
                               </div>
@@ -888,7 +888,7 @@ export default function Storefront({
                                       <Link
                                         key={deck.id}
                                         href={deck.href}
-                                        className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border-2 border-cyan-700 bg-cyan-50 px-3 py-2 text-center text-sm font-black text-cyan-900 transition hover:bg-cyan-100 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200/70"
+                                        className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border-2 border-cyan-200/50 bg-cyan-300/10 px-3 py-2 text-center text-sm font-black text-cyan-100 transition hover:bg-cyan-300/20 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200/70"
                                       >
                                         {product.trialDecks.length > 1 ? `Preview ${deckName}` : "Preview deck"}
                                       </Link>
@@ -901,7 +901,7 @@ export default function Storefront({
                                 <div className="mt-auto pt-4">
                                   <Link
                                     href={product.setListHref}
-                                    className="inline-flex min-h-10 w-full items-center justify-center rounded-xl border-2 border-cyan-700 bg-cyan-50 px-3 py-2 text-center text-sm font-black text-cyan-900 transition hover:bg-cyan-100 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200/70"
+                                    className="inline-flex min-h-10 w-full items-center justify-center rounded-xl border-2 border-cyan-200/50 bg-cyan-300/10 px-3 py-2 text-center text-sm font-black text-cyan-100 transition hover:bg-cyan-300/20 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200/70"
                                   >
                                     {product.setListLabel}
                                   </Link>
@@ -912,7 +912,7 @@ export default function Storefront({
                                 type="button"
                                 disabled={!canAdd}
                                 onClick={() => addToCart(product)}
-                                className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#f7c948] px-5 py-3 font-black text-[#082f49] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/70 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+                                className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#f7c948] px-5 py-3 font-black text-[#082f49] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/70 disabled:cursor-not-allowed disabled:bg-slate-900/60 disabled:text-slate-300 disabled:shadow-none"
                               >
                                 <CartGlyph />
                                 {!product.available
@@ -938,11 +938,11 @@ export default function Storefront({
               </div>
             </>
           ) : (
-            <div className="mt-7 rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-              <h3 className="text-xl font-bold text-slate-950">
+            <div className="mt-7 rounded-3xl border border-dashed border-white/30 bg-slate-950/40 px-6 py-12 text-center">
+              <h3 className="text-xl font-bold text-white">
                 Products are being prepared
               </h3>
-              <p className="mt-2 text-slate-600">
+              <p className="mt-2 text-cyan-100">
                 Check back soon to explore the SeaRealm store.
               </p>
             </div>
@@ -955,9 +955,9 @@ export default function Storefront({
           ref={cartSummaryRef}
           tabIndex={-1}
           aria-labelledby="cart-heading"
-          className="scroll-mt-4 overflow-hidden rounded-[1.75rem] border border-cyan-100 bg-white shadow-xl shadow-cyan-950/10 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300/70 lg:sticky lg:top-6"
+          className="scroll-mt-4 overflow-hidden rounded-[1.75rem] border border-cyan-100/25 bg-slate-950/55 shadow-xl shadow-cyan-950/10 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300/70 lg:sticky lg:top-6"
         >
-          <div className="bg-[#073d58] px-5 py-5 text-white">
+          <div className="bg-slate-950/35 px-5 py-5 text-white">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-cyan-100">
@@ -986,12 +986,12 @@ export default function Storefront({
 
           <div className="p-5">
             {!cartReady ? (
-              <p className="py-8 text-center text-sm text-slate-500" role="status">
+              <p className="py-8 text-center text-sm text-cyan-100/85" role="status">
                 Loading your saved cart...
               </p>
             ) : cartItems.length ? (
               <div className="space-y-5">
-                <ul className="divide-y divide-slate-100" aria-label="Cart items">
+                <ul className="divide-y divide-white/15" aria-label="Cart items">
                   {cartItems.map(({ product, quantity }) => (
                     <li key={product.id} className="py-4 first:pt-0">
                       <div className="flex items-start gap-3">
@@ -1006,10 +1006,10 @@ export default function Storefront({
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-2">
-                            <h3 className="text-sm font-bold leading-5 text-slate-950">
+                            <h3 className="text-sm font-bold leading-5 text-white">
                               {product.name}
                             </h3>
-                            <span className="shrink-0 text-sm font-bold text-slate-800">
+                            <span className="shrink-0 text-sm font-bold text-white">
                               {formatMoney(
                                 Number(product.priceCents ?? 0) * quantity,
                                 currency
@@ -1017,25 +1017,25 @@ export default function Storefront({
                             </span>
                           </div>
                           {product.preorder ? (
-                            <p className="mt-1 text-xs font-bold leading-5 text-amber-800">
+                            <p className="mt-1 text-xs font-bold leading-5 text-amber-200">
                               {preorderCampaign.fulfillmentLabel}
                             </p>
                           ) : null}
                           <div className="mt-3 flex items-center justify-between gap-3">
                             <div
                               role="group"
-                              className="inline-flex items-center rounded-full border border-slate-200"
+                              className="inline-flex items-center rounded-full border border-white/20"
                               aria-label={"Quantity for " + product.name}
                             >
                               <button
                                 type="button"
                                 onClick={() => changeQuantity(product.id, -1)}
-                                className="flex h-9 w-9 items-center justify-center rounded-l-full text-lg font-bold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-cyan-200/60"
+                                className="flex h-9 w-9 items-center justify-center rounded-l-full text-lg font-bold text-cyan-50 transition hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/60"
                                 aria-label={"Decrease " + product.name + " quantity"}
                               >
                                 -
                               </button>
-                              <span className="min-w-8 text-center text-sm font-black tabular-nums text-slate-950">
+                              <span className="min-w-8 text-center text-sm font-black tabular-nums text-white">
                                 {quantity}
                               </span>
                               <button
@@ -1046,7 +1046,7 @@ export default function Storefront({
                                   cartCount >= STORE_MAX_CART_QUANTITY
                                 }
                                 onClick={() => changeQuantity(product.id, 1)}
-                                className="flex h-9 w-9 items-center justify-center rounded-r-full text-lg font-bold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-cyan-200/60 disabled:cursor-not-allowed disabled:text-slate-300"
+                                className="flex h-9 w-9 items-center justify-center rounded-r-full text-lg font-bold text-cyan-50 transition hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/60 disabled:cursor-not-allowed disabled:text-slate-500"
                                 aria-label={"Increase " + product.name + " quantity"}
                               >
                                 +
@@ -1055,7 +1055,7 @@ export default function Storefront({
                             <button
                               type="button"
                               onClick={() => removeFromCart(product.id)}
-                              className="text-xs font-bold text-slate-500 underline decoration-slate-300 underline-offset-4 transition hover:text-rose-700 focus:outline-none focus:ring-4 focus:ring-cyan-200/60"
+                              className="text-xs font-bold text-cyan-100/85 underline decoration-cyan-200/50 underline-offset-4 transition hover:text-rose-200 focus:outline-none focus:ring-4 focus:ring-cyan-200/60"
                             >
                               Remove
                             </button>
@@ -1067,7 +1067,7 @@ export default function Storefront({
                 </ul>
 
                 {cartHasPreorders ? (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+                  <div className="rounded-xl border border-amber-200/40 bg-amber-950/45 px-4 py-3 text-sm leading-6 text-amber-100">
                     <p className="font-black">Your order includes a pre-order</p>
                     <p className="mt-1">{preorderCampaign.message}</p>
                     <p className="mt-2 text-xs leading-5">
@@ -1077,8 +1077,8 @@ export default function Storefront({
                     </p>
                   </div>
                 ) : (
-                <fieldset className="space-y-2 border-t border-slate-200 pt-4">
-                  <legend className="text-sm font-black text-slate-950">
+                <fieldset className="space-y-2 border-t border-white/20 pt-4">
+                  <legend className="text-sm font-black text-white">
                     Production speed
                   </legend>
                   {productionChoices.map((option) => {
@@ -1088,8 +1088,8 @@ export default function Storefront({
                         key={option.id}
                         className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition ${
                           selected
-                            ? "border-cyan-500 bg-cyan-50"
-                            : "border-slate-200 bg-white hover:border-cyan-300"
+                            ? "border-cyan-200 bg-cyan-300/20"
+                            : "border-white/20 bg-slate-950/25 hover:border-cyan-200/70 hover:bg-white/10"
                         }`}
                       >
                         <input
@@ -1102,21 +1102,21 @@ export default function Storefront({
                             setCheckoutError("");
                             setSelectedProductionOptionId(option.id);
                           }}
-                          className="mt-1 h-4 w-4 accent-cyan-700"
+                          className="mt-1 h-4 w-4 accent-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200"
                         />
                         <span className="min-w-0 flex-1">
                           <span className="flex items-start justify-between gap-3">
-                            <span className="text-sm font-bold text-slate-900">
+                            <span className="text-sm font-bold text-white">
                               {option.displayName}
                             </span>
-                            <span className="shrink-0 text-sm font-black text-slate-900">
+                            <span className="shrink-0 text-sm font-black text-white">
                               {option.amountCents
                                 ? `+${formatMoney(option.amountCents, currency)}`
                                 : "Included"}
                             </span>
                           </span>
                           {option.description ? (
-                            <span className="mt-1 block text-xs leading-5 text-slate-500">
+                            <span className="mt-1 block text-xs leading-5 text-cyan-100/85">
                               {option.description}
                             </span>
                           ) : null}
@@ -1124,13 +1124,13 @@ export default function Storefront({
                       </label>
                     );
                   })}
-                  <p className="px-1 text-xs leading-5 text-slate-500">
+                  <p className="px-1 text-xs leading-5 text-cyan-100/85">
                     Production timing ends when a mailed order is handed to the
                     carrier or a pickup order is marked ready. It is not a
                     delivery estimate.
                   </p>
                   {expeditedProductionOption ? (
-                    <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-950">
+                    <p className="rounded-lg border border-amber-200/40 bg-amber-950/45 px-3 py-2 text-xs font-semibold leading-5 text-amber-100">
                       Expedited production is limited to{" "}
                       {hasExpeditedDailyOrderLimit
                         ? `${normalizedExpeditedDailyOrderLimit} orders per SeaRealm production day`
@@ -1146,8 +1146,8 @@ export default function Storefront({
                 </fieldset>
                 )}
 
-                <fieldset className="space-y-2 border-t border-slate-200 pt-4">
-                  <legend className="text-sm font-black text-slate-950">
+                <fieldset className="space-y-2 border-t border-white/20 pt-4">
+                  <legend className="text-sm font-black text-white">
                     Shipping or pickup
                   </legend>
                   {fulfillmentOptions.map((option) => {
@@ -1166,8 +1166,8 @@ export default function Storefront({
                         key={option.id}
                         className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 transition ${
                           selected
-                            ? "border-cyan-500 bg-cyan-50"
-                            : "border-slate-200 bg-white hover:border-cyan-300"
+                            ? "border-cyan-200 bg-cyan-300/20"
+                            : "border-white/20 bg-slate-950/25 hover:border-cyan-200/70 hover:bg-white/10"
                         }`}
                       >
                         <input
@@ -1180,28 +1180,28 @@ export default function Storefront({
                             setCheckoutError("");
                             setSelectedFulfillmentOptionId(option.id);
                           }}
-                          className="mt-1 h-4 w-4 accent-cyan-700"
+                          className="mt-1 h-4 w-4 accent-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200"
                         />
                         <span className="min-w-0 flex-1">
                           <span className="flex items-start justify-between gap-3">
-                            <span className="text-sm font-bold text-slate-900">
+                            <span className="text-sm font-bold text-white">
                               {option.displayName}
                             </span>
-                            <span className="shrink-0 text-sm font-black text-slate-900">
+                            <span className="shrink-0 text-sm font-black text-white">
                               {displayedAmountCents
                                 ? formatMoney(displayedAmountCents, currency)
                                 : "Free"}
                             </span>
                           </span>
                           {option.fulfillmentMethod === "pickup" ? (
-                            <span className="mt-1 block text-xs leading-5 text-slate-500">
+                            <span className="mt-1 block text-xs leading-5 text-cyan-100/85">
                               Free scheduled pickup in Elverson, PA. After your
                               order is built, we will email you to arrange a
                               pickup time. You do not choose a pickup time during
                               checkout.
                             </span>
                           ) : option.description ? (
-                            <span className="mt-1 block text-xs leading-5 text-slate-500">
+                            <span className="mt-1 block text-xs leading-5 text-cyan-100/85">
                               {option.description}{" "}
                               {rateTier?.id === "large"
                                 ? "Large-parcel rate applies above 1 lb through 8 lb."
@@ -1216,45 +1216,45 @@ export default function Storefront({
                   })}
                 </fieldset>
 
-                <dl className="space-y-2 border-t border-slate-200 pt-4 text-sm">
-                  <div className="flex justify-between gap-4 text-slate-600">
+                <dl className="space-y-2 border-t border-white/20 pt-4 text-sm">
+                  <div className="flex justify-between gap-4 text-cyan-100">
                     <dt>Subtotal</dt>
-                    <dd className="font-bold text-slate-900">
+                    <dd className="font-bold text-white">
                       {formatMoney(subtotalCents, currency)}
                     </dd>
                   </div>
-                  <div className="flex justify-between gap-4 text-slate-600">
+                  <div className="flex justify-between gap-4 text-cyan-100">
                     <dt>{cartHasPreorders ? "Pre-order fulfillment" : selectedProductionOption.displayName}</dt>
-                    <dd className="font-bold text-slate-900">
+                    <dd className="font-bold text-white">
                       {normalizedProductionCents
                         ? formatMoney(normalizedProductionCents, currency)
                         : "Included"}
                     </dd>
                   </div>
-                  <div className="flex justify-between gap-4 text-slate-600">
+                  <div className="flex justify-between gap-4 text-cyan-100">
                     <dt>
                       {selectedFulfillmentOption.fulfillmentMethod === "pickup"
                         ? selectedFulfillmentOption.displayName
                         : "Shipping & handling"}
                     </dt>
-                    <dd className="font-bold text-slate-900">
+                    <dd className="font-bold text-white">
                       {normalizedShippingCents
                         ? formatMoney(normalizedShippingCents, currency)
                         : "Free"}
                     </dd>
                   </div>
-                  <div className="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base">
-                    <dt className="font-black text-slate-950">
+                  <div className="flex justify-between gap-4 border-t border-white/20 pt-3 text-base">
+                    <dt className="font-black text-white">
                       {automaticTaxEnabled ? "Estimated total" : "Total"}
                     </dt>
-                    <dd className="font-black text-[#075b7d]">
+                    <dd className="font-black text-cyan-100">
                       {formatMoney(totalCents, currency)}
                     </dd>
                   </div>
                 </dl>
 
                 {automaticTaxEnabled ? (
-                  <p className="text-xs leading-5 text-slate-500">
+                  <p className="text-xs leading-5 text-cyan-100/85">
                     Applicable tax is calculated in secure checkout.
                   </p>
                 ) : null}
@@ -1262,17 +1262,17 @@ export default function Storefront({
                 {checkoutError ? (
                   <p
                     role="alert"
-                    className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold leading-5 text-rose-800"
+                    className="rounded-xl border border-rose-200/40 bg-rose-950/60 px-3 py-2 text-sm font-semibold leading-5 text-rose-100"
                   >
                     {checkoutError}
                   </p>
                 ) : null}
 
-                <p className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs leading-5 text-slate-600">
+                <p className="rounded-xl border border-white/20 bg-slate-950/40 px-3 py-2 text-xs leading-5 text-cyan-100">
                   Need to change an order? Email{" "}
                   <a
                     href={`mailto:${PUBLIC_SUPPORT_EMAIL}`}
-                    className="font-bold text-cyan-800 underline underline-offset-4"
+                    className="font-bold text-cyan-100 underline underline-offset-4"
                   >
                     {PUBLIC_SUPPORT_EMAIL}
                   </a>{" "}
@@ -1280,7 +1280,7 @@ export default function Storefront({
                   be returned within 30 days after delivery or pickup; the{" "}
                   <Link
                     href="/terms#purchases"
-                    className="font-bold text-cyan-800 underline underline-offset-4"
+                    className="font-bold text-cyan-100 underline underline-offset-4"
                   >
                     purchase terms
                   </Link>{" "}
@@ -1288,7 +1288,7 @@ export default function Storefront({
                   deadlines.
                 </p>
 
-                <p className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs leading-5 text-slate-600">
+                <p className="rounded-xl border border-cyan-200/30 bg-cyan-300/10 px-3 py-2 text-xs leading-5 text-cyan-100">
                   Stripe will collect the adult purchaser&apos;s payment,
                   contact, and billing details
                   {selectedFulfillmentOption.fulfillmentMethod === "shipping"
@@ -1298,14 +1298,14 @@ export default function Storefront({
                   continuing, you agree to the{" "}
                   <Link
                     href="/terms#purchases"
-                    className="font-bold text-cyan-800 underline underline-offset-4"
+                    className="font-bold text-cyan-100 underline underline-offset-4"
                   >
                     Terms of Use
                   </Link>{" "}
                   and acknowledge the{" "}
                   <Link
                     href="/privacy#collection"
-                    className="font-bold text-cyan-800 underline underline-offset-4"
+                    className="font-bold text-cyan-100 underline underline-offset-4"
                   >
                     Privacy Policy
                   </Link>
@@ -1317,7 +1317,7 @@ export default function Storefront({
                   disabled={!checkoutEnabled || isCheckingOut}
                   onClick={beginCheckout}
                   aria-busy={isCheckingOut}
-                  className="inline-flex min-h-13 w-full items-center justify-center rounded-xl bg-[#f7c948] px-5 py-3.5 text-base font-black text-[#082f49] shadow-md transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/70 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+                  className="inline-flex min-h-13 w-full items-center justify-center rounded-xl bg-[#f7c948] px-5 py-3.5 text-base font-black text-[#082f49] shadow-md transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/70 disabled:cursor-not-allowed disabled:bg-slate-900/60 disabled:text-slate-300 disabled:shadow-none"
                 >
                   {isCheckingOut
                     ? "Opening secure checkout..."
@@ -1330,13 +1330,13 @@ export default function Storefront({
               </div>
             ) : (
               <div className="py-8 text-center">
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-cyan-50 text-cyan-700">
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-cyan-300/10 text-cyan-200">
                   <CartGlyph />
                 </span>
-                <h3 className="mt-4 font-bold text-slate-950">
+                <h3 className="mt-4 font-bold text-white">
                   Your cart is empty
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
+                <p className="mt-2 text-sm leading-6 text-cyan-100/85">
                   {checkoutEnabled
                     ? "Choose an available product to begin your order."
                     : "Browse the collection while final launch checks are completed."}
@@ -1344,7 +1344,7 @@ export default function Storefront({
               </div>
             )}
 
-            <p className="mt-5 border-t border-slate-100 pt-4 text-xs leading-5 text-slate-500">
+            <p className="mt-5 border-t border-white/15 pt-4 text-xs leading-5 text-cyan-100/85">
               Prices and availability shown here come from the current SeaRealm
               store catalog. {checkoutEnabled
                 ? "The checkout service verifies them again before payment."
@@ -1361,7 +1361,7 @@ export default function Storefront({
         isCartSummaryAhead,
       }) ? (
         <div
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-cyan-100 bg-white/95 pt-3 shadow-[0_-12px_30px_rgba(6,47,70,0.16)] backdrop-blur lg:hidden"
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-cyan-100/20 bg-slate-950/85 pt-3 shadow-[0_-12px_30px_rgba(6,47,70,0.16)] backdrop-blur lg:hidden"
           style={{
             paddingRight: "max(1rem, env(safe-area-inset-right))",
             paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",

@@ -36,7 +36,7 @@ function getPhysicalDecks() {
 
 function CardRow({ card }) {
   return (
-    <tr className="border-t border-slate-100">
+    <tr className="border-t border-white/10">
       <td className="px-3 py-3">
         <div className="flex items-center gap-3">
           <Image
@@ -44,15 +44,15 @@ function CardRow({ card }) {
             alt={card.displayName}
             width={48}
             height={67}
-            className="h-16 w-12 shrink-0 rounded border border-slate-200 object-cover"
+            className="h-16 w-12 shrink-0 rounded border border-cyan-200/20 object-cover"
           />
           <div className="min-w-0">
-            <div className="font-bold text-slate-900">{card.displayName}</div>
-            <div className="mt-0.5 text-xs font-semibold text-slate-500">{card.categoryLabel}</div>
+            <div className="font-bold text-white">{card.displayName}</div>
+            <div className="mt-0.5 text-xs font-semibold text-cyan-200">{card.categoryLabel}</div>
           </div>
         </div>
       </td>
-      <td className="w-20 px-3 py-3 text-right font-bold tabular-nums text-slate-900">
+      <td className="w-20 px-3 py-3 text-right font-bold tabular-nums text-white">
         x{card.quantity}
       </td>
     </tr>
@@ -63,10 +63,10 @@ function DeckList({ deck }) {
   return (
     <div className="grid items-start gap-5 lg:grid-cols-2">
       {deck.groups.map((group) => (
-        <section key={group.category} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <div className="flex items-center justify-between bg-slate-50 px-4 py-3">
-            <h3 id={`${deck.id}-${group.category}-heading`} className="font-bold text-slate-900">{group.label}</h3>
-            <span className="text-sm font-bold text-slate-500">{group.count} {group.count === 1 ? "card" : "cards"}</span>
+        <section key={group.category} className="overflow-hidden rounded-xl border border-cyan-200/20 bg-slate-950/35">
+          <div className="flex items-center justify-between bg-white/5 px-4 py-3">
+            <h3 id={`${deck.id}-${group.category}-heading`} className="font-bold text-white">{group.label}</h3>
+            <span className="text-sm font-bold text-cyan-200">{group.count} {group.count === 1 ? "card" : "cards"}</span>
           </div>
           <table aria-labelledby={`${deck.id}-${group.category}-heading`} className="w-full text-left text-sm">
             <thead className="sr-only">
@@ -99,22 +99,22 @@ function DeckSection({ deck }) {
             </Link>
             <Link
               href={`/simulator?deck=${deck.id}`}
-              className="inline-flex min-h-11 items-center justify-center rounded-full border-2 border-cyan-700 bg-white px-5 py-2.5 text-sm font-black text-cyan-800 transition hover:-translate-y-0.5 hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border-2 border-cyan-200/40 bg-slate-950/35 px-5 py-2.5 text-sm font-black text-cyan-100 transition hover:-translate-y-0.5 hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-cyan-200/70"
             >
               Open simulator
             </Link>
           </div>
           <p className="mt-3 text-sm leading-6 text-cyan-100">Simulator previews may differ from the physical contents listed here.</p>
         </div>
-        <Link href={getStoreProductPath(deck.productId)} className="relative block aspect-[4/3] w-44 shrink-0 self-center overflow-hidden rounded-2xl border border-cyan-100 bg-cyan-50 sm:self-start">
+        <Link href={getStoreProductPath(deck.productId)} className="relative block aspect-[4/3] w-44 shrink-0 self-center overflow-hidden rounded-2xl border border-cyan-200/20 bg-slate-950/35 sm:self-start">
           <Image src={deck.image} alt={deck.imageAlt || `${deck.name} deck box`} fill sizes="176px" className="object-contain p-3" />
         </Link>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2" aria-label={`${deck.name} card composition`}>
         {deck.groups.map((group) => (
-          <span key={group.category} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700">
-            {group.label} <strong className="font-bold text-slate-950">{group.count}</strong>
+          <span key={group.category} className="rounded-full border border-cyan-200/20 bg-slate-950/35 px-3 py-1.5 text-sm text-cyan-50">
+            {group.label} <strong className="font-bold text-white">{group.count}</strong>
           </span>
         ))}
       </div>
@@ -127,7 +127,7 @@ export default function DecksPage() {
   const decks = getPhysicalDecks();
   return (
     <main className="space-y-8 pb-12">
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <section className="overflow-hidden rounded-lg">
         <Image
           src="/images/store/product-photos/deck-collection-collage-v1.webp"
           alt="SeaRealm deck boxes: Drop Off, Coral Garden, Murky Water, Disruption, Stinging Fortress, Pelagic Zone, and Darkness Shroud"
@@ -137,18 +137,18 @@ export default function DecksPage() {
           sizes="(max-width: 767px) calc(100vw - 48px), (max-width: 1151px) calc(100vw - 80px), 1070px"
           className="block h-auto w-full object-contain"
         />
-        <div className="border-t border-slate-200 px-6 py-6 md:px-8">
-          <p className="text-sm font-bold uppercase tracking-wide text-cyan-700">Prebuilt Deck Guide</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">SeaRealm Decks</h1>
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">See what is included in each ready-to-play physical deck, with exact card quantities and artwork.</p>
+        <div className="border-t border-cyan-200/20 py-6 md:py-8">
+          <p className="text-sm font-bold uppercase tracking-wide text-cyan-200">Prebuilt Deck Guide</p>
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-white md:text-5xl">SeaRealm Decks</h1>
+          <p className="mt-4 max-w-3xl text-lg leading-8 text-cyan-100">See what is included in each ready-to-play physical deck, with exact card quantities and artwork.</p>
         </div>
       </section>
 
       <nav aria-label="Physical decks" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {decks.map((deck) => (
-          <a key={deck.id} href={`#${deck.id}`} className="rounded-lg border border-slate-200 bg-white p-4 transition hover:border-cyan-300 hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-cyan-200/70">
-            <div className="font-bold text-slate-950">{deck.name}</div>
-            <div className="mt-2 text-sm font-semibold text-slate-500">{deck.totalCards} cards</div>
+          <a key={deck.id} href={`#${deck.id}`} className="rounded-lg border border-cyan-200/20 bg-slate-950/35 p-4 transition hover:border-cyan-200/35 hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-cyan-200/70">
+            <div className="font-bold text-white">{deck.name}</div>
+            <div className="mt-2 text-sm font-semibold text-cyan-200">{deck.totalCards} cards</div>
           </a>
         ))}
       </nav>

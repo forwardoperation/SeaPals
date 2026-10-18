@@ -45,14 +45,14 @@ function NavLink({ item, active, onNavigate, compact = false }) {
         compact ? "px-3 py-2.5" : "px-3 py-2"
       } ${
         isActive
-          ? "bg-cyan-700 font-bold text-white shadow-sm"
-          : "font-medium text-slate-600 hover:bg-cyan-50 hover:text-cyan-800"
+          ? "bg-cyan-700/40 font-bold text-white ring-1 ring-cyan-200/20"
+          : "font-medium text-cyan-100/85 hover:bg-cyan-900/25 hover:text-white"
       }`}
     >
       <span
         aria-hidden="true"
         className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-          isActive ? "bg-amber-300" : "bg-cyan-300 group-hover:bg-cyan-600"
+          isActive ? "bg-amber-300" : "bg-cyan-300/60 group-hover:bg-cyan-100"
         }`}
       />
       <span>{item.label}</span>
@@ -110,18 +110,18 @@ export default function InstructionsNav() {
         <details
           data-rules-ignore
           data-mobile-instructions-nav
-          className="group max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl border border-cyan-200 bg-white/95 shadow-lg backdrop-blur"
+          className="group max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-2xl border border-cyan-200/25 bg-[#031c30]/85 shadow-lg backdrop-blur-md"
         >
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 font-bold text-slate-900 [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 font-bold text-white [&::-webkit-details-marker]:hidden">
             <span className="flex min-w-0 items-center gap-3">
-              <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-800">
+              <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-900/40 text-cyan-100">
                 ≡
               </span>
               <span className="truncate">Jump to: {activeLabel}</span>
             </span>
             <span
               aria-hidden="true"
-              className="text-cyan-700 transition group-open:rotate-180"
+              className="text-cyan-200 transition group-open:rotate-180"
             >
               ↓
             </span>
@@ -129,7 +129,7 @@ export default function InstructionsNav() {
           <nav
             data-rules-ignore
             aria-label="Instructions sections"
-            className="border-t border-cyan-100 p-2"
+            className="border-t border-cyan-200/20 p-2"
           >
             <div className="grid gap-1 sm:grid-cols-2">
               {items.map((item) => (
@@ -147,8 +147,8 @@ export default function InstructionsNav() {
       </div>
 
       <aside data-rules-ignore className="hidden lg:block">
-        <div className="sticky top-6 max-h-[calc(100dvh-3rem)] overflow-y-auto rounded-3xl border border-cyan-100 bg-white/90 p-4 shadow-sm backdrop-blur">
-          <p className="px-3 text-xs font-bold uppercase tracking-[0.22em] text-cyan-700">
+        <div className="sticky top-6 max-h-[calc(100dvh-3rem)] overflow-y-auto border-l border-cyan-200/20 py-4 pl-3">
+          <p className="px-3 text-xs font-bold uppercase tracking-[0.22em] text-cyan-200">
             On this page
           </p>
           <nav
@@ -158,7 +158,7 @@ export default function InstructionsNav() {
           >
             {groups.map((group) => (
               <div key={group.label}>
-                <p className="px-3 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-slate-400">
+                <p className="px-3 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-cyan-100/65">
                   {group.label}
                 </p>
                 <div className="mt-1 space-y-0.5 text-sm">
@@ -175,7 +175,7 @@ export default function InstructionsNav() {
             ))}
           </nav>
 
-          <div className="mt-5 rounded-2xl bg-slate-950 p-4 text-white">
+          <div className="mt-5 border-t border-white/15 px-3 pt-4 text-white">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
               Turn reminder
             </p>

@@ -124,7 +124,7 @@ const questions = [
         You can browse the complete launch collection in the{" "}
         <Link
           href="/store"
-          className="font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 hover:text-cyan-950"
+          className="font-bold text-cyan-100 underline decoration-cyan-300/60 underline-offset-4 hover:text-white"
         >
           SeaRealm Store
         </Link>
@@ -137,23 +137,14 @@ const questions = [
 
 export default function HomePage() {
   return (
-    <main className="pb-12 text-slate-900 md:pb-20">
-      <section className="relative isolate overflow-hidden rounded-[2rem] border border-white/15 bg-[#032b49]/75 px-5 py-10 text-white shadow-2xl shadow-cyan-950/15 backdrop-blur-[2px] sm:px-8 md:rounded-[2.75rem] md:px-12 md:py-14 lg:px-16 lg:py-16">
-        <div
-          aria-hidden="true"
-          className="absolute -right-32 -top-40 h-96 w-96 rounded-full bg-cyan-400/20 blur-3xl"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute -bottom-48 -left-32 h-96 w-96 rounded-full bg-emerald-400/15 blur-3xl"
-        />
-
+    <main className="pb-12 text-white md:pb-20">
+      <section className="relative isolate overflow-hidden px-1 py-10 text-white sm:px-4 md:py-14 lg:px-8 lg:py-16">
         <div className="relative grid items-center gap-12 lg:grid-cols-[1.05fr_.95fr] lg:gap-10">
           <div>
-            <p className="inline-flex rounded-full border border-cyan-200/25 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-100">
+            <p className="inline-flex rounded-full border border-cyan-200/25 bg-cyan-950/65 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-100">
               Coming soon · Creation-focused family play
             </p>
-            <h1 className="mt-6 max-w-3xl font-serif text-4xl font-bold leading-[1.04] tracking-tight text-white sm:text-5xl md:text-6xl">
+            <h1 className="[text-shadow:0_2px_18px_#00172c,0_1px_3px_#00172c] mt-6 max-w-3xl font-serif text-4xl font-bold leading-[1.04] tracking-tight text-white sm:text-5xl md:text-6xl">
               A card game your kids will love, and you will too.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-cyan-50/90 md:text-xl">
@@ -251,7 +242,7 @@ export default function HomePage() {
                 ))}
               </div>
 
-              <div className="mt-7 max-w-sm rounded-2xl border border-cyan-200/30 bg-[#082f49]/90 px-5 py-4 text-center shadow-xl backdrop-blur-md">
+              <div className="mt-7 max-w-sm px-5 py-4 text-center">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">What kids are building</p>
                 <p className="mt-1 text-sm font-semibold leading-6 text-white">
                   A thriving reef—one coral, creature, and smart decision at a time.
@@ -274,28 +265,28 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
             {familyBenefits.map((benefit, index) => (
               <article
                 key={benefit.number}
-                className={`rounded-3xl border p-6 shadow-sm ${
+                className={`border-t py-6 ${
                   index === 0
-                    ? "border-cyan-800 bg-[#073d58] text-white sm:col-span-2 sm:grid sm:grid-cols-[auto_1fr] sm:gap-6"
-                    : "border-slate-200 bg-white"
+                    ? "border-cyan-200/30 text-white sm:col-span-2 sm:grid sm:grid-cols-[auto_1fr] sm:gap-6"
+                    : "border-white/15"
                 }`}
               >
                 <p
                   className={`text-sm font-black tracking-[0.18em] ${
-                    index === 0 ? "text-[#f7c948]" : "text-cyan-700"
+                    index === 0 ? "text-[#f7c948]" : "text-cyan-200"
                   }`}
                 >
                   {benefit.number}
                 </p>
                 <div>
-                  <h3 className={`mt-3 text-xl font-bold ${index === 0 ? "sm:mt-0" : "text-slate-950"}`}>
+                  <h3 className={`mt-3 text-xl font-bold ${index === 0 ? "sm:mt-0" : "text-white"}`}>
                     {benefit.title}
                   </h3>
-                  <p className={`mt-3 leading-7 ${index === 0 ? "text-cyan-50/85" : "text-slate-600"}`}>
+                  <p className={`mt-3 leading-7 ${index === 0 ? "text-cyan-50/90" : "text-cyan-100/90"}`}>
                     {benefit.copy}
                   </p>
                 </div>
@@ -305,26 +296,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="rounded-[2rem] bg-[#f5efe2] px-5 py-12 sm:px-8 md:rounded-[2.75rem] md:px-12 md:py-16">
+      <section className="border-y border-white/15 py-12 md:py-16">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-amber-800">From one mom to another</p>
-          <h2 className="mt-4 font-serif text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#f7c948]">From one mom to another</p>
+          <h2 className="mt-4 font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Why moms are glad they said yes to SeaRealm.
           </h2>
         </div>
-        <div className="mt-10 grid gap-5 lg:grid-cols-2">
+        <div className="mt-10 grid gap-10 lg:grid-cols-2 lg:gap-12">
           {parentTestimonials.map((testimonial) => (
             <figure
               key={testimonial.name}
-              className="flex h-full flex-col rounded-3xl border border-amber-900/10 bg-white p-6 shadow-sm sm:p-8"
+              className="flex h-full flex-col border-l border-cyan-200/25 py-2 pl-6 sm:pl-8"
             >
-              <span aria-hidden="true" className="font-serif text-5xl leading-none text-cyan-600">“</span>
-              <blockquote className="mt-2 flex-1 font-serif text-xl leading-8 text-slate-800">
+              <span aria-hidden="true" className="font-serif text-5xl leading-none text-cyan-200/70">“</span>
+              <blockquote className="mt-2 flex-1 font-serif text-xl leading-8 text-white">
                 {testimonial.quote}
               </blockquote>
-              <figcaption className="mt-6 border-t border-slate-200 pt-5">
-                <span className="font-bold text-slate-950">{testimonial.name}</span>
-                <span className="ml-2 text-sm text-slate-500">{testimonial.role}</span>
+              <figcaption className="mt-6 border-t border-white/15 pt-5">
+                <span className="font-bold text-white">{testimonial.name}</span>
+                <span className="ml-2 text-sm text-cyan-100/80">{testimonial.role}</span>
               </figcaption>
             </figure>
           ))}
@@ -349,22 +340,22 @@ export default function HomePage() {
 
           <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             {youngPlayerSurvey.stats.map((stat) => (
-              <article key={stat.value} className="rounded-3xl border border-cyan-100 bg-cyan-50 p-6">
-                <p className="text-3xl font-black tracking-tight text-[#075b7d]">{stat.value}</p>
-                <p className="mt-3 font-bold leading-6 text-slate-950">{stat.label}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{stat.detail}</p>
+              <article key={stat.value} className="border-t border-cyan-200/25 py-6">
+                <p className="text-3xl font-black tracking-tight text-cyan-100">{stat.value}</p>
+                <p className="mt-3 font-bold leading-6 text-white">{stat.label}</p>
+                <p className="mt-2 text-sm leading-6 text-cyan-100/90">{stat.detail}</p>
               </article>
             ))}
           </div>
         </div>
-        <p className="mt-8 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-500">
+        <p className="mt-8 border-t border-white/15 py-4 text-sm leading-6 text-cyan-100/80">
           Source: {youngPlayerSurvey.responseCount} SeaPals player survey responses, collected before the SeaRealm name change. {youngPlayerSurvey.audienceNote} Counts reflect the exact wording described on each card.
         </p>
       </section>
 
-      <section className="overflow-hidden rounded-[2rem] border border-cyan-100 bg-white shadow-xl shadow-cyan-950/5 md:rounded-[2.75rem]">
-        <div className="grid lg:grid-cols-[.9fr_1.1fr]">
-          <div className="bg-[#073d58] p-6 text-white sm:p-8 md:p-12">
+      <section className="overflow-hidden border-y border-white/15 py-10 md:py-14">
+        <div className="grid gap-10 lg:grid-cols-[.9fr_1.1fr]">
+          <div className="py-2 text-white lg:pr-8">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-200">A game in three moves</p>
             <h2 className="mt-4 font-serif text-3xl font-bold tracking-tight sm:text-4xl">
               Build a reef. Bring it to life. Outplay your friends.
@@ -384,14 +375,14 @@ export default function HomePage() {
             </div>
             <Link
               href="/instructions"
-              className="mt-9 inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 py-3 font-bold text-[#073d58] transition hover:-translate-y-0.5 hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
+              className="mt-9 inline-flex min-h-12 items-center justify-center rounded-full bg-[#f7c948] px-6 py-3 font-bold text-[#073d58] transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
             >
               Learn how to play
             </Link>
           </div>
 
-          <div className="relative flex min-h-[390px] items-center justify-center overflow-hidden bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 p-8 sm:min-h-[480px]">
-            <div aria-hidden="true" className="absolute h-72 w-72 rounded-full border-[32px] border-white/55" />
+          <div className="relative flex min-h-[390px] items-center justify-center overflow-hidden p-8 sm:min-h-[480px]">
+            <div aria-hidden="true" className="absolute h-72 w-72 rounded-full border-[32px] border-cyan-200/10" />
             <div className="relative grid w-full max-w-lg grid-cols-2 gap-4 sm:gap-6">
               <Image
                 src="/images/cards/habitats/coral-reef.webp"
@@ -416,10 +407,10 @@ export default function HomePage() {
 
       <section
         aria-labelledby="try-seapals-heading"
-        className="mt-16 overflow-hidden rounded-[2rem] bg-[#062f46] text-white shadow-2xl shadow-cyan-950/15 md:mt-24 md:rounded-[2.75rem]"
+        className="mt-16 overflow-hidden border-b border-white/15 pb-16 text-white md:mt-24 md:pb-24"
       >
-        <div className="grid lg:grid-cols-[1.05fr_.95fr] lg:items-stretch">
-          <div className="p-6 sm:p-9 md:p-12 lg:p-14">
+        <div className="grid gap-10 lg:grid-cols-[1.05fr_.95fr] lg:items-stretch">
+          <div className="py-2 lg:pr-8">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#f7c948]">
               Try before you buy
             </p>
@@ -438,7 +429,7 @@ export default function HomePage() {
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               <Link
                 href="/decks"
-                className="group rounded-2xl border border-cyan-200/25 bg-white/10 p-5 transition hover:-translate-y-0.5 hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
+                className="group border-t border-cyan-200/25 px-1 py-5 transition hover:-translate-y-0.5 hover:border-cyan-100 hover:bg-cyan-950/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
               >
                 <span className="block text-xs font-black uppercase tracking-[0.16em] text-cyan-200">
                   Step 1
@@ -452,7 +443,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/instructions/tutorial"
-                className="group rounded-2xl border border-cyan-200/25 bg-white/10 p-5 transition hover:-translate-y-0.5 hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
+                className="group border-t border-cyan-200/25 px-1 py-5 transition hover:-translate-y-0.5 hover:border-cyan-100 hover:bg-cyan-950/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
               >
                 <span className="block text-xs font-black uppercase tracking-[0.16em] text-cyan-200">
                   Step 2
@@ -482,12 +473,12 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="relative flex min-h-[280px] items-center overflow-hidden bg-gradient-to-br from-cyan-100 via-sky-50 to-amber-50 p-6 sm:min-h-[340px] sm:p-9 lg:min-h-full lg:p-10">
+          <div className="relative flex min-h-[280px] items-center overflow-hidden py-6 sm:min-h-[340px] sm:p-6 lg:min-h-full">
             <div
               aria-hidden="true"
-              className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-300/35 blur-3xl"
+              className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-300/10 blur-3xl"
             />
-            <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-white p-3 shadow-2xl shadow-cyan-950/20 sm:p-4">
+            <div className="relative overflow-hidden rounded-2xl">
               <Image
                 src="/images/promo/decks-promo.png"
                 alt="The seven SeaRealm ready-to-play deck designs"
@@ -508,14 +499,14 @@ export default function HomePage() {
             A short read before you say yes.
           </h2>
         </div>
-        <div className="mx-auto mt-9 max-w-4xl divide-y divide-slate-200 overflow-hidden rounded-3xl border border-slate-200 bg-white">
+        <div className="mx-auto mt-9 max-w-4xl divide-y divide-white/15 border-y border-white/15">
           {questions.map((item) => (
-            <details key={item.question} className="group p-5 open:bg-cyan-50/50 sm:p-6">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 font-bold text-slate-950 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200/60">
+            <details key={item.question} className="group px-1 py-5 open:bg-cyan-950/15 sm:px-2 sm:py-6">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 font-bold text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-200/60">
                 {item.question}
-                <span aria-hidden="true" className="text-2xl font-light text-cyan-700 transition group-open:rotate-45">+</span>
+                <span aria-hidden="true" className="text-2xl font-light text-cyan-200 transition group-open:rotate-45">+</span>
               </summary>
-              <p className="mt-4 max-w-3xl pr-8 leading-7 text-slate-600">{item.answer}</p>
+              <p className="mt-4 max-w-3xl pr-8 leading-7 text-cyan-50/90">{item.answer}</p>
             </details>
           ))}
         </div>
@@ -523,10 +514,10 @@ export default function HomePage() {
 
       <section
         id="signup"
-        className="scroll-mt-6 overflow-hidden rounded-[2rem] bg-[#062f46] text-white shadow-2xl shadow-cyan-950/15 md:rounded-[2.75rem]"
+        className="scroll-mt-6 border-t border-white/15 pt-12 text-white md:pt-16"
       >
-        <div className="grid lg:grid-cols-[.85fr_1.15fr]">
-          <div className="relative hidden min-h-[560px] overflow-hidden bg-gradient-to-br from-cyan-400/25 via-[#0b4e68] to-[#05283d] p-10 lg:block">
+        <div className="grid gap-10 lg:grid-cols-[.85fr_1.15fr]">
+          <div className="relative hidden min-h-[560px] overflow-hidden p-10 lg:block">
             <div className="absolute -left-24 top-10 h-72 w-72 rounded-full border-[38px] border-cyan-200/10" />
             <div className="relative flex h-full items-center justify-center">
               <Image
@@ -548,7 +539,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="p-6 sm:p-9 md:p-12 lg:p-14">
+          <div className="py-2 lg:pr-8">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#f7c948]">Join the crew</p>
             <h2 className="mt-4 max-w-2xl font-serif text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
               Give family game night a world worth exploring.
@@ -604,7 +595,7 @@ export default function HomePage() {
               >
                 Get SeaRealm updates
               </button>
-              <div className="rounded-xl border border-cyan-200/20 bg-cyan-950/35 px-4 py-3 text-sm leading-6 text-cyan-50/80">
+              <div className="border-t border-cyan-200/20 pt-4 text-sm leading-6 text-cyan-50/80">
                 <strong className="text-white">For grown-ups:</strong> Sea Realm,
                 LLC sends the email address and optional first name/referral to
                 Kit only for the updates requested here. Do not put a child&apos;s

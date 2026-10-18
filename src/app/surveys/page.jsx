@@ -26,7 +26,7 @@ function QuestionNumber({ number }) {
   if (!number) return null;
 
   return (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-sky-700">
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-300/15 text-sm font-bold text-cyan-200">
       {number}
     </span>
   );
@@ -35,13 +35,13 @@ function QuestionNumber({ number }) {
 function ChoiceButton({ checked, children, ...props }) {
   return (
     <label
-      className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+      className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition has-disabled:cursor-not-allowed has-disabled:opacity-45 ${
         checked
-          ? "border-sky-500 bg-sky-50 text-sky-900"
-          : "border-slate-200 bg-white text-slate-700 hover:border-sky-200"
+          ? "border-cyan-200 bg-cyan-300/20 text-white"
+          : "border-white/20 bg-slate-950/40 text-cyan-50 hover:border-cyan-200/70"
       }`}
     >
-      <input className="h-4 w-4 accent-sky-600" checked={checked} {...props} />
+      <input className="h-4 w-4 accent-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200" checked={checked} {...props} />
       <span>{children}</span>
     </label>
   );
@@ -61,15 +61,15 @@ function SurveyQuestion({ question, value, otherValue, onChange, onOtherChange }
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm">
+    <section className="rounded-3xl border border-white/20 bg-slate-950/40 p-5 text-white shadow-sm">
       <div className="flex gap-3">
         <QuestionNumber number={question.number} />
         <div className="min-w-0 flex-1">
-          <label className="block text-lg font-bold leading-7 text-slate-900">
+          <label className="block text-lg font-bold leading-7 text-white">
             {question.label}
           </label>
           {question.helper && (
-            <p className="mt-1 text-sm font-semibold text-slate-500">{question.helper}</p>
+            <p className="mt-1 text-sm font-semibold text-cyan-100/85">{question.helper}</p>
           )}
         </div>
       </div>
@@ -80,7 +80,7 @@ function SurveyQuestion({ question, value, otherValue, onChange, onOtherChange }
             value={value}
             onChange={(event) => onChange(event.target.value)}
             required={question.required}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+            className="w-full rounded-2xl border border-cyan-100/30 bg-slate-950/50 px-4 py-3 text-white placeholder:text-cyan-100/60 outline-none focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/35"
           />
         )}
 
@@ -91,7 +91,7 @@ function SurveyQuestion({ question, value, otherValue, onChange, onOtherChange }
             type="number"
             min={question.min}
             max={question.max}
-            className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+            className="w-full rounded-2xl border border-cyan-100/30 bg-slate-950/50 px-4 py-3 text-white placeholder:text-cyan-100/60 outline-none focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/35"
           />
         )}
 
@@ -100,7 +100,7 @@ function SurveyQuestion({ question, value, otherValue, onChange, onOtherChange }
             value={value}
             onChange={(event) => onChange(event.target.value)}
             rows={4}
-            className="w-full resize-y rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+            className="w-full resize-y rounded-2xl border border-cyan-100/30 bg-slate-950/50 px-4 py-3 text-white placeholder:text-cyan-100/60 outline-none focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/35"
           />
         )}
 
@@ -123,7 +123,7 @@ function SurveyQuestion({ question, value, otherValue, onChange, onOtherChange }
         {question.type === "checkbox" && (
           <>
             {question.maxSelections && (
-              <p className="mb-3 text-sm font-semibold text-slate-500">
+              <p className="mb-3 text-sm font-semibold text-cyan-100/85">
                 {selectedCount} / {question.maxSelections} selected
               </p>
             )}
@@ -155,10 +155,10 @@ function SurveyQuestion({ question, value, otherValue, onChange, onOtherChange }
                   key={number}
                   type="button"
                   onClick={() => onChange(number)}
-                  className={`aspect-square rounded-2xl border text-lg font-bold transition ${
+                  className={`aspect-square rounded-2xl border text-lg font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200 ${
                     Number(value) === number
-                      ? "border-sky-600 bg-sky-600 text-white"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-sky-300"
+                      ? "border-cyan-200 bg-cyan-300/25 text-white"
+                      : "border-white/20 bg-slate-950/40 text-cyan-50 hover:border-cyan-200/70"
                   }`}
                 >
                   {number}
@@ -173,7 +173,7 @@ function SurveyQuestion({ question, value, otherValue, onChange, onOtherChange }
             value={otherValue}
             onChange={(event) => onOtherChange(event.target.value)}
             placeholder="Other"
-            className="mt-3 w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-sky-500"
+            className="mt-3 w-full rounded-2xl border border-cyan-100/30 bg-slate-950/50 px-4 py-3 text-white placeholder:text-cyan-100/60 outline-none focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/35"
           />
         )}
       </div>
@@ -231,16 +231,16 @@ export default function SurveyPage() {
   if (submitted) {
     return (
       <main className="mx-auto max-w-3xl py-8">
-        <section className="rounded-3xl border border-cyan-200 bg-white p-8 text-center shadow-sm">
-          <h1 className="text-4xl font-bold text-slate-900">Thank you!</h1>
-          <p className="mt-3 text-lg text-slate-600">
+        <section className="rounded-3xl border border-cyan-200/25 bg-slate-950/40 p-8 text-center shadow-sm">
+          <h1 className="text-4xl font-bold text-white">Thank you!</h1>
+          <p className="mt-3 text-lg text-cyan-100">
             Your SeaRealm survey was submitted. We saved your name so it can be counted
             for rewards.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               href={RESULTS_URL}
-              className="rounded-xl bg-sky-600 px-5 py-3 font-bold text-white hover:bg-sky-700"
+              className="rounded-xl bg-[#f7c948] px-5 py-3 font-bold text-[#082f49] hover:bg-[#ffda68] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200"
             >
               View Summary
             </Link>
@@ -251,7 +251,7 @@ export default function SurveyPage() {
                 setStepIndex(0);
                 setSubmitted(false);
               }}
-              className="rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-700 hover:bg-slate-50"
+              className="rounded-xl border border-cyan-100/30 px-5 py-3 font-bold text-cyan-50 hover:bg-white/15"
             >
               Submit Another
             </button>
@@ -278,14 +278,14 @@ export default function SurveyPage() {
         </div>
         <Link
           href={RESULTS_URL}
-          className="inline-flex items-center justify-center rounded-xl border border-sky-300 bg-white px-5 py-3 font-bold text-sky-700 shadow-sm hover:bg-sky-50"
+          className="inline-flex items-center justify-center rounded-xl border border-cyan-200/40 bg-slate-950/40 px-5 py-3 font-bold text-cyan-200 shadow-sm hover:bg-cyan-300/15"
         >
           View Results
         </Link>
       </section>
 
-      <section className="rounded-3xl border-2 border-cyan-300 bg-cyan-50 p-5 text-slate-700 shadow-sm">
-        <h2 className="text-xl font-bold text-slate-900">
+      <section className="rounded-3xl border-2 border-cyan-200/40 bg-cyan-950/45 p-5 text-cyan-50 shadow-sm">
+        <h2 className="text-xl font-bold text-white">
           Privacy notice for players and parents
         </h2>
         <p className="mt-2 leading-7">
@@ -300,14 +300,14 @@ export default function SurveyPage() {
           de-identification within 12 months. Read the{" "}
           <Link
             href="/privacy#collection"
-            className="font-bold text-cyan-800 underline underline-offset-4"
+            className="font-bold text-cyan-100 underline underline-offset-4"
           >
             Privacy Policy
           </Link>{" "}
           and{" "}
           <Link
             href="/terms#submissions"
-            className="font-bold text-cyan-800 underline underline-offset-4"
+            className="font-bold text-cyan-100 underline underline-offset-4"
           >
             Terms of Use
           </Link>
@@ -315,16 +315,16 @@ export default function SurveyPage() {
         </p>
       </section>
 
-      <section className="rounded-3xl border border-cyan-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center justify-between gap-4 text-sm font-bold text-slate-600">
+      <section className="rounded-3xl border border-cyan-200/25 bg-slate-950/40 p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-4 text-sm font-bold text-cyan-100">
           <span>
             Step {stepIndex + 1} of {TOTAL_STEPS}
           </span>
           <span>{progress}% complete</span>
         </div>
-        <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
+        <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/15">
           <div
-            className="h-full rounded-full bg-cyan-500 transition-all"
+            className="h-full rounded-full bg-cyan-300 transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -351,7 +351,7 @@ export default function SurveyPage() {
       </form>
 
       {message && (
-        <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
+        <p className="rounded-2xl bg-rose-950/60 px-4 py-3 text-sm font-semibold text-rose-100">
           {message}
         </p>
       )}
@@ -371,7 +371,7 @@ export default function SurveyPage() {
             type="button"
             onClick={submitSurvey}
             disabled={submitting}
-            className="rounded-xl bg-sky-600 px-5 py-3 font-bold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="rounded-xl bg-[#f7c948] px-5 py-3 font-bold text-[#082f49] hover:bg-[#ffda68] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200 disabled:cursor-not-allowed disabled:bg-slate-700/60 disabled:text-slate-300"
           >
             {submitting ? "Submitting..." : "Submit Survey"}
           </button>
@@ -380,7 +380,7 @@ export default function SurveyPage() {
             type="button"
             onClick={() => setStepIndex((current) => Math.min(TOTAL_STEPS - 1, current + 1))}
             disabled={requiredMissing}
-            className="rounded-xl bg-sky-600 px-5 py-3 font-bold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="rounded-xl bg-[#f7c948] px-5 py-3 font-bold text-[#082f49] hover:bg-[#ffda68] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200 disabled:cursor-not-allowed disabled:bg-slate-700/60 disabled:text-slate-300"
           >
             Next
           </button>

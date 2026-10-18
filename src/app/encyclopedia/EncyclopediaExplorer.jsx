@@ -23,18 +23,18 @@ const GROUPS = [
 
 const ZONE_STYLES = {
   Reef: {
-    pill: "bg-emerald-100 text-emerald-800",
-    wash: "from-emerald-100 via-cyan-50 to-sky-100",
+    pill: "bg-emerald-300/15 text-emerald-100",
+    wash: "from-emerald-700/15 via-cyan-950/10 to-sky-900/15",
     accent: "bg-emerald-500",
   },
   Oceanic: {
-    pill: "bg-sky-100 text-sky-800",
-    wash: "from-sky-100 via-blue-50 to-cyan-100",
+    pill: "bg-sky-300/15 text-sky-100",
+    wash: "from-sky-700/15 via-blue-950/10 to-cyan-900/15",
     accent: "bg-sky-500",
   },
   Deep: {
-    pill: "bg-indigo-100 text-indigo-800",
-    wash: "from-indigo-100 via-slate-100 to-cyan-100",
+    pill: "bg-indigo-300/15 text-indigo-100",
+    wash: "from-indigo-700/15 via-slate-950/10 to-cyan-900/15",
     accent: "bg-indigo-500",
   },
 };
@@ -65,8 +65,8 @@ function CreatureArtwork({ creature }) {
           className="h-[88%] w-auto rotate-2 rounded-lg object-contain drop-shadow-xl transition duration-300 group-hover:-rotate-1 group-hover:scale-[1.04]"
         />
       ) : (
-        <div className="relative grid h-28 w-28 place-items-center rounded-full border border-white/80 bg-white/70 shadow-lg backdrop-blur">
-          <span className="font-serif text-5xl font-bold text-slate-700">
+        <div className="relative grid h-28 w-28 place-items-center rounded-full border border-white/20 bg-slate-950/35 shadow-lg backdrop-blur">
+          <span className="font-serif text-5xl font-bold text-cyan-50">
             {creature.name.charAt(0)}
           </span>
           <span
@@ -112,15 +112,15 @@ export default function EncyclopediaExplorer({ creatures }) {
 
   return (
     <section aria-labelledby="explore-heading" className="mt-12">
-      <div className="rounded-[2rem] border border-cyan-100 bg-white/90 p-5 shadow-xl shadow-sky-950/5 backdrop-blur md:p-7">
+      <div className="py-2 md:py-4">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-700">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-200">
               Creature finder
             </p>
             <h2
               id="explore-heading"
-              className="mt-2 font-serif text-3xl font-bold tracking-tight text-slate-950 md:text-4xl"
+              className="mt-2 font-serif text-3xl font-bold tracking-tight text-white md:text-4xl"
             >
               Who will you meet?
             </h2>
@@ -131,7 +131,7 @@ export default function EncyclopediaExplorer({ creatures }) {
               <span className="sr-only">Search creatures and facts</span>
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-cyan-700"
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-cyan-200"
               >
                 ⌕
               </span>
@@ -140,7 +140,7 @@ export default function EncyclopediaExplorer({ creatures }) {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Try ‘shark,’ ‘glow,’ or ‘squid’"
-                className="min-h-12 w-full rounded-2xl border border-cyan-200 bg-cyan-50/60 py-3 pl-11 pr-4 text-base text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-cyan-500 focus:bg-white focus:ring-4 focus:ring-cyan-100"
+                className="min-h-12 w-full rounded-2xl border border-cyan-200/30 bg-slate-950/55 py-3 pl-11 pr-4 text-base text-white outline-none transition [color-scheme:dark] placeholder:text-cyan-200/70 focus:border-cyan-200/70 focus:bg-slate-950/70 focus:ring-4 focus:ring-cyan-200/40"
               />
             </label>
             <button
@@ -153,9 +153,9 @@ export default function EncyclopediaExplorer({ creatures }) {
           </div>
         </div>
 
-        <div className="mt-7 grid gap-7 border-t border-cyan-100 pt-7 lg:grid-cols-[1.15fr_.85fr]">
+        <div className="mt-7 grid gap-7 border-t border-cyan-200/20 pt-7 lg:grid-cols-[1.15fr_.85fr]">
           <fieldset>
-            <legend className="text-sm font-bold text-slate-800">
+            <legend className="text-sm font-bold text-white">
               Pick an ocean zone
             </legend>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -167,16 +167,16 @@ export default function EncyclopediaExplorer({ creatures }) {
                     type="button"
                     aria-pressed={selected}
                     onClick={() => setZone(option.value)}
-                    className={`rounded-2xl border px-3 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-cyan-100 ${
+                    className={`rounded-2xl border px-3 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-cyan-200/40 ${
                       selected
-                        ? "border-cyan-600 bg-cyan-600 text-white shadow-md"
-                        : "border-cyan-100 bg-white text-slate-800 hover:border-cyan-300 hover:bg-cyan-50"
+                        ? "border-cyan-200/60 bg-cyan-700/70 text-white shadow-md"
+                        : "border-cyan-200/20 bg-slate-950/35 text-white hover:border-cyan-200/35 hover:bg-white/10"
                     }`}
                   >
                     <span className="block text-sm font-bold">{option.label}</span>
                     <span
                       className={`mt-0.5 block text-[0.7rem] ${
-                        selected ? "text-cyan-50" : "text-slate-500"
+                        selected ? "text-cyan-50" : "text-cyan-200"
                       }`}
                     >
                       {option.note}
@@ -188,7 +188,7 @@ export default function EncyclopediaExplorer({ creatures }) {
           </fieldset>
 
           <fieldset>
-            <legend className="text-sm font-bold text-slate-800">
+            <legend className="text-sm font-bold text-white">
               Choose a creature group
             </legend>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -200,10 +200,10 @@ export default function EncyclopediaExplorer({ creatures }) {
                     type="button"
                     aria-pressed={selected}
                     onClick={() => setGroup(option)}
-                    className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition focus:outline-none focus:ring-4 focus:ring-cyan-100 ${
+                    className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition focus:outline-none focus:ring-4 focus:ring-cyan-200/40 ${
                       selected
-                        ? "border-[#073d58] bg-[#073d58] text-white"
-                        : "border-cyan-200 bg-cyan-50/70 text-slate-700 hover:border-cyan-400 hover:bg-cyan-100"
+                        ? "border-cyan-200/60 bg-cyan-700/70 text-white"
+                        : "border-cyan-200/25 bg-slate-950/35 text-cyan-50 hover:border-cyan-400 hover:bg-white/10"
                     }`}
                   >
                     {option === "All" ? "All groups" : option}
@@ -224,7 +224,7 @@ export default function EncyclopediaExplorer({ creatures }) {
           <button
             type="button"
             onClick={clearFilters}
-            className="rounded-full px-4 py-2 text-sm font-bold text-cyan-100 underline decoration-cyan-300 underline-offset-4 transition hover:text-white focus:outline-none focus:ring-4 focus:ring-cyan-100"
+            className="rounded-full px-4 py-2 text-sm font-bold text-cyan-100 underline decoration-cyan-300 underline-offset-4 transition hover:text-white focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
           >
             Clear filters
           </button>
@@ -239,7 +239,7 @@ export default function EncyclopediaExplorer({ creatures }) {
               <Link
                 key={creature.slug}
                 href={`/encyclopedia/${creature.slug}`}
-                className="group overflow-hidden rounded-[1.6rem] border border-cyan-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:border-cyan-300 hover:shadow-xl hover:shadow-cyan-950/10 focus:outline-none focus:ring-4 focus:ring-cyan-200"
+                className="group overflow-hidden rounded-[1.6rem] border border-cyan-200/20 bg-slate-950/35 shadow-sm transition duration-300 hover:-translate-y-1.5 hover:border-cyan-200/35 hover:shadow-xl hover:shadow-cyan-950/10 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
               >
                 <CreatureArtwork creature={creature} />
                 <div className="p-5">
@@ -249,20 +249,20 @@ export default function EncyclopediaExplorer({ creatures }) {
                     >
                       {creature.zone}
                     </span>
-                    <span className="text-xs font-semibold text-slate-500">
+                    <span className="text-xs font-semibold text-cyan-200">
                       {creature.group}
                     </span>
                   </div>
-                  <h3 className="mt-3 font-serif text-2xl font-bold leading-tight text-slate-950 group-hover:text-cyan-800">
+                  <h3 className="mt-3 font-serif text-2xl font-bold leading-tight text-white group-hover:text-cyan-100">
                     {creature.name}
                   </h3>
-                  <p className="mt-1 truncate text-sm italic text-slate-500">
+                  <p className="mt-1 truncate text-sm italic text-cyan-200">
                     {creature.scientificName}
                   </p>
-                  <p className="mt-3 text-sm font-semibold leading-6 text-slate-700">
+                  <p className="mt-3 text-sm font-semibold leading-6 text-cyan-50">
                     {creature.tagline}
                   </p>
-                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-cyan-800">
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-cyan-100">
                     Open field guide <span aria-hidden="true">→</span>
                   </span>
                 </div>
@@ -271,18 +271,18 @@ export default function EncyclopediaExplorer({ creatures }) {
           })}
         </div>
       ) : (
-        <div className="mt-5 rounded-[2rem] border border-dashed border-cyan-300 bg-white/70 px-6 py-14 text-center">
-          <p className="font-serif text-3xl font-bold text-slate-900">
+        <div className="mt-5 rounded-[2rem] border border-dashed border-cyan-200/35 bg-slate-950/35 px-6 py-14 text-center">
+          <p className="font-serif text-3xl font-bold text-white">
             That creature is hiding!
           </p>
-          <p className="mx-auto mt-3 max-w-lg leading-7 text-slate-600">
+          <p className="mx-auto mt-3 max-w-lg leading-7 text-cyan-100">
             Try a different name or explore another ocean zone. You can also ask
             for a surprise dive.
           </p>
           <button
             type="button"
             onClick={clearFilters}
-            className="mt-6 rounded-full bg-cyan-700 px-5 py-3 font-bold text-white transition hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-200"
+            className="mt-6 rounded-full bg-cyan-700 px-5 py-3 font-bold text-white transition hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
           >
             Show every SeaPal
           </button>

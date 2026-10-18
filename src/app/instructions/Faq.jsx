@@ -18,8 +18,8 @@ export default function Faq({ questions }) {
     <div>
       <label className="block" htmlFor="rules-search">
         <span className="sr-only">Search frequently asked questions</span>
-        <span className="flex items-center gap-3 rounded-2xl border border-cyan-200 bg-white px-4 py-3 shadow-sm focus-within:border-cyan-500 focus-within:ring-4 focus-within:ring-cyan-100">
-          <span aria-hidden="true" className="text-xl text-cyan-700">
+        <span className="flex items-center gap-3 rounded-2xl border border-cyan-200/30 bg-cyan-950/25 px-4 py-3 focus-within:border-cyan-200 focus-within:ring-4 focus-within:ring-cyan-300/15">
+          <span aria-hidden="true" className="text-xl text-cyan-200">
             ⌕
           </span>
           <input
@@ -29,7 +29,7 @@ export default function Faq({ questions }) {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search: ties, RP, slots, empty deck…"
-            className="min-w-0 flex-1 bg-transparent text-base text-slate-900 outline-none placeholder:text-slate-400"
+            className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-cyan-100/60"
           />
           {query ? (
             <button
@@ -38,7 +38,7 @@ export default function Faq({ questions }) {
                 setQuery("");
                 requestAnimationFrame(() => inputRef.current?.focus());
               }}
-              className="rounded-full px-3 py-1 text-xs font-bold text-cyan-800 hover:bg-cyan-50"
+              className="rounded-full px-3 py-1 text-xs font-bold text-cyan-100 hover:bg-cyan-900/30"
             >
               Clear
             </button>
@@ -56,27 +56,27 @@ export default function Faq({ questions }) {
         {filteredQuestions.map((item) => (
           <details
             key={item.question}
-            className="group rounded-2xl border border-slate-200 bg-white shadow-sm open:border-cyan-300 open:ring-4 open:ring-cyan-50"
+            className="group border-b border-white/15 open:border-cyan-200/40"
           >
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-bold text-slate-900 [&::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-bold text-white [&::-webkit-details-marker]:hidden">
               <h3 className="text-base font-bold md:text-lg">{item.question}</h3>
               <span
                 aria-hidden="true"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-xl text-cyan-800 transition group-open:rotate-45 group-open:bg-cyan-700 group-open:text-white"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-950/25 text-xl text-cyan-100 transition group-open:rotate-45 group-open:bg-cyan-700/40 group-open:text-white"
               >
                 +
               </span>
             </summary>
-            <p className="border-t border-slate-100 px-5 py-4 text-sm leading-7 text-slate-600 md:text-base">
+            <p className="border-t border-white/10 px-5 py-4 text-sm leading-7 text-cyan-100/90 md:text-base">
               {item.answer}
             </p>
           </details>
         ))}
 
         {!filteredQuestions.length ? (
-          <div className="rounded-2xl border border-dashed border-cyan-300 bg-cyan-50 p-6 text-center">
-            <p className="font-bold text-slate-900">No exact match yet.</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+          <div className="border-y border-dashed border-cyan-200/30 py-6 text-center">
+            <p className="font-bold text-white">No exact match yet.</p>
+            <p className="mt-2 text-sm leading-6 text-cyan-100/90">
               Try a shorter word, or ask Finn using the chat button in the bottom-right corner.
             </p>
           </div>

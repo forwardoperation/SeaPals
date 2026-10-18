@@ -45,16 +45,8 @@ export default function EncyclopediaPage() {
   ).filter(Boolean);
 
   return (
-    <main className="pb-16 text-slate-900 md:pb-24">
-      <section className="relative isolate overflow-hidden rounded-[2rem] bg-[#073d58] px-5 py-10 text-white shadow-2xl shadow-cyan-950/15 sm:px-8 md:rounded-[2.75rem] md:px-12 md:py-14 lg:px-16">
-        <div
-          aria-hidden="true"
-          className="absolute -right-32 -top-40 h-96 w-96 rounded-full bg-cyan-400/20 blur-3xl"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute -bottom-44 -left-28 h-80 w-80 rounded-full bg-emerald-400/15 blur-3xl"
-        />
+    <main className="pb-16 text-white md:pb-24">
+      <section className="relative isolate overflow-hidden py-10 text-white md:py-14">
         <span
           aria-hidden="true"
           className="absolute left-[47%] top-12 h-8 w-8 rounded-full border-4 border-cyan-200/25"
@@ -139,7 +131,7 @@ export default function EncyclopediaPage() {
                 />
               </Link>
             ))}
-            <p className="absolute bottom-0 rounded-full border border-cyan-200/25 bg-[#062f46]/90 px-4 py-2 text-center text-xs font-bold uppercase tracking-[0.17em] text-cyan-100 shadow-lg backdrop-blur">
+            <p className="absolute bottom-0 rounded-full border border-cyan-200/25 bg-slate-950/35 px-4 py-2 text-center text-xs font-bold uppercase tracking-[0.17em] text-cyan-100 shadow-lg backdrop-blur">
               Tap a card to take a quick dive
             </p>
           </div>
@@ -148,22 +140,22 @@ export default function EncyclopediaPage() {
 
       <EncyclopediaExplorer creatures={creatures} />
 
-      <section className="mt-14 grid gap-5 rounded-[2rem] border border-cyan-100 bg-white/80 p-6 shadow-sm md:grid-cols-[1fr_auto] md:items-center md:p-9">
+      <section className="mt-14 grid gap-5 border-t border-cyan-200/20 py-9 md:grid-cols-[1fr_auto] md:items-center">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">
             Learning meets play
           </p>
-          <h2 className="mt-2 font-serif text-3xl font-bold text-slate-950">
+          <h2 className="mt-2 font-serif text-3xl font-bold text-white">
             Found a new favorite?
           </h2>
-          <p className="mt-3 max-w-2xl leading-7 text-slate-600">
+          <p className="mt-3 max-w-2xl leading-7 text-cyan-100">
             Spot its SeaRealm card, then bring that creature’s real ocean talents
             back to your next game.
           </p>
         </div>
         <Link
           href="/gallery"
-          className="inline-flex min-h-12 items-center justify-center rounded-full border border-cyan-300 bg-cyan-50 px-5 py-3 font-bold text-cyan-900 transition hover:bg-cyan-100 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+          className="inline-flex min-h-12 items-center justify-center rounded-full border border-cyan-200/40 bg-slate-950/35 px-5 py-3 font-bold text-cyan-100 transition hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
         >
           Browse the card gallery
         </Link>

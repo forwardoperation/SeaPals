@@ -14,19 +14,19 @@ const ZONE_STYLES = {
   Reef: {
     label: "Coral Reef",
     pill: "bg-emerald-300/15 text-emerald-100 ring-emerald-200/25",
-    panel: "border-emerald-100 bg-emerald-50/70",
+    panel: "border-emerald-200/25 bg-slate-950/35",
     number: "bg-emerald-600",
   },
   Oceanic: {
     label: "Open Ocean",
     pill: "bg-cyan-300/15 text-cyan-100 ring-cyan-200/25",
-    panel: "border-cyan-100 bg-cyan-50/70",
+    panel: "border-cyan-200/20 bg-slate-950/35",
     number: "bg-cyan-700",
   },
   Deep: {
     label: "Deep Sea",
     pill: "bg-indigo-300/15 text-indigo-100 ring-indigo-200/25",
-    panel: "border-indigo-100 bg-indigo-50/70",
+    panel: "border-indigo-200/25 bg-slate-950/35",
     number: "bg-indigo-700",
   },
 };
@@ -81,11 +81,11 @@ function sourceLabel(url) {
 
 function FactCard({ label, children }) {
   return (
-    <div className="rounded-2xl border border-cyan-100 bg-white p-5 shadow-sm">
-      <dt className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">
+    <div className="rounded-2xl border border-cyan-200/20 bg-slate-950/35 p-5 shadow-sm">
+      <dt className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">
         {label}
       </dt>
-      <dd className="mt-2 font-semibold leading-6 text-slate-800">{children}</dd>
+      <dd className="mt-2 font-semibold leading-6 text-white">{children}</dd>
     </div>
   );
 }
@@ -107,21 +107,21 @@ function DeckDiscoverySection({ creature, discovery }) {
   return (
     <section
       aria-labelledby="deck-discovery-heading"
-      className="mt-10 overflow-hidden rounded-[2rem] border border-cyan-200 bg-gradient-to-br from-cyan-50 via-white to-amber-50 shadow-sm"
+      className="mt-10 border-t border-cyan-200/20"
     >
-      <div className="px-6 py-7 sm:px-8 md:py-8">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700">
+      <div className="py-7 md:py-8">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">
           From field guide to game table
         </p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2
               id="deck-discovery-heading"
-              className="font-serif text-3xl font-bold text-slate-950 md:text-4xl"
+              className="font-serif text-3xl font-bold text-white md:text-4xl"
             >
               Bring {demonstrative} {creature.name} home
             </h2>
-            <p className="mt-2 max-w-2xl leading-7 text-slate-600">
+            <p className="mt-2 max-w-2xl leading-7 text-cyan-100">
               See which ready-to-play decks feature {seaPalReference}. Try one
               in the simulator before you buy, or explore each full deck list.
             </p>
@@ -139,14 +139,14 @@ function DeckDiscoverySection({ creature, discovery }) {
             {discovery.decks.map((deck) => (
               <li
                 key={deck.deckId}
-                className="rounded-2xl border border-cyan-100 bg-white p-5 shadow-sm"
+                className="rounded-2xl border border-cyan-200/20 bg-slate-950/35 p-5 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-700">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">
                       Ready-to-play deck
                     </p>
-                    <h3 className="mt-1 font-serif text-2xl font-bold text-slate-950">
+                    <h3 className="mt-1 font-serif text-2xl font-bold text-white">
                       {deck.productName}
                     </h3>
                   </div>
@@ -154,7 +154,7 @@ function DeckDiscoverySection({ creature, discovery }) {
                     {deck.copies} {deck.copies === 1 ? "copy" : "copies"}
                   </span>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
+                <p className="mt-3 text-sm leading-6 text-cyan-100">
                   Includes {deck.copies} {deck.copies === 1 ? "card" : "cards"}{" "}
                   featuring {creature.name}
                   {deck.matchedCards.length > 1
@@ -165,19 +165,19 @@ function DeckDiscoverySection({ creature, discovery }) {
                 <div className="mt-5 flex flex-wrap gap-2">
                   <Link
                     href={deck.simulatorHref}
-                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-800 px-4 py-2 text-sm font-bold text-white transition hover:bg-cyan-900 focus:outline-none focus:ring-4 focus:ring-cyan-200"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-800 px-4 py-2 text-sm font-bold text-white transition hover:bg-cyan-900 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
                   >
                     Try this deck
                   </Link>
                   <Link
                     href={deck.storeHref}
-                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-cyan-700 bg-white px-4 py-2 text-sm font-bold text-cyan-900 transition hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-cyan-200/40 bg-slate-950/35 px-4 py-2 text-sm font-bold text-cyan-50 transition hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
                   >
                     Shop this deck
                   </Link>
                   <Link
                     href={deck.deckListHref}
-                    className="inline-flex min-h-11 items-center justify-center rounded-full px-3 py-2 text-sm font-bold text-cyan-800 underline decoration-cyan-300 underline-offset-4 transition hover:text-cyan-950 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full px-3 py-2 text-sm font-bold text-cyan-100 underline decoration-cyan-300 underline-offset-4 transition hover:text-white focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
                   >
                     See full deck list
                   </Link>
@@ -186,12 +186,12 @@ function DeckDiscoverySection({ creature, discovery }) {
             ))}
           </ul>
         ) : (
-          <div className="mt-6 rounded-2xl border border-dashed border-cyan-300 bg-white/80 p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
+          <div className="mt-6 rounded-2xl border border-dashed border-cyan-200/35 bg-slate-950/35 p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
             <div>
-              <h3 className="font-serif text-xl font-bold text-slate-950">
+              <h3 className="font-serif text-xl font-bold text-white">
                 Not currently in a ready-to-play deck
               </h3>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-cyan-100">
                 You can still find {seaPalReference} in the card gallery while
                 planning your own custom deck.
               </p>
@@ -199,13 +199,13 @@ function DeckDiscoverySection({ creature, discovery }) {
             <div className="mt-4 flex shrink-0 flex-wrap gap-2 sm:mt-0">
               <Link
                 href="/gallery"
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-800 px-4 py-2 text-sm font-bold text-white transition hover:bg-cyan-900 focus:outline-none focus:ring-4 focus:ring-cyan-200"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-cyan-800 px-4 py-2 text-sm font-bold text-white transition hover:bg-cyan-900 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
               >
                 Browse the gallery
               </Link>
               <Link
                 href="/decks"
-                className="inline-flex min-h-11 items-center justify-center rounded-full border border-cyan-700 bg-white px-4 py-2 text-sm font-bold text-cyan-900 transition hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-cyan-200/40 bg-slate-950/35 px-4 py-2 text-sm font-bold text-cyan-50 transition hover:bg-white/10 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
               >
                 Explore all decks
               </Link>
@@ -221,7 +221,7 @@ function DeckDiscoverySection({ creature, discovery }) {
           return (
             <aside
               key={bundle.productId}
-              className="mt-4 rounded-2xl bg-[#073d58] p-5 text-white sm:flex sm:items-center sm:justify-between sm:gap-6"
+              className="mt-4 rounded-2xl bg-slate-950/35 p-5 text-white sm:flex sm:items-center sm:justify-between sm:gap-6"
             >
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#f7c948]">
@@ -238,7 +238,7 @@ function DeckDiscoverySection({ creature, discovery }) {
               </div>
               <Link
                 href={bundle.storeHref}
-                className="mt-4 inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-[#f7c948] px-5 py-2 text-sm font-black text-[#073d58] transition hover:bg-amber-300 focus:outline-none focus:ring-4 focus:ring-cyan-200 sm:mt-0"
+                className="mt-4 inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-[#f7c948] px-5 py-2 text-sm font-black text-[#073d58] transition hover:bg-amber-300 focus:outline-none focus:ring-4 focus:ring-cyan-200/40 sm:mt-0"
               >
                 Shop {bundle.productName}
               </Link>
@@ -266,26 +266,18 @@ export default async function CreaturePage({ params }) {
   const deckDiscovery = getCreatureDeckDiscovery(creature);
 
   return (
-    <main className="pb-16 text-slate-900 md:pb-24">
+    <main className="pb-16 text-white md:pb-24">
       <nav aria-label="Breadcrumb" className="mb-5">
         <Link
           href="/encyclopedia"
-          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold text-cyan-100 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-4 focus:ring-cyan-100"
+          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold text-cyan-100 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
         >
           <span aria-hidden="true">←</span> All creatures
         </Link>
       </nav>
 
       <article>
-        <header className="relative isolate overflow-hidden rounded-[2rem] bg-[#062f46] px-5 py-9 text-white shadow-2xl shadow-cyan-950/15 sm:px-8 md:rounded-[2.75rem] md:px-12 md:py-12 lg:px-14">
-          <div
-            aria-hidden="true"
-            className="absolute -right-28 -top-36 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl"
-          />
-          <div
-            aria-hidden="true"
-            className="absolute -bottom-40 -left-24 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl"
-          />
+        <header className="relative isolate overflow-hidden rounded-[2rem] bg-slate-950/35 px-5 py-9 text-white shadow-2xl shadow-cyan-950/15 sm:px-8 md:rounded-[2.75rem] md:px-12 md:py-12 lg:px-14">
 
           <div className="relative grid items-center gap-10 lg:grid-cols-[1fr_330px]">
             <div>
@@ -385,12 +377,12 @@ export default async function CreaturePage({ params }) {
             aria-labelledby="facts-heading"
             className={`rounded-[2rem] border p-6 shadow-sm md:p-8 ${styles.panel}`}
           >
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">
               Tell-your-friends facts
             </p>
             <h2
               id="facts-heading"
-              className="mt-2 font-serif text-3xl font-bold text-slate-950"
+              className="mt-2 font-serif text-3xl font-bold text-white"
             >
               Four wonderfully wild things
             </h2>
@@ -398,14 +390,14 @@ export default async function CreaturePage({ params }) {
               {creature.funFacts.map((fact, factIndex) => (
                 <li
                   key={fact}
-                  className="flex gap-4 rounded-2xl border border-white/90 bg-white/85 p-4 shadow-sm"
+                  className="flex gap-4 rounded-2xl border border-white/15 bg-transparent p-4 shadow-sm"
                 >
                   <span
                     className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-black text-white ${styles.number}`}
                   >
                     {factIndex + 1}
                   </span>
-                  <p className="pt-1 font-medium leading-7 text-slate-700">
+                  <p className="pt-1 font-medium leading-7 text-cyan-50">
                     {fact}
                   </p>
                 </li>
@@ -414,8 +406,8 @@ export default async function CreaturePage({ params }) {
           </section>
 
           <div className="space-y-5">
-            <section className="rounded-[2rem] bg-[#f7c948] p-6 text-[#073d58] shadow-sm md:p-7">
-              <p className="text-xs font-black uppercase tracking-[0.2em] opacity-75">
+            <section className="rounded-[2rem] border border-amber-200/30 bg-slate-950/35 p-6 text-white shadow-sm md:p-7">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-200">
                 Ocean superpower
               </p>
               <h2 className="mt-3 font-serif text-3xl font-bold">
@@ -426,29 +418,29 @@ export default async function CreaturePage({ params }) {
               </p>
             </section>
 
-            <section className="rounded-[2rem] border border-cyan-100 bg-white p-6 shadow-sm md:p-7">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700">
+            <section className="rounded-[2rem] border border-cyan-200/20 bg-slate-950/35 p-6 shadow-sm md:p-7">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">
                 Junior scientist tip
               </p>
-              <h2 className="mt-3 font-serif text-2xl font-bold text-slate-950">
+              <h2 className="mt-3 font-serif text-2xl font-bold text-white">
                 What should I look for?
               </h2>
-              <p className="mt-3 leading-7 text-slate-700">{creature.lookFor}</p>
+              <p className="mt-3 leading-7 text-cyan-50">{creature.lookFor}</p>
             </section>
 
-            <details className="group rounded-[2rem] border border-cyan-100 bg-white p-6 shadow-sm open:border-cyan-200">
-              <summary className="cursor-pointer list-none font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-cyan-100">
+            <details className="group rounded-[2rem] border border-cyan-200/20 bg-slate-950/35 p-6 shadow-sm open:border-cyan-200/25">
+              <summary className="cursor-pointer list-none font-bold text-white focus:outline-none focus:ring-4 focus:ring-cyan-200/40">
                 <span className="flex items-center justify-between gap-4">
                   Grown-up research links
                   <span
                     aria-hidden="true"
-                    className="text-xl text-cyan-700 transition group-open:rotate-45"
+                    className="text-xl text-cyan-200 transition group-open:rotate-45"
                   >
                     +
                   </span>
                 </span>
               </summary>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
+              <p className="mt-3 text-sm leading-6 text-cyan-100">
                 We used trusted science organizations to check this profile.
               </p>
               <ul className="mt-4 space-y-2">
@@ -458,7 +450,7 @@ export default async function CreaturePage({ params }) {
                       href={url}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-semibold text-cyan-800 underline decoration-cyan-300 underline-offset-4 hover:text-cyan-950"
+                      className="font-semibold text-cyan-100 underline decoration-cyan-300 underline-offset-4 hover:text-white"
                     >
                       {sourceLabel(url)}
                       <span className="sr-only"> (opens in a new tab)</span>
@@ -473,27 +465,27 @@ export default async function CreaturePage({ params }) {
 
       <nav
         aria-label="More creatures"
-        className="mt-12 grid gap-4 border-t border-cyan-100 pt-8 sm:grid-cols-2"
+        className="mt-12 grid gap-4 border-t border-cyan-200/20 pt-8 sm:grid-cols-2"
       >
         <Link
           href={`/encyclopedia/${previous.slug}`}
-          className="rounded-2xl border border-cyan-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-cyan-300 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-cyan-100"
+          className="rounded-2xl border border-cyan-200/20 bg-slate-950/35 p-5 shadow-sm transition hover:-translate-y-1 hover:border-cyan-200/35 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
         >
-          <span className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-700">
+          <span className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">
             ← Previous creature
           </span>
-          <span className="mt-2 block font-serif text-xl font-bold text-slate-950">
+          <span className="mt-2 block font-serif text-xl font-bold text-white">
             {previous.name}
           </span>
         </Link>
         <Link
           href={`/encyclopedia/${next.slug}`}
-          className="rounded-2xl border border-cyan-100 bg-white p-5 text-right shadow-sm transition hover:-translate-y-1 hover:border-cyan-300 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-cyan-100"
+          className="rounded-2xl border border-cyan-200/20 bg-slate-950/35 p-5 text-right shadow-sm transition hover:-translate-y-1 hover:border-cyan-200/35 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
         >
-          <span className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-700">
+          <span className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">
             Next creature →
           </span>
-          <span className="mt-2 block font-serif text-xl font-bold text-slate-950">
+          <span className="mt-2 block font-serif text-xl font-bold text-white">
             {next.name}
           </span>
         </Link>

@@ -49,6 +49,14 @@
 
 .surface .footage { object-position: center bottom; }
 
+/* A soft, continuous shade keeps open page text readable over the bright sky. */
+.surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #00172c26, #00172c99 28%, #00172c80 62%, #00172c00);
+}
+
 .water {
   /* Keep the distant surface small above a wide, steady view of open water. */
   inset: 0;

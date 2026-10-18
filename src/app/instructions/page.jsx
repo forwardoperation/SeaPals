@@ -24,7 +24,7 @@ const turnSteps = [
     prompt: "Which deck helps me most?",
     description:
       "Draw 1 card from either your Foundation Deck or your Main Deck. You do not draw from both unless a card effect says so.",
-    color: "border-blue-200 bg-blue-50 text-blue-950",
+    color: "border-blue-300/30 bg-blue-950/15 text-blue-100",
   },
   {
     number: "2",
@@ -32,7 +32,7 @@ const turnSteps = [
     prompt: "How much RP do I gain?",
     description:
       "Gain 1 RP, then add the RP produced by your active Foundations. Apply modifiers and discard RP above your current bank cap.",
-    color: "border-amber-200 bg-amber-50 text-amber-950",
+    color: "border-amber-300/35 bg-amber-950/20 text-amber-100",
   },
   {
     number: "3",
@@ -40,7 +40,7 @@ const turnSteps = [
     prompt: "What can I add to my ocean?",
     description:
       "Spend RP to play legal cards, upgrade Foundations, and use paid Actions. A card's Actions are available the turn it enters your ecosystem unless its text says otherwise. Meet every requirement before paying the cost.",
-    color: "border-emerald-200 bg-emerald-50 text-emerald-950",
+    color: "border-emerald-300/30 bg-emerald-950/15 text-emerald-100",
   },
   {
     number: "4",
@@ -48,7 +48,7 @@ const turnSteps = [
     prompt: "What can my Pals target?",
     description:
       "Use available attacks one at a time. Choose a legal target and completely resolve that attack before beginning another.",
-    color: "border-rose-200 bg-rose-50 text-rose-950",
+    color: "border-rose-300/35 bg-rose-950/20 text-rose-100",
   },
 ];
 
@@ -179,7 +179,7 @@ function SectionHeading({ number, title, children }) {
   return (
     <div className="max-w-3xl">
       <h2 className="flex items-start gap-4 text-3xl font-bold tracking-tight text-white md:text-4xl">
-        <span className="mt-0.5 flex h-10 min-w-10 items-center justify-center rounded-full bg-cyan-100 px-2 text-sm font-black text-cyan-800">
+        <span className="mt-0.5 flex h-10 min-w-10 items-center justify-center rounded-full border border-cyan-200/25 bg-cyan-950/20 px-2 text-sm font-black text-cyan-100">
           {number}
         </span>
         <span>{title}</span>
@@ -197,23 +197,23 @@ function RuleDetails({ title, summary, children, open = false }) {
   return (
     <details
       open={open}
-      className="group rounded-2xl border border-slate-200 bg-white shadow-sm open:border-cyan-300 open:ring-4 open:ring-cyan-50"
+      className="group border-b border-white/15 open:border-cyan-200/40"
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-5 py-4 [&::-webkit-details-marker]:hidden md:px-6 md:py-5">
         <div>
-          <h3 className="text-lg font-bold text-slate-950 md:text-xl">{title}</h3>
+          <h3 className="text-lg font-bold text-white md:text-xl">{title}</h3>
           {summary ? (
-            <p className="mt-1 text-sm leading-6 text-slate-500">{summary}</p>
+            <p className="mt-1 text-sm leading-6 text-cyan-100/80">{summary}</p>
           ) : null}
         </div>
         <span
           aria-hidden="true"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-xl font-bold text-cyan-800 transition group-open:rotate-45 group-open:bg-cyan-700 group-open:text-white"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-950/25 text-xl font-bold text-cyan-100 transition group-open:rotate-45 group-open:bg-cyan-700/40 group-open:text-white"
         >
           +
         </span>
       </summary>
-      <div className="border-t border-slate-100 px-5 py-5 text-sm leading-7 text-slate-600 md:px-6 md:text-base">
+      <div className="border-t border-white/10 px-5 py-5 text-sm leading-7 text-cyan-100/90 md:px-6 md:text-base">
         {children}
       </div>
     </details>
@@ -225,7 +225,7 @@ function CheckItem({ children }) {
     <li className="flex gap-3">
       <span
         aria-hidden="true"
-        className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-800"
+        className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-950/30 text-xs font-black text-emerald-200"
       >
         ✓
       </span>
@@ -253,10 +253,9 @@ function SimulatorPromo() {
       id="learn-by-doing"
       data-rules-ignore
       aria-label="SeaRealm guided tutorial"
-      className="relative mt-8 scroll-mt-6 overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl"
+      className="relative mt-8 scroll-mt-6 overflow-hidden border-y border-white/15 text-white"
     >
-      <div aria-hidden="true" className="absolute -left-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" />
-      <div className="relative grid gap-6 p-6 md:p-8 lg:grid-cols-[1fr_auto] lg:items-end lg:p-10">
+      <div className="relative grid gap-6 py-8 lg:grid-cols-[1fr_auto] lg:items-end lg:py-10">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-300">
             Start here · Learn by doing
@@ -264,7 +263,7 @@ function SimulatorPromo() {
           <h2 className="mt-3 max-w-3xl text-3xl font-black tracking-tight md:text-5xl">
             Play the lessons before you read the rulebook
           </h2>
-          <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 md:text-lg md:leading-8">
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-cyan-100/90 md:text-lg md:leading-8">
             Mr. Easterling guides you through hands-on simulator lessons. Start
             with your first reef, practice interactions and attacks, then learn
             Apex creatures, Support combos, and open-water ecosystems. Choose a
@@ -323,10 +322,8 @@ function SimulatorPromo() {
 
 export default function InstructionsPage() {
   return (
-    <main className="pb-20">
-      <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 px-6 py-8 text-white shadow-xl md:px-10 md:py-12 lg:px-12 lg:py-14">
-        <div aria-hidden="true" className="absolute -right-24 -top-28 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl" />
-        <div aria-hidden="true" className="absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-emerald-400/15 blur-3xl" />
+    <main className="pb-20 text-white">
+      <section className="relative overflow-hidden px-1 py-8 text-white md:py-12 lg:py-14">
         <div className="relative grid gap-9 lg:grid-cols-[1.12fr_0.88fr] lg:items-center">
           <div>
             <p data-rules-ignore className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-300">
@@ -335,7 +332,7 @@ export default function InstructionsPage() {
             <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight md:text-6xl md:leading-[1.05]">
               How to get started with SeaRealm
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 md:text-lg md:leading-8">
+            <p className="mt-5 max-w-2xl text-base leading-7 text-cyan-100/90 md:text-lg md:leading-8">
               Begin with Mr. Easterling&apos;s hands-on simulator lessons. Once you
               have played through the turn flow yourself, use the written rules below
               whenever a card or interaction raises a question.
@@ -361,21 +358,21 @@ export default function InstructionsPage() {
 
             <dl className="mt-8 flex flex-wrap gap-x-7 gap-y-3 border-t border-white/10 pt-6 text-sm">
               <div className="flex items-baseline gap-2">
-                <dt className="text-slate-400">Players</dt>
+                <dt className="text-cyan-100/75">Players</dt>
                 <dd className="font-black text-white">2–4</dd>
               </div>
               <div className="flex items-baseline gap-2">
-                <dt className="text-slate-400">Guided lessons</dt>
+                <dt className="text-cyan-100/75">Guided lessons</dt>
                 <dd className="font-black text-white">{SIMULATOR_V2_LESSONS.length}</dd>
               </div>
               <div className="flex items-baseline gap-2">
-                <dt className="text-slate-400">Full game</dt>
+                <dt className="text-cyan-100/75">Full game</dt>
                 <dd className="font-black text-white">30 VP</dd>
               </div>
             </dl>
           </div>
 
-          <div className="relative rounded-3xl border border-white/15 bg-white/10 p-5 shadow-2xl backdrop-blur md:p-7">
+          <div className="relative border-l border-cyan-200/25 py-5 pl-5 md:py-7 md:pl-7">
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-300">
               SeaRealm at a glance
             </p>
@@ -413,25 +410,25 @@ export default function InstructionsPage() {
               ].map(([term, label, description], index) => (
                 <div
                   key={term}
-                  className="rounded-2xl border border-cyan-100 bg-white/85 p-5 shadow-sm backdrop-blur"
+                  className="border-t border-white/15 py-5"
                 >
                   <div className="flex items-center gap-4">
                     <span
                       className={`flex h-12 min-w-12 shrink-0 items-center justify-center whitespace-nowrap rounded-2xl px-3 text-sm font-black ${
                         index === 0
-                          ? "bg-amber-100 text-amber-900"
+                          ? "bg-amber-950/25 text-amber-100"
                           : index === 1
-                            ? "bg-cyan-100 text-cyan-900"
+                            ? "bg-cyan-950/25 text-cyan-100"
                             : index === 2
-                              ? "bg-emerald-100 text-emerald-900"
-                              : "bg-blue-100 text-blue-900"
+                              ? "bg-emerald-950/25 text-emerald-100"
+                              : "bg-blue-950/25 text-blue-100"
                       }`}
                     >
                       {term}
                     </span>
                     <div>
-                      <h3 className="font-bold text-slate-950">{label}</h3>
-                      <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+                      <h3 className="font-bold text-white">{label}</h3>
+                      <p className="mt-1 text-sm leading-6 text-cyan-100/90">{description}</p>
                     </div>
                   </div>
                 </div>
@@ -441,7 +438,7 @@ export default function InstructionsPage() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <a
                 href="#goal"
-                className="group rounded-2xl bg-cyan-700 p-5 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-800"
+                className="group border-t border-cyan-200/30 px-1 py-5 text-white transition hover:-translate-y-0.5 hover:bg-cyan-950/20"
               >
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">Brand new?</p>
                 <h3 className="mt-2 text-lg font-bold">Follow the next 4 sections</h3>
@@ -449,11 +446,11 @@ export default function InstructionsPage() {
               </a>
               <a
                 href="#faq"
-                className="group rounded-2xl border border-cyan-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-400"
+                className="group border-t border-cyan-200/30 px-1 py-5 transition hover:-translate-y-0.5 hover:bg-cyan-950/20"
               >
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">Already playing?</p>
-                <h3 className="mt-2 text-lg font-bold text-slate-950">Jump to the FAQ</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">Search the questions that stop games most often.</p>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">Already playing?</p>
+                <h3 className="mt-2 text-lg font-bold text-white">Jump to the FAQ</h3>
+                <p className="mt-2 text-sm leading-6 text-cyan-100/90">Search the questions that stop games most often.</p>
               </a>
             </div>
           </section>
@@ -465,34 +462,34 @@ export default function InstructionsPage() {
             </SectionHeading>
 
             <div className="mt-7 grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-3xl bg-slate-950 p-6 text-white shadow-lg md:p-8">
+              <div className="border-t border-cyan-200/25 py-6 text-white md:py-8">
                 <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-300">The winning rule</p>
                 <p className="mt-3 text-2xl font-black leading-9 md:text-3xl">
                   Be the first player to reach the target with VP currently in play.
                 </p>
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl bg-white/10 p-4">
+                  <div className="border-t border-white/15 py-4">
                     <p className="text-3xl font-black text-amber-300">10 VP</p>
-                    <p className="mt-1 text-sm text-slate-300">Best for a first or quick game</p>
+                    <p className="mt-1 text-sm text-cyan-100/90">Best for a first or quick game</p>
                   </div>
-                  <div className="rounded-2xl bg-white/10 p-4">
+                  <div className="border-t border-white/15 py-4">
                     <p className="text-3xl font-black text-cyan-300">30 VP</p>
-                    <p className="mt-1 text-sm text-slate-300">Recommended full game</p>
+                    <p className="mt-1 text-sm text-cyan-100/90">Recommended full game</p>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-                  <h3 className="font-bold text-amber-950">VP can go back down</h3>
-                  <p className="mt-2 text-sm leading-6 text-amber-900">
+                <div className="border-l-2 border-amber-300/50 bg-amber-950/20 p-5">
+                  <h3 className="font-bold text-amber-100">VP can go back down</h3>
+                  <p className="mt-2 text-sm leading-6 text-amber-100/90">
                     If a VP card leaves your ecosystem—or a conditional VP requirement
                     stops being true—subtract those points.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5">
-                  <h3 className="font-bold text-rose-950">The deck-out loss</h3>
-                  <p className="mt-2 text-sm leading-6 text-rose-900">
+                <div className="border-l-2 border-rose-300/50 bg-rose-950/20 p-5">
+                  <h3 className="font-bold text-rose-100">The deck-out loss</h3>
+                  <p className="mt-2 text-sm leading-6 text-rose-100/90">
                     If you must draw and both of your personal decks are depleted,
                     you lose.
                   </p>
@@ -507,12 +504,12 @@ export default function InstructionsPage() {
               is separate and shared by everyone.
             </SectionHeading>
 
-            <div className="mt-7 rounded-3xl border border-cyan-100 bg-white/90 p-5 shadow-sm md:p-7">
+            <div className="mt-7 border-y border-white/15 py-5 md:py-7">
               <div className="grid gap-4 md:grid-cols-3">
                 {[
-                  ["Foundation Deck", "Coral, Creature Schools, and their stages", "bg-amber-100 text-amber-950"],
-                  ["Main Deck", "Creatures, Support cards, and Habitat cards", "bg-cyan-100 text-cyan-950"],
-                  ["Conditions Deck", "One separate shared deck; affects everybody", "bg-violet-100 text-violet-950"],
+                  ["Foundation Deck", "Coral, Creature Schools, and their stages", "bg-amber-950/20 text-amber-100"],
+                  ["Main Deck", "Creatures, Support cards, and Habitat cards", "bg-cyan-950/20 text-cyan-100"],
+                  ["Conditions Deck", "One separate shared deck; affects everybody", "bg-violet-950/20 text-violet-100"],
                 ].map(([name, description, color]) => (
                   <div key={name} className={`rounded-2xl p-5 ${color}`}>
                     <h3 className="text-lg font-bold">{name}</h3>
@@ -521,25 +518,25 @@ export default function InstructionsPage() {
                 ))}
               </div>
 
-              <div className="mt-5 rounded-2xl bg-cyan-50 p-5 ring-1 ring-cyan-100">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-800">Simple table map</p>
-                <div className="mt-4 grid gap-3 text-center text-xs font-bold uppercase tracking-[0.12em] text-slate-700 sm:grid-cols-[0.7fr_1.6fr_0.7fr]">
-                  <div className="rounded-xl border-2 border-dashed border-amber-300 bg-white px-3 py-5">Foundation Deck</div>
-                  <div className="rounded-xl border-2 border-cyan-300 bg-white px-3 py-5">Your ecosystem</div>
-                  <div className="rounded-xl border-2 border-dashed border-blue-300 bg-white px-3 py-5">Main Deck</div>
+              <div className="mt-5 rounded-2xl border border-cyan-200/20 bg-cyan-950/15 p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-100">Simple table map</p>
+                <div className="mt-4 grid gap-3 text-center text-xs font-bold uppercase tracking-[0.12em] text-cyan-50 sm:grid-cols-[0.7fr_1.6fr_0.7fr]">
+                  <div className="rounded-xl border-2 border-dashed border-amber-300/50 bg-amber-950/15 px-3 py-5">Foundation Deck</div>
+                  <div className="rounded-xl border-2 border-cyan-300/50 bg-cyan-950/15 px-3 py-5">Your ecosystem</div>
+                  <div className="rounded-xl border-2 border-dashed border-blue-300/50 bg-blue-950/15 px-3 py-5">Main Deck</div>
                 </div>
-                <div className="mt-3 grid gap-3 text-center text-xs font-bold uppercase tracking-[0.12em] text-slate-700 sm:grid-cols-3">
-                  <div className="rounded-xl bg-amber-100 px-3 py-3">RP bank</div>
-                  <div className="rounded-xl bg-violet-100 px-3 py-3">Shared Conditions</div>
-                  <div className="rounded-xl bg-slate-100 px-3 py-3">Discard</div>
+                <div className="mt-3 grid gap-3 text-center text-xs font-bold uppercase tracking-[0.12em] text-cyan-50 sm:grid-cols-3">
+                  <div className="rounded-xl border border-amber-200/20 bg-amber-950/20 px-3 py-3 text-amber-100">RP bank</div>
+                  <div className="rounded-xl border border-violet-200/20 bg-violet-950/20 px-3 py-3 text-violet-100">Shared Conditions</div>
+                  <div className="rounded-xl border border-white/15 bg-cyan-950/15 px-3 py-3">Discard</div>
                 </div>
               </div>
             </div>
 
             <div className="mt-6 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="text-xl font-bold text-slate-950">Bring to the table</h3>
-                <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+              <div className="border-t border-white/15 py-6">
+                <h3 className="text-xl font-bold text-white">Bring to the table</h3>
+                <ul className="mt-4 space-y-3 text-sm leading-6 text-cyan-100/90">
                   <CheckItem>One legal deck per player, separated into two piles</CheckItem>
                   <CheckItem>One shared Conditions Deck</CheckItem>
                   <CheckItem>RP counters plus damage or HP counters</CheckItem>
@@ -547,7 +544,7 @@ export default function InstructionsPage() {
                 </ul>
               </div>
 
-              <div className="rounded-3xl bg-cyan-800 p-6 text-white shadow-lg">
+              <div className="border-t border-cyan-200/25 py-6 text-white">
                 <h3 className="text-xl font-bold">Opening setup, in order</h3>
                 <ol className="mt-5 space-y-4 text-sm leading-6 text-cyan-50">
                   {[
@@ -569,7 +566,7 @@ export default function InstructionsPage() {
               </div>
             </div>
 
-            <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-950">
+            <p className="mt-4 border-l-2 border-amber-300/50 bg-amber-950/20 px-5 py-4 text-sm leading-6 text-amber-100">
               <strong>For a first game:</strong> use a Base Coral or base Creature School as the starting Foundation, and choose the first player by agreement. The current rules do not prescribe a first-player method.
             </p>
           </section>
@@ -582,14 +579,14 @@ export default function InstructionsPage() {
 
             <ol className="mt-7 grid gap-4 md:grid-cols-2">
               {turnSteps.map((step) => (
-                <li key={step.name} className={`rounded-3xl border p-5 ${step.color}`}>
+                <li key={step.name} className={`border-t p-5 ${step.color}`}>
                   <div className="flex items-start gap-4">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black shadow-sm">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-current/20 bg-cyan-950/25 text-sm font-black">
                       {step.number}
                     </span>
                     <div>
                       <h3 className="text-xl font-black">{step.name}</h3>
-                      <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] opacity-60">{step.prompt}</p>
+                      <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] opacity-85">{step.prompt}</p>
                       <p className="mt-3 text-sm leading-6 opacity-85">{step.description}</p>
                     </div>
                   </div>
@@ -597,9 +594,9 @@ export default function InstructionsPage() {
               ))}
             </ol>
 
-            <div data-rules-ignore className="mt-5 rounded-2xl border border-cyan-200 bg-white p-5 shadow-sm">
-              <h3 className="font-bold text-slate-950">Playing in the simulator?</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+            <div data-rules-ignore className="mt-5 border-t border-cyan-200/25 py-5">
+              <h3 className="font-bold text-white">Playing in the simulator?</h3>
+              <p className="mt-2 text-sm leading-6 text-cyan-100/90">
                 The canonical rule order is Choose → Collect → Build → Attack. The
                 simulator currently automates collection before it presents the
                 deck-choice prompt; it is handling those start-of-turn jobs for you.
@@ -613,8 +610,8 @@ export default function InstructionsPage() {
               complete turn.
             </SectionHeading>
 
-            <div className="mt-7 overflow-hidden rounded-3xl border border-cyan-100 bg-white shadow-sm">
-              <div className="bg-violet-700 px-6 py-5 text-white">
+            <div className="mt-7 overflow-hidden border-y border-white/15">
+              <div className="border-b border-violet-200/25 bg-violet-950/20 px-6 py-5 text-white">
                 <h3 className="text-xl font-bold">Start of round: reveal a Condition</h3>
                 <p className="mt-2 text-sm leading-6 text-violet-100">
                   Read it aloud and apply its printed effect to everyone for the stated duration.
@@ -622,17 +619,17 @@ export default function InstructionsPage() {
               </div>
               <div className="grid gap-0 md:grid-cols-2">
                 <div className="p-6">
-                  <h3 className="font-bold text-slate-950">The table-talk script</h3>
-                  <ol className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+                  <h3 className="font-bold text-white">The table-talk script</h3>
+                  <ol className="mt-4 space-y-3 text-sm leading-6 text-cyan-100/90">
                     <li><strong>1.</strong> “Which deck are you choosing?”</li>
                     <li><strong>2.</strong> “Add 1 RP. What do your Foundations produce?”</li>
                     <li><strong>3.</strong> “What can you afford, and where can it legally go?”</li>
                     <li><strong>4.</strong> “Does one of your cards have a legal attack?”</li>
                   </ol>
                 </div>
-                <div className="border-t border-cyan-100 bg-cyan-50 p-6 md:border-l md:border-t-0">
-                  <h3 className="font-bold text-slate-950">Pause only for these checks</h3>
-                  <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+                <div className="border-t border-cyan-200/20 bg-cyan-950/15 p-6 md:border-l md:border-t-0">
+                  <h3 className="font-bold text-white">Pause only for these checks</h3>
+                  <ul className="mt-4 space-y-3 text-sm leading-6 text-cyan-100/90">
                     <CheckItem>Can the player pay the full RP and additional cost?</CheckItem>
                     <CheckItem>Does the Pal match its habitat and legal space?</CheckItem>
                     <CheckItem>Does the attack icon allow that target?</CheckItem>
@@ -642,12 +639,12 @@ export default function InstructionsPage() {
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col items-start justify-between gap-4 rounded-3xl bg-gradient-to-r from-cyan-700 to-emerald-700 p-6 text-white sm:flex-row sm:items-center">
+            <div className="mt-6 flex flex-col items-start justify-between gap-4 border-y border-cyan-200/25 py-6 text-white sm:flex-row sm:items-center">
               <div>
                 <h3 className="text-xl font-bold">You now know enough to start.</h3>
                 <p className="mt-2 text-sm text-cyan-50">Use the sections below only when the game asks for them.</p>
               </div>
-              <Link href="/simulator" className="shrink-0 rounded-full bg-white px-5 py-3 text-sm font-black text-cyan-800 shadow-sm hover:bg-cyan-50">
+              <Link href="/simulator" className="shrink-0 rounded-full bg-amber-300 px-5 py-3 text-sm font-black text-slate-950 shadow-sm hover:bg-amber-200">
                 Practice a turn →
               </Link>
             </div>
@@ -660,7 +657,7 @@ export default function InstructionsPage() {
             </SectionHeading>
 
             <div className="mt-7 grid gap-6 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
-              <div className="rounded-3xl border border-cyan-100 bg-cyan-50 p-4 shadow-sm">
+              <div className="p-4">
                 <Image
                   src="/images/cards/fish/Reef/picasso-triggerfish.webp"
                   alt="Picasso Triggerfish SeaRealm card used as a reading example"
@@ -678,18 +675,18 @@ export default function InstructionsPage() {
                   ["5", "Rules labels", "Passive is ongoing, On Play happens once, and Action is chosen and paid."],
                   ["6", "Attack & Defense", "The attack lists die, legal targets, and count; Defense is the opposing roll."],
                 ].map(([number, title, text]) => (
-                  <div key={title} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div key={title} className="border-t border-white/15 py-4">
                     <div className="flex items-center gap-3">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-700 text-xs font-black text-white">{number}</span>
-                      <h3 className="font-bold text-slate-950">{title}</h3>
+                      <h3 className="font-bold text-white">{title}</h3>
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">{text}</p>
+                    <p className="mt-3 text-sm leading-6 text-cyan-100/90">{text}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="mt-6 rounded-3xl bg-slate-950 p-6 text-white">
+            <div className="mt-6 border-y border-white/15 py-6 text-white">
               <h3 className="text-xl font-bold">Four different labels answer four different questions</h3>
               <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[
@@ -698,13 +695,13 @@ export default function InstructionsPage() {
                   ["Creature class", "Fish, Predator, Apex, Invertebrate, or Filter Feeder"],
                   ["Subtype", "A narrower printed identity, such as Baitball"],
                 ].map(([title, text]) => (
-                  <div key={title} className="rounded-2xl bg-white/10 p-4">
+                  <div key={title} className="border-t border-white/15 py-4">
                     <h3 className="font-bold text-cyan-200">{title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-300">{text}</p>
+                    <p className="mt-2 text-sm leading-6 text-cyan-100/90">{text}</p>
                   </div>
                 ))}
               </div>
-              <p className="mt-5 text-sm leading-6 text-slate-300">
+              <p className="mt-5 text-sm leading-6 text-cyan-100/90">
                 A Deep Predator and a Reef Predator share the Predator class, but
                 their habitat zones are different. Both labels matter.
               </p>
@@ -718,26 +715,26 @@ export default function InstructionsPage() {
             </SectionHeading>
 
             <div className="mt-7 grid gap-5 md:grid-cols-2">
-              <div className="rounded-3xl border border-cyan-200 bg-white p-6 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">Check 1</p>
-                <h3 className="mt-2 text-xl font-bold text-slate-950">Does the habitat match?</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
+              <div className="border-t border-cyan-200/25 py-6">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">Check 1</p>
+                <h3 className="mt-2 text-xl font-bold text-white">Does the habitat match?</h3>
+                <p className="mt-3 text-sm leading-6 text-cyan-100/90">
                   Reef creatures use compatible Reef slots. Deep creatures use
                   compatible Deep slots. They do not cross between those habitats
                   unless a printed rule says they can.
                 </p>
               </div>
-              <div className="rounded-3xl border border-emerald-200 bg-white p-6 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">Check 2</p>
-                <h3 className="mt-2 text-xl font-bold text-slate-950">Does the class fit?</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">
+              <div className="border-t border-emerald-200/25 py-6">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-200">Check 2</p>
+                <h3 className="mt-2 text-xl font-bold text-white">Does the class fit?</h3>
+                <p className="mt-3 text-sm leading-6 text-cyan-100/90">
                   A slot’s icon tells you the largest class it can hold. The hierarchy
                   applies only inside the matching habitat.
                 </p>
               </div>
             </div>
 
-            <div className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="mt-5 overflow-hidden border-y border-white/15">
               {[
                 ["Fish slot", `${iconBase}/fish-any.png`, ["Fish"]],
                 ["Predator slot", `${iconBase}/predator-any.png`, ["Fish", "Predator"]],
@@ -745,15 +742,15 @@ export default function InstructionsPage() {
                 ["Invertebrate slot", `${iconBase}/invertebrate_any.png`, ["Invertebrate"]],
                 ["Filter Feeder slot", `${iconBase}/filter-feeder-any.png`, ["Filter Feeder"]],
               ].map(([slot, icon, accepts]) => (
-                <div key={slot} className="grid gap-4 border-b border-slate-100 p-5 last:border-0 sm:grid-cols-[190px_1fr] sm:items-center">
+                <div key={slot} className="grid gap-4 border-b border-white/10 p-5 last:border-0 sm:grid-cols-[190px_1fr] sm:items-center">
                   <div className="flex items-center gap-3">
                     <CardIcon src={icon} alt="" size={42} />
-                    <h3 className="font-bold text-slate-950">{slot}</h3>
+                    <h3 className="font-bold text-white">{slot}</h3>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="mr-1 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Can hold</span>
+                    <span className="mr-1 text-xs font-bold uppercase tracking-[0.14em] text-cyan-100/75">Can hold</span>
                     {accepts.map((item) => (
-                      <span key={item} className="rounded-full bg-cyan-50 px-3 py-1.5 text-sm font-bold text-cyan-900 ring-1 ring-cyan-100">{item}</span>
+                      <span key={item} className="rounded-full bg-cyan-950/20 px-3 py-1.5 text-sm font-bold text-cyan-100 ring-1 ring-cyan-200/20">{item}</span>
                     ))}
                   </div>
                 </div>
@@ -761,7 +758,7 @@ export default function InstructionsPage() {
             </div>
 
             <div className="mt-5 grid gap-5 lg:grid-cols-2">
-              <div className="rounded-3xl bg-blue-900 p-6 text-white">
+              <div className="border-l-2 border-blue-300/40 bg-blue-950/15 p-6 text-white">
                 <div className="flex items-center gap-3">
                   <CardIcon src={`${iconBase}/oceanic-fish-icon.png`} alt="Oceanic Fish icon" size={48} />
                   <h3 className="text-xl font-bold">Oceanic creatures use open water</h3>
@@ -772,9 +769,9 @@ export default function InstructionsPage() {
                   Density; cards may also require an enabling Habitat such as Open Ocean.
                 </p>
               </div>
-              <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6">
-                <h3 className="text-xl font-bold text-amber-950">Upgrading Coral</h3>
-                <p className="mt-3 text-sm leading-6 text-amber-900">
+              <div className="border-l-2 border-amber-300/50 bg-amber-950/20 p-6">
+                <h3 className="text-xl font-bold text-amber-100">Upgrading Coral</h3>
+                <p className="mt-3 text-sm leading-6 text-amber-100/90">
                   Have the next stage in hand, meet its requirement, and pay its RP
                   cost. Place it over the current stage. Existing damage stays, and a
                   Coral normally upgrades only once per turn.
@@ -790,8 +787,8 @@ export default function InstructionsPage() {
             </SectionHeading>
 
             <div className="mt-7 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-              <div className="rounded-3xl border border-cyan-100 bg-white p-6 shadow-sm">
-                <h3 className="text-xl font-bold text-slate-950">The attack indicator</h3>
+              <div className="border-t border-cyan-200/25 py-6">
+                <h3 className="text-xl font-bold text-white">The attack indicator</h3>
                 <div className="mt-5 rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-100">
                   <Image
                     src={`${iconBase}/attack-icon.png`}
@@ -807,17 +804,17 @@ export default function InstructionsPage() {
                     ["Targets", "Every icon is a legal target family."],
                     ["Count", "×2 means two separate attacks."],
                   ].map(([title, text]) => (
-                    <div key={title} className="rounded-2xl bg-cyan-50 p-4">
-                      <h3 className="font-bold text-cyan-950">{title}</h3>
-                      <p className="mt-1 text-xs leading-5 text-cyan-900">{text}</p>
+                    <div key={title} className="border-t border-cyan-200/20 py-4">
+                      <h3 className="font-bold text-cyan-50">{title}</h3>
+                      <p className="mt-1 text-xs leading-5 text-cyan-100">{text}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="rounded-3xl bg-slate-950 p-6 text-white shadow-lg">
+              <div className="border-t border-cyan-200/25 py-6 text-white">
                 <h3 className="text-xl font-bold">Resolve a normal attack</h3>
-                <ol className="mt-5 space-y-4 text-sm leading-6 text-slate-300">
+                <ol className="mt-5 space-y-4 text-sm leading-6 text-cyan-100/90">
                   {[
                     "Choose a target allowed by the target icons and every printed restriction.",
                     "Roll the printed attack die. The target rolls its Defense die.",
@@ -832,7 +829,7 @@ export default function InstructionsPage() {
                   ))}
                 </ol>
 
-                <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-2xl bg-white/10 p-5 text-center">
+                <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-y border-white/15 py-5 text-center">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.14em] text-cyan-300">Attack</p>
                     <p className="mt-2 text-4xl font-black text-white">7</p>
@@ -847,19 +844,19 @@ export default function InstructionsPage() {
             </div>
 
             <div className="mt-5 grid gap-5 md:grid-cols-2">
-              <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6">
+              <div className="border-l-2 border-amber-300/50 bg-amber-950/20 p-6">
                 <div className="flex items-center gap-3">
                   <CardIcon src={`${iconBase}/bait-ball-icon.png`} alt="Creature School icon" size={46} />
-                  <h3 className="text-lg font-bold text-amber-950">Creature Schools take damage</h3>
+                  <h3 className="text-lg font-bold text-amber-100">Creature Schools take damage</h3>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-amber-900">
+                <p className="mt-3 text-sm leading-6 text-amber-100/90">
                   They do not roll Defense. Damage equals the attack roll ×10. Discard
                   the School when it reaches 0 HP.
                 </p>
               </div>
-              <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6">
-                <h3 className="text-lg font-bold text-rose-950">Repeated attacks use distinct targets</h3>
-                <p className="mt-3 text-sm leading-6 text-rose-900">
+              <div className="border-l-2 border-rose-300/50 bg-rose-950/20 p-6">
+                <h3 className="text-lg font-bold text-rose-100">Repeated attacks use distinct targets</h3>
+                <p className="mt-3 text-sm leading-6 text-rose-100/90">
                   Resolve each attack separately. During one repeated sequence, the
                   same physical target cannot be selected twice.
                 </p>
@@ -868,10 +865,10 @@ export default function InstructionsPage() {
           </section>
 
           <section id="advanced" className="scroll-mt-24">
-            <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 to-cyan-950 p-6 text-white shadow-xl md:p-9">
+            <div className="border-t border-cyan-200/25 py-6 text-white md:py-9">
               <p data-rules-ignore className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">Complete reference</p>
               <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Advanced rules and edge cases</h2>
-              <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300 md:text-lg">
+              <p className="mt-4 max-w-3xl text-base leading-7 text-cyan-100/90 md:text-lg">
                 This is the currently documented general rules layer. Open only the
                 topic you need. A card’s more specific printed text wins when it
                 clearly creates an exception.
@@ -1031,10 +1028,10 @@ export default function InstructionsPage() {
               </RuleDetails>
             </div>
 
-            <div className="mt-6 flex flex-col items-start justify-between gap-4 rounded-3xl border border-cyan-200 bg-cyan-50 p-6 sm:flex-row sm:items-center">
+            <div className="mt-6 flex flex-col items-start justify-between gap-4 border-y border-cyan-200/25 py-6 sm:flex-row sm:items-center">
               <div>
-                <h3 className="text-lg font-bold text-slate-950">Need the working source document?</h3>
-                <p className="mt-1 text-sm leading-6 text-slate-600">Use it for card-specific comparisons and the latest wording.</p>
+                <h3 className="text-lg font-bold text-white">Need the working source document?</h3>
+                <p className="mt-1 text-sm leading-6 text-cyan-100/90">Use it for card-specific comparisons and the latest wording.</p>
               </div>
               <a href={fullRulesUrl} target="_blank" rel="noreferrer" className="shrink-0 rounded-full bg-cyan-700 px-5 py-3 text-sm font-bold text-white hover:bg-cyan-800">
                 Open full rules document ↗
@@ -1049,15 +1046,15 @@ export default function InstructionsPage() {
 
             <dl className="mt-7 grid gap-3 sm:grid-cols-2">
               {glossary.map(([term, definition]) => (
-                <div key={term} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <dt className="font-black text-cyan-800">{term}</dt>
-                  <dd className="mt-2 text-sm leading-6 text-slate-600">{definition}</dd>
+                <div key={term} className="border-t border-white/15 py-5">
+                  <dt className="font-black text-cyan-100">{term}</dt>
+                  <dd className="mt-2 text-sm leading-6 text-cyan-100/90">{definition}</dd>
                 </div>
               ))}
             </dl>
 
-            <div className="mt-6 rounded-3xl border border-cyan-100 bg-white p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-950">Target icon shortcut</h3>
+            <div className="mt-6 border-t border-cyan-200/25 py-6">
+              <h3 className="text-lg font-bold text-white">Target icon shortcut</h3>
               <div className="mt-4 flex flex-wrap gap-3">
                 {[
                   ["Any Fish", `${iconBase}/fish-any.png`],
@@ -1065,13 +1062,13 @@ export default function InstructionsPage() {
                   ["Any Apex", `${iconBase}/apex-any.png`],
                   ["Any Creature", `${iconBase}/any-creature.png`],
                 ].map(([label, icon]) => (
-                  <div key={label} className="flex items-center gap-2 rounded-full bg-slate-50 py-2 pl-2 pr-4 ring-1 ring-slate-100">
+                  <div key={label} className="flex items-center gap-2 rounded-full bg-cyan-950/15 py-2 pl-2 pr-4 ring-1 ring-white/15">
                     <CardIcon src={icon} alt="" size={36} />
-                    <span className="text-sm font-bold text-slate-700">{label}</span>
+                    <span className="text-sm font-bold text-cyan-50">{label}</span>
                   </div>
                 ))}
               </div>
-              <p className="mt-4 text-sm leading-6 text-slate-600">
+              <p className="mt-4 text-sm leading-6 text-cyan-100/90">
                 A colored circle with a star means any subtype in the pictured family.
                 The target must still satisfy habitat, controller, visibility, and
                 specific card-text restrictions.
@@ -1088,10 +1085,10 @@ export default function InstructionsPage() {
               <Faq questions={faqQuestions} />
             </div>
 
-            <div className="mt-7 rounded-[2rem] bg-slate-950 p-7 text-white md:flex md:items-center md:justify-between md:gap-8">
+            <div className="mt-7 border-t border-white/15 py-7 text-white md:flex md:items-center md:justify-between md:gap-8">
               <div>
                 <h3 className="text-2xl font-black">Still not sure?</h3>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
+                <p className="mt-2 max-w-xl text-sm leading-6 text-cyan-100/90">
                   Ask Finn in plain language. Finn uses this guide and the structured
                   SeaRealm rules knowledge to answer without guessing.
                 </p>

@@ -57,7 +57,7 @@ export default function SurveyResultsPage() {
       </section>
 
       {message && (
-        <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
+        <p className="rounded-2xl bg-rose-950/60 px-4 py-3 text-sm font-semibold text-rose-100">
           {message}
         </p>
       )}
@@ -66,11 +66,11 @@ export default function SurveyResultsPage() {
 
       {summary && (
         <>
-          <section className="rounded-3xl border border-cyan-200 bg-white p-6 shadow-sm">
-            <div className="text-sm font-bold uppercase tracking-wide text-slate-500">
+          <section className="rounded-3xl border border-cyan-200/25 bg-slate-950/40 p-6 shadow-sm">
+            <div className="text-sm font-bold uppercase tracking-wide text-cyan-100/85">
               Responses Collected
             </div>
-            <div className="mt-2 text-5xl font-bold text-slate-900">
+            <div className="mt-2 text-5xl font-bold text-white">
               {summary.responseCount}
             </div>
           </section>
@@ -82,14 +82,14 @@ export default function SurveyResultsPage() {
               return (
                 <section
                   key={question.id}
-                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+                  className="rounded-3xl border border-white/20 bg-slate-950/40 p-5 shadow-sm"
                 >
-                  <h2 className="text-lg font-bold text-slate-900">{question.label}</h2>
+                  <h2 className="text-lg font-bold text-white">{question.label}</h2>
 
                   {item?.type === "scale" && (
-                    <p className="mt-4 text-4xl font-bold text-sky-700">
+                    <p className="mt-4 text-4xl font-bold text-cyan-200">
                       {item.average ?? "No data"}
-                      {item.average ? <span className="text-lg text-slate-500"> / 10</span> : null}
+                      {item.average ? <span className="text-lg text-cyan-100/85"> / 10</span> : null}
                     </p>
                   )}
 
@@ -102,13 +102,13 @@ export default function SurveyResultsPage() {
 
                         return (
                           <div key={label}>
-                            <div className="mb-1 flex justify-between gap-3 text-sm font-semibold text-slate-700">
+                            <div className="mb-1 flex justify-between gap-3 text-sm font-semibold text-cyan-50">
                               <span>{label}</span>
                               <span>{count}</span>
                             </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                            <div className="h-2 overflow-hidden rounded-full bg-white/15">
                               <div
-                                className="h-full rounded-full bg-cyan-500"
+                                className="h-full rounded-full bg-cyan-300"
                                 style={{ width: `${percent}%` }}
                               />
                             </div>

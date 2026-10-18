@@ -6,7 +6,7 @@
   align-items: center;
   overflow: hidden;
   border-radius: 2rem;
-  background: #062f46;
+  background: transparent;
   color: #fff;
   box-shadow: 0 24px 56px -24px rgb(6 47 70 / 32%);
 }
@@ -54,8 +54,8 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, #062f46 0%, rgb(6 47 70 / 94%) 30%, rgb(6 47 70 / 60%) 66%, rgb(6 47 70 / 15%) 100%),
-    linear-gradient(0deg, rgb(6 47 70 / 45%), transparent 40%);
+    linear-gradient(90deg, rgb(2 17 34 / 45%) 0%, rgb(2 17 34 / 35%) 30%, rgb(2 17 34 / 18%) 66%, rgb(2 17 34 / 8%) 100%),
+    linear-gradient(0deg, rgb(2 17 34 / 20%), transparent 40%);
 }
 
 .content {

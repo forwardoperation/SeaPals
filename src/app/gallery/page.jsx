@@ -40,11 +40,11 @@ function StatPill({ label, value }) {
   if (value === null || value === undefined || value === "") return null;
 
   return (
-    <div className="rounded-xl border border-cyan-100 bg-cyan-50 px-3 py-2">
-      <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-cyan-700">
+    <div className="rounded-xl border border-cyan-200/20 bg-slate-950/25 px-3 py-2">
+      <dt className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-cyan-200">
         {label}
       </dt>
-      <dd className="mt-1 font-semibold text-slate-900">{value}</dd>
+      <dd className="mt-1 font-semibold text-white">{value}</dd>
     </div>
   );
 }
@@ -54,7 +54,7 @@ function MetadataRow({ label, value }) {
 
   return (
     <p>
-      <span className="font-semibold text-slate-800">{label}:</span> {value}
+      <span className="font-semibold text-white">{label}:</span> {value}
     </p>
   );
 }
@@ -72,14 +72,14 @@ function RuleList({ title, items }) {
 
   return (
     <div>
-      <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700">
+      <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
         {title}
       </h4>
       <div className="mt-2 space-y-2">
         {visibleItems.map((item) => (
-          <div key={item.id ?? `${title}-${item.name}`} className="text-slate-600">
+          <div key={item.id ?? `${title}-${item.name}`} className="text-cyan-100">
             {item.name && (
-              <p className="font-semibold text-slate-900">{item.name}</p>
+              <p className="font-semibold text-white">{item.name}</p>
             )}
             {item.text && <p className="leading-relaxed">{item.text}</p>}
           </div>
@@ -91,7 +91,7 @@ function RuleList({ title, items }) {
 
 function ProgressBar({ value }) {
   return (
-    <div className="h-3 overflow-hidden rounded-full bg-cyan-100">
+    <div className="h-3 overflow-hidden rounded-full bg-white/15">
       <div
         className="h-full rounded-full bg-cyan-500 transition-all"
         style={{ width: `${value}%` }}
@@ -105,25 +105,25 @@ function ArtProgress({ categories }) {
     getGalleryArtProgress(categories);
 
   return (
-    <section className="rounded-[2rem] border border-cyan-100 bg-white/85 p-8 shadow-sm backdrop-blur">
+    <section className="py-4 md:py-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-cyan-700">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-cyan-200">
             Set Art Progress
           </p>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
             The SeaRealm set is {overallPercent}% illustrated
           </h2>
-          <p className="mt-3 text-base leading-relaxed text-slate-600 md:text-lg">
+          <p className="mt-3 text-base leading-relaxed text-cyan-100 md:text-lg">
             Progress follows the master set list, with one entry per card and
             stage. Prerelease cards and cards awaiting artwork do not
             count as complete.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-cyan-100 bg-cyan-50 px-6 py-5 text-center">
-          <p className="text-5xl font-bold text-cyan-700">{overallPercent}%</p>
-          <p className="mt-1 text-sm font-semibold text-slate-700">
+        <div className="rounded-2xl border border-cyan-200/20 bg-slate-950/25 px-6 py-5 text-center">
+          <p className="text-5xl font-bold text-cyan-200">{overallPercent}%</p>
+          <p className="mt-1 text-sm font-semibold text-cyan-50">
             {completedCards} of {totalCards} cards complete
           </p>
         </div>
@@ -137,18 +137,18 @@ function ArtProgress({ categories }) {
         {categoryStats.map((category) => (
           <div
             key={category.slug}
-            className="rounded-2xl border border-cyan-100 bg-white/90 p-4 shadow-sm"
+            className="rounded-2xl border border-cyan-200/20 bg-slate-950/35 p-4 shadow-sm"
           >
             <div className="flex items-baseline justify-between gap-3">
-              <h3 className="font-semibold text-slate-900">{category.title}</h3>
-              <p className="text-sm font-semibold text-cyan-700">
+              <h3 className="font-semibold text-white">{category.title}</h3>
+              <p className="text-sm font-semibold text-cyan-200">
                 {category.percent}%
               </p>
             </div>
             <div className="mt-3">
               <ProgressBar value={category.percent} />
             </div>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-cyan-100">
               {category.complete} of {category.total} illustrated
             </p>
           </div>
@@ -160,11 +160,11 @@ function ArtProgress({ categories }) {
 
 function ComingSoonTile({ name }) {
   return (
-    <div className="flex aspect-[5/7] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-cyan-300 bg-white/80 p-5 text-center shadow-sm transition group-open:border-cyan-400 group-open:bg-cyan-50/70 group-hover:-translate-y-1 group-hover:border-cyan-400 group-hover:bg-cyan-50/80">
-      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-700">
+    <div className="flex aspect-[5/7] w-full flex-col items-center justify-center rounded-2xl border border-dashed border-cyan-200/35 bg-slate-950/35 p-5 text-center shadow-sm transition group-open:border-cyan-400 group-open:bg-cyan-950/50 group-hover:-translate-y-1 group-hover:border-cyan-400 group-hover:bg-cyan-950/50">
+      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-200">
         Coming Soon!
       </p>
-      <p className="mt-4 text-xl font-bold leading-tight text-slate-900">
+      <p className="mt-4 text-xl font-bold leading-tight text-white">
         {name}
       </p>
     </div>
@@ -173,7 +173,7 @@ function ComingSoonTile({ name }) {
 
 function SetMetadata({ image }) {
   return (
-    <div className="mt-3 space-y-1 text-slate-600">
+    <div className="mt-3 space-y-1 text-cyan-100">
       <MetadataRow label="Set" value={image.setTitle} />
       <MetadataRow label="Stage" value={image.stageLabel} />
       <MetadataRow
@@ -183,7 +183,7 @@ function SetMetadata({ image }) {
         ).join(", ")}
       />
       {image.prerelease && (
-        <p className="font-semibold text-amber-700">Prerelease — artwork in progress</p>
+        <p className="font-semibold text-amber-200">Prerelease — artwork in progress</p>
       )}
     </div>
   );
@@ -194,8 +194,8 @@ function CardMetadata({ image }) {
 
   if (!card) {
     return (
-      <div className="mt-3 rounded-2xl border border-cyan-100 bg-white/90 p-4 text-sm shadow-sm">
-        <h3 className="text-base font-semibold text-slate-900">{image.name}</h3>
+      <div className="mt-3 rounded-2xl border border-cyan-200/20 bg-slate-950/35 p-4 text-sm shadow-sm">
+        <h3 className="text-base font-semibold text-white">{image.name}</h3>
         <SetMetadata image={image} />
       </div>
     );
@@ -204,16 +204,16 @@ function CardMetadata({ image }) {
   const encyclopediaSlug = encyclopediaSlugByCardId[image.cardId];
 
   return (
-    <div className="mt-3 rounded-2xl border border-cyan-100 bg-white/95 p-4 text-sm shadow-sm">
+    <div className="mt-3 rounded-2xl border border-cyan-200/20 bg-slate-950/50 p-4 text-sm shadow-sm">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
           {formatCreatureType(card) || formatLabel(card.category)}
         </p>
-        <h3 className="mt-1 text-lg font-semibold text-slate-900">
+        <h3 className="mt-1 text-lg font-semibold text-white">
           {cardDisplayName(card, image.name)}
         </h3>
         {card.bio?.scientificName && (
-          <p className="mt-1 italic text-slate-500">{card.bio.scientificName}</p>
+          <p className="mt-1 italic text-cyan-200">{card.bio.scientificName}</p>
         )}
       </div>
 
@@ -234,7 +234,7 @@ function CardMetadata({ image }) {
         <StatPill label="Health" value={card.health} />
       </dl>
 
-      <div className="mt-4 space-y-1 text-slate-600">
+      <div className="mt-4 space-y-1 text-cyan-100">
         <MetadataRow label="Kind" value={formatLabel(card.kind)} />
         <MetadataRow label="Type" value={formatCreatureType(card)} />
         <MetadataRow label="Role" value={card.bio?.role} />
@@ -249,14 +249,14 @@ function CardMetadata({ image }) {
       </div>
 
       {card.bonusVictoryPoints?.text && (
-        <div className="mt-4 rounded-xl bg-cyan-50 p-3 text-slate-700">
-          <p className="font-semibold text-slate-900">Bonus VP</p>
+        <div className="mt-4 rounded-xl bg-slate-950/25 p-3 text-cyan-50">
+          <p className="font-semibold text-white">Bonus VP</p>
           <p className="mt-1 leading-relaxed">{card.bonusVictoryPoints.text}</p>
         </div>
       )}
 
       {card.flavorText && (
-        <p className="mt-4 border-l-2 border-cyan-200 pl-3 italic leading-relaxed text-slate-500">
+        <p className="mt-4 border-l-2 border-cyan-200/25 pl-3 italic leading-relaxed text-cyan-200">
           {card.flavorText}
         </p>
       )}
@@ -273,7 +273,7 @@ function CardMetadata({ image }) {
       {encyclopediaSlug && (
         <Link
           href={`/encyclopedia/${encyclopediaSlug}`}
-          className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-cyan-700 px-4 py-3 font-bold text-white transition hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-100"
+          className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-cyan-700 px-4 py-3 font-bold text-white transition hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
         >
           Meet the real creature →
         </Link>
@@ -329,8 +329,8 @@ function ZoneSection({ zone }) {
       <div>
         <h2 className="text-4xl font-bold text-white">{zone.title}</h2>
         {zone.images.length === 0 && (
-          <div className="mt-6 rounded-[2rem] border border-dashed border-cyan-200 bg-white/75 p-8 text-slate-600 shadow-sm">
-            <p className="text-lg font-semibold text-slate-900">
+          <div className="mt-6 rounded-[2rem] border border-dashed border-cyan-200/25 bg-slate-950/35 p-8 text-cyan-100 shadow-sm">
+            <p className="text-lg font-semibold text-white">
               No {zone.title.toLowerCase()} cards yet.
             </p>
             <p className="mt-2">
@@ -359,23 +359,23 @@ export default async function GalleryPage() {
     <main className="space-y-12 pb-16">
       <ArtProgress categories={categories} />
 
-      <section className="rounded-[2rem] border border-cyan-100 bg-white/80 p-8 shadow-sm backdrop-blur">
-        <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-cyan-700">
+      <section className="py-4 md:py-6">
+        <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-cyan-200">
           SeaRealm Gallery
         </p>
 
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
+        <h1 className="text-4xl font-bold tracking-tight text-white md:text-5xl">
           Card Gallery
         </h1>
 
-        <p className="mt-4 max-w-3xl text-base text-slate-600 md:text-lg">
+        <p className="mt-4 max-w-3xl text-base text-cyan-100 md:text-lg">
           Browse SeaRealm cards by zone, then by card type.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
             href="/set-list"
-            className="rounded-full bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-200"
+            className="rounded-full bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
           >
             Rarity set list →
           </Link>
@@ -383,7 +383,7 @@ export default async function GalleryPage() {
             <a
               key={category.slug}
               href={`#${category.slug}`}
-              className="rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-900 transition hover:bg-cyan-100"
+              className="rounded-full border border-cyan-200/25 bg-slate-950/25 px-4 py-2 text-sm font-medium text-cyan-50 transition hover:bg-white/10"
             >
               {category.title}
             </a>
