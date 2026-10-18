@@ -9,14 +9,16 @@ Downloaded October 17, 2026. The [Pexels License](https://www.pexels.com/license
 | Local asset in `public/media/ocean/` | Original footage | Creator | Source excerpt |
 | --- | --- | --- | --- |
 | `surface-steady.mp4` / `surface-steady.webp` | [Water Level Shot With View of Sunset](https://www.pexels.com/video/water-level-shot-with-view-of-sunset-3138050/) | juv | 0-12 seconds |
-| `calm-blue-water.mp4` / `calm-blue-water.webp` | [Vast Underwater Scene with Turquoise Hues](https://www.pexels.com/video/vast-underwater-scene-with-turquoise-hues-38881597/) | JUN HO LEE | Full 7-second recording, slowed to 40% speed |
+| `clear-blue-water.mp4` / `clear-blue-water.webp` | [Vast Underwater Scene with Turquoise Hues](https://www.pexels.com/video/vast-underwater-scene-with-turquoise-hues-38881597/) | JUN HO LEE | Full 7-second recording, slowed to 40% speed; central squid removed |
 
 Original download URLs:
 
 - https://videos.pexels.com/video-files/3138050/3138050-hd_1920_1080_30fps.mp4
 - https://videos.pexels.com/video-files/38881597/16530873_1920_1080_60fps.mp4
 
-The underwater source was published August 5, 2026, at 1920x1080 and 59.94 fps. Its narrow surface band and mostly empty blue water replace the previous close view of turbulent reflections. The slight natural camera drift and small distant fish remain in the recording.
+The underwater source was published August 5, 2026, at 1920x1080 and 59.94 fps. Its narrow surface band and mostly empty blue water replace the previous close view of turbulent reflections. The central squid is removed from the source frames before the slow-motion loop and its dissolve are assembled. The slight natural camera drift remains in the recording.
+
+The cleanup tracks the squid through all 425 source frames and blends adjacent water from the same frame and depth into a small feathered patch. The 288x160-pixel patch uses water sampled 320 pixels to either side; the rest of the composition is preserved. This also cleans both branches of the loop dissolve. New `clear-blue-water` asset URLs prevent browsers from reusing the previous clip or poster.
 
 ## Surface stabilization
 
@@ -29,7 +31,7 @@ On 234 confidently tracked matched frames, horizon-angle standard deviation fell
 Prepared with FFmpeg 7.1 and Pillow. Both clips are 1280x720, 24 fps, H.264/yuv420p MP4 with fast-start metadata and no audio. The surface retains its original playback speed. Matching WebP posters are extracted from the first encoded frame.
 
 - Surface: 720 pixels high, 11-second loop. The last second dissolves into the original first second; playback begins at source second one to make the loop join continuously. Grade: saturation 0.86; red shadows -0.025, blue shadows +0.035, blue midtones +0.035.
-- Open water: the full frame is retained and the 59.94 fps recording is slowed to 40% speed for gentle movement at 24 fps. No optical-flow interpolation, generated beams, or ripple distortion is used. A two-second dissolve makes a 15.708-second loop (377 frames); playback begins after the opening section so the loop wraps continuously. Grade: green channel 98%, blue channel 101%, red unchanged. The video is 1,280,112 bytes and its poster is 13,710 bytes.
+- Open water: the full frame is retained and the 59.94 fps recording is slowed to 40% speed for gentle movement at 24 fps. No optical-flow interpolation, generated beams, or ripple distortion is used. A two-second dissolve makes a 15.708-second loop (377 frames); playback begins after the opening section so the loop wraps continuously. Grade: green channel 98%, blue channel 101%, red unchanged. The poster is extracted from the cleaned video so reduced-motion and autoplay-blocked views also omit the squid.
 
 ## Runtime
 
