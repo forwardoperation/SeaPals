@@ -1,0 +1,31 @@
+.wrapper {
+  display: contents;
+}
+
+.item {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 800ms ease,
+    transform 800ms cubic-bezier(0.2, 0.65, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.pending {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.item:focus-within {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
