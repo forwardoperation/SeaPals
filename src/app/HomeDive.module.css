@@ -114,7 +114,7 @@
   border-bottom: 1px solid rgb(165 243 252 / 18%);
 }
 .tabletop .chapterHeading { max-width: 20ch; }
-.tabletopFigure { margin: 0; }
+.tabletopFigure { max-width: 42rem; margin: 0 auto; }
 .tabletopImage {
   display: block;
   width: 100%;

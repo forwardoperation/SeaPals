@@ -86,11 +86,11 @@ export default function HomeDive() {
           </h2>
           <figure className={styles.tabletopFigure} data-dive-reveal>
             <Image
-              src="/images/promo/searealm-tabletop.webp"
-              alt="Top-down tabletop scene with SeaRealm cards played on two opposing ecosystem mats"
-              width={1536}
-              height={1024}
-              sizes="(max-width: 767px) calc(100vw - 48px), (max-width: 1152px) calc(100vw - 80px), 1072px"
+              src="/images/promo/searealm-tabletop-figma.webp"
+              alt="Top-down SeaRealm game on the Coral Garden and Drop Off playmats, with coral in the foundation bands and creatures above and below"
+              width={1024}
+              height={1536}
+              sizes="(max-width: 767px) calc(100vw - 48px), 672px"
               className={styles.tabletopImage}
             />
           </figure>
