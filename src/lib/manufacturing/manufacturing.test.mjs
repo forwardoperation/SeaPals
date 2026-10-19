@@ -10,8 +10,8 @@ import {
   validateBoosterPool,
 } from "./boosters.mjs";
 import {
-  BACK_TEMPLATE,
-  PRINT_LAYOUT,
+  LEGACY_BACK_TEMPLATE as BACK_TEMPLATE,
+  LEGACY_PRINT_LAYOUT as PRINT_LAYOUT,
   createManufacturingManifest,
   preflightPrintAssets,
   verifyManifest,

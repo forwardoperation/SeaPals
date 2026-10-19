@@ -29,8 +29,8 @@ function releaseFor(selected) {
       const hash = contentHash(item.id);
       return [item.id, {
         nodeId: item.nodeId, sha256: hash, path: `manufacturing/sha256/${hash}.png`,
-        width: background?.width ?? (item.kind === "card" ? 750 : 2550),
-        height: background?.height ?? (item.kind === "card" ? 1050 : 3300),
+        width: background?.assetWidth ?? background?.width ?? (item.kind === "card" ? 750 : 2550),
+        height: background?.assetHeight ?? background?.height ?? (item.kind === "card" ? 1050 : 3300),
       }];
     })),
   };
@@ -39,18 +39,18 @@ function releaseFor(selected) {
 test("omitting products preserves the full export and its existing cache hash", () => {
   assert.equal(parseProducts([]), null);
   assert.equal(selectProductArtwork(source), source);
-  assert.equal(source.sources.length, 271);
+  assert.equal(source.sources.length, 270);
   assert.equal(source.exportScope, undefined);
 });
 
-test("Reef export includes all 95 eligible printings and three shared assets without shrinking the catalog", () => {
+test("Reef export includes all 95 eligible printings and two shared assets without shrinking the catalog", () => {
   const before = structuredClone(source);
   const selected = selectProductArtwork(source, ["reef-dive-pack"]);
   const reef = source.catalog.filter((card) => card.set === "reef");
-  assert.equal(selected.sources.length, 98);
+  assert.equal(selected.sources.length, 97);
   assert.deepEqual(ids(selected.sources), [
     ...reef.map((card) => card.printingId), "standard-back-sheet",
-    "print-template-front-background", "print-template-back-background",
+    "print-template-front-background",
   ].sort());
   assert.deepEqual(selected.catalog, source.catalog);
   assert.equal(selected.catalog.length, 217);
@@ -112,13 +112,13 @@ test("comma-separated selections are deterministic and share common back/backgro
   const reversed = selectProductArtwork(source, [...products].reverse());
   assert.equal(contentHash(selected), contentHash(reversed));
   assert.notEqual(contentHash(selected), contentHash(selectProductArtwork(source, ["reef-dive-pack"])));
-  assert.equal(selected.sources.length, source.catalog.filter((card) => card.set !== "ocean").length + 3);
+  assert.equal(selected.sources.length, source.catalog.filter((card) => card.set !== "ocean").length + 2);
   assert.equal(new Set(ids(selected.sources)).size, selected.sources.length);
 });
 
 test("fixed products select their complete sheets and shared assets", () => {
   const selected = selectProductArtwork(source, ["coral-garden"]);
-  assert.equal(selected.sources.length, 10);
+  assert.equal(selected.sources.length, 9);
   assert.equal(selected.sources.filter((item) => item.kind === "sheet").length, 7);
   assert.ok(selected.sources.every((item) => item.kind !== "card"));
   assert.deepEqual(selected.catalog, source.catalog);

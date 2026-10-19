@@ -16,9 +16,9 @@ import { validateBoosterPool } from "./boosters.mjs";
 import { BOOSTER_PRODUCTS, fixedSheetAssets } from "./recipes.mjs";
 import { validFixedSheetPositions } from "./sourceGeometry.mjs";
 import {
-  CUTTER_LAYOUT_V3,
-  PRINT_BACKGROUNDS,
+  backgroundsForLayout,
   backgroundSide,
+  hasPrintBackgrounds,
   validateBackgroundAsset,
 } from "./backdrops.mjs";
 
@@ -96,11 +96,11 @@ export function requireOrderArtwork(items, release) {
   }
   if (ids.size) {
     ids.add("standard-back-sheet");
-    if (release.printTemplates?.version === CUTTER_LAYOUT_V3) {
+    if (hasPrintBackgrounds(release.printTemplates?.version)) {
       resolvePrintTemplates(release.printTemplates);
-      for (const [side, background] of Object.entries(PRINT_BACKGROUNDS)) {
+      for (const [side, background] of Object.entries(backgroundsForLayout(release.printTemplates.version))) {
         ids.add(background.assetId);
-        validateBackgroundAsset(release.assets?.[background.assetId], side);
+        validateBackgroundAsset(release.assets?.[background.assetId], side, release.printTemplates.version);
       }
     }
   }
@@ -136,17 +136,19 @@ export function validateRelease(release) {
     validateBoosterPool(release.catalog, set);
   if (release.printTemplates !== undefined)
     resolvePrintTemplates(release.printTemplates);
-  if (release.printTemplates?.version === CUTTER_LAYOUT_V3)
-    for (const [side, background] of Object.entries(PRINT_BACKGROUNDS))
-      validateBackgroundAsset(release.assets?.[background.assetId], side);
+  if (hasPrintBackgrounds(release.printTemplates?.version))
+    for (const [side, background] of Object.entries(backgroundsForLayout(release.printTemplates.version)))
+      validateBackgroundAsset(release.assets?.[background.assetId], side, release.printTemplates.version);
   for (const [id, asset] of Object.entries(release.assets ?? {})) {
     if (!/^[A-Za-z0-9_-]{1,150}$/.test(id) || asset.path !== assetKey(asset))
       throw new Error("Invalid private asset entry.");
-    const side = backgroundSide(id);
+    const side = backgroundSide(id, release.printTemplates?.version);
     if (side) {
-      if (release.printTemplates?.version !== CUTTER_LAYOUT_V3)
+      if (!hasPrintBackgrounds(release.printTemplates?.version))
         throw new Error("A private background requires matching versioned print templates.");
-      validateBackgroundAsset(asset, side);
+      if (backgroundsForLayout(release.printTemplates.version)[side].assetId !== id)
+        throw new Error("A private background requires its matching versioned asset identity.");
+      validateBackgroundAsset(asset, side, release.printTemplates.version);
     } else if (id === "standard-back-sheet" || id.startsWith("sheet-")) {
       if (asset.width !== 2550 || asset.height !== 3300)
         throw new Error(`Incorrect Letter sheet dimensions: ${id}`);

@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
 import QRCode from "qrcode";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -6,7 +6,11 @@ import { PNG } from "pngjs";
 import { preflightPrintAssets } from "../../src/lib/manufacturing/printPlan.mjs";
 import { sha256 } from "../../src/lib/manufacturing/integration.mjs";
 import { validFixedSheetPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
-import { isCutterLayout } from "../../src/lib/manufacturing/backdrops.mjs";
+import {
+  CUTTER_LAYOUT_V4,
+  hasPrintBackgrounds,
+  isCutterLayout,
+} from "../../src/lib/manufacturing/backdrops.mjs";
 
 const POINT = 72 / 300,
   LETTER = [612, 792];
@@ -51,12 +55,16 @@ export function backPositionForGlue(position, pageWidth = 2550) {
   // sheet over a vertical edge reverses its column positions, not the artwork.
   return { ...position, x: pageWidth - position.x - position.width };
 }
-function drawCard(page, image, position) {
+function drawCard(page, image, position, rotation = 0) {
+  // Figma records the unrotated top-left origin in page coordinates. PDF
+  // images rotate about their bottom-left corner with the opposite y axis.
+  const radians = rotation * Math.PI / 180;
   page.drawImage(image, {
-    x: position.x * POINT,
-    y: LETTER[1] - (position.y + position.height) * POINT,
+    x: (position.x - Math.sin(radians) * position.height) * POINT,
+    y: LETTER[1] - (position.y + Math.cos(radians) * position.height) * POINT,
     width: position.width * POINT,
     height: position.height * POINT,
+    rotate: degrees(-rotation),
   });
 }
 function cropCard(original, position) {
@@ -80,19 +88,27 @@ function cropCard(original, position) {
   PNG.bitblt(original, crop, x, y, width, height, 0, 0);
   return PNG.sync.write(crop);
 }
-function cutterPositions(positions, name) {
+function cutterPositions(positions, name, rotated = false) {
   if (
     !Array.isArray(positions) ||
     positions.length !== 9 ||
     positions.some(
-      (p) =>
-        ![p.x, p.y, p.width, p.height].every(Number.isFinite) ||
-        p.x < 0 ||
-        p.y < 0 ||
-        p.width <= 0 ||
-        p.height <= 0 ||
-        p.x + p.width > 2550 ||
-        p.y + p.height > 3300,
+      (p) => {
+        if (
+          ![p.x, p.y, p.width, p.height].every(Number.isFinite) ||
+          p.width <= 0 ||
+          p.height <= 0 ||
+          (rotated && !Number.isFinite(p.rotation))
+        ) return true;
+        const radians = (rotated ? p.rotation : 0) * Math.PI / 180,
+          cos = Math.cos(radians), sin = Math.sin(radians);
+        return [[0, 0], [p.width, 0], [0, p.height], [p.width, p.height]]
+          .some(([x, y]) => {
+            const pageX = p.x + x * cos - y * sin,
+              pageY = p.y + x * sin + y * cos;
+            return pageX < 0 || pageY < 0 || pageX > 2550 || pageY > 3300;
+          });
+      },
     )
   )
     throw new Error(`The saved ${name} needs nine valid Letter card positions.`);
@@ -144,12 +160,14 @@ export async function renderJob({
         page = doc.addPage(LETTER),
         font = await doc.embedFont(StandardFonts.Helvetica);
       if (isCutterLayout(manifest.layout.version)) {
-        // The backdrop is its own private image-only Figma layer. The guide
-        // frames contain numbered placeholders and are never printed.
+        const tuned = manifest.layout.version === CUTTER_LAYOUT_V4;
+        // Front artwork is placed over the exported backdrop bounds, whose
+        // raster already includes its Figma rotation. V4 backs are one complete
+        // tuned Figma page, including the ocean and all nine white logos.
         const background = side === "fronts"
           ? manifest.layout.background
           : sheet.backs.template.background;
-        if (manifest.layout.version === "figma-cutter-nine-up-v3") {
+        if (hasPrintBackgrounds(manifest.layout.version)) {
           const image = await doc.embedPng(bytes.get(background.assetId));
           drawCard(page, image, background);
         }
@@ -161,12 +179,12 @@ export async function renderJob({
             sourcePositions = savedPositions.toSorted((a, b) =>
               Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y,
             ),
-            positions = cutterPositions(manifest.layout.positions, "front template");
+            positions = cutterPositions(manifest.layout.positions, "front template", tuned);
           for (const [index, sourcePosition] of sourcePositions.entries()) {
             const image = await doc.embedPng(
               cropCard(original, sourcePosition),
             );
-            drawCard(page, image, positions[index]);
+            drawCard(page, image, positions[index], tuned ? positions[index].rotation : 0);
           }
         } else if (side === "fronts") {
           const positions = cutterPositions(
@@ -176,12 +194,13 @@ export async function renderJob({
               height: slot.height ?? manifest.layout.cardHeight,
             })),
             "booster front",
+            tuned,
           );
           for (const position of positions) {
             const image = await doc.embedPng(bytes.get(position.printingId));
-            drawCard(page, image, position);
+            drawCard(page, image, position, tuned ? position.rotation : 0);
           }
-        } else {
+        } else if (!tuned) {
           const original = PNG.sync.read(bytes.get(sheet.backs.assetId)),
             image = await doc.embedPng(
               cropCard(original, { x: 150, y: 75, width: 750, height: 1050 }),

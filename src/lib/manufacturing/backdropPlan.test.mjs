@@ -5,6 +5,8 @@ import { buildPrintingCatalog, contentHash } from "./boosters.mjs";
 import {
   BACK_TEMPLATE,
   PRINT_LAYOUT,
+  V3_BACK_TEMPLATE,
+  V3_PRINT_LAYOUT,
   createManufacturingManifest,
   preflightPrintAssets,
   verifyManifest,
@@ -18,7 +20,8 @@ const read = async (name) => JSON.parse(await readFile(new URL(`../../data/${nam
     orderNumber: "OCEAN-TEMPLATE-TEST",
     items: [{ productId: "deep-dive-pack", quantity: 1 }],
   };
-const templates = () => structuredClone({ version: "figma-cutter-nine-up-v3", fronts: PRINT_LAYOUT, backs: BACK_TEMPLATE });
+const templates = () => structuredClone({ version: "figma-cutter-nine-up-v3", fronts: V3_PRINT_LAYOUT, backs: V3_BACK_TEMPLATE });
+const tunedTemplates = () => structuredClone({ version: "figma-cutter-nine-up-v4", fronts: PRINT_LAYOUT, backs: BACK_TEMPLATE });
 function releaseFixture() {
   const asset = (digit, width, height, extra = {}) => ({
     sha256: digit.repeat(64), path: `manufacturing/sha256/${digit.repeat(64)}.png`, width, height, ...extra,
@@ -33,6 +36,15 @@ function releaseFixture() {
       "print-template-back-background": asset("d", 2467, 3240, { nodeId: "4116:234589" }),
     },
   };
+}
+function tunedReleaseFixture() {
+  const release = releaseFixture();
+  release.printTemplates = tunedTemplates();
+  release.assets["standard-back-sheet"].nodeId = "4244:451219";
+  release.assets["print-template-front-background"].width = 2439;
+  release.assets["print-template-front-background"].height = 3239;
+  delete release.assets["print-template-back-background"];
+  return release;
 }
 const manifest = (options = {}) => createManufacturingManifest({
   request, catalog, artworkRelease: "ocean-template-test", randomIndex: () => 0,
@@ -126,6 +138,83 @@ test("preflight includes both backgrounds only for v3 and rejects silently mixin
   const mixed = structuredClone(legacy);
   mixed.layout.background = structuredClone(saved.layout.background);
   assert.equal(preflightPrintAssets(rehash(mixed), release).ready, false);
+});
+
+test("v4 pins the tuned front rotation and native Canon page without changing booster draws", () => {
+  const old = manifest({ printTemplates: templates() }), saved = manifest({ printTemplates: tunedTemplates() });
+  assert.equal(saved.layout.version, "figma-cutter-nine-up-v4");
+  assert.deepEqual(saved.packs, old.packs);
+  assert.notEqual(saved.manifestHash, old.manifestHash);
+  assert.equal(saved.layout.name, "die-cut-front-epson");
+  assert.deepEqual(saved.sheets[0].slots[0], {
+    ...old.sheets[0].slots[0],
+    x: 153.89588928222656, y: 54.32331466674805,
+    rotation: 0.35000001238844786,
+  });
+  assert.deepEqual(saved.sheets[0].backs.template.background, {
+    assetId: "standard-back-sheet", nodeId: "4244:451219",
+    x: 0, y: 0, width: 2550, height: 3300,
+  });
+  assert.deepEqual(saved.layout.background, {
+    assetId: "print-template-front-background", nodeId: "4116:234587",
+    x: 82.17547827214003, y: 19.641708374023438,
+    width: 2438.649044044316, height: 3238.7165909940377,
+    assetWidth: 2439, assetHeight: 3239,
+  });
+  assert.equal(old.layout.name, "print-test-die-cut-front-epson");
+  assert.equal(old.sheets[0].backs.template.nodeId, "4099:61666");
+});
+
+test("v4 release and preflight require the full rear source and native exported backdrop dimensions", () => {
+  const release = tunedReleaseFixture(), saved = manifest({ printTemplates: tunedTemplates() });
+  assert.doesNotThrow(() => validateRelease(release));
+  assert.doesNotThrow(() => requireOrderArtwork(request.items, release));
+  const check = preflightPrintAssets(saved, release);
+  assert.equal(check.ready, true);
+  assert.ok(check.requiredAssetIds.includes("standard-back-sheet"));
+  assert.ok(check.requiredAssetIds.includes("print-template-front-background"));
+  assert.ok(!check.requiredAssetIds.includes("print-template-back-background"));
+  for (const change of [
+    (value) => { value.assets["standard-back-sheet"].nodeId = "3758:338124"; },
+    (value) => { delete value.assets["standard-back-sheet"]; },
+    (value) => { value.assets["print-template-front-background"].width = 2438.649044044316; },
+    (value) => { value.assets["print-template-front-background"].height = 3238.7165909940377; },
+  ]) {
+    const invalid = tunedReleaseFixture();
+    change(invalid);
+    assert.throws(() => validateRelease(invalid), /background|backdrop/i);
+    assert.throws(() => requireOrderArtwork(request.items, invalid), /background|backdrop/i);
+    assert.equal(preflightPrintAssets(saved, invalid).ready, false);
+  }
+  const mixedAssets = tunedReleaseFixture();
+  mixedAssets.assets["print-template-back-background"] = releaseFixture().assets["print-template-back-background"];
+  assert.throws(() => validateRelease(mixedAssets), /matching versioned asset identity/i);
+});
+
+test("v3 and v4 saved jobs cannot be rendered against the other release's templates", () => {
+  const old = manifest({ printTemplates: templates() }), tuned = manifest({ printTemplates: tunedTemplates() });
+  const unversioned = structuredClone(manifest());
+  delete unversioned.layout.version;
+  for (const [saved, release] of [
+    [old, tunedReleaseFixture()], [tuned, releaseFixture()],
+    [manifest(), tunedReleaseFixture()], [rehash(unversioned), tunedReleaseFixture()],
+  ]) {
+    const result = preflightPrintAssets(saved, release);
+    assert.equal(result.ready, false);
+    assert.match(result.errors.join("; "), /matching versioned release templates/);
+  }
+  for (const change of [
+    (value) => { value.fronts.positions[0].rotation = 0; },
+    (value) => { value.fronts.positions[0].x += 1; },
+    (value) => { value.backs.nodeId = "4099:61666"; },
+    (value) => { value.backs.background = templates().backs.background; },
+  ]) {
+    const changed = tunedTemplates();
+    change(changed);
+    let draws = 0;
+    assert.throws(() => manifest({ printTemplates: changed, randomIndex: () => { draws++; return 0; } }), /geometry|background|backdrop/i);
+    assert.equal(draws, 0);
+  }
 });
 
 // The real service must pass the pinned release's templates into the draw and

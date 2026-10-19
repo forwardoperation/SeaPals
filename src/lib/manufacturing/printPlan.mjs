@@ -14,8 +14,12 @@ import { validFixedSheetPositions } from "./sourceGeometry.mjs";
 import {
   CUTTER_LAYOUT_V2,
   CUTTER_LAYOUT_V3,
+  CUTTER_LAYOUT_V4,
   PRINT_BACKGROUNDS,
+  PRINT_BACKGROUNDS_V3,
+  backgroundsForLayout,
   backgroundSide,
+  hasPrintBackgrounds,
   isCutterLayout,
   validateBackground,
   validateBackgroundAsset,
@@ -56,9 +60,9 @@ export const PRINTER_ROUTES = Object.freeze({
   backs: "Canon MF750C II Series UFR II",
 });
 
-// This older frame contains the actual card-back artwork. The new cutting
-// template contains only placeholders and must never replace the art source.
-export const BACK_ART_SOURCE = Object.freeze({
+// V2/V3 used one logo crop from this older artwork frame. Their cutting
+// templates contain placeholders, so they remain separate from the art source.
+export const V3_BACK_ART_SOURCE = Object.freeze({
   fileKey: "xeol2YE0jCE0N5vAD6tjzx",
   nodeId: "3758:338124",
   name: "card-back-sea-realm-laser-print",
@@ -79,19 +83,65 @@ export const LEGACY_BACK_TEMPLATE = Object.freeze({
   ),
 });
 
-export const PRINT_LAYOUT = Object.freeze({
+export const V3_PRINT_LAYOUT = Object.freeze({
   ...LEGACY_PRINT_LAYOUT,
   version: CUTTER_LAYOUT_V3,
+  background: PRINT_BACKGROUNDS_V3.fronts,
+});
+
+export const V3_BACK_TEMPLATE = Object.freeze({
+  ...LEGACY_BACK_TEMPLATE,
+  background: PRINT_BACKGROUNDS_V3.backs,
+});
+
+export const PRINT_LAYOUT = Object.freeze({
+  ...LEGACY_PRINT_LAYOUT,
+  version: CUTTER_LAYOUT_V4,
+  name: "die-cut-front-epson",
+  left: 153.89588928222656,
+  top: 54.32331466674805,
+  positions: Object.freeze([
+    [153.89588928222656, 54.32331466674805],
+    [930.5480346679688, 59.06767272949219],
+    [1707.200439453125, 63.812034606933594],
+    [147.4411163330078, 1110.97021484375],
+    [924.09326171875, 1115.714599609375],
+    [1700.7457275390625, 1120.458984375],
+    [140.9864044189453, 2167.6171875],
+    [917.6384887695312, 2172.361572265625],
+    [1694.2908935546875, 2177.10595703125],
+  ].map(([x, y]) => Object.freeze({
+    x, y, width: cutterWidth, height: cutterHeight,
+    rotation: 0.35000001238844786,
+  }))),
   background: PRINT_BACKGROUNDS.fronts,
 });
 
 export const BACK_TEMPLATE = Object.freeze({
-  ...LEGACY_BACK_TEMPLATE,
+  fileKey: LEGACY_PRINT_LAYOUT.fileKey,
+  nodeId: "4244:451219",
+  name: "die-cut-rear-canon",
+  width: 2550,
+  height: 3300,
+  positions: Object.freeze(
+    [79.31329345703125, 1135.97998046875, 2192.646484375].flatMap((y) =>
+      [94.033447265625, 870.7001953125, 1647.36669921875].map((x) => Object.freeze({
+        x, y, width: 738.5999755859375, height: 1034.0400390625, rotation: 0,
+      }))),
+  ),
   background: PRINT_BACKGROUNDS.backs,
 });
 
+export const BACK_ART_SOURCE = Object.freeze({
+  fileKey: BACK_TEMPLATE.fileKey,
+  nodeId: BACK_TEMPLATE.nodeId,
+  name: BACK_TEMPLATE.name,
+  width: BACK_TEMPLATE.width,
+  height: BACK_TEMPLATE.height,
+});
+
 // Resolve from the release pinned to the job. An omitted template retains the
-// original v2 behavior for old callers and releases, even after v3 is active.
+// original v2 behavior for old callers and releases, even after newer tuning.
 export function resolvePrintTemplates(templates) {
   if (templates === undefined)
     return {
@@ -100,9 +150,13 @@ export function resolvePrintTemplates(templates) {
     };
   if (!isCutterLayout(templates?.version))
     throw new Error("Unsupported versioned print templates.");
+  const expectedFront = templates.version === CUTTER_LAYOUT_V4 ? PRINT_LAYOUT
+      : templates.version === CUTTER_LAYOUT_V3 ? V3_PRINT_LAYOUT : LEGACY_PRINT_LAYOUT,
+    expectedBack = templates.version === CUTTER_LAYOUT_V4 ? BACK_TEMPLATE
+      : templates.version === CUTTER_LAYOUT_V3 ? V3_BACK_TEMPLATE : LEGACY_BACK_TEMPLATE;
   for (const [side, expected] of [
-    ["fronts", LEGACY_PRINT_LAYOUT],
-    ["backs", LEGACY_BACK_TEMPLATE],
+    ["fronts", expectedFront],
+    ["backs", expectedBack],
   ]) {
     const saved = templates[side];
     if (
@@ -116,12 +170,13 @@ export function resolvePrintTemplates(templates) {
         ["x", "y", "width", "height"].some((key) =>
           !Number.isFinite(position?.[key]) ||
           Math.abs(position[key] - expected.positions[index][key]) > 0.01,
-        ),
+        ) || !Number.isFinite(position.rotation ?? 0) ||
+          Math.abs((position.rotation ?? 0) - (expected.positions[index].rotation ?? 0)) > 0.000001,
       )
     )
       throw new Error(`The saved ${side} print template has incorrect identity or card geometry.`);
-    if (templates.version === CUTTER_LAYOUT_V3)
-      validateBackground(saved.background, side);
+    if (hasPrintBackgrounds(templates.version))
+      validateBackground(saved.background, side, templates.version);
     else if (saved.background !== undefined)
       throw new Error("Legacy print templates cannot contain a background.");
   }
@@ -136,7 +191,7 @@ export function resolvePrintTemplates(templates) {
   });
   return {
     layout: {
-      ...structuredClone(LEGACY_PRINT_LAYOUT),
+      ...structuredClone(expectedFront),
       ...reference(templates.fronts),
       version: templates.version,
     },
@@ -402,19 +457,24 @@ export function preflightPrintAssets(manifest, release) {
     ]),
   );
   const errors = [];
-  if (manifest.layout.version === CUTTER_LAYOUT_V3) {
+  if (
+    release.printTemplates?.version === CUTTER_LAYOUT_V4 &&
+    manifest.layout.version !== CUTTER_LAYOUT_V4
+  )
+    errors.push("The full-page Canon artwork requires its matching versioned release templates; it cannot be cropped as a legacy back.");
+  if (hasPrintBackgrounds(manifest.layout.version)) {
     try {
       const templates = resolvePrintTemplates(release.printTemplates);
-      if (templates.layout.version !== CUTTER_LAYOUT_V3)
+      if (templates.layout.version !== manifest.layout.version)
         throw new Error("The saved background layout requires its matching versioned release templates.");
-      validateBackground(manifest.layout.background, "fronts");
+      validateBackground(manifest.layout.background, "fronts", manifest.layout.version);
       for (const sheet of manifest.sheets)
-        validateBackground(sheet.backs.template?.background, "backs");
+        validateBackground(sheet.backs.template?.background, "backs", manifest.layout.version);
     } catch (error) {
       errors.push(error.message);
     }
     if (manifest.sheets.length)
-      for (const background of Object.values(PRINT_BACKGROUNDS))
+      for (const background of Object.values(backgroundsForLayout(manifest.layout.version)))
         required.add(background.assetId);
   } else if (
     manifest.layout.background !== undefined ||
@@ -424,10 +484,10 @@ export function preflightPrintAssets(manifest, release) {
   }
   for (const id of required) {
     const asset = release.assets?.[id];
-    const side = backgroundSide(id);
+    const side = backgroundSide(id, manifest.layout.version);
     if (side) {
       try {
-        validateBackgroundAsset(asset, side);
+        validateBackgroundAsset(asset, side, manifest.layout.version);
       } catch (error) {
         errors.push(error.message);
       }

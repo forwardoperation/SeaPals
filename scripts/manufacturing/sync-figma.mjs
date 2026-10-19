@@ -21,6 +21,7 @@ import {
 } from "../../src/lib/manufacturing/integration.mjs";
 import { PRIVATE_ROOT, REPO_ROOT, atomicJson } from "./orders.mjs";
 import { validFixedSheetPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
+import { validateTunedTemplate } from "./tuned-template-validation.mjs";
 
 export function buildSourceMap(
   setList,
@@ -62,10 +63,10 @@ export function buildSourceMap(
     expectedNumber: `${c.collectorNumber}/${c.setTotal}`,
   }));
   sources.push(
-    // The cutter template contains numbered placeholders, not card artwork.
+    // V4 uses the complete Canon page, including water and logos.
     { id: "standard-back-sheet", kind: "back", nodeId: BACK_ART_SOURCE.nodeId },
     ...fixedArtworkSources(),
-    ...[PRINT_LAYOUT, BACK_TEMPLATE].map((template) => ({
+    ...[PRINT_LAYOUT, BACK_TEMPLATE].filter(template => template.background.assetId !== "standard-back-sheet").map((template) => ({
       id: template.background.assetId,
       kind: "backdrop",
       nodeId: template.background.nodeId,
@@ -192,6 +193,8 @@ export function selectProductArtwork(source, products = null) {
 }
 
 export function validateCutterTemplate(document, template) {
+  if (template.positions?.some(position => position.rotation !== undefined))
+    return validateTunedTemplate(document, template);
   const label = template.name ?? template.nodeId;
   const invalid = (detail) => {
     throw new Error(
@@ -302,7 +305,7 @@ export async function checkCutterTemplates(figma, source, version) {
     throw new Error("Cutter templates and print artwork must come from the same versioned Figma file.");
   const ids = templates.map((template) => template.nodeId).join(",");
   const response = await figma(
-    `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&version=${encodeURIComponent(version)}`,
+    `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&geometry=paths&version=${encodeURIComponent(version)}`,
   );
   for (const template of templates)
     validateCutterTemplate(response.nodes?.[template.nodeId]?.document, template);

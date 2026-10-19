@@ -661,14 +661,13 @@ export mode requires complete mappings for every eligible printing.
   Conditions, dice, and tokens. Standalone prepared accessory SKUs are supported.
   Existing packaging supplies are checked during packing; this integration
   does not generate new box/wrapper artwork or carrier labels.
-- New jobs use the October 13 cutting-machine templates: nine 738.5952 ×
-  1034.0333 pixel cards per Letter page, with independent Epson/Canon positions.
-  Fixed deck and Conditions cards are cropped from their original Figma sheets
-  and arranged on that same grid. The Canon template's −79 X / +18 Y offset is
-  used directly; the old 96% scaling and position reflection apply only to
-  legacy saved manifests. Actual back art comes from the original back frame,
-  never the cutting template's numbered placeholders. No automatic duplexing
-  is used. See `manufacturing-workflow.md` for the exact template references.
+- New releases use the October 19 printer-tuned V4 templates: nine native
+  738.5952 ? 1034.0333 Epson cards with saved positions and a 0.35? clockwise
+  rotation, plus the complete Canon rear page with water and nine white logos.
+  The front backdrop's exported rotation is applied once. Fixed-sheet cards
+  use their saved source crops on this grid. Existing V1/V2/V3 jobs retain
+  their original layouts and assets. See `manufacturing-workflow.md` for
+  exact references. No automatic duplexing or separate alignment print is used.
 - Work tickets, fronts, and backs have separate durable attempt states. The
   Canon ticket defaults to the same stock/tray as backs; configure a dedicated
   plain-paper bin in its profile if desired. Sumatra submits exact-size PDFs

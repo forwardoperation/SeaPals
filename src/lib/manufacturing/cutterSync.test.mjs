@@ -7,7 +7,13 @@ import {
   sheetPositions,
   validateCutterTemplate,
 } from "../../../scripts/manufacturing/sync-figma.mjs";
-import { BACK_ART_SOURCE, BACK_TEMPLATE, PRINT_LAYOUT } from "./printPlan.mjs";
+import {
+  BACK_ART_SOURCE,
+  BACK_TEMPLATE as CURRENT_BACK_TEMPLATE,
+  PRINT_LAYOUT as CURRENT_PRINT_LAYOUT,
+  V3_BACK_TEMPLATE as BACK_TEMPLATE,
+  V3_PRINT_LAYOUT as PRINT_LAYOUT,
+} from "./printPlan.mjs";
 import { sha256 } from "./integration.mjs";
 
 // Recorded geometry from the owner's two Figma die-cut guides. Keep the
@@ -54,32 +60,31 @@ const source = buildSourceMap(
   await readJson("../../../scripts/manufacturing/figma-holo-sources.json"),
 );
 
-test("source mapping keeps actual back artwork and records cutter geometry separately", () => {
-  assert.equal(source.sources.length, 282);
-  assert.equal(source.sources.find((s) => s.id === "standard-back-sheet").nodeId, "3758:338124");
-  assert.equal(BACK_ART_SOURCE.nodeId, "3758:338124");
+test("current source mapping pins the complete tuned Canon page and versioned cutter geometry", () => {
+  assert.equal(source.sources.length, 281);
+  assert.equal(source.sources.find((s) => s.id === "standard-back-sheet").nodeId, "4244:451219");
+  assert.equal(BACK_ART_SOURCE.nodeId, "4244:451219");
   assert.equal(source.sources.some((s) => ["4099:61637", "4099:61666"].includes(s.nodeId)), false);
-  assert.equal(source.templates.version, "figma-cutter-nine-up-v3");
-  assert.deepEqual(source.templates.fronts.positions, measuredPositions());
-  assert.deepEqual(source.templates.backs.positions, measuredPositions(true));
+  assert.equal(source.templates.version, "figma-cutter-nine-up-v4");
+  assert.deepEqual(source.templates.fronts.positions, CURRENT_PRINT_LAYOUT.positions);
+  assert.deepEqual(source.templates.backs.positions, CURRENT_BACK_TEMPLATE.positions);
   const changed = structuredClone(source);
   changed.templates.backs.positions[0].x += 1;
   assert.notEqual(sha256(Buffer.from(JSON.stringify(changed))), sha256(Buffer.from(JSON.stringify(source))));
 });
 
-test("print sources export only the two ocean layers, excluding guide frames and numbered placeholders", () => {
+test("current sources export only the front ocean and complete rear page, excluding front guides", () => {
   const backdrops = source.sources.filter((item) => item.kind === "backdrop");
   assert.deepEqual(backdrops, [
     { id: "print-template-front-background", kind: "backdrop", nodeId: "4116:234587" },
-    { id: "print-template-back-background", kind: "backdrop", nodeId: "4116:234589" },
   ]);
-  for (const [side, index] of [["fronts", 0], ["backs", 1]]) {
-    assert.deepEqual(source.templates[side].background, {
-      assetId: backdrops[index].id, nodeId: backdrops[index].nodeId,
-      x: 36, y: 20, width: 2467, height: 3240,
-    });
-    assert.ok(!source.sources.some((item) => item.nodeId === source.templates[side].nodeId));
-  }
+  assert.deepEqual(source.templates.fronts.background, CURRENT_PRINT_LAYOUT.background);
+  assert.deepEqual(source.templates.backs.background, {
+    assetId: "standard-back-sheet", nodeId: "4244:451219", x: 0, y: 0, width: 2550, height: 3300,
+  });
+  assert.ok(!source.sources.some((item) => item.nodeId === source.templates.fronts.nodeId));
+  assert.equal(source.sources.filter((item) => item.nodeId === source.templates.backs.nodeId).length, 1);
+  assert.ok(!source.sources.some((item) => item.id === "print-template-back-background"));
   assert.equal(new Set(source.sources.map((item) => item.id)).size, source.sources.length);
 });
 
@@ -174,7 +179,8 @@ test("missing, renamed or hidden templates and grids cannot silently fall back",
   }
 });
 
-test("sync reads both guides at the pinned artwork version and never exports their placeholder images", async () => {
+test("saved v3 sync reads both guides at the pinned artwork version and never exports their placeholders", async () => {
+  const savedSource = { ...source, templates: { version: "figma-cutter-nine-up-v3", fronts: PRINT_LAYOUT, backs: BACK_TEMPLATE } };
   const calls = [];
   await checkCutterTemplates(async (route) => {
     calls.push(route);
@@ -186,11 +192,11 @@ test("sync reads both guides at the pinned artwork version and never exports the
       [PRINT_LAYOUT.nodeId]: { document: templateNode() },
       [BACK_TEMPLATE.nodeId]: { document: templateNode(true) },
     } };
-  }, source, "saved/version+123");
+  }, savedSource, "saved/version+123");
   assert.equal(calls.length, 1);
-  await assert.rejects(checkCutterTemplates(async () => ({ nodes: {} }), source, "123"), /missing or renamed/);
-  await assert.rejects(checkCutterTemplates(async () => assert.fail("Must not request an unpinned version"), source, ""), /pinned Figma version/);
-  const wrongFile = structuredClone(source);
+  await assert.rejects(checkCutterTemplates(async () => ({ nodes: {} }), savedSource, "123"), /missing or renamed/);
+  await assert.rejects(checkCutterTemplates(async () => assert.fail("Must not request an unpinned version"), savedSource, ""), /pinned Figma version/);
+  const wrongFile = structuredClone(savedSource);
   wrongFile.templates.backs.fileKey = "another-file";
   await assert.rejects(checkCutterTemplates(async () => assert.fail("Must not mix Figma files"), wrongFile, "123"), /same versioned Figma file/);
 });

@@ -8,7 +8,7 @@ required sticker must be confirmed before quality check and packing.
 This document records the agreed workflow. Paid-order intake, private versioned
 artwork synchronization, PDF/QR rendering, the Windows printer agent, staff
 screen, and buyer notifications are now implemented. Production activation is
-still pending. See [the integration setup guide](manufacturing-setup.md) for the
+enabled for staff-approved Reef boosters. See [the integration setup guide](manufacturing-setup.md) for the
 verified status, artwork eligibility, deployment steps, and commands.
 
 ## Confirmed production rules
@@ -38,47 +38,42 @@ verified status, artwork eligibility, deployment steps, and commands.
 
 ## Source artwork and sheet geometry
 
-New jobs use the cutting-machine templates supplied on October 13, 2026:
+New releases use the printer-tuned Page_Templates supplied on October 19, 2026:
 [Epson fronts](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx/Sea-Realm-Production?node-id=4099-61637)
-and [Canon backs](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx/Sea-Realm-Production?node-id=4099-61666).
-Both are 2550 × 3300 pixels, printed on Letter at actual size, with nine upright
-738.5952 × 1034.0333 pixel cards. Positions below are measured from the page's
-upper-left corner, in pixels:
+and [Canon backs](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx/Sea-Realm-Production?node-id=4244-451219).
+Both are 2550 ? 3300 pixels, printed on Letter at actual size (300 DPI).
 
-| Template | Column X positions | Row Y positions |
-|---|---|---|
-| Epson front | 164.7024, 944.7024, 1724.7024 | 61.3167, 1117.9833, 2174.6499 |
-| Canon back | 85.7024, 865.7024, 1645.7024 | 79.3167, 1135.9833, 2192.6499 |
+The Epson grid keeps nine native 738.5952 ? 1034.0333 pixel cards. Each card
+uses the saved page origin and 0.35? clockwise rotation from Figma, including
+the grid's parent transform. The first card starts at (153.8959, 54.3233);
+the bottom-left starts at (140.9864, 2167.6172). These are the rotated cards'
+top-left origins, not their enlarged axis-aligned bounds. The front ocean
+rectangle is exported separately with its rotation already baked into the
+2439 ? 3239 PNG and placed at the saved fractional page bounds. Do not rotate
+that exported backdrop again. Numbered guides and crop marks stay out of
+production output. Fixed deck cards retain their original source crops and
+are placed on this same tuned grid.
 
-The Canon template includes its own −79 X / +18 Y offset. Apply these positions
-directly, with no extra 96% reduction or reflection. The templates' numbered
-dashed rectangles are placeholders: they are replaced with card art, not
-printed over it. Card-page identification stays on the separate work ticket.
-Fixed deck/Conditions sheets are cropped at their saved source card positions
-and laid out on this same new grid. The actual back art still comes from the
-original card-back frame; the cutting template does not contain card-back art.
-The back source's page frame (`3758:338124`) and card grid (`3758:338139`)
-have no fills. Preserve that PNG transparency so the white SeaRealm logos
-print directly over the ocean backdrop instead of opaque white rectangles.
-Keep its old sheet-guide group (`3758:338125`) hidden too: with transparency,
-those white marks would otherwise be repeated inside each rendered back.
+The Canon rear source is the complete native page, including water and all
+nine white logos. It is embedded once at 2550 ? 3300. Do not crop a logo out
+of this new source, add a second background, reflect it, or apply the old 96%
+scale. The opaque page export keeps the logo and water together through the
+PDF print path. Fronts and backs still print on separate sheets for gluing.
+Card-page identification stays on the separate work ticket.
 
-The October 14 templates add an ocean backdrop behind the cards. Each backdrop
-is exported separately from its image-only Figma rectangle (front
-`4116:234587`, rear `4116:234589`), at x 36 / y 20 and 2467 × 3240 pixels.
-The outside page margin stays white. Crop marks and numbered guide labels are
-excluded. An unused card slot shows ocean; it does not create an extra card.
+New releases save `figma-cutter-nine-up-v4`, the private front backdrop and
+complete rear page, and the exact geometry. The Figma sync checks both
+pinned templates, including native transforms, before exporting. A changed
+template requires an explicit layout update. Missing or incorrect artwork
+blocks preparation before any booster draw; corrupt PNGs block rendering
+before any PDFs are written. No separate alignment print is required.
 
-New releases save `figma-cutter-nine-up-v3`, both private backdrop assets, and
-the exact coordinates. New manifests take their templates from the pinned
-release. A missing or invalid backdrop blocks preparation before a booster
-draw; changed PNG bytes block rendering before any PDFs are written.
-Releases without versioned templates retain the v2 layout without backdrops.
-Existing saved manifests remain on their original layout;
-reprinting cannot silently resize them or change their cards. The Figma sync
-checks both template geometries at the pinned file version before exporting.
-A changed template requires an explicit layout update. No separate alignment
-print is required by this workflow, per the owner's request.
+Existing saved manifests keep their original version and private release.
+V3 retains the October 14 ocean layers and its original upright grid; V2
+retains the same upright positions without ocean. Their rear artwork still
+uses the transparent logo crop from `3758:338124`. V1 retains its original
+scaling/reflection. Reprinting a saved job does not change its cards or apply
+new printer tuning. Create a new stock build to use the updated templates.
 
 ### Original artwork sources and legacy saved jobs
 
