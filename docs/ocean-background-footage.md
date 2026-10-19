@@ -28,15 +28,15 @@ On 234 confidently tracked matched frames, horizon-angle standard deviation fell
 
 ## Video preparation
 
-Prepared with FFmpeg 7.1 and Pillow. Both clips are 1280x720, 24 fps, H.264/yuv420p MP4 with fast-start metadata and no audio. The surface retains its original playback speed. Matching WebP posters are extracted from the first encoded frame.
+Prepared with FFmpeg 7.1 and Pillow. Both clips are 1280x720, 24 fps, H.264/yuv420p MP4 with fast-start metadata and no audio. The surface file retains its original timestamps; the website plays it at half speed. Matching WebP posters are extracted from the first encoded frame.
 
-- Surface: 720 pixels high, 11-second loop. The last second dissolves into the original first second; playback begins at source second one to make the loop join continuously. Grade: saturation 0.86; red shadows -0.025, blue shadows +0.035, blue midtones +0.035.
+- Surface: 720 pixels high, 11-second encoded loop, played at 0.5x for a 22-second viewing loop. The last second dissolves into the original first second; playback begins at source second one to make the loop join continuously. Grade: saturation 0.86; red shadows -0.025, blue shadows +0.035, blue midtones +0.035.
 - Open water: the full frame is retained and the 59.94 fps recording is slowed to 40% speed for gentle movement at 24 fps. No optical-flow interpolation, generated beams, or ripple distortion is used. A two-second dissolve makes a 15.708-second loop (377 frames); playback begins after the opening section so the loop wraps continuously. Grade: green channel 98%, blue channel 101%, red unchanged. The poster is extracted from the cleaned video so reduced-motion and autoplay-blocked views also omit the squid.
 
 ## Runtime
 
 `OceanBackground` moves the surface out of view as the page scrolls, while the underwater scene stays fixed. The underwater layer fills the viewport without the previous oversized zoom; top-centered cover framing preserves the distant ceiling on portrait screens. Static shading deepens from lightly tinted blue at the top to dark navy below. A smooth opacity curve starts darkening after 10% scroll and reaches black at 95%. Both clips are hidden at full darkness, so their intersection observers pause decoding.
 
-`OceanFootage` loads nearby scenes, plays visible scenes, pauses offscreen scenes and hidden tabs, and starts with posters without downloading video when reduced motion is requested. Reduced motion uses ordinary document scrolling through the posters into black. Playback is muted and inline; posters remain available when autoplay is blocked. Game and auth route exclusions are unchanged.
+`OceanFootage` loads nearby scenes, plays visible scenes, pauses offscreen scenes and hidden tabs, and starts with posters without downloading video when reduced motion is requested. Reduced motion uses ordinary document scrolling through the posters into black. Playback is muted and inline; posters remain available when autoplay is blocked. The surface uses a 0.5 playback rate for calmer waves, restored after source loading and page restoration. Underwater playback stays at 1x because its slow motion is already encoded in the file. Game and auth route exclusions are unchanged.
 
 The earlier turbulent blue-water, downward-looking sunlight, and seafloor clips have been removed. Original downloads, stabilization measurements/contact sheets, and encoder tooling remain development-only files under ignored `tmp/ocean-footage/`. Runtime media is self-hosted, with no third-party media requests.

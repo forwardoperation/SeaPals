@@ -1,5 +1,5 @@
 // Keep media startup and visibility recovery independent of React rendering.
-export function observeOceanFootage(video, src, browser = window, page = document) {
+export function observeOceanFootage(video, src, browser = window, page = document, playbackRate = 1) {
   const motion = browser.matchMedia("(prefers-reduced-motion: reduce)");
   let reducedMotion = motion.matches;
   let nearView = false;
@@ -17,6 +17,13 @@ export function observeOceanFootage(video, src, browser = window, page = documen
   video.setAttribute("muted", "");
   video.setAttribute("playsinline", "");
   video.setAttribute("webkit-playsinline", "");
+
+  function applyPlaybackRate() {
+    // Keep the chosen pace through source loads and page/visibility restoration.
+    if (video.defaultPlaybackRate !== playbackRate) video.defaultPlaybackRate = playbackRate;
+    if (video.playbackRate !== playbackRate) video.playbackRate = playbackRate;
+  }
+  applyPlaybackRate();
 
   function shouldPlay() {
     return !disposed && inView && !page.hidden && !reducedMotion;
@@ -39,6 +46,7 @@ export function observeOceanFootage(video, src, browser = window, page = documen
       // Explicitly select the dynamically attached source on WebKit too.
       video.load();
     }
+    applyPlaybackRate();
     if (!attached || !shouldPlay()) {
       pause();
       return;
@@ -102,6 +110,7 @@ export function observeOceanFootage(video, src, browser = window, page = documen
   browser.addEventListener("resize", scheduleMeasurement);
   browser.addEventListener("pageshow", measureVisibility);
   page.addEventListener("visibilitychange", measureVisibility);
+  video.addEventListener("loadedmetadata", measureVisibility);
   video.addEventListener("loadeddata", measureVisibility);
   video.addEventListener("canplay", measureVisibility);
 
@@ -125,6 +134,7 @@ export function observeOceanFootage(video, src, browser = window, page = documen
     browser.removeEventListener("resize", scheduleMeasurement);
     browser.removeEventListener("pageshow", measureVisibility);
     page.removeEventListener("visibilitychange", measureVisibility);
+    video.removeEventListener("loadedmetadata", measureVisibility);
     video.removeEventListener("loadeddata", measureVisibility);
     video.removeEventListener("canplay", measureVisibility);
     page.removeEventListener("touchend", measureVisibility);

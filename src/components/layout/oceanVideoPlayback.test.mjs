@@ -57,7 +57,7 @@ function fixture({ reduced = false, legacyMotion = false, top = 0 } = {}) {
     video.paused = false;
     return Promise.resolve();
   };
-  const start = () => observeOceanFootage(video, "/media/ocean/surface-steady.mp4", browser, page);
+  const start = (playbackRate) => observeOceanFootage(video, "/media/ocean/surface-steady.mp4", browser, page, playbackRate);
   return { browser, page, video, motion, frames, start };
 }
 
@@ -174,4 +174,33 @@ test("cleanup cancels queued work and a late play promise cannot pause a replace
   resolvePlay();
   await settled();
   assert.equal(video.paused, false);
+});
+
+
+test("surface half speed survives a source-load reset, metadata, and page restoration", async () => {
+  const { video, browser, start } = fixture();
+  video.load = () => { video.loadCalls += 1; video.playbackRate = 1; };
+  const stop = start(0.5);
+  assert.equal(video.defaultPlaybackRate, 0.5);
+  assert.equal(video.playbackRate, 0.5);
+  await settled();
+  video.playbackRate = 1;
+  video.emit("loadedmetadata");
+  assert.equal(video.playbackRate, 0.5);
+  video.playbackRate = 1;
+  video.pause();
+  browser.emit("pageshow", { persisted: true });
+  assert.equal(video.playbackRate, 0.5);
+  assert.equal(video.paused, false);
+  await settled();
+  stop();
+});
+
+test("other footage keeps normal playback speed by default", async () => {
+  const { video, start } = fixture();
+  const stop = start();
+  assert.equal(video.defaultPlaybackRate, 1);
+  assert.equal(video.playbackRate, 1);
+  await settled();
+  stop();
 });

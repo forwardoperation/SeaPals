@@ -123,6 +123,7 @@ export default function OceanBackground() {
         <div className={styles.surface}>
           <OceanFootage
             src="/media/ocean/surface-steady.mp4?v=2"
+            playbackRate={0.5}
             poster="/media/ocean/surface-steady.webp"
             className={styles.footage}
           />
