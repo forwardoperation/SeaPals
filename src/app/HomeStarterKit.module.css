@@ -1,0 +1,149 @@
+.section {
+  display: grid;
+  align-items: center;
+  gap: clamp(2.25rem, 6vw, 4.5rem);
+  padding: clamp(3.5rem, 8vw, 6rem) 0;
+  border-top: 1px solid rgb(165 243 252 / 18%);
+  color: #fff;
+  scroll-margin-top: 2rem;
+}
+
+.imageColumn { min-width: 0; }
+.imageLink {
+  display: block;
+  border-radius: 1rem;
+  transition: transform 250ms ease;
+}
+.imageLink:hover { transform: translateY(-5px); }
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 22px 25px rgb(0 8 20 / 35%));
+}
+.imageCaption {
+  max-width: 28rem;
+  margin: 1.25rem auto 0;
+  color: #b8e5ed;
+  font-size: .8125rem;
+  line-height: 1.7;
+  text-align: center;
+  text-wrap: balance;
+}
+.copy { min-width: 0; }
+.eyebrow {
+  margin: 0 0 .75rem;
+  color: #a5f3fc;
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.heading {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.75rem, 5.5vw, 4.5rem);
+  font-weight: 500;
+  letter-spacing: -.035em;
+  line-height: 1.08;
+  text-wrap: balance;
+  text-shadow: 0 2px 24px rgb(0 12 30 / 35%);
+}
+.description {
+  max-width: 38rem;
+  margin: 1.25rem 0 0;
+  color: #e2f6fb;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+.contents {
+  display: grid;
+  gap: .65rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: #e2f6fb;
+  font-size: .875rem;
+  line-height: 1.6;
+}
+.contents li { display: flex; align-items: baseline; gap: .75rem; }
+.contents li > span:first-child { flex-shrink: 0; color: #f7c948; font-weight: 700; }
+.setupNote {
+  margin: 1rem 0 0;
+  color: #b8dfe8;
+  font-size: .75rem;
+  line-height: 1.7;
+}
+.ordering { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid rgb(165 243 252 / 20%); }
+.priceRow { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.price { margin: 0; color: #fff; font-size: 2rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.25; }
+.badge {
+  border: 1px solid rgb(247 201 72 / 50%);
+  border-radius: 999px;
+  padding: .35rem .65rem;
+  color: #ffe496;
+  font-size: .625rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.fulfillment, .availability { margin: .65rem 0 0; color: #d7edf2; font-size: .75rem; line-height: 1.7; }
+.fulfillment { color: #ffe8b1; }
+.signupLink { color: #cffafe; font-weight: 700; text-decoration: underline; text-underline-offset: .25em; }
+.signupLink:hover { color: #fff; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.5rem; margin-top: 1.25rem; }
+.addButton {
+  display: inline-flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: .8rem 1.5rem;
+  background: #f7c948;
+  color: #082f49;
+  font: inherit;
+  font-size: .9375rem;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 200ms ease, background-color 200ms ease;
+}
+.addButton:hover:not(:disabled) { background: #ffda68; transform: translateY(-2px); }
+.addButton:disabled { border-color: rgb(207 250 254 / 25%); background: rgb(8 47 73 / 35%); color: #d2e6ed; cursor: not-allowed; }
+.addButton svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.detailsLink, .cartLink {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: .5rem;
+  border-radius: .25rem;
+  color: #cffafe;
+  font-size: .875rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgb(165 243 252 / 50%);
+  text-underline-offset: .3em;
+}
+.detailsLink:hover, .cartLink:hover { color: #fff; text-decoration-color: currentColor; }
+.cartStatus { margin-top: .5rem; color: #cffafe; font-size: .8125rem; line-height: 1.65; }
+.cartStatus:empty { margin-top: 0; }
+.cartStatus p { margin: .75rem 0 0; }
+.imageLink:focus-visible, .addButton:focus-visible, .detailsLink:focus-visible, .cartLink:focus-visible, .signupLink:focus-visible { outline: 3px solid #a5f3fc; outline-offset: 5px; }
+
+@media (min-width: 768px) {
+  .section { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+}
+@media (max-width: 479px) {
+  .actions { align-items: stretch; gap: .5rem; }
+  .addButton { width: 100%; }
+  .detailsLink { justify-content: center; width: 100%; }
+  .price { font-size: 1.875rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .imageLink, .addButton { transition: none; }
+  .imageLink:hover, .addButton:hover:not(:disabled) { transform: none; }
+}

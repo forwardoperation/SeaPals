@@ -1,6 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import HomeDive from "./HomeDive";
+import HomeDiveReveal from "./HomeDiveReveal";
+import HomeIntroduction from "./HomeIntroduction";
+import HomeStarterKit from "./HomeStarterKit";
+import { getStoreConfiguration } from "@/lib/store/catalog";
 import {
   parentTestimonials,
   youngPlayerSurvey,
@@ -10,38 +14,8 @@ export const metadata = {
   alternates: { canonical: "/" },
 };
 
-const familyBenefits = [
-  {
-    number: "01",
-    title: "A worldview stated plainly",
-    copy:
-      "SeaRealm explores real marine life as part of God’s creation. Parents know the theme, the boundaries, and the perspective before the first card is played.",
-  },
-  {
-    number: "02",
-    title: "Face time beats screen time",
-    copy:
-      "Siblings and friends sit down together to talk, laugh, trade, plan, and compete—no screen required.",
-  },
-  {
-    number: "03",
-    title: "Room for the whole sibling range",
-    copy:
-      "The core play is approachable for younger kids, while deck building and strategy give older kids and parents plenty to grow into.",
-  },
-  {
-    number: "04",
-    title: "Fits a full family schedule",
-    copy:
-      "Most games can be completed in under 30 minutes once players know the flow, making one more round an easy yes.",
-  },
-  {
-    number: "05",
-    title: "Easy to bring along",
-    copy:
-      "Minimal setup and teardown make SeaRealm ready for the kitchen table, co-op, a friend’s house, or vacation.",
-  },
-];
+// Price and purchase availability must reflect the current store configuration.
+export const dynamic = "force-dynamic";
 
 const howItWorks = [
   {
@@ -72,7 +46,7 @@ const questions = [
   {
     question: "Can younger and older siblings enjoy it together?",
     answer:
-      "SeaRealm is being developed for families with kids ages 6–14, with an approachable core for younger players and strategy that older players can keep exploring.",
+      "SeaRealm is being developed for families with kids ages 8–14, with an approachable core for younger players and strategy that older players can keep exploring.",
   },
   {
     question: "How long does a game take?",
@@ -90,127 +64,59 @@ const questions = [
         >
           SeaRealm Store
         </Link>
-        . Online checkout will open after the final launch checks are complete.
-        Join the crew below to hear when ordering begins.
+        . Each product page shows current availability and pre-order details.
+        Join the crew below for new releases and updates.
       </>
     ),
   },
 ];
 
 export default function HomePage() {
+  const configuration = getStoreConfiguration();
+  const starterKit = configuration.products.find((product) => product.id === "starter-kit");
+
   return (
     <main className="pb-12 text-white md:pb-20">
       <HomeDive />
 
-      <section aria-label="Explore SeaRealm" className="mx-auto max-w-3xl pb-10 pt-8 md:pb-16">
-        <div className="flex flex-col justify-center gap-3 sm:flex-row">
-          <Link
-            href="/store"
-            className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#f7c948] px-6 py-3 text-base font-bold text-[#082f49] shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-[#ffda68] focus:outline-none focus:ring-4 focus:ring-cyan-200/50"
-          >
-            Explore the Store
-          </Link>
-          <Link
-            href="/instructions"
-            className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-base font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/15 focus:outline-none focus:ring-4 focus:ring-cyan-200/40"
-          >
-            See how it plays
-          </Link>
-        </div>
-        <p className="mt-4 text-center text-sm text-cyan-100/75">
-          Want launch news, card reveals, and early purchase updates?{" "}
-          <a
-            href="#signup"
-            className="font-bold text-white underline decoration-cyan-200/60 underline-offset-4 hover:text-[#f7c948]"
-          >
-            Join the crew.
-          </a>
-        </p>
+      <HomeDiveReveal>
+        <HomeIntroduction />
+        <HomeStarterKit
+          product={starterKit}
+          cartProducts={configuration.products.map(({ id, available }) => ({ id, available }))}
+          currency={configuration.currency}
+          checkoutEnabled={configuration.checkoutEnabled}
+          preorderCampaign={configuration.preorderCampaign}
+          paymentMode={configuration.paymentMode}
+        />
 
-        <dl className="mt-9 grid grid-cols-2 gap-x-5 gap-y-5 border-t border-white/15 pt-7 sm:grid-cols-3">
-          <div>
-            <dt className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Made for</dt>
-            <dd className="mt-1 font-semibold text-white">Families with kids 6–14</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Play time</dt>
-            <dd className="mt-1 font-semibold text-white">Under 30 min. for skilled players</dd>
-          </div>
-          <div className="col-span-2 sm:col-span-1">
-            <dt className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Setup</dt>
-            <dd className="mt-1 font-semibold text-white">Quick to start and pack up</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section className="py-16 md:py-24" id="what-it-is">
-        <div className="grid gap-10 lg:grid-cols-[.82fr_1.18fr] lg:items-start">
-          <div className="lg:sticky lg:top-8">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-cyan-100">Clarity for parents</p>
-            <h2 className="mt-4 max-w-xl font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
-              Know the world your kids are stepping into.
+        <section id="parent-feedback" aria-labelledby="parent-feedback-heading" className="border-y border-white/15 py-12 md:py-16">
+          <div className="mx-auto max-w-3xl text-center" data-dive-reveal>
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#f7c948]">From parents who play</p>
+            <h2 id="parent-feedback-heading" className="mt-4 font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              What parents are saying.
             </h2>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-cyan-50">
-              SeaRealm has a clear focus: exploring creation through a genuinely fun strategy game about marine life. The theme, content, and worldview are stated plainly—so you can make a confident yes.
-            </p>
           </div>
-
-          <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-            {familyBenefits.map((benefit, index) => (
-              <article
-                key={benefit.number}
-                className={`border-t py-6 ${
-                  index === 0
-                    ? "border-cyan-200/30 text-white sm:col-span-2 sm:grid sm:grid-cols-[auto_1fr] sm:gap-6"
-                    : "border-white/15"
-                }`}
+          <div className="mt-10 grid gap-10 lg:grid-cols-2 lg:gap-12">
+            {parentTestimonials.map((testimonial) => (
+              <figure
+                key={testimonial.name}
+                data-dive-reveal
+                className="flex h-full flex-col border-l border-cyan-200/25 py-2 pl-6 sm:pl-8"
               >
-                <p
-                  className={`text-sm font-black tracking-[0.18em] ${
-                    index === 0 ? "text-[#f7c948]" : "text-cyan-200"
-                  }`}
-                >
-                  {benefit.number}
-                </p>
-                <div>
-                  <h3 className={`mt-3 text-xl font-bold ${index === 0 ? "sm:mt-0" : "text-white"}`}>
-                    {benefit.title}
-                  </h3>
-                  <p className={`mt-3 leading-7 ${index === 0 ? "text-cyan-50/90" : "text-cyan-100/90"}`}>
-                    {benefit.copy}
-                  </p>
-                </div>
-              </article>
+                <span aria-hidden="true" className="font-serif text-5xl leading-none text-cyan-200/70">“</span>
+                <blockquote className="mt-2 flex-1 font-serif text-xl leading-8 text-white">
+                  {testimonial.quote}
+                </blockquote>
+                <figcaption className="mt-6 border-t border-white/15 pt-5">
+                  <span className="font-bold text-white">{testimonial.name}</span>
+                  <span className="ml-2 text-sm text-cyan-100/80">{testimonial.role}</span>
+                </figcaption>
+              </figure>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="border-y border-white/15 py-12 md:py-16">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#f7c948]">From one mom to another</p>
-          <h2 className="mt-4 font-serif text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Why moms are glad they said yes to SeaRealm.
-          </h2>
-        </div>
-        <div className="mt-10 grid gap-10 lg:grid-cols-2 lg:gap-12">
-          {parentTestimonials.map((testimonial) => (
-            <figure
-              key={testimonial.name}
-              className="flex h-full flex-col border-l border-cyan-200/25 py-2 pl-6 sm:pl-8"
-            >
-              <span aria-hidden="true" className="font-serif text-5xl leading-none text-cyan-200/70">“</span>
-              <blockquote className="mt-2 flex-1 font-serif text-xl leading-8 text-white">
-                {testimonial.quote}
-              </blockquote>
-              <figcaption className="mt-6 border-t border-white/15 pt-5">
-                <span className="font-bold text-white">{testimonial.name}</span>
-                <span className="ml-2 text-sm text-cyan-100/80">{testimonial.role}</span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </section>
+        </section>
+      </HomeDiveReveal>
 
       <section className="py-16 md:py-24">
         <div className="grid gap-10 lg:grid-cols-[.9fr_1.1fr] lg:items-end">
