@@ -15,10 +15,10 @@ export default function HomeIntroduction() {
       <h2 id="introducing-heading" className={styles.heading} data-dive-reveal>
         <span className={styles.eyebrow}>Introducing</span>
         <Image
-          src="/images/brand/SeaPalsTCGLogoWhite.svg"
-          alt="Sea Pals Trading Card Game"
-          width={2680}
-          height={740}
+          src="/images/brand/searealm-tcg-logo.png"
+          alt="SeaRealm Trading Card Game"
+          width={1543}
+          height={421}
           sizes="(max-width: 599px) calc(100vw - 48px), 520px"
           className={styles.logo}
         />

@@ -126,7 +126,7 @@ export default function HomePage() {
               Fun first. Learning comes along for the ride.
             </h2>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-cyan-50">
-              We asked the kids who have actually played SeaRealm, previously called SeaPals. Here is the small-sample result, with the numbers shown plainly.
+              We asked the kids who have actually played SeaRealm. Here is the small-sample result, with the numbers shown plainly.
             </p>
 
             <p className="mt-8 border-l-4 border-[#f7c948] pl-5 font-serif text-xl leading-8 text-white">
@@ -145,7 +145,7 @@ export default function HomePage() {
           </div>
         </div>
         <p className="mt-8 border-t border-white/15 py-4 text-sm leading-6 text-cyan-100/80">
-          Source: {youngPlayerSurvey.responseCount} SeaPals player survey responses, collected before the SeaRealm name change. {youngPlayerSurvey.audienceNote} Counts reflect the exact wording described on each card.
+          Source: {youngPlayerSurvey.responseCount} SeaRealm player survey responses. {youngPlayerSurvey.audienceNote} Counts reflect the exact wording described on each card.
         </p>
       </section>
 

@@ -1,13 +1,13 @@
 export const parentTestimonials = [
   {
     quote:
-      "Our kids have so much fun, they don't even realize that they are learning. It has given my boys a chance to develop a passion about something and make memories with friends. We are so thankful to have SeaPals.",
+      "Our kids have so much fun, they don't even realize that they are learning. It has given my boys a chance to develop a passion about something and make memories with friends. We are so thankful to have SeaRealm.",
     name: "Kelly",
-    role: "SeaPals mom",
+    role: "SeaRealm mom",
   },
   {
     quote:
-      "As a homeschool Mom, SeaPals has been a great outlet for my kids to spend time with each other learning about our creator through the lens of marine life. There's not enough good we can say about SeaPals",
+      "As a homeschool Mom, SeaRealm has been a great outlet for my kids to spend time with each other learning about our creator through the lens of marine life. There's not enough good we can say about SeaRealm",
     name: "Alexandria",
     role: "Homeschool mom",
   },
@@ -22,7 +22,7 @@ export const youngPlayerSurvey = {
   stats: [
     {
       value: "11 of 13",
-      label: "called SeaPals “Fun”",
+      label: "called SeaRealm “Fun”",
       detail: "From a choose-up-to-five descriptor question.",
     },
     {

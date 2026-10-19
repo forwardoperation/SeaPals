@@ -14,6 +14,8 @@
 .pending {
   opacity: 0;
   transform: translateY(24px);
+  /* Hide offscreen candidates immediately; only the reveal should animate. */
+  transition: none;
 }
 
 .item:focus-within {

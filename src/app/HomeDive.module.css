@@ -1,9 +1,11 @@
 .intro {
   display: flex;
+  min-height: calc(100vh - 10.5rem);
   min-height: calc(100svh - 10.5rem);
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 1rem 0 clamp(3rem, 10vh, 6rem);
   padding: 1rem 0 clamp(3rem, 10svh, 6rem);
   text-align: center;
   color: #fff;
@@ -26,6 +28,7 @@
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
+  margin-top: clamp(1.75rem, 4vh, 2.75rem);
   margin-top: clamp(1.75rem, 4svh, 2.75rem);
   padding: .5rem 1rem;
   border-radius: 1rem;
@@ -49,10 +52,12 @@
 
 .cardPassage { scroll-margin-top: 3rem; }
 .chapter {
+  padding: clamp(4rem, 10vh, 7rem) 0 clamp(6rem, 18vh, 12rem);
   padding: clamp(4rem, 10svh, 7rem) 0 clamp(6rem, 18svh, 12rem);
 }
 .chapterHeading {
   max-width: 18ch;
+  margin: 0 auto clamp(4rem, 10vh, 7rem);
   margin: 0 auto clamp(4rem, 10svh, 7rem);
   color: #fff;
   font-family: Georgia, "Times New Roman", serif;
@@ -68,6 +73,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
+  gap: clamp(3rem, 8vh, 5rem) clamp(1.5rem, 4vw, 3rem);
   gap: clamp(3rem, 8svh, 5rem) clamp(1.5rem, 4vw, 3rem);
   max-width: 44rem;
   margin: 0 auto;
@@ -81,6 +87,7 @@
   margin: 0;
   justify-self: center;
 }
+.card:nth-child(even) { --card-angle: 4deg; margin-top: clamp(3rem, 8vh, 5rem); }
 .card:nth-child(even) { --card-angle: 4deg; margin-top: clamp(3rem, 8svh, 5rem); }
 .card:nth-child(3) { --card-angle: -2deg; }
 .card:nth-child(4) { --card-angle: 3deg; }
@@ -109,7 +116,9 @@
   text-transform: uppercase;
 }
 .tabletop {
+  padding: clamp(3rem, 8vh, 6rem) 0 clamp(3rem, 8vh, 6rem);
   padding: clamp(3rem, 8svh, 6rem) 0 clamp(3rem, 8svh, 6rem);
+  margin-bottom: clamp(2rem, 6vh, 4rem);
   margin-bottom: clamp(2rem, 6svh, 4rem);
   border-bottom: 1px solid rgb(165 243 252 / 18%);
 }
@@ -124,9 +133,11 @@
 }
 
 @media (min-width: 768px) {
+  .intro { min-height: calc(100vh - clamp(7rem, 18vh, 12rem) - 6rem); }
   .intro { min-height: calc(100svh - clamp(7rem, 18svh, 12rem) - 6rem); }
 }
 @media (min-width: 900px) {
+  .chapter { padding-bottom: clamp(8rem, 24vh, 16rem); }
   .chapter { padding-bottom: clamp(8rem, 24svh, 16rem); }
   .cardGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 66rem; }
   .cardGrid[data-card-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 42rem; gap: 6rem; }

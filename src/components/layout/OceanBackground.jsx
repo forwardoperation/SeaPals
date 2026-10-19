@@ -87,7 +87,11 @@ export default function OceanBackground() {
     window.addEventListener("scroll", scheduleFrame, { passive: true });
     window.addEventListener("resize", measure);
     window.addEventListener("pageshow", measure);
-    motionPreference.addEventListener("change", updateMotionPreference);
+    if (typeof motionPreference.addEventListener === "function") {
+      motionPreference.addEventListener("change", updateMotionPreference);
+    } else {
+      motionPreference.addListener(updateMotionPreference);
+    }
     measure();
 
     return () => {
@@ -96,7 +100,11 @@ export default function OceanBackground() {
       window.removeEventListener("scroll", scheduleFrame);
       window.removeEventListener("resize", measure);
       window.removeEventListener("pageshow", measure);
-      motionPreference.removeEventListener("change", updateMotionPreference);
+      if (typeof motionPreference.removeEventListener === "function") {
+        motionPreference.removeEventListener("change", updateMotionPreference);
+      } else {
+        motionPreference.removeListener(updateMotionPreference);
+      }
     };
   }, [isGameRoute, pathname]);
 
@@ -106,7 +114,7 @@ export default function OceanBackground() {
     <div ref={viewportRef} className={styles.ocean} data-ocean-viewport aria-hidden="true">
       <div className={styles.water}>
         <OceanFootage
-          src="/media/ocean/clear-blue-water.mp4"
+          src="/media/ocean/clear-blue-water.mp4?v=2"
           poster="/media/ocean/clear-blue-water.webp"
           className={styles.footage}
         />
@@ -114,7 +122,7 @@ export default function OceanBackground() {
       <div ref={worldRef} className={styles.world}>
         <div className={styles.surface}>
           <OceanFootage
-            src="/media/ocean/surface-steady.mp4"
+            src="/media/ocean/surface-steady.mp4?v=2"
             poster="/media/ocean/surface-steady.webp"
             className={styles.footage}
           />

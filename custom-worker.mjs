@@ -7,6 +7,7 @@ import {
   legacySiteRedirectLocation,
   legacySiteRedirectPolicy,
 } from "./src/lib/siteRedirect.mjs";
+import { serveOceanMedia } from "./src/lib/oceanMedia.mjs";
 import { enforceStoreCheckoutRateLimit } from "./src/lib/store/checkoutRateLimit.mjs";
 import { reconcileOverdueInventoryReservations } from "./src/lib/store/inventoryReservationReconciler.mjs";
 import { drainFulfillmentDueNotifications } from "./src/lib/store/fulfillmentDueNotificationDrain.mjs";
@@ -60,6 +61,9 @@ export default {
         legacySiteRedirectPolicy(environment),
       );
     }
+
+    const oceanMedia = await serveOceanMedia(request, environment);
+    if (oceanMedia) return oceanMedia;
 
     const blockedResponse = await enforceStoreCheckoutRateLimit({
       request,
