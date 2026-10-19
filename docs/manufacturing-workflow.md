@@ -41,21 +41,21 @@ verified status, artwork eligibility, deployment steps, and commands.
 New releases use the printer-tuned Page_Templates supplied on October 19, 2026:
 [Epson fronts](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx/Sea-Realm-Production?node-id=4099-61637)
 and [Canon backs](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx/Sea-Realm-Production?node-id=4244-451219).
-Both are 2550 ? 3300 pixels, printed on Letter at actual size (300 DPI).
+Both are 2550 x 3300 pixels, printed on Letter at actual size (300 DPI).
 
-The Epson grid keeps nine native 738.5952 ? 1034.0333 pixel cards. Each card
-uses the saved page origin and 0.35? clockwise rotation from Figma, including
+The Epson grid keeps nine native 738.5952 x 1034.0333 pixel cards. Each card
+uses the saved page origin and 0.35 degree clockwise rotation from Figma, including
 the grid's parent transform. The first card starts at (153.8959, 54.3233);
 the bottom-left starts at (140.9864, 2167.6172). These are the rotated cards'
 top-left origins, not their enlarged axis-aligned bounds. The front ocean
 rectangle is exported separately with its rotation already baked into the
-2439 ? 3239 PNG and placed at the saved fractional page bounds. Do not rotate
+2439 x 3239 PNG and placed at the saved fractional page bounds. Do not rotate
 that exported backdrop again. Numbered guides and crop marks stay out of
 production output. Fixed deck cards retain their original source crops and
 are placed on this same tuned grid.
 
 The Canon rear source is the complete native page, including water and all
-nine white logos. It is embedded once at 2550 ? 3300. Do not crop a logo out
+nine white logos. It is embedded once at 2550 x 3300. Do not crop a logo out
 of this new source, add a second background, reflect it, or apply the old 96%
 scale. The opaque page export keeps the logo and water together through the
 PDF print path. Fronts and backs still print on separate sheets for gluing.

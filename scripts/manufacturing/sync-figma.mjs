@@ -520,8 +520,8 @@ async function main() {
       if (error.code !== "ENOENT") throw error;
     }
   }
-  // Read both guides at the exact version used for every artwork export. They
-  // are checked as geometry only and are never exported as printable assets.
+  // Validate both templates at the version used for every artwork export.
+  // The front guides stay out of the assets; V4 exports the complete rear page.
   await checkCutterTemplates(figma, source, version);
   const releaseId =
     value("--release") ?? `figma-${version}-${sourceHash.slice(0, 8)}`;

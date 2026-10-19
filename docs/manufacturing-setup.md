@@ -6,9 +6,40 @@ checklist, and buyer milestone emails. **Printing is enabled for Reef booster
 jobs approved with Send to printers.** Buyer manufacturing notifications and
 paid test-order intake remain disabled.
 
-## Reef printing enabled - October 14, 2026
+## Tuned printer templates activated - October 19, 2026
 
 The active private artwork release is
+`figma-2412156090472208619-ee3b0b94`, pinned to Figma version
+`2412156090472208619`. Its 97 assets include all 95 eligible Reef printings,
+the tuned front ocean backdrop, and the complete Canon rear page.
+The V4 layout preserves the Epson grid's native positions and 0.35 degree
+clockwise rotation. The Canon PDF embeds the complete opaque rear export,
+including blue water and all nine white logos, once at actual size.
+
+All 137 manufacturing tests passed. Every exported PNG passed checksum and
+image validation; the rendered front, rear, and work-ticket proofs were
+visually checked. The rear PDF's embedded pixels matched the native Figma
+export exactly, and the ticket QR decoded successfully. The live release
+matches the verified local manifest. Its storage bucket remains private;
+anonymous artwork access was denied and an authenticated download matched
+the recorded checksum.
+
+The existing **SeaRealm Manufacturing Agent** Windows task was started with
+the updated renderer after confirming there were no approved pages waiting
+to print. Both printer queues were empty. No production jobs, stock movements,
+buyer messages, or physical prints were created by this update. Reef-only
+printing remains enabled; test orders and buyer notifications remain off.
+
+Create a **new** Reef stock build in
+[Manufacturing](https://searealm.com/admin/manufacturing) and use
+**Send to printers** to use the tuned templates. Existing saved jobs retain
+their original cards, artwork release, and layout, including on reprints.
+The ignored `.private/manufacturing/template-update-2026-10-19/` directory
+contains local proofs and verification receipts.
+
+## Initial Reef printing activation - October 14, 2026
+
+At initial activation, the private artwork release was
 `figma-2410259424823644926-49a271a8`, pinned to Figma version
 `2410259424823644926`. Its 98 assets include every eligible Reef printing (95),
 the transparent card-back artwork, and both ocean backgrounds. All PNG hashes,
@@ -591,8 +622,8 @@ are unfinished. The exact list is recorded in
 `scripts/manufacturing/figma-unfinished-printings.json`. These printings are
 excluded from new booster draws only while they have no Figma source mapping.
 The current configuration therefore exports 217 eligible printings and
-271 mapped assets, including the shared back, 51 fixed deck/Conditions
-sheets, and two private ocean backdrops. The store/gallery catalog remains
+270 mapped assets, including the complete Canon back page, 51 fixed
+deck/Conditions sheets, and one private Epson ocean backdrop. The store/gallery catalog remains
 228 printings. Finished prerelease
 cards remain eligible, and collector numbers and printed set totals are unchanged.
 
