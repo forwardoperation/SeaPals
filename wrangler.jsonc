@@ -39,7 +39,7 @@
 		"SITE_LEGACY_REDIRECT_ENABLED": "true",
 		"SITE_LEGACY_REDIRECT_PERMANENT": "true",
 		"STORE_CURRENCY": "usd",
-		// The live catalog is the $44 Starter Kit, seven $22 decks, three $10
+		// The live catalog is the $50 Starter Kit, seven $25 decks, three $10
 		// Dive Packs, and the $12 Accessories Kit. The Dive Pack inventory rows
 		// and offline twelve-product launch readiness were verified during the
 		// 2026-08-25 cutover.

@@ -287,8 +287,8 @@ test("launch readiness rejects prepared products outside the approved allowlist"
   assert.match(result.stdout, /Remove non-launch products: conditions-deck/);
 });
 
-test("launch readiness rejects a deck price that differs from the approved $22", () => {
-  const result = runLaunchCheck({ STORE_PRICE_BLUE_WATER_CENTS: "2199" });
+test("launch readiness rejects a deck price that differs from the approved $25", () => {
+  const result = runLaunchCheck({ STORE_PRICE_BLUE_WATER_CENTS: "2499" });
 
   assert.equal(result.status, 1);
   assert.match(result.stdout, /TODO.*Approved launch prices/);
@@ -313,12 +313,53 @@ test("launch readiness rejects an Accessories Kit price other than $12", () => {
   assert.match(result.stdout, /accessory-set/);
 });
 
-test("launch readiness rejects a Starter Kit price other than $44", () => {
-  const result = runLaunchCheck({ STORE_PRICE_STARTER_KIT_CENTS: "4399" });
+test("launch readiness rejects a Starter Kit price other than $50", () => {
+  const result = runLaunchCheck({ STORE_PRICE_STARTER_KIT_CENTS: "4999" });
 
   assert.equal(result.status, 1);
   assert.match(result.stdout, /TODO.*Approved launch prices/);
   assert.match(result.stdout, /starter-kit/);
+});
+
+test("launch readiness rejects obsolete Starter Kit and per-product deck prices", () => {
+  const obsoleteOverrides = Object.fromEntries(
+    storeProductDefinitions
+      .filter((product) => product.category === "expansion-decks")
+      .map((product) => [product.priceEnvKey, "2200"])
+  );
+  const result = runLaunchCheck({
+    ...obsoleteOverrides,
+    STORE_PRICE_STARTER_KIT_CENTS: "4400",
+  });
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /TODO.*Approved launch prices/);
+  assert.match(result.stdout, /starter-kit/);
+  for (const product of storeProductDefinitions.filter(
+    (product) => product.category === "expansion-decks"
+  )) {
+    assert.match(result.stdout, new RegExp(product.id));
+  }
+});
+
+test("launch readiness rejects the obsolete shared $22 deck price", () => {
+  const clearPerProductOverrides = Object.fromEntries(
+    storeProductDefinitions
+      .filter((product) => product.category === "expansion-decks")
+      .map((product) => [product.priceEnvKey, ""])
+  );
+  const result = runLaunchCheck({
+    ...clearPerProductOverrides,
+    STORE_DEFAULT_PRICE_CENTS: "2200",
+  });
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /TODO.*Approved launch prices/);
+  for (const product of storeProductDefinitions.filter(
+    (product) => product.category === "expansion-decks"
+  )) {
+    assert.match(result.stdout, new RegExp(product.id));
+  }
 });
 
 test("launch readiness requires every owner-approved shipping tier", async (t) => {

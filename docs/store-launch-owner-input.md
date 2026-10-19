@@ -40,16 +40,21 @@ seven decks, three Dive Packs, and the Accessories Kit. The other prepared rows
 remain private and unavailable; retaining their capacity records does not add
 them to the public allowlist.
 
+**Price revision approved by the owner on 2026-10-18:** the Starter Kit is now
+**$50**, and all seven Expansion Decks are **$25 each**. All other product
+prices are unchanged. The dated August prices above are retained as approval
+history; the table below records the current prices.
+
 | SKU | Product | Configured price | Initial ATP capacity | Build and dispatch within | Contents / catalog verification |
 | --- | --- | ---: | ---: | --- | --- |
-| `SP-KIT-STARTER` | Starter Kit | $44 | **10** | **5 business days** | **Public catalog approved 2026-08-16: Coral Garden and Blue Water 60-card decks; 18-card Conditions Deck; 7 dice (D4, D6, D8, D10, D12, D20, D100); 15 RP tokens** |
-| `SP-DECK-BLUE-WATER` | Blue Water Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
-| `SP-DECK-DISRUPTION` | Disruption Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
-| `SP-DECK-CORAL-GARDEN` | Coral Garden Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
-| `SP-DECK-DARKNESS-SHROUD` | Darkness Shroud Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
-| `SP-DECK-OPEN-OCEAN-HUNT` | Open Ocean Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
-| `SP-DECK-MURKY-WATER` | Murky Water Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
-| `SP-DECK-STINGING-FORTRESS` | Stinging Fortress Deck | $22 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-KIT-STARTER` | Starter Kit | $50 | **10** | **5 business days** | **Public catalog approved 2026-08-16: Coral Garden and Blue Water 60-card decks; 18-card Conditions Deck; 7 dice (D4, D6, D8, D10, D12, D20, D100); 15 RP tokens** |
+| `SP-DECK-BLUE-WATER` | Blue Water Deck | $25 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-DISRUPTION` | Disruption Deck | $25 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-CORAL-GARDEN` | Coral Garden Deck | $25 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-DARKNESS-SHROUD` | Darkness Shroud Deck | $25 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-OPEN-OCEAN-HUNT` | Open Ocean Deck | $25 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-MURKY-WATER` | Murky Water Deck | $25 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
+| `SP-DECK-STINGING-FORTRESS` | Stinging Fortress Deck | $25 | **10** | **5 business days** | **60-card manifest approved 2026-08-15** |
 | `SP-PACK-OCEANIC` | Pelagic Rush — Oceanic Set Dive Pack | $10 | **10** | **5 business days** | **Live release authorized 2026-08-25; row verified at 10 on hand / 0 reserved; Killer Whale Apex card cover approved** |
 | `SP-PACK-REEF` | Coral Bloom — Reef Set Dive Pack | $10 | **10** | **5 business days** | **Live release authorized 2026-08-25; row verified at 10 on hand / 0 reserved; Great White Apex card cover approved** |
 | `SP-PACK-DEEP` | Abyssal Glow — Deep Set Dive Pack | $10 | **10** | **5 business days** | **Live release authorized 2026-08-25; row verified at 10 on hand / 0 reserved; Colossal Squid Apex card cover approved** |
@@ -102,9 +107,12 @@ Increase a SKU only after materials and build capacity are actually restored.
 Decrease it immediately if materials, labor, quality, or shipping capacity
 falls. Never reset a sold-down count to its original number on a schedule.
 
-Price approval: **owner confirmed the configured prices**  Dates:
-**2026-08-15; Dive Pack prices approved 2026-08-24 and live release authorized
-2026-08-25**
+Price approval: **owner confirmed the current $50 Starter Kit and $25 Expansion
+Deck prices on 2026-10-18**. Earlier approvals: **2026-08-15** for the initial
+decks, **2026-08-16** for the Starter Kit and Accessories Kit, and
+**2026-08-24** for Dive Pack prices; Dive Pack live release was authorized on
+**2026-08-25**. The 2026-10-18 revision changes only Starter Kit and Expansion
+Deck pricing.
 
 ## Production speed options
 

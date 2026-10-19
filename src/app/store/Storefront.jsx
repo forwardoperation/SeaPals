@@ -756,7 +756,7 @@ export default function Storefront({
             <p className="max-w-md text-sm leading-6 text-cyan-100">
               {checkoutEnabled
                 ? "Choose your products and add available items to your order. Prices and availability reflect the current catalog."
-                : "The approved $44 Starter Kit, seven $22 decks, three $10 Dive Packs, and $12 Accessories Kit are shown. Ordering remains disabled until the final launch checks are complete."}
+                : "Preview the Starter Kit, seven expansion decks, three Dive Packs, and Accessories Kit. Current prices are shown below. Ordering opens soon."}
             </p>
           </div>
 

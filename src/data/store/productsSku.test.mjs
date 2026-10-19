@@ -311,7 +311,7 @@ test("the Starter Kit, Accessories Kit, and prepared components preserve the own
     "7 dice: D4, D6, D8, D10, D12, D20, and D100",
     "15 Reef Point tokens",
   ]);
-  assert.equal(productsById.get("starter-kit")?.defaultPriceCents, 4400);
+  assert.equal(productsById.get("starter-kit")?.defaultPriceCents, 5000);
   assert.equal(productsById.get("conditions-deck")?.cardsIncluded, 18);
   assert.equal(
     productsById.get("conditions-deck")?.details,

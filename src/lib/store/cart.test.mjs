@@ -143,10 +143,10 @@ test("the catalog definitions use the established cash prices", () => {
     (product) => product.category === "dive-packs"
   );
 
-  assert.equal(definitionsById.get("starter-kit").defaultPriceCents, 4400);
+  assert.equal(definitionsById.get("starter-kit").defaultPriceCents, 5000);
   assert.equal(definitionsById.get("accessory-set").defaultPriceCents, 1200);
   assert.equal(expansionDecks.length, 7);
-  assert.ok(expansionDecks.every((product) => product.defaultPriceCents === 2200));
+  assert.ok(expansionDecks.every((product) => product.defaultPriceCents === 2500));
   assert.equal(divePacks.length, 3);
   assert.ok(divePacks.every((product) => product.defaultPriceCents === 1000));
   assert.equal(
@@ -439,13 +439,13 @@ test("the server catalog requires explicit product allowlisting", () => {
         configuration.products.map((product) => [product.id, product])
       );
 
-      assert.equal(productsById.get("starter-kit").priceCents, 4400);
+      assert.equal(productsById.get("starter-kit").priceCents, 5000);
       assert.equal(productsById.get("starter-kit").available, true);
       assert.equal(productsById.get("accessory-set").priceCents, 1200);
       assert.equal(productsById.get("accessory-set").available, true);
       assert.equal(productsById.get("reef-point-tokens").priceCents, 500);
       assert.equal(productsById.get("reef-point-tokens").available, true);
-      assert.equal(productsById.get("coral-garden").priceCents, 2200);
+      assert.equal(productsById.get("coral-garden").priceCents, 2500);
       assert.equal(productsById.get("coral-garden").available, false);
 
       const shirt = productsById.get("custom-t-shirt");
@@ -554,11 +554,11 @@ test("the twelve-product launch catalog preserves the eight-item cart limit", ()
 
       assert.equal(quote.items.length, STORE_MAX_CART_QUANTITY);
       assert.equal(quote.totalQuantity, STORE_MAX_CART_QUANTITY);
-      assert.equal(quote.subtotalCents, 19_800);
+      assert.equal(quote.subtotalCents, 22_500);
       assert.equal(quote.shippingWeightOunces, 72);
       assert.equal(quote.shippingRateTierId, "large");
       assert.equal(quote.shippingCents, 2000);
-      assert.equal(quote.totalCents, 21_800);
+      assert.equal(quote.totalCents, 24_500);
 
       assert.throws(
         () =>
@@ -677,6 +677,29 @@ test("checkout stays closed when no product is actually available", () => {
   });
 });
 
+test("the current server catalog quotes a $50 Starter Kit and $25 expansion deck", () => {
+  withStoreEnvironment(
+    {
+      ...infrastructureEnvironment,
+      STORE_AVAILABLE_PRODUCT_IDS: "starter-kit,coral-garden",
+    },
+    () => {
+      const configuration = getStoreConfiguration();
+      const quote = quoteCart(
+        [
+          { productId: "starter-kit", quantity: 1 },
+          { productId: "coral-garden", quantity: 1 },
+        ],
+        configuration.products
+      );
+
+      assert.equal(quote.items[0].unitAmountCents, 5000);
+      assert.equal(quote.items[1].unitAmountCents, 2500);
+      assert.equal(quote.subtotalCents, 7500);
+    }
+  );
+});
+
 test("legacy deck allowlisting and shared deck pricing remain supported", () => {
   withStoreEnvironment(
     {
@@ -696,7 +719,7 @@ test("legacy deck allowlisting and shared deck pricing remain supported", () => 
 
       assert.equal(coralGarden.priceCents, 2250);
       assert.equal(coralGarden.available, true);
-      assert.equal(starterKit.priceCents, 4400);
+      assert.equal(starterKit.priceCents, 5000);
       assert.equal(starterKit.available, false);
     }
   );

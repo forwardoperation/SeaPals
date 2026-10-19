@@ -7,6 +7,11 @@ order ledger and Stripe webhook are ready, and the launch switch is turned on.
 
 ## Current public catalog and live allowlist
 
+**Current price revision, owner-approved 2026-10-18:** the two-player Starter
+Kit is **$50**, and each of the seven Expansion Decks is **$25**. All other
+product prices are unchanged. The earlier prices in the dated approval history
+below are historical, not current configuration values.
+
 The owner approved the first public catalog on **2026-08-15** as seven `$22`
 ready-to-play decks, then approved the `$12` Accessories Kit and `$44`
 two-player Starter Kit on **2026-08-16**. On **2026-08-24**, the owner approved
@@ -105,20 +110,20 @@ the payment page and retains the underlying payment record.
 
 ## Owner-approved catalog prices
 
-SeaPals Credits are intentionally excluded. The repository currently uses
-these server-controlled cash-price definitions. The owner approved the seven
-launch decks at $22 each on 2026-08-15, then the Accessories Kit at $12 and
-Starter Kit at $44 on 2026-08-16, then three set-specific Dive Packs at $10
-each on 2026-08-24. The owner authorized the Dive Packs for live release on
-2026-08-25; the other future rows remain unavailable:
+SeaPals Credits are intentionally excluded. These server-controlled cash-price
+definitions reflect the owner's **2026-10-18** revision: **$50 for the Starter
+Kit and $25 for each of the seven Expansion Decks**. The Accessories Kit, Dive
+Packs, and individual accessory prices retain their earlier approvals. The
+owner authorized the Dive Packs for live release on 2026-08-25; the other
+future rows remain unavailable:
 
 | Product | Configured price | Included | Catalog state |
 | --- | ---: | --- | --- |
-| Each Expansion Deck | $22 | One 60-card ready-to-play deck | **Live** |
+| Each Expansion Deck | $25 | One 60-card ready-to-play deck | **Live** |
 | Pelagic Rush — Oceanic Set Dive Pack | $10 | One Oceanic Set Dive Pack | **Live** |
 | Coral Bloom — Reef Set Dive Pack | $10 | One Reef Set Dive Pack | **Live** |
 | Abyssal Glow — Deep Set Dive Pack | $10 | One Deep Set Dive Pack | **Live** |
-| Starter Kit | $44 | Coral Garden and Blue Water 60-card decks, one 18-card Conditions Deck, seven dice (D4, D6, D8, D10, D12, D20, D100), and 15 Reef Point tokens | **Live** |
+| Starter Kit | $50 | Coral Garden and Blue Water 60-card decks, one 18-card Conditions Deck, seven dice (D4, D6, D8, D10, D12, D20, D100), and 15 Reef Point tokens | **Live** |
 | Accessories Kit | $12 | One 18-card Conditions Deck, seven dice (D4, D6, D8, D10, D12, D20, D100), and 15 Reef Point tokens | **Live** |
 | Conditions Deck | $5 | 18 cards; title-list/sample review remains required before a standalone release | Future |
 | Dice Pack | $5 | One each D4, D6, D8, D10, D12, D20, D100 | Future |
@@ -306,6 +311,17 @@ defaults; every price can still be overridden with the matching
 `STORE_PRICE_*_CENTS` key in `.env.example`. Set unpriced merchandise only after
 its final SKU and retail price are known.
 
+For the owner-approved **2026-10-18** prices, leave overrides blank to use the
+updated source defaults, or set `STORE_PRICE_STARTER_KIT_CENTS=5000` and each
+of the seven deck-specific price overrides to `2500`. The deck keys are
+`STORE_PRICE_BLUE_WATER_CENTS`, `STORE_PRICE_DISRUPTION_CENTS`,
+`STORE_PRICE_CORAL_GARDEN_CENTS`, `STORE_PRICE_DARKNESS_SHROUD_CENTS`,
+`STORE_PRICE_OPEN_OCEAN_HUNT_CENTS`, `STORE_PRICE_MURKY_WATER_CENTS`, and
+`STORE_PRICE_STINGING_FORTRESS_CENTS`. The legacy deck fallback
+`STORE_DEFAULT_PRICE_CENTS` must also be blank or `2500`. Remove or update old
+price overrides in every deployment; they take precedence over source defaults.
+Do not change the Dive Pack or accessory price overrides for this revision.
+
 Set `STORE_AVAILABLE_PRODUCT_IDS` to a comma-separated list of reviewed product
 IDs. The current live twelve-product value is:
 
@@ -387,7 +403,7 @@ offering any promotion code, or staff totals can disagree with Stripe.
 Keep `STORE_SHOW_FUTURE_PRODUCTS=false` for the launch store. Run
 `npm.cmd run store:check:online` against the exact twelve-product production
 allowlist. `npm.cmd run store:check:launch` verifies that exact allowlist and the
-owner-approved server-controlled prices: $44 for the Starter Kit, $22 per deck,
+owner-approved server-controlled prices: $50 for the Starter Kit, $25 per deck,
 $10 per set-specific Dive Pack, and $12 for the Accessories Kit.
 
 The owner-approved fulfillment choices, cart-composition rule, and conservative
@@ -726,7 +742,7 @@ copy with the store's private launch records.
   and 15 Reef Point tokens.
 - Preserve the Accessories Kit contents: one 18-card Conditions Deck, one each
   D4, D6, D8, D10, D12, D20, and D100, and 15 Reef Point tokens.
-- Preserve the approved $44 Starter Kit, $22 deck, $10 set-specific Dive Pack,
+- Preserve the approved $50 Starter Kit, $25 deck, $10 set-specific Dive Pack,
   and $12 Accessories Kit prices, the reviewed capacity for established SKUs,
   the owner-accepted ATP of 10 per Dive Pack, and seven 60-card deck manifests.
   The three Dive Pack rows were verified at 10 on hand and 0 reserved on
