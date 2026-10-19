@@ -122,9 +122,8 @@ export default function OceanBackground() {
       <div ref={worldRef} className={styles.world}>
         <div className={styles.surface}>
           <OceanFootage
-            src="/media/ocean/surface-steady.mp4?v=2"
-            playbackRate={0.5}
-            poster="/media/ocean/surface-steady.webp"
+            src="/media/ocean/surface-steady.mp4?v=3"
+            poster="/media/ocean/surface-steady.webp?v=3"
             className={styles.footage}
           />
         </div>

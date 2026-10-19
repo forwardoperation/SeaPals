@@ -3,7 +3,7 @@
 // The fallback sizes are checked against the source files by oceanMedia.test.mjs.
 const OCEAN_MEDIA_BYTES = new Map([
   ["/media/ocean/clear-blue-water.mp4", 1216595],
-  ["/media/ocean/surface-steady.mp4", 2723351],
+  ["/media/ocean/surface-steady.mp4", 16437568],
 ]);
 
 function parseRange(value, size) {
