@@ -354,6 +354,41 @@ test("a crash after printer acceptance cannot print that sheet again automatical
     assert.equal(printed, 1);
     assert.equal(state.ticket.ticket, "needs_review");
   }));
+test("printer placement preflight failure blocks the job before reserving or printing a page", async () =>
+  temp(async (root) => {
+    const manifest = makeManifest([{ productId: "dice-pack", quantity: 1 }]);
+    const state = createManufacturingState(manifest), requests = [];
+    await assert.rejects(runJob({
+      job: {
+        order_id: manifest.order.orderId, lease_token: randomUUID(), manifest, state,
+        release: { releaseId: "test-v1", assets: {} },
+      },
+      root, config: {}, siteOrigin: "https://searealm.com",
+      client: { post: async (payload) => { requests.push(payload); return {}; } },
+      render: async () => [{ sheetId: "work-ticket", side: "ticket", file: "unused" }],
+      prepare: async () => { throw new Error("Printer geometry changed"); },
+      print: async () => assert.fail("Preflight must finish before printing"),
+    }), /Printer geometry changed/);
+    assert.deepEqual(requests.map((request) => request.action), ["block"]);
+    assert.equal(state.ticket.ticket, "queued");
+  }));
+
+test("Epson fill explicitly selects numeric Letter instead of auto-detecting its enlarged transport page", () => {
+  const route = { printerName: "ET-8550 Series(Network)", printSettings: "noscale,simplex,color,paper=letter" };
+  const config = {
+    fronts: { ...route, pagePlacement: { mode: "fill-driver-page", expectedDevice: {
+      rasterDpiX: 720, rasterDpiY: 720, physicalWidth: 6284, physicalHeight: 8020,
+      offsetX: 0, offsetY: 0, printableWidth: 6284, printableHeight: 8020,
+    } } },
+    backs: { ...route, printerName: "Canon" },
+  };
+  const file = path.resolve("printer-ready", "proof.pdf");
+  assert.deepEqual(printerArguments(config, { side: "fronts", file }), [
+    "-print-to", route.printerName, "-print-settings", "noscale,simplex,color,paperkind=1", "-silent", file,
+  ]);
+  assert.equal(printerArguments(config, { side: "backs", file })[3], route.printSettings);
+});
+
 test("holding an in-flight job retains its lease until the outcome is recorded", () => {
   const manifest = makeManifest();
   let s = createManufacturingState(manifest);

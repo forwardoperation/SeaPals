@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { PDFDocument } from "pdf-lib";
 import { printerArguments, submitPdf } from "./agent.mjs";
 import { PRIVATE_ROOT, atomicJson } from "./orders.mjs";
+import { preparePrinterPdf } from "./printer-placement.mjs";
 
 const SIDES = ["ticket", "fronts", "backs"];
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -101,6 +102,10 @@ export async function validateLocalTestPacket({ packetPath, configPath }) {
     printerArguments(config, normalized);
     validateLocalPrintSettings(config, job.side);
     await verifyPdf(normalized);
+    // Read-only preflight, including the live device geometry for opted-in fronts.
+    // The canonical packet PDF remains Letter and retains its original checksum.
+    const prepared = await preparePrinterPdf(config, normalized);
+    if (prepared.file !== normalized.file) normalized.preparedFile = prepared.file;
     files.push(normalized);
   }
   return {
@@ -119,6 +124,7 @@ export async function runLocalPrinterTest({ packetPath, configPath, print = fals
     status: "validated", printingRequested: print, receiptPath,
     files: packet.files.map((job) => ({ ...job,
       printerName: config[job.side].printerName, printSettings: config[job.side].printSettings,
+      pagePlacement: config[job.side].pagePlacement ?? null,
     })),
   };
   if (!print) return summary;

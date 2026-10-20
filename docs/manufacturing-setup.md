@@ -733,6 +733,50 @@ export mode requires complete mappings for every eligible printing.
 
 ## Main implementation files
 
+### Epson full-page PNG placement (October 20)
+
+The tuned Figma template was tested through the Windows PNG print dialog using
+**Full page**, **Fill page**, **Normal** margins, Letter portrait, and borderless
+printing. Sumatra's `noscale` mode instead anchors the nominal Letter PDF at the
+upper-left of the driver's larger borderless canvas. This changes card positions
+even when the canonical PDF exactly matches Figma.
+
+For that calibrated Epson route, add the following property to `fronts` in the
+private printer config. Keep its print settings
+`noscale,simplex,color,paper=letter`:
+
+```json
+"pagePlacement": {
+  "mode": "fill-driver-page",
+  "expectedDevice": {
+    "rasterDpiX": 720, "rasterDpiY": 720,
+    "physicalWidth": 6284, "physicalHeight": 8020,
+    "offsetX": 0, "offsetY": 0,
+    "printableWidth": 6284, "printableHeight": 8020
+  }
+}
+```
+
+These values are specific to the measured ET-8550 user profile; do not copy them
+to another printer. For the enlarged transport PDF, the helper emits numeric
+`paperkind=1` to force Letter; Epson's paper name does not match Sumatra's literal
+`paper=letter` lookup and the transport page cannot auto-detect nominal Letter.
+The helper reads the current driver's capabilities without
+printing, rejects a mismatch, and creates a private `printer-ready` PDF alongside
+the canonical file. It centers and uniformly scales the complete Letter page to
+cover the 628.4 × 802 point borderless canvas (scale 1.0267973856, vertical crop
+5.6117647059 points per edge). Figma geometry, card selection, and the source PDF
+stay unchanged. Canon backs and tickets retain their existing actual-size path.
+
+All pending placements are checked before the first submission, and Epson is
+checked again immediately before its page is sent. Local test validation also
+performs this read-only preflight and reports the prepared file. A successful
+software check is not proof of physical cutting alignment; confirm the next
+operator-requested sheet before cutting a batch. No print is required to inspect
+the generated files. Restart the local helper after changing its code or config.
+
+### File index
+
 - `supabase/manufacturing.sql`: intake, leases, immutable manifests, atomic state,
   private access, and buyer outbox.
 - `supabase/manufacturing-inventory.sql`: finished goods, reservations, movement

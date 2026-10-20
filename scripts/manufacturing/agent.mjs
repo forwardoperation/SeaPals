@@ -6,9 +6,11 @@ import { spawn } from "node:child_process";
 import { renderJob, verifiedPng } from "./render.mjs";
 import { preflightPrintAssets } from "../../src/lib/manufacturing/printPlan.mjs";
 import { PRIVATE_ROOT as privateRoot, atomicJson } from "./orders.mjs";
+import { preparePrinterPdf, validatePrinterPlacement } from "./printer-placement.mjs";
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export function printerArguments(config, job) {
+  const placement = validatePrinterPlacement(config, job);
   const route = config[job.side];
   if (
     !route?.printerName ||
@@ -21,11 +23,17 @@ export function printerArguments(config, job) {
     );
   if (!path.isAbsolute(job.file))
     throw new Error("Print file must be absolute.");
+  // The transport page is larger than nominal Letter. Force DMPAPER_LETTER
+  // numerically: Epson's localized "Letter (8.5 x 11 in)" does not match
+  // Sumatra's paper=letter name lookup, and this PDF cannot auto-detect Letter.
+  const settings = placement
+    ? route.printSettings.replace("paper=letter", "paperkind=1")
+    : route.printSettings;
   return [
     "-print-to",
     route.printerName,
     "-print-settings",
-    route.printSettings,
+    settings,
     "-silent",
     job.file,
   ];
@@ -35,8 +43,9 @@ export async function submitPdf(config, job) {
     throw new Error(
       "Calibrate and confirm both printer profiles before submission.",
     );
-  await readFile(job.file);
-  const args = printerArguments(config, job);
+  const prepared = await preparePrinterPdf(config, job);
+  await readFile(prepared.file);
+  const args = printerArguments(config, prepared);
   await new Promise((resolve, reject) => {
     const child = spawn(config.sumatraPath, args, {
       shell: false,
@@ -137,6 +146,7 @@ export async function runJob({
   siteOrigin,
   print = submitPdf,
   render = renderJob,
+  prepare = preparePrinterPdf,
 }) {
   const dir = path.join(root, "agent", job.order_id),
     assetDir = path.join(root, "assets");
@@ -227,6 +237,11 @@ export async function runJob({
       outputDir: path.join(dir, "pdf"),
       siteOrigin,
     });
+    // Validate every pending printer placement before any page is submitted.
+    // submitPdf rechecks the device immediately before its individual submission.
+    for (const target of jobs) {
+      if (status(target) === "queued") await prepare(config, target);
+    }
     for (const target of jobs) {
       if (status(target) !== "queued") continue;
       if (leaseLost) throw new Error("Lease lost before print submission.");
