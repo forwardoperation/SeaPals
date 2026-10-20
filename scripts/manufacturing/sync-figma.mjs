@@ -309,6 +309,7 @@ export async function checkCutterTemplates(figma, source, version) {
   );
   for (const template of templates)
     validateCutterTemplate(response.nodes?.[template.nodeId]?.document, template);
+  return response;
 }
 
 export function sheetPositions(document) {
@@ -397,6 +398,59 @@ export async function runExportBatches(batches, { concurrency = 1, runBatch, che
     throw new AggregateError(failures, `${failures.length} export batch(es) failed. ${details} Completed assets are saved; no release was written or published by this run.`);
   }
 }
+// Figma can keep the current version ID while its contents change. Timestamp
+// provenance prevents same-version edits from reusing an earlier export cache.
+export function parseFigmaSnapshot(metadata, requestedVersion) {
+  if (typeof requestedVersion !== "string" || !requestedVersion ||
+      metadata?.version !== requestedVersion)
+    throw new Error("Figma returned a different version than the requested source snapshot.");
+  if (typeof metadata.lastModified !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(metadata.lastModified) ||
+      !Number.isFinite(Date.parse(metadata.lastModified)))
+    throw new Error("Figma did not return a valid lastModified snapshot marker.");
+  return { version: requestedVersion, lastModified: metadata.lastModified };
+}
+
+export function sameFigmaSnapshot(left, right) {
+  return typeof left?.version === "string" && Boolean(left.version) &&
+    typeof left.lastModified === "string" && Boolean(left.lastModified) &&
+    left.version === right?.version && left.lastModified === right?.lastModified;
+}
+
+export async function readFigmaSnapshot(figma, source, version) {
+  const metadata = await figma(
+    `files/${source.fileKey}?depth=1&version=${encodeURIComponent(version)}`,
+  );
+  const snapshot = parseFigmaSnapshot(metadata, version);
+  // Always validate the actual templates, including before --if-changed exits.
+  const templates = await checkCutterTemplates(figma, source, version);
+  if (!sameFigmaSnapshot(snapshot, parseFigmaSnapshot(templates, version)))
+    throw new Error("Figma changed while validating the source snapshot. The active release is unchanged; retry from a fresh snapshot.");
+  return snapshot;
+}
+
+export function canReuseFigmaSnapshot(record, snapshot, sourceHash) {
+  return (record?.version ?? record?.figmaVersion) === snapshot.version &&
+    record?.sourceHash === sourceHash && sameFigmaSnapshot(record?.figmaSnapshot, snapshot);
+}
+
+export function assertFigmaCacheSnapshot(record, snapshot, sourceHash, label = "Artwork cache") {
+  if (!canReuseFigmaSnapshot(record, snapshot, sourceHash))
+    throw new Error(`${label} belongs to an unverified or different Figma snapshot. Choose a new --release ID; existing artwork and progress remain untouched.`);
+}
+
+export function snapshotReleaseId(snapshot, sourceHash) {
+  const marker = sha256(Buffer.from(JSON.stringify(snapshot))).slice(0, 8);
+  return `figma-${snapshot.version}-${sourceHash.slice(0, 8)}-${marker}`;
+}
+
+export async function withVerifiedFigmaSnapshot(figma, source, snapshot, operation) {
+  const current = await readFigmaSnapshot(figma, source, snapshot.version);
+  if (!sameFigmaSnapshot(snapshot, current))
+    throw new Error("Figma changed during export. No release was written or published by this check; choose a new snapshot and release ID.");
+  return operation();
+}
+
 async function main() {
   const args = process.argv.slice(2),
     value = (flag) =>
@@ -502,29 +556,27 @@ async function main() {
       throw new Error(`Figma ${endpoint} returned an unreadable response. Completed exports are saved; the active release is unchanged.`, { cause: error });
     }
   }
-  // Pin the file version once. Every node read and image export uses this version.
-  const head = await figma(`files/${source.fileKey}?depth=1`),
-    version = value("--version") ?? head.version;
+  // An explicit version still needs timestamp provenance: the current Figma
+  // version can change in place until it becomes a historical checkpoint.
+  const version = value("--version") ?? (await figma(`files/${source.fileKey}?depth=1`)).version;
   if (!version) throw new Error("Figma did not return a version.");
   const sourceHash = sha256(Buffer.from(JSON.stringify(source)));
+  const figmaSnapshot = await readFigmaSnapshot(figma, source, version);
   if (args.includes("--if-changed")) {
     try {
       const previous = JSON.parse(
         await readFile(path.join(PRIVATE_ROOT, "last-published.json"), "utf8"),
       );
-      if (previous.version === version && previous.sourceHash === sourceHash) {
-        console.log("Figma version and print source mappings are unchanged.");
+      if (canReuseFigmaSnapshot(previous, figmaSnapshot, sourceHash)) {
+        console.log("Figma snapshot and print source mappings are unchanged.");
         return;
       }
     } catch (error) {
       if (error.code !== "ENOENT") throw error;
     }
   }
-  // Validate both templates at the version used for every artwork export.
-  // The front guides stay out of the assets; V4 exports the complete rear page.
-  await checkCutterTemplates(figma, source, version);
   const releaseId =
-    value("--release") ?? `figma-${version}-${sourceHash.slice(0, 8)}`;
+    value("--release") ?? snapshotReleaseId(figmaSnapshot, sourceHash);
   if (!/^[A-Za-z0-9._-]{1,100}$/.test(releaseId))
     throw new Error("Invalid release ID.");
   const dir = path.join(PRIVATE_ROOT, "releases", releaseId);
@@ -534,6 +586,8 @@ async function main() {
     releaseId,
     figmaFileKey: source.fileKey,
     figmaVersion: version,
+    figmaSnapshot,
+    sourceHash,
     printTemplates: source.templates,
     catalog: source.catalog,
     missing: source.missing,
@@ -541,24 +595,31 @@ async function main() {
     ...(source.exportScope ? { exportScope: source.exportScope } : {}),
     assets: {},
   };
+  const manifestFile = path.join(dir, "release.json");
+  // Refuse a legacy or conflicting explicit ID before changing its progress.
+  try {
+    const existing = JSON.parse(await readFile(manifestFile, "utf8"));
+    assertFigmaCacheSnapshot(existing, figmaSnapshot, sourceHash, "Saved release");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
   const files = {};
-  // Resume completed exports after a rate limit or network interruption. Never
-  // combine nodes from different versions or mappings into one release.
+  // Resume only exports from the same verified source snapshot. Old journals
+  // without a timestamp cannot establish provenance and remain untouched.
   const progressFile = path.join(dir, "progress.json");
   try {
     const progress = JSON.parse(await readFile(progressFile, "utf8"));
-    if (progress.version === version && progress.sourceHash === sourceHash) {
-      for (const [id, asset] of Object.entries(progress.assets)) {
-        if (!/^[a-f0-9]{64}$/.test(asset.sha256)) continue;
-        const file = path.join(dir, `${asset.sha256}.png`);
-        try {
-          if (sha256(await readFile(file)) === asset.sha256) {
-            release.assets[id] = asset;
-            files[id] = file;
-          }
-        } catch (error) {
-          if (error.code !== "ENOENT") throw error;
+    assertFigmaCacheSnapshot(progress, figmaSnapshot, sourceHash, "Saved progress");
+    for (const [id, asset] of Object.entries(progress.assets)) {
+      if (!/^[a-f0-9]{64}$/.test(asset.sha256)) continue;
+      const file = path.join(dir, `${asset.sha256}.png`);
+      try {
+        if (sha256(await readFile(file)) === asset.sha256) {
+          release.assets[id] = asset;
+          files[id] = file;
         }
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
       }
     }
   } catch (error) {
@@ -571,7 +632,7 @@ async function main() {
     mapped.slice(index * batchSize, (index + 1) * batchSize));
   await runExportBatches(batches, {
     concurrency,
-    checkpoint: () => atomicJson(progressFile, { version, sourceHash, assets: release.assets }),
+    checkpoint: () => atomicJson(progressFile, { version, sourceHash, figmaSnapshot, assets: release.assets }),
     runBatch: async (batch, saveProgress, stopScheduling) => {
       const ids = [...new Set(batch.map((s) => s.nodeId))].join(",");
       const responses = await Promise.allSettled([
@@ -588,6 +649,10 @@ async function main() {
       if (failures.length)
         throw new AggregateError(failures.map((response) => response.reason), failures.map((response) => response.reason.message).join(" "));
       const [nodes, images] = responses.map((response) => response.value);
+      if (!sameFigmaSnapshot(figmaSnapshot, parseFigmaSnapshot(nodes, version))) {
+        stopScheduling();
+        throw new Error("Figma changed during an export batch. The active release is unchanged; choose a new snapshot and release ID.");
+      }
       for (const item of batch) {
         const node = nodes.nodes?.[item.nodeId]?.document,
           url = images.images?.[item.nodeId];
@@ -636,18 +701,19 @@ async function main() {
     Object.entries(release.assets).sort(([a], [b]) => a.localeCompare(b)),
   );
   validateRelease(release);
-  const manifestFile = path.join(dir, "release.json");
-  // An existing release ID may never be silently replaced.
-  try {
-    const existing = JSON.parse(await readFile(manifestFile, "utf8"));
-    if (JSON.stringify(existing) !== JSON.stringify(release))
-      throw new Error(
-        "Release ID already has different contents. Choose a new release ID.",
-      );
-  } catch (error) {
-    if (error.code !== "ENOENT") throw error;
-  }
-  await atomicJson(manifestFile, release);
+  await withVerifiedFigmaSnapshot(figma, source, figmaSnapshot, async () => {
+    // An existing release ID may never be silently replaced.
+    try {
+      const existing = JSON.parse(await readFile(manifestFile, "utf8"));
+      if (JSON.stringify(existing) !== JSON.stringify(release))
+        throw new Error(
+          "Release ID already has different contents. Choose a new release ID.",
+        );
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+    await atomicJson(manifestFile, release);
+  });
   if (args.includes("--publish")) {
     if (!process.env.STORE_ADMIN_TOKEN)
       throw new Error("Set STORE_ADMIN_TOKEN locally to publish.");
@@ -671,7 +737,7 @@ async function main() {
           "Private artwork upload failed. The previous release remains active.",
         );
     }
-    const response = await fetch(endpoint, {
+    const response = await withVerifiedFigmaSnapshot(figma, source, figmaSnapshot, () => fetch(endpoint, {
       method: "POST",
       headers: {
         "x-admin-token": process.env.STORE_ADMIN_TOKEN,
@@ -680,7 +746,7 @@ async function main() {
       body: JSON.stringify({ action: "publish", release }),
       redirect: "error",
       signal: AbortSignal.timeout(90_000),
-    });
+    }));
     if (!response.ok)
       throw new Error(
         "Release publication failed. The previous release remains active.",
@@ -689,6 +755,7 @@ async function main() {
       version,
       releaseId,
       sourceHash,
+      figmaSnapshot,
     });
     console.log(
       `Published ${releaseId}. Existing orders keep their pinned release.`,
