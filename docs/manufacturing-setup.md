@@ -2,13 +2,98 @@
 
 The implementation connects paid-order intake, immutable booster draws, private
 Figma PNG releases, separate Epson/Canon print jobs, a QR work ticket, a staff
-checklist, and buyer milestone emails. **Printing is enabled for Reef booster
-jobs approved with Send to printers.** Buyer manufacturing notifications and
-paid test-order intake remain disabled.
+checklist, and buyer milestone emails. **Printing is enabled for Reef, Deep,
+and Oceanic booster jobs approved with Send to printers.** Buyer manufacturing
+notifications and paid test-order intake remain disabled.
+
+## Reef, Deep, and Oceanic boosters activated - October 20, 2026
+
+The combined Reef, Deep, and Oceanic release was published and verified live
+on October 20 at 22:07 UTC. The active private artwork release is
+`figma-2412558910773503874-2b178ed5-b0078790`, pinned to Figma version
+`2412558910773503874` and modification time `2026-10-20T21:26:10Z`.
+It contains 219 private assets: 217 card printings, the tuned Epson front
+backdrop, and the complete Canon rear page. All three booster products passed
+artwork-availability checks. Earlier interrupted exports remain in private
+diagnostic folders and are not approved releases.
+
+| Set | Eligible printings | Common | Uncommon | Rare | Holo Rare | Prerelease printings |
+|---|---:|---:|---:|---:|---:|---:|
+| Reef | 95 | 32 | 30 | 18 | 15 | 16 |
+| Deep | 59 | 19 | 14 | 11 | 15 | 54 |
+| Oceanic | 63 | 26 | 17 | 15 | 5 | 54 |
+
+All three pools already allow finished cards bearing PRERELEASE. Preserve that
+stamp in the source exports. The existing eleven unfinished-artwork exclusions
+remain unchanged, including Deep 060-062 and Oceanic 064. The recipe remains
+five commons, three uncommons, and one premium slot with a 25% holo chance.
+Fixed-deck sheets are outside this combined booster scope and remain held
+until a complete release includes their artwork.
+
+The owner-approved source corrections are complete and visually verified.
+Krill (`ocean-057`) and Silverside (`ocean-060`) no longer show obsolete,
+duplicate ability text; their correct abilities remain visible. Clipping contains
+the decorative glow without changing the photograph or template's absolute
+geometry, or the 750 x 1050 outer card bounds. Their clipping frames are
+`4281:118099` and `4281:118100`.
+
+Bamboo Coral Stage 2's regular component `1929:17148` contains clipping frame
+`4279:84807`, which encloses the photograph and template instance. The change
+propagates through linked holo instance `4130:33732` inside `3962:57784`;
+no instance was detached. Regular `deep-030` still displays `30/62`, and holo
+`deep-013` still displays `13/62`. These three source corrections affect four
+printing exports because Bamboo has regular and holo variants. Both blue water
+backdrops are visible again: Epson front `4116:234587` and Canon rear
+`4244:451220`. Only their visibility changed; their tuned geometry remains
+unchanged. Both templates passed the strict snapshot and layout guards for
+this release.
+
+The complete manufacturing suite passed all 167 tests with no failures or
+skips, including 15 regression tests for source snapshot protection. These
+checks cover cache provenance, template validation before unchanged skips,
+publication guards, and compatibility with existing published releases.
+
+All 219 PNGs passed checksum, CRC decoding, and dimension checks. The exact
+eleven unfinished-artwork exclusions were verified, and the four corrected
+exports passed transparency checks and differ from their earlier artwork.
+Four local Deep/Oceanic rare and holo booster proofs each contain nine distinct
+cards from the correct set: five commons, three uncommons, and one premium.
+Their twelve single-page PDFs use Letter size, and all four work-ticket QR
+codes decode successfully. The complete 2550 x 3300 Canon rear is opaque; its
+native pixels match the image embedded in the PDF. Fronts, backs, and tickets
+passed visual review.
+
+The live database manifest matches the verified local manifest exactly:
+SHA256 `208bebe1dc89e1921806f8b5356a490365aaa8939eec6f4eb487df5214e3a6d9`.
+The Supabase artwork bucket remains private (`public: false`). Anonymous access
+to four representative assets was denied; authenticated downloads of the rear
+page, `deep-013`, `ocean-057`, and `ocean-060` matched their recorded checksums.
+
+The pre-publication queue check found no approved runnable jobs without an
+assigned release. After activation, all five existing jobs retained their
+states, pinned releases, and saved draw hashes. This work created no orders,
+physical prints, or buyer notifications. The ignored
+`.private/manufacturing/deep-oceanic-2026-10-20/` directory contains local proofs
+and verification receipts.
+
+Create a **new** stock build in
+[Manufacturing](https://searealm.com/admin/manufacturing), choose a Reef, Deep,
+or Oceanic Dive Pack, and click **Send to printers** on its workshop job.
+The saved draw uses the complete eligible pool for that set, including its
+finished prerelease cards. Scan the work-ticket QR to continue manufacturing;
+receive the finished batch into inventory after its checklist is complete.
+
+Publishing inserts an immutable release and updates the active-release setting.
+It does not send jobs to printers or retry blocked work. Existing job releases
+and saved draws stay pinned. A job blocked before its first manifest needs an
+explicit **Retry** to use newly available artwork; jobs with saved manifests
+retain their original release on retry or reprint. An already approved queued
+job with no release assigned can adopt the active release on its next agent
+poll, so check the queue before claiming an activation will produce no prints.
 
 ## Tuned printer templates activated - October 19, 2026
 
-The active private artwork release is
+At this activation, the private artwork release became
 `figma-2412156090472208619-ee3b0b94`, pinned to Figma version
 `2412156090472208619`. Its 97 assets include all 95 eligible Reef printings,
 the tuned front ocean backdrop, and the complete Canon rear page.
@@ -27,13 +112,11 @@ the recorded checksum.
 The existing **SeaRealm Manufacturing Agent** Windows task was started with
 the updated renderer after confirming there were no approved pages waiting
 to print. Both printer queues were empty. No production jobs, stock movements,
-buyer messages, or physical prints were created by this update. Reef-only
-printing remains enabled; test orders and buyer notifications remain off.
-
-Create a **new** Reef stock build in
-[Manufacturing](https://searealm.com/admin/manufacturing) and use
-**Send to printers** to use the tuned templates. Existing saved jobs retain
-their original cards, artwork release, and layout, including on reprints.
+buyer messages, or physical prints were created by this update. At this
+checkpoint, Reef-only printing was enabled; test orders and buyer notifications
+remained off. New Reef stock builds used the tuned templates after staff chose
+**Send to printers**. Existing saved jobs retained their original cards, artwork
+release, and layout, including on reprints.
 The ignored `.private/manufacturing/template-update-2026-10-19/` directory
 contains local proofs and verification receipts.
 
@@ -418,23 +501,25 @@ including across refreshes. Stock builds never insert into `store_orders`.
    in the ignored local `sync.env` for unattended export and publishing. Both
    credentials were verified on October 13. The Figma connector's connection
    is not a reusable credential for a scheduled Node process.
-4. The complete Reef artwork scope is published. Export and validate additional
-   product scopes before making those products; publish a release containing
-   all product pools that should be available together.
+4. The combined Reef, Deep, and Oceanic booster artwork scope is published
+   and verified. Fixed-deck artwork is outside this release. For later updates,
+   export and validate every included product pool before publishing it; the
+   active release must contain all pools that should be available together.
    The owner-approved eleven unfinished printings below are excluded until
    their sources are mapped and validated; finished prerelease cards remain
-   included. Any other missing mapping must be resolved. The script pins one
-   Figma version for every export and checks collector numbers, dimensions,
-   sheet positions, and checksums.
+   included. Any other missing mapping must be resolved. The script pins the
+   Figma version and modification time for every export and checks collector
+   numbers, dimensions, sheet positions, and checksums.
 5. Use the established Epson and Canon printer profiles with Letter, actual
    size, simplex, and the intended trays/media settings. The owner opted to
    skip the separate alignment-check print on October 5, 2026. That print is
    optional; it is not a database setup or activation prerequisite. The owner
    confirmed the profiles on October 14 and `calibrationConfirmed` is now true.
    The local three-page printer test above is ready without a full release.
-6. The Windows startup task is installed and running. Use one independent Reef
-   stock build for the first print; paid test-order intake is not needed. Click
-   Send to printers for that job, confirm both physical printer outputs, and
+6. The Windows startup task is installed and running. Create an independent
+   stock build for a product included in the active release; paid test-order
+   intake is not needed. Click Send to printers for that job, confirm both
+   physical printer outputs, and
    scan its work-ticket QR. Unapproved jobs remain waiting. Enable buyer
    milestone emails separately after the physical workflow has been confirmed.
 
@@ -445,8 +530,10 @@ No live buyer emails or physical prints were sent during implementation.
 This checkpoint predates the October 14 source corrections and ocean
 backdrops. It preserves the older version for reproducibility; completing it
 would not deliver the updated artwork. The next production release needs a
-fresh pinned source map. A full-catalog release needs all 271 assets, including
-both backdrops; the active Reef scope above needs only its complete 98 assets.
+fresh pinned source map. The later V3 full-catalog scope needed 271 assets,
+including both backdrops; its Reef-only scope needed 98. Current V4 scopes use
+the complete rear page and one front backdrop: 270 assets for the full catalog,
+219 for all three boosters, or 97 for Reef alone.
 Do not mix the updated candidate PNGs into this older release or overwrite its
 saved manifests.
 
@@ -481,8 +568,8 @@ contents, 2550 × 3300 dimensions, PNG CRC decoding, checksums, and measured
 card positions. Then resume the pinned exporter, validate all 269 assets,
 upload the remaining PNGs, and publish the complete private release. Verify
 the live manifest and denied public access afterward. These historical recovery
-instructions do not supersede the active October 14 Reef release; do not publish
-the older artwork over it.
+instructions do not supersede the current active release; do not publish this
+historical artwork over a newer verified release.
 
 The existing three booster manifests and Conditions manifest must be reused
 when rebuilding the review bundle against the complete release. A rerun
@@ -494,28 +581,43 @@ Use Node 24 and `npm ci` (including dev dependencies on the printer PC). The PDF
 renderer, PNG decoder, and QR generator are local tools and are not imported by
 the public website. `npm.cmd` avoids Windows PowerShell script-policy issues.
 
-For a first Reef-only activation, export a complete eligible Reef pool with
-`--products reef-dive-pack`. This selects all 95 eligible Reef printings plus
-the back and two backgrounds (98 assets). It retains the full 217-printing
-catalog; it never narrows random draws to whichever images are available.
-Deep, Oceanic, and fixed products with missing artwork stop before drawing.
+To refresh all three booster sets together, use
+`--products reef-dive-pack,deep-dive-pack,oceanic-dive-pack`. This selects all
+217 eligible printings, the complete rear page, and the front backdrop
+(219 assets). A Reef-only scope remains available with `--products reef-dive-pack`
+(95 card printings plus the two page assets, 97 total). Every scope retains the
+full catalog; it never narrows random draws to whichever images are available.
+Any product missing required artwork, including fixed decks outside the selected
+scope, stops before drawing.
 Already-finished inventory can still be fulfilled without new card artwork.
 The product scope participates in the source hash and release ID, so its cache
 cannot collide with the full-catalog export. Omitting `--products` keeps the
 existing full-export behavior. Comma-separated product IDs are supported.
 
+Figma can keep its current version ID while accepting new edits. The exporter
+therefore records the version and `lastModified` timestamp together. Default
+release IDs include a hash of this snapshot. `--if-changed` validates both cutter
+templates before skipping; cache reuse also requires the same snapshot and
+source mappings. Historical cache folders without a snapshot marker are kept
+intact and cannot be resumed under their old ID. Start a new release to export
+them safely; existing published releases remain readable. The exporter checks
+the snapshot and templates again after export and immediately before publication,
+and stops if either changed.
+
 ```powershell
 # Export privately for review; no publication or printing.
-node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products reef-dive-pack --batch-size 1 --concurrency 2
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products reef-dive-pack,deep-dive-pack,oceanic-dive-pack --batch-size 1 --concurrency 2
 
 # Publish the reviewed scope at its exact saved version and release ID.
-node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products reef-dive-pack --version <reviewed-version> --release <reviewed-release-id> --publish
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products reef-dive-pack,deep-dive-pack,oceanic-dive-pack --version <reviewed-version> --release <reviewed-release-id> --publish
 ```
 
 Review the new release before publishing. All included assets must be complete
-and validated; `--allow-incomplete` is not a substitute for the full Reef pool.
-Publishing a later scope replaces the active release for future preparation;
-existing jobs retain their pinned release and saved draw.
+and validated; `--allow-incomplete` is not a substitute for complete selected
+pools. Publishing a later scope replaces the active release for new jobs;
+include every product pool that should remain available. Existing jobs retain
+their pinned release and saved draw. Publication does not retry blocked work;
+explicitly retry a job without a saved manifest to adopt the new active release.
 
 ```powershell
 # Read-only source audit; no Figma token needed.
@@ -589,7 +691,7 @@ Use the following instructions when creating a separate recurring chat:
 > The script loads `FIGMA_ACCESS_TOKEN` and `STORE_ADMIN_TOKEN` from the ignored
 > `.private/manufacturing/sync.env`; do not display or copy those secrets.
 > It reads optional `.private/manufacturing/figma-overrides.json`, checks for
-> changed Figma versions or source mappings, resumes verified local downloads,
+> changed Figma snapshots or source mappings, resumes verified local downloads,
 > and publishes validated PNGs to the private artwork bucket. Keep the exact
 > 11-card unfinished-artwork policy: finished prerelease cards remain eligible,
 > mapped cards must pass validation, and any newly unmapped card outside that
@@ -605,12 +707,12 @@ from 1 through 10 and `-Concurrency` from 1 through 3. To use one request group
 at a time, append `-Concurrency 1`. These options change only request grouping;
 they preserve the same release and cached exports.
 
-The unchanged check compares the Figma file version and source mappings with
-the last successfully published release. Each new file version exports the
-complete eligible artwork set, even if only one card changed; it can therefore
-be a lengthy run. Interrupted downloads resume only when the pinned version
-and source mappings match. This is version-level caching, not a per-card change
-detector.
+The unchanged check compares the Figma file version, modification time, and
+source mappings with the last successfully published release, after validating
+both templates. Each changed snapshot exports the complete eligible artwork
+set, even if only one card changed; it can therefore be a lengthy run.
+Interrupted downloads resume only when all three provenance fields match.
+This is snapshot-level caching, not a per-card change detector.
 
 This handoff does not create a chat or install a schedule. Use either that
 recurring chat or the Windows hourly sync task to avoid overlapping publishers.

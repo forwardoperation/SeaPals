@@ -8,8 +8,12 @@ required sticker must be confirmed before quality check and packing.
 This document records the agreed workflow. Paid-order intake, private versioned
 artwork synchronization, PDF/QR rendering, the Windows printer agent, staff
 screen, and buyer notifications are now implemented. Production activation is
-enabled for staff-approved Reef boosters. See [the integration setup guide](manufacturing-setup.md) for the
-verified status, artwork eligibility, deployment steps, and commands.
+enabled for staff-approved Reef, Deep, and Oceanic boosters. The combined
+private release passed export, final QA, and live verification on October 20,
+2026. Finished prerelease cards remain eligible, including 54 each in Deep and
+Oceanic; the eleven unfinished printings remain excluded. Fixed-deck artwork
+is outside this release. See [the integration setup guide](manufacturing-setup.md) for verified activation
+status, artwork eligibility, deployment steps, and commands.
 
 ## Confirmed production rules
 
@@ -226,8 +230,9 @@ Windows agent, authenticated QR screen, and buyer outbox are implemented in this
 workspace. Fixed decks, Starter Kit, Conditions, dice, and tokens have explicit
 recipes. The HTTP handlers derive roles from their authentication credentials.
 
-The production switches remain disabled. Follow [manufacturing-setup.md](manufacturing-setup.md)
-for the verified integration status, approved unfinished-artwork policy, deployment,
+Staff-approved printing is enabled. Test-order intake and buyer manufacturing
+notifications remain disabled. Follow [manufacturing-setup.md](manufacturing-setup.md)
+for the active artwork scope, approved unfinished-artwork policy, deployment,
 credentials, printer profiles, and recovery steps. The production database
 migration was applied and verified on October 5, 2026. The separate alignment
 check print was skipped at the owner's request.
