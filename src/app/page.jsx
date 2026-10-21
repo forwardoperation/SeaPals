@@ -4,6 +4,7 @@ import HomeDive from "./HomeDive";
 import HomeDiveReveal from "./HomeDiveReveal";
 import HomeIntroduction from "./HomeIntroduction";
 import HomeStarterKit from "./HomeStarterKit";
+import HomeDeckShowcase from "./HomeDeckShowcase";
 import { getStoreConfiguration } from "@/lib/store/catalog";
 import {
   parentTestimonials,
@@ -269,22 +270,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="relative flex min-h-[280px] items-center overflow-hidden py-6 sm:min-h-[340px] sm:p-6 lg:min-h-full">
-            <div
-              aria-hidden="true"
-              className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-300/10 blur-3xl"
-            />
-            <div className="relative overflow-hidden rounded-2xl">
-              <Image
-                src="/images/promo/decks-promo.png"
-                alt="The seven SeaRealm ready-to-play deck designs"
-                width={6596}
-                height={1202}
-                sizes="(max-width: 1024px) 90vw, 520px"
-                className="h-auto w-full rounded-xl"
-              />
-            </div>
-          </div>
+          <HomeDeckShowcase
+            products={configuration.products.filter((product) => product.category === "expansion-decks")}
+          />
         </div>
       </section>
 
