@@ -297,7 +297,8 @@ export function createManufacturingManifest({
       side: "fronts",
       copies: 1,
       paper: "thin-photo-paper",
-      assetIds: pack.cards.map((card) => card.printingId),
+      // Finished holos are picked from existing cards, not printed again.
+      assetIds: pack.cards.filter((card) => !card.requiresHoloSticker).map((card) => card.printingId),
     },
     backs: {
       printerRole: "backs",
@@ -312,6 +313,13 @@ export function createManufacturingManifest({
       printingId: card.printingId,
       slot: card.slot,
       ...layout.positions[card.slot - 1],
+      ...(card.requiresHoloSticker ? { pullFinishedHolo: {
+        name: card.name,
+        set: card.set,
+        collectorNumber: card.collectorNumber,
+        setTotal: card.setTotal,
+        printingId: card.printingId,
+      } } : {}),
     })),
   }));
   const accessoryChecklist = [];
@@ -368,6 +376,8 @@ export function createManufacturingManifest({
     policy: { ...policy },
     layout,
     assembly: "separate-sheets-glued-together",
+    // Omitted on older manifests, which retain their printed-holo/sticker flow.
+    holoHandling: "pull-finished",
     physicalPrintVerified: false,
     packs,
     sheets,
@@ -382,10 +392,13 @@ export function createManufacturingManifest({
           sheetId: pack.packId,
           printingId: card.printingId,
           name: card.name,
+          set: card.set,
+          collectorNumber: card.collectorNumber,
+          setTotal: card.setTotal,
           slot: card.slot,
           row: card.row,
           column: card.column,
-          instruction: "Manually apply the holo sticker and confirm.",
+          instruction: "Pull the finished holo card and insert it into this pack. Do not pack the printed placeholder.",
         })),
     ),
   };
@@ -432,6 +445,8 @@ export function verifyManifest(manifest) {
     manifest.requestHash !== contentHash(validateOrderRequest(manifest.order))
   )
     throw new Error("Manifest order does not match its request hash.");
+  if (manifest.holoHandling !== undefined && manifest.holoHandling !== "pull-finished")
+    throw new Error("Unsupported holo handling in the saved manifest.");
   return manifest;
 }
 

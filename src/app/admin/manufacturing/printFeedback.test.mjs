@@ -83,6 +83,24 @@ test("background refresh does not overlap another read", () => {
   assert.ok(guard.begin({ replace: false }));
 });
 
+test("packed stock remains awaiting receipt until actual finished inventory is posted", () => {
+  const detail = { ...job(), job_kind: "stock", phase: "complete" };
+  detail.state.packed = true;
+  assert.equal(printFeedback(detail, true, now).title, "Packaged — awaiting stock receipt");
+  detail.inventory_posted_at = "2026-10-24T15:00:00Z";
+  assert.equal(printFeedback(detail, true, now).title, "Job complete");
+  assert.match(printFeedback(detail, true, now).description, /received into finished inventory/);
+});
+
+test("new holo jobs say to pull finished cards and legacy jobs retain sticker instructions", () => {
+  const detail = job();
+  detail.state.ticket.ticket = "confirmed";
+  detail.state.sheets["reef-1"] = { fronts: "confirmed", backs: "confirmed" };
+  assert.match(printFeedback(detail, true, now).description, /applying holo stickers/);
+  detail.manifest.holoHandling = "pull-finished";
+  assert.match(printFeedback(detail, true, now).description, /pulling the listed finished holo cards/);
+});
+
 test("replaced selection ignores an older response even when fetch ignores abort", async () => {
   const guard = createRefreshGuard();
   const visible = [];

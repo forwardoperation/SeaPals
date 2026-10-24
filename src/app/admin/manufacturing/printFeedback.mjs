@@ -19,12 +19,16 @@ export function printFeedback(detail, enabled, now = Date.now()) {
     attention,
     ...counts,
   });
-  if (detail.phase === "complete" || state?.packed || detail.inventory_posted_at)
-    return feedback("Job complete", "Printing and manufacturing checks are complete.");
+  if (detail.inventory_posted_at || (detail.job_kind !== "stock" && (detail.phase === "complete" || state?.packed)))
+    return feedback("Job complete", detail.job_kind === "stock"
+      ? "All planned products have been received into finished inventory."
+      : "Printing and manufacturing checks are complete.");
   if (detail.phase === "blocked" || state?.hold)
     return feedback("Paused — needs attention", detail.issue || "Resolve the manufacturing hold before continuing.", true);
   if (statuses.includes("needs_review"))
     return feedback("Print outcome needs review", "Check the physical pages and printer queue before confirming or authorizing a reprint.", true);
+  if (detail.job_kind === "stock" && state?.packed)
+    return feedback("Packaged — awaiting stock receipt", "Scan the packaged products and receive the actual finished quantities. Packing alone does not add inventory.");
   if (!detail.print_requested_at)
     return feedback("Awaiting Send to printers", "Review this job, then send it when the printers and paper are ready.");
   if (statuses.includes("submitting")) {
@@ -33,7 +37,9 @@ export function printFeedback(detail, enabled, now = Date.now()) {
     return feedback("Sending pages to printers", "The local print helper is submitting pages to Windows. Paper still needs to be checked.");
   }
   if (counts.total && counts.checked === counts.total)
-    return feedback("All printed pages checked", "Continue gluing, cutting, applying holo stickers, and the remaining manufacturing checks.");
+    return feedback("All printed pages checked", detail.manifest?.holoHandling === "pull-finished"
+      ? "Continue gluing, cutting, pulling the listed finished holo cards, and the remaining manufacturing checks."
+      : "Continue gluing, cutting, applying holo stickers, and the remaining manufacturing checks.");
   if (counts.total && counts.sent === counts.total)
     return feedback("Sent to printers — check paper", "Windows accepted all print jobs. Check the physical pages, then use Paper checked below.");
   if (!enabled)

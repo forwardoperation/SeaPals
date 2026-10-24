@@ -1,17 +1,23 @@
 "use client";
 import { useState } from "react";
 
+const buttonClass = "rounded-xl bg-cyan-900 px-4 py-3 text-sm font-bold text-white disabled:opacity-40";
+
 export default function FinishedInventory({
   stock,
   movements,
+  barcodes = [],
   busy,
   onOperation,
+  onSetBarcode,
   selected,
 }) {
   const [mode, setMode] = useState("build_stock"),
     [product, setProduct] = useState("reef-dive-pack"),
     [quantity, setQuantity] = useState("1"),
     [reason, setReason] = useState("");
+  const [barcode, setBarcode] = useState(""),
+    [barcodeProduct, setBarcodeProduct] = useState("reef-dive-pack");
   const field =
     "mt-1 block w-full rounded-lg border border-slate-300 bg-white p-2";
   return (
@@ -141,8 +147,8 @@ export default function FinishedInventory({
           ) : (
             <p className="text-xs text-slate-600">
               Creates a workshop job for review. Choose Send to printers on the
-              job to start its print queue. It adds stock after you confirm QC
-              and receive the completed batch.
+              job to start its print queue. Scan packaged products on that job
+              and confirm the actual finished quantities to add inventory.
             </p>
           )}
           <button
@@ -155,6 +161,25 @@ export default function FinishedInventory({
           </button>
         </form>
       </div>
+      <details className="mt-4">
+        <summary className="cursor-pointer font-bold">Product barcodes</summary>
+        <p className="my-3 text-sm text-slate-600">Connect the barcodes already printed on your packaging to finished products. Preserve leading zeros. Each barcode belongs to one product.</p>
+        <form className="flex flex-wrap items-end gap-3" onSubmit={async (e) => {
+          e.preventDefault();
+          if (await onSetBarcode({ barcode: barcode.trim(), productId: barcodeProduct })) setBarcode("");
+        }}>
+          <label className="min-w-0 flex-1 text-sm">Barcode
+            <input className={field} value={barcode} onChange={(e) => setBarcode(e.target.value)} maxLength={128} autoComplete="off" required disabled={busy} />
+          </label>
+          <label className="min-w-0 flex-1 text-sm">Finished product
+            <select className={field} value={barcodeProduct} onChange={(e) => setBarcodeProduct(e.target.value)} disabled={busy}>
+              {stock.map((item) => <option key={item.product_id} value={item.product_id}>{item.product_name}</option>)}
+            </select>
+          </label>
+          <button className={buttonClass} disabled={busy || !stock.length || !barcode.trim()}>Save barcode</button>
+        </form>
+        {!!barcodes.length && <ul className="mt-3 space-y-1 text-sm">{barcodes.map((item) => <li key={item.barcode} className="break-words"><span className="font-mono">{item.barcode}</span> — {stock.find((product) => product.product_id === item.product_id)?.product_name ?? item.product_id}</li>)}</ul>}
+      </details>
       {!!movements.length && (
         <details className="mt-4">
           <summary className="cursor-pointer font-bold">

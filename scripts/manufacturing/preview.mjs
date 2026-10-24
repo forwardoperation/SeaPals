@@ -17,6 +17,8 @@ import {
 import {
   normalizedEvent,
   productionPhase,
+  validatedBarcode,
+  validatedReceiptItems,
 } from "../../src/lib/manufacturing/integration.mjs";
 import { renderTicket } from "./render.mjs";
 import { PRIVATE_ROOT, REPO_ROOT, atomicJson } from "./orders.mjs";
@@ -79,6 +81,7 @@ export async function previewFixture({
     job_kind: jobKind,
     display_number: manifest.order.orderNumber,
     stock_request: jobKind === "stock" ? items : null,
+    received_quantities: {},
     inventory_plan: manifest.inventoryPlan,
     print_requested_at: awaitingSend ? null : new Date().toISOString(),
     manifest: awaitingSend ? null : manifest,
@@ -190,7 +193,7 @@ async function main() {
       id: "20000000-0000-4000-8000-000000000002",
       items: [{ productId: "reef-dive-pack", quantity: 3 }],
       jobKind: "stock",
-      awaitingSend: true,
+      awaitingSend: false,
     }),
     preparedJob = await previewFixture({
       id: "30000000-0000-4000-8000-000000000003",
@@ -202,6 +205,8 @@ async function main() {
     ),
     operations = new Set(),
     movements = [];
+  const barcodes = [{barcode:"DEMO-REEF", product_id:"reef-dive-pack"}];
+  const receipts = new Map();
   const { storeProductDefinitions, storePreparedProductIds } =
     await import("../../src/data/store/products.js");
   const stock = storeProductDefinitions
@@ -260,6 +265,43 @@ async function main() {
             if (text.length > 10000) throw new Error("Too large");
           }
           const payload = JSON.parse(text);
+          if (payload.action === "set_product_barcode") {
+            const barcode = validatedBarcode(payload.barcode);
+            if (!stock.some(s=>s.product_id===payload.productId)) throw new Error("Unknown product");
+            const prior=barcodes.find(b=>b.barcode===barcode);
+            if(prior && prior.product_id!==payload.productId) throw new Error("Barcode already belongs to another product");
+            if(!prior) barcodes.push({barcode,product_id:payload.productId});
+            res.end(JSON.stringify({recorded:true})); return;
+          }
+          if (payload.action === "receive_stock") {
+            const items=validatedReceiptItems(payload.items);
+            const fingerprint=JSON.stringify({orderId:payload.orderId,items,qualityConfirmed:payload.qualityConfirmed});
+            const prior=receipts.get(payload.id);
+            if(prior) {
+              if(prior!==fingerprint) throw new Error("Receipt ID reused with different contents");
+              res.end(JSON.stringify({recorded:true,duplicate:true}));return;
+            }
+            const job=jobs.get(payload.orderId);
+            if(!payload.qualityConfirmed || job?.job_kind!=="stock" || !job.manifest || !job.print_requested_at || job.state?.hold || job.inventory_posted_at) throw new Error("Choose an open prepared stock build and confirm packaged quality");
+            const quantities={};
+            for(const item of items) {
+              const product=barcodes.find(b=>b.barcode===item.barcode)?.product_id;
+              if(!product) throw new Error("Unknown barcode");
+              quantities[product]=(quantities[product]??0)+item.quantity;
+            }
+            for(const [product,quantity] of Object.entries(quantities)) {
+              const planned=job.stock_request.find(i=>i.productId===product)?.quantity??0;
+              if((job.received_quantities[product]??0)+quantity>planned) throw new Error("Quantity exceeds remaining batch");
+            }
+            for(const [product,quantity] of Object.entries(quantities)) {
+              record(product,quantity,0,"Packaged products received by barcode");
+              job.received_quantities[product]=(job.received_quantities[product]??0)+quantity;
+            }
+            receipts.set(payload.id,fingerprint);job.revision++;job.state.revision=job.revision;
+            const complete=job.stock_request.every(i=>job.received_quantities[i.productId]===i.quantity);
+            if(complete){job.inventory_posted_at=new Date().toISOString();job.phase="complete";}
+            res.end(JSON.stringify({recorded:true,duplicate:false,complete}));return;
+          }
           if (payload.action === "adjust_stock") {
             const s = stock.find((s) => s.product_id === payload.productId);
             if (
@@ -316,16 +358,7 @@ async function main() {
           detail.revision = detail.state.revision;
           detail.phase = productionPhase(detail.state);
           if (payload.event.type === "packed" && !detail.previewReceived) {
-            if (detail.job_kind === "stock") {
-              for (const i of detail.manifest.order.items)
-                record(
-                  i.productId,
-                  i.quantity,
-                  0,
-                  "Finished stock build received",
-                );
-              detail.inventory_posted_at = new Date().toISOString();
-            } else
+            if (detail.job_kind === "order")
               for (const i of detail.manifest.inventoryPlan ?? [])
                 if (i.fromStock)
                   record(
@@ -336,6 +369,7 @@ async function main() {
                   );
             detail.previewReceived = true;
           }
+          if (detail.job_kind === "stock" && !detail.inventory_posted_at && detail.phase === "complete") detail.phase = "awaiting_operator";
           res.end(JSON.stringify(detail));
           return;
         }
@@ -361,11 +395,12 @@ async function main() {
                           n +
                           (j.stock_request.find(
                             (i) => i.productId === s.product_id,
-                          )?.quantity ?? 0),
+                          )?.quantity ?? 0) - (j.received_quantities?.[s.product_id] ?? 0),
                         0,
                       ),
                   })),
                   movements,
+                  barcodes,
                 },
           ),
         );

@@ -237,7 +237,7 @@ Applied inventory migration SHA-256:
 `68fbe8f008aa8e33f012453a5e3fe4da29d2edd58a55f94aaeb874021a330c42`.
 
 For a new database, apply `manufacturing.sql`, `manufacturing-inventory.sql`,
-then `manufacturing-dispatch.sql`, in that order. Always reapply the later
+then `manufacturing-dispatch.sql` and `manufacturing-receiving.sql`, in that order. Always reapply the later
 migrations after rerunning an earlier one: each replaces shared job functions.
 The migrations are rerunnable without resetting stock, saved cards, or dispatch
 approval.
@@ -435,6 +435,37 @@ status is in the Reef printing section above.
   token is a separate random credential. The initial profile gate was `false`;
   see the October 14 connection and test status above for the later confirmation.
 
+## Barcode receiving and finished holo pulls - October 24, 2026
+
+Apply `supabase/manufacturing-receiving.sql` after the dispatch migration.
+It removes automatic batch credit from the stock packed event, adds private
+product-barcode mappings, and posts reviewed partial receipts atomically.
+The existing staff token protects both operations:
+
+`{"action":"set_product_barcode","barcode":"<actual packaging code>","productId":"reef-dive-pack"}`
+
+`{"action":"receive_stock","id":"<stable receipt uuid>","orderId":"<stock job uuid>","items":[{"barcode":"<actual packaging code>","quantity":2}],"qualityConfirmed":true}`
+
+The same receipt UUID and payload must be reused after a lost response. Product
+codes preserve leading zeros and cannot be reassigned to a different product.
+Shared SKU barcodes cannot identify duplicate scans of one physical pack; staff
+review the scanned count. No real barcode numbers are seeded by this migration.
+
+New manifests pin `holoHandling: "pull-finished"`: the holo front slot contains
+its name and collector/set number, and the operator confirms `holo_pulled`.
+Saved older manifests still print their original holo artwork and require
+`holo_applied`. Restart the local printer helper after installing the updated
+renderer, before the server begins generating new manifests. No art release,
+pull-rate, printer-driver, or template-geometry change is needed.
+
+Production database verification on October 24: all 14 read-only checks passed
+(8 private tables, 21 server-only functions). Migration SHA-256: `a3824bb2658eb961924b0243d9b9ac6bceb906304f51b74a89112f1c146430ad`.
+Saved draws, job states, stock balances, and movement records matched the
+pre-migration baseline. The local helper was updated and restarted with no
+new dispatches. The full manufacturing suite passed 196 tests; the final
+receiving/API/UI suite passed 35 after review fixes. Three holo PDFs were
+visually checked, and the offline scan flow received 1 then 2 demo packs.
+
 ## Finished inventory and independent builds
 
 `supabase/manufacturing-inventory.sql` extends the original migration. It adds
@@ -452,8 +483,10 @@ In the workshop's **Finished inventory** section:
 - Use **Build stock without an order** to make up to 100 finished units per
   job, then open the build and click **Send to printers**. This uses the existing private artwork, Epson fronts, Canon backs,
   QR work ticket, and manual finishing checklist. Packs keep the same odds
-  and saved draw. Stock is credited only after QC and **Packed — receive into
-  stock**. A completed build cannot credit stock twice or email a buyer.
+  and saved draw. Printing and packing do not credit stock. Scan each good
+  packaged product in **Receive packaged products**, review the count, confirm
+  quality, and receive that count. Partial receipts leave failed units outstanding
+  for reprinting. A stock build never emails a buyer.
 - Paid live orders atomically reserve available finished products. Ordering
   five boosters when three are available reserves three and generates only
   two new boosters. Fully stocked orders need only the work ticket and stock
@@ -482,8 +515,8 @@ request's response is lost. Reusing an ID with different contents is rejected.
 ```
 
 `GET /api/admin/manufacturing` includes `stock` (on hand, reserved, available,
-and planned) and recent `movements`. Job details include `job_kind` and the
-saved `inventoryPlan`. The staff UI retains an uncertain operation for retry,
+and remaining planned quantities), registered `barcodes`, and recent `movements`. Job details include `job_kind` and the
+saved `inventoryPlan` and `received_quantities` by product. The staff UI retains an uncertain operation for retry,
 including across refreshes. Stock builds never insert into `store_orders`.
 
 ## Activation checklist and remaining rollout

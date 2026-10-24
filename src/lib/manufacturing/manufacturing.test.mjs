@@ -318,7 +318,7 @@ test("manifest tampering and missing or low-resolution artwork are rejected", ()
     assets,
   });
   assert.equal(result.ready, false);
-  assert.equal(result.errors.length, 10);
+  assert.equal(result.errors.length, 9);
   assert.throws(
     () => preflightPrintAssets(saved, { releaseId: "new-release" }),
     /does not match/,
@@ -344,23 +344,23 @@ test("spool success is not physical confirmation; both sides are required before
   assert.equal(run.state().sheets[sheetId].glued, true);
 });
 
-test("manual holo work may precede or follow gluing/cutting, but always gates QC", () => {
+test("finished holo pulls may precede or follow gluing/cutting, but always gate QC", () => {
   for (const early of [true, false]) {
     const saved = manifest();
     const run = exercise(saved);
     const sheetId = saved.sheets[0].sheetId;
     assert.throws(
-      () => run.apply("holo_applied", { holoId: saved.holoChecklist[0].id }),
+      () => run.apply("holo_pulled", { holoId: saved.holoChecklist[0].id }),
       /matching front/,
     );
     run.print(sheetId, "fronts");
-    if (early) run.apply("holo_applied", { holoId: saved.holoChecklist[0].id });
+    if (early) run.apply("holo_pulled", { holoId: saved.holoChecklist[0].id });
     run.print(sheetId, "backs");
     run.apply("glued", { sheetId });
     run.apply("cut", { sheetId });
     if (!early) {
-      assert.throws(() => run.apply("quality_checked"), /every holo sticker/);
-      run.apply("holo_applied", { holoId: saved.holoChecklist[0].id });
+      assert.throws(() => run.apply("quality_checked"), /every finished holo pull/);
+      run.apply("holo_pulled", { holoId: saved.holoChecklist[0].id });
     }
     run.apply("quality_checked");
     run.apply("packed");
@@ -368,14 +368,14 @@ test("manual holo work may precede or follow gluing/cutting, but always gates QC
   }
 });
 
-test("front reprints reset stickers; back reprints preserve stickers but reset assembly", () => {
+test("front reprints require holo pulls to be checked again; back reprints preserve pulls but reset assembly", () => {
   for (const side of ["fronts", "backs"]) {
     const saved = manifest();
     const run = exercise(saved);
     const sheetId = saved.sheets[0].sheetId;
     run.print(sheetId, "fronts");
     run.print(sheetId, "backs");
-    run.apply("holo_applied", { holoId: saved.holoChecklist[0].id });
+    run.apply("holo_pulled", { holoId: saved.holoChecklist[0].id });
     run.apply("glued", { sheetId });
     run.apply("cut", { sheetId });
     run.apply("quality_checked");

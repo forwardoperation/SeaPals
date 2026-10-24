@@ -1,5 +1,5 @@
 -- Read-only verification after manufacturing.sql, manufacturing-inventory.sql,
--- and manufacturing-dispatch.sql (in that order).
+-- manufacturing-dispatch.sql, and manufacturing-receiving.sql (in that order).
 -- Does not create orders, claim print jobs, or enqueue buyer messages.
 with manufacturing_tables as (
   select c.oid, c.relrowsecurity
@@ -7,30 +7,30 @@ with manufacturing_tables as (
   where n.nspname = 'public' and c.relkind = 'r'
     and c.relname in ('manufacturing_releases', 'manufacturing_settings',
                      'manufacturing_orders', 'manufacturing_notifications',
-                     'manufacturing_stock', 'manufacturing_stock_operations', 'manufacturing_stock_movements')
+                     'manufacturing_stock', 'manufacturing_stock_operations', 'manufacturing_stock_movements', 'manufacturing_product_barcodes')
 ), manufacturing_functions as (
   select p.oid, p.prosecdef, p.proconfig
   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.proname like 'manufacturing_%'
 ), checks as (
-  select 1 as position, 'All seven manufacturing tables exist' as check_name,
-    (select count(*) = 7 from manufacturing_tables) as passed
-  union all select 2, 'Row-level security enabled on all seven tables',
-    (select count(*) = 7 and bool_and(relrowsecurity) from manufacturing_tables)
+  select 1 as position, 'All eight manufacturing tables exist' as check_name,
+    (select count(*) = 8 from manufacturing_tables) as passed
+  union all select 2, 'Row-level security enabled on all eight tables',
+    (select count(*) = 8 and bool_and(relrowsecurity) from manufacturing_tables)
   union all select 3, 'Public and signed-in clients cannot access tables',
-    (select count(*) = 7 and bool_and(
+    (select count(*) = 8 and bool_and(
       not has_table_privilege('anon', oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
       and not has_table_privilege('authenticated', oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
     ) from manufacturing_tables)
-  union all select 4, 'Server role can read and maintain all seven tables',
-    (select count(*) = 7 and bool_and(
+  union all select 4, 'Server role can read and maintain all eight tables',
+    (select count(*) = 8 and bool_and(
       has_table_privilege('service_role', oid, 'SELECT')
       and has_table_privilege('service_role', oid, 'INSERT')
       and has_table_privilege('service_role', oid, 'UPDATE')
       and has_table_privilege('service_role', oid, 'DELETE')
     ) from manufacturing_tables)
-  union all select 5, 'All 19 manufacturing functions are server-only',
-    (select count(*) = 19 and bool_and(
+  union all select 5, 'All 21 manufacturing functions are server-only',
+    (select count(*) = 21 and bool_and(
       prosecdef and 'search_path=public, pg_temp' = any(proconfig)
       and has_function_privilege('service_role', oid, 'EXECUTE')
       and not has_function_privilege('anon', oid, 'EXECUTE')
@@ -66,5 +66,10 @@ with manufacturing_tables as (
       and prosrc like '%q.print_requested_at is not null%' and prosrc like '%m.print_requested_at is null%')
     and exists(select 1 from pg_proc where oid='public.manufacturing_commit(uuid,uuid,integer,jsonb,jsonb,text)'::regprocedure
       and prosrc like '%submission_started%and m.print_requested_at is null%')
+  union all select 14, 'Packaged receiving replaces automatic stock-batch credit',
+    exists(select 1 from pg_proc where oid='public.manufacturing_commit(uuid,uuid,integer,jsonb,jsonb,text)'::regprocedure
+      and prosrc not like '%Finished stock build received%')
+    and exists(select 1 from information_schema.columns where table_schema='public'
+      and table_name='manufacturing_orders' and column_name='received_quantities' and is_nullable='NO')
 )
 select check_name, coalesce(passed, false) as passed from checks order by position;

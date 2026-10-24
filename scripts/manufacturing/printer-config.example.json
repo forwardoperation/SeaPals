@@ -18,5 +18,5 @@
     "media": "Uses the Canon backing-paper tray unless a separate plain-paper bin is configured. Do not pause between orders to swap stock."
   },
   "assembly": "Glue the separately printed fronts and backs together.",
-  "holoFinishing": "Manually apply each listed holo sticker. Confirm all stickers before quality check."
+  "holoFinishing": "Follow the saved work ticket: new jobs pull finished holo cards; older sticker jobs retain their original finishing instructions."
 }

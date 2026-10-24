@@ -2,6 +2,8 @@
 import { useEffect, useState, useRef } from "react";
 import { workflowReadiness } from "@/lib/manufacturing/readiness.mjs";
 import FinishedInventory from "./FinishedInventory";
+import StockReceiving from "./StockReceiving";
+import { RECEIPT_RETRY_KEY, readReceiptRetry, receiptWasRejected } from "./receiving.mjs";
 import { createRefreshGuard, printFeedback } from "./printFeedback.mjs";
 
 const TOKEN_KEY = "seapals-store-admin-token";
@@ -29,7 +31,11 @@ export default function ManufacturingDashboard() {
     [reason, setReason] = useState(""),
     [manualId, setManualId] = useState("");
   const [stock, setStock] = useState([]),
-    [movements, setMovements] = useState([]);
+    [movements, setMovements] = useState([]),
+    [barcodes, setBarcodes] = useState([]);
+  const pendingReceipt = useRef(null);
+  const [receiptRetry, setReceiptRetry] = useState(null);
+  const [lastReceipt, setLastReceipt] = useState(null);
   const pendingStock = useRef(null);
   const [stockRetry, setStockRetry] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null),
@@ -53,6 +59,7 @@ export default function ManufacturingDashboard() {
     setRows([]);
     setStock([]);
     setMovements([]);
+    setBarcodes([]);
     setDetail(null);
     setReprint(null);
     setLastUpdated(null);
@@ -70,6 +77,11 @@ export default function ManufacturingDashboard() {
         setStockRetry(pending);
       }
     } catch {}
+    const receipt = readReceiptRetry(sessionStorage.getItem(RECEIPT_RETRY_KEY));
+    if (receipt) {
+      pendingReceipt.current = receipt;
+      setReceiptRetry(receipt);
+    }
   }, []);
   async function request(payload, id, { signal, credential = tokenRef.current } = {}) {
     const r = await fetch(
@@ -125,6 +137,7 @@ export default function ManufacturingDashboard() {
       setRows(list.orders);
       setStock(list.stock ?? []);
       setMovements(list.movements ?? []);
+      setBarcodes(list.barcodes ?? []);
       setEnabled(list.enabled);
       setDetail(nextDetail);
       setLoggedIn(true);
@@ -285,6 +298,69 @@ export default function ManufacturingDashboard() {
       return false;
     }
   }
+  async function setProductBarcode({ barcode, productId }) {
+    const mutation = beginMutation();
+    if (!mutation) return false;
+    try {
+      await request({ action: "set_product_barcode", barcode, productId }, null, mutation);
+      if (!mutation.isCurrent()) return false;
+      await load(selectedRef.current);
+      return true;
+    } catch (e) {
+      if (!mutation.isCurrent()) return false;
+      setError(e.message);
+      setWorking(false);
+      return false;
+    }
+  }
+  async function receiveStock(payload) {
+    if (pendingReceipt.current && JSON.stringify(pendingReceipt.current.payload) !== JSON.stringify(payload)) {
+      setError("Resolve the saved receipt before receiving more products.");
+      return false;
+    }
+    const mutation = beginMutation();
+    if (!mutation) return false;
+    const isFirstAttempt = !pendingReceipt.current;
+    const saved = pendingReceipt.current ?? { id: crypto.randomUUID(), payload };
+    try {
+      // Persist before sending. If saving fails, no inventory request is made.
+      sessionStorage.setItem(RECEIPT_RETRY_KEY, JSON.stringify(saved));
+    } catch {
+      setError("The browser could not save the receipt for safe retries. Enable session storage before receiving products.");
+      setWorking(false);
+      return false;
+    }
+    pendingReceipt.current = saved;
+    setReceiptRetry(saved);
+    try {
+      await request({ ...saved.payload, id: saved.id }, null, mutation);
+      if (!mutation.isCurrent()) return false;
+      sessionStorage.removeItem(RECEIPT_RETRY_KEY);
+      pendingReceipt.current = null;
+      setReceiptRetry(null);
+      setLastReceipt({ orderId: saved.payload.orderId, id: saved.id });
+      await load(saved.payload.orderId);
+      return true;
+    } catch (e) {
+      if (!mutation.isCurrent()) return false;
+      if (receiptWasRejected(e, isFirstAttempt)) {
+        try {
+          sessionStorage.removeItem(RECEIPT_RETRY_KEY);
+        } catch {
+          setError(`${e.message} The browser could not clear the saved receipt. Keep retrying that saved receipt after restoring session storage.`);
+          setWorking(false);
+          return false;
+        }
+        pendingReceipt.current = null;
+        setReceiptRetry(null);
+        setError(`${e.message} The receipt was rejected; review the counts before trying again.`);
+      } else {
+        setError(`${e.message} The receipt may have succeeded. Retry the saved receipt to check its outcome without adding it twice.`);
+      }
+      setWorking(false);
+      return false;
+    }
+  }
   const feedback = printFeedback(detail, enabled);
   const state = detail?.state,
     manifest = detail?.manifest,
@@ -379,6 +455,13 @@ export default function ManufacturingDashboard() {
     <main className="mx-auto min-w-0 max-w-6xl space-y-6 px-4 py-10 text-slate-900 [overflow-wrap:anywhere]">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
+          {receiptRetry && (
+            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-slate-900">
+              <p>A packaged-product receipt is awaiting confirmation. Its counts are locked until the saved request is resolved.</p>
+              <p className="mt-1 break-all text-xs">Stock build {receiptRetry.payload.orderId} · {receiptRetry.payload.items.reduce((n, item) => n + item.quantity, 0)} products</p>
+              <button className={`${button} mt-3`} disabled={busy || !loggedIn} onClick={() => receiveStock(receiptRetry.payload)}>Retry saved receipt</button>
+            </div>
+          )}
           {stockRetry && (
             <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
               <p>
@@ -481,8 +564,10 @@ export default function ManufacturingDashboard() {
           <FinishedInventory
             stock={stock}
             movements={movements}
+            barcodes={barcodes}
             busy={busy}
             onOperation={stockOperation}
+            onSetBarcode={setProductBarcode}
             selected={selected}
           />
           <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -726,14 +811,7 @@ export default function ManufacturingDashboard() {
                 </p>
               )}
               {detail?.job_kind === "stock" && (
-                <div className={panel}>
-                  <h3 className="font-bold">Stock build</h3>
-                  <p className="mt-2 text-sm">
-                    {detail.inventory_posted_at
-                      ? "Completed products have been added to finished inventory."
-                      : "Finish and quality-check this batch, then receive it into inventory. This job has no customer or buyer emails."}
-                  </p>
-                </div>
+                <StockReceiving key={detail.order_id} detail={detail} stock={stock} barcodes={barcodes} busy={busy} pendingReceipt={receiptRetry} lastReceipt={lastReceipt} onReceive={receiveStock} onSetBarcode={setProductBarcode} />
               )}
               {manifest?.sheets.map((sheet) => (
                 <article key={sheet.sheetId} className={panel}>
@@ -792,10 +870,12 @@ export default function ManufacturingDashboard() {
                         key={holo.id}
                         className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-4"
                       >
-                        <p className="font-bold">Holo sticker: {holo.name}</p>
+                        <p className="font-bold">{manifest.holoHandling === "pull-finished" ? "Pull finished holo" : "Holo sticker"}: {holo.name}</p>
                         <p className="my-2 text-sm">
                           Row {holo.row}, column {holo.column} ·{" "}
-                          {holo.printingId}
+                          {manifest.holoHandling === "pull-finished"
+                            ? `${holo.set === "ocean" ? "Oceanic" : holo.set} ${holo.collectorNumber}/${holo.setTotal}`
+                            : holo.printingId}
                         </p>
                         <button
                           className={button}
@@ -806,12 +886,12 @@ export default function ManufacturingDashboard() {
                             state.sheets[sheet.sheetId].fronts !== "confirmed"
                           }
                           onClick={() =>
-                            update("holo_applied", { holoId: holo.id })
+                            update(manifest.holoHandling === "pull-finished" ? "holo_pulled" : "holo_applied", { holoId: holo.id })
                           }
                         >
                           {state.holos[holo.id]
-                            ? "Sticker applied ✓"
-                            : "Confirm sticker applied"}
+                            ? manifest.holoHandling === "pull-finished" ? "Finished holo pulled ✓" : "Sticker applied ✓"
+                            : manifest.holoHandling === "pull-finished" ? "Confirm finished holo pulled" : "Confirm sticker applied"}
                         </button>
                       </div>
                     ))}
@@ -849,7 +929,7 @@ export default function ManufacturingDashboard() {
                 <div className={panel}>
                   <h3 className="font-black">Quality check & packing</h3>
                   <p className="my-3 text-sm">
-                    {ready.holosRemaining} holo stickers and{" "}
+                    {ready.holosRemaining} {manifest.holoHandling === "pull-finished" ? "finished holos to pull" : "holo stickers"} and{" "}
                     {ready.accessoriesRemaining} accessory groups and{" "}
                     {ready.stockRemaining} finished-stock picks remaining. Check
                     card counts, alignment, glue, and cut edges.
@@ -871,18 +951,12 @@ export default function ManufacturingDashboard() {
                       disabled={busy || !ready.canPack || state.packed}
                       onClick={() => update("packed")}
                     >
-                      {detail.job_kind === "stock"
-                        ? state.packed
-                          ? "Received into stock ✓"
-                          : "Packed — receive into stock"
-                        : state.packed
-                          ? "Packed ✓"
-                          : "Confirm packed"}
+                      {state.packed ? "Packed ✓" : "Confirm packed"}
                     </button>
                   </div>
                   <p className="mt-3 text-sm text-slate-500">
                     {detail.job_kind === "stock"
-                      ? "Receiving this completed batch adds its finished units to available inventory once."
+                      ? "This confirms packaging only. Scan packaged products in Receive packaged products above to add actual finished quantities to inventory. Partial receipts are allowed."
                       : "Production and packing updates follow these confirmations. Record shipment or pickup readiness in Orders & shipping."}
                   </p>
                 </div>

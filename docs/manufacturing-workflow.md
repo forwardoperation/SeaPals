@@ -2,8 +2,10 @@
 
 Use one immutable manufacturing manifest per order. Generate each booster once,
 print its fronts on the Epson and its backs on the Canon, and match the two
-sheets before gluing. Track manual holo sticker application per card. Every
-required sticker must be confirmed before quality check and packing.
+sheets before gluing. New booster manifests print a pull instruction in each
+holo slot with the card name and collector/set number. Insert the matching
+finished holo card instead of making it on this sheet. Older saved manifests
+retain their original holo artwork and sticker confirmations.
 
 This document records the agreed workflow. Paid-order intake, private versioned
 artwork synchronization, PDF/QR rendering, the Windows printer agent, staff
@@ -37,8 +39,9 @@ status, artwork eligibility, deployment steps, and commands.
 - Epson fronts use thin photo paper in the standard tray. Canon backs use
   separate sheets. The two sheets are glued together; this is not duplex
   printing and the same sheet does not pass through both printers.
-- Holo stickers are already printed and must be manually applied. They are a
-  finishing operation, not another automatically submitted printer job.
+- New booster jobs pull already finished holo cards. The holo slot prints a
+  disposable instruction; no holo artwork is printed there. Confirm the pull
+  in the workshop. Existing saved sticker jobs keep their original behavior.
 
 ## Source artwork and sheet geometry
 
@@ -128,11 +131,10 @@ its own document/media profile so it does not unexpectedly consume card stock.
    Acceptance by a print spooler is not confirmation of usable output.
 3. Match the identified pair, glue the sheets, and confirm gluing.
 4. Cut the assembled sheet and confirm cutting.
-5. Confirm every required holo sticker. Stickers may be applied any time after
-   the matching front is confirmed printed, including before or after gluing
-   and cutting. The software does not prescribe an unverified application
-   technique.
-6. Quality check requires both prints, gluing, cutting, and all holo stickers.
+5. Pull the listed finished holo card, discard its printed instruction slot,
+   and confirm the pull after checking the front sheet. Older saved jobs still
+   ask for sticker application instead.
+6. Quality check requires both prints, gluing, cutting, and every holo confirmation.
    Check card count, finish, alignment, print quality, and adhesion; allow the
    materials the drying/curing time their actual process requires.
 7. Pack only after quality check. Shipping and pickup follow the store's
@@ -146,8 +148,8 @@ Randomize the physical pack's presentation during assembly if desired; the
 saved sheet layout exists to make manufacturing easy.
 
 For an order with 12 packs, the work ticket lists 12 Epson sheets and 12 Canon
-sheets. It lists the exact number of holo stickers selected, not an estimate of
-three. Each pack has either zero or one required sticker.
+sheets. It lists the exact number of finished holo cards to pull, not an estimate
+of three. Each pack has either zero or one required holo.
 
 Both sides have `queued`, `submitting`, `submitted`, `needs_review`, and
 `confirmed` states. Record `submitting` durably before invoking the printer.
@@ -160,6 +162,30 @@ preserves the existing fronts' holo confirmations. Either reprint clears the
 sheet's glue/cut completion and the order's quality-check/packing completion.
 If damaged assembly also requires replacement fronts, request a front reprint
 explicitly. Reprint events require a reason and remain in the event history.
+
+## Receiving packaged inventory
+
+Printing and marking a stock build packed never increase inventory. Open the
+stock build's **Receive packaged products** panel, scan each good packaged
+product once, review the counts, and attest that those products passed quality
+check. Click **Receive N products** to post that count to finished stock.
+Unmapped codes can be linked to a product using the actual packaging barcode.
+
+Product barcodes identify a SKU, not a physical unit: scanning the same pack
+twice cannot be detected automatically. Remove accidental scans before posting.
+A saved receipt ID makes connection retries safe, and the database caps total
+receipts at the planned quantity. Keep an uncertain receipt and use its retry
+button; do not recreate it in another tab. Partial receipts leave damaged or
+unfinished units outstanding. Reprinting keeps the saved cards and never credits
+additional stock; after a fully received batch, use a stock adjustment and a new
+replacement build for later damage. Customer-order packing still consumes its
+reserved inventory and cannot be received as available stock.
+
+Each receipt independently confirms the scanned products were packaged and
+checked, so successful products can be received before the whole batch is done.
+Wait for an active printer attempt to finish before receiving. Resolve queued
+or uncertain pages before receiving the last units. Existing received stock is
+preserved when the receiving migration is applied.
 
 ## Local tools implemented
 

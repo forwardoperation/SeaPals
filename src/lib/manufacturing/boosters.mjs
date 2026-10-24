@@ -183,7 +183,7 @@ export function generateBooster({
   const rarity = roll < policy.holoBasisPoints ? "Holo Rare" : "Rare";
   const used = new Set();
   // Choose premium first, so a Deep uncommon with a holo printing cannot use
-  // both slots. Keep the premium in a fixed sheet position for sticker work.
+  // both slots. Keep the premium in a fixed sheet position for finishing and card pulls.
   const premium = draw(
     pool.filter((card) => card.rarity === rarity),
     1,

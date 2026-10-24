@@ -34,7 +34,7 @@ export async function GET(request) {
     return json(
       {
         error:
-          "Could not load manufacturing. Check that manufacturing.sql, manufacturing-inventory.sql, and manufacturing-dispatch.sql have been applied in that order.",
+          "Could not load manufacturing. Check that manufacturing.sql, manufacturing-inventory.sql, manufacturing-dispatch.sql, and manufacturing-receiving.sql have been applied in that order.",
       },
       503,
     );
@@ -42,9 +42,15 @@ export async function GET(request) {
 }
 export async function POST(request) {
   if (!auth(request)) return json({ error: "Unauthorized." }, 401);
+  let action;
   try {
-    const payload = await body(request),
-      s = service();
+    const payload = await body(request);
+    action = payload.action;
+    const s = service();
+    if (payload.action === "set_product_barcode")
+      return json(await s.setProductBarcode(payload.barcode, payload.productId));
+    if (payload.action === "receive_stock")
+      return json(await s.receiveStock(payload.id, payload.orderId, payload.items, payload.qualityConfirmed));
     if (payload.action === "build_stock")
       return json(await s.createStock(payload.id, payload.items));
     if (payload.action === "adjust_stock")
@@ -88,7 +94,10 @@ export async function POST(request) {
       return json(await s.event(payload.orderId, payload.event, "operator"));
     throw new Error("Unknown operation.");
   } catch (error) {
-    return json({ error: error.message }, 409);
+    const status = action === "receive_stock"
+      ? ([409, 422].includes(error.status) ? error.status : 503)
+      : (error.status === 503 ? 503 : 409);
+    return json({ error: error.message }, status);
   }
 }
 export async function PUT(request) {

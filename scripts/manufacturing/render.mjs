@@ -55,17 +55,65 @@ export function backPositionForGlue(position, pageWidth = 2550) {
   // sheet over a vertical edge reverses its column positions, not the artwork.
   return { ...position, x: pageWidth - position.x - position.width };
 }
-function drawCard(page, image, position, rotation = 0) {
+function cardPlacement(position, rotation = 0) {
   // Figma records the unrotated top-left origin in page coordinates. PDF
   // images rotate about their bottom-left corner with the opposite y axis.
   const radians = rotation * Math.PI / 180;
-  page.drawImage(image, {
+  return {
     x: (position.x - Math.sin(radians) * position.height) * POINT,
     y: LETTER[1] - (position.y + Math.cos(radians) * position.height) * POINT,
     width: position.width * POINT,
     height: position.height * POINT,
     rotate: degrees(-rotation),
-  });
+  };
+}
+function drawCard(page, image, position, rotation = 0) {
+  page.drawImage(image, cardPlacement(position, rotation));
+}
+function holoNumber(holo) {
+  const set = { reef: "Reef", deep: "Deep", ocean: "Oceanic" }[holo.set] ?? holo.set;
+  return `${set} ${holo.collectorNumber}/${holo.setTotal}`;
+}
+async function drawHoloPull(page, document, position, rotation = 0) {
+  const holo = position.pullFinishedHolo,
+    marker = await PDFDocument.create(),
+    width = position.width * POINT, height = position.height * POINT,
+    card = marker.addPage([width, height]),
+    font = await marker.embedFont(StandardFonts.Helvetica),
+    bold = await marker.embedFont(StandardFonts.HelveticaBold);
+  card.drawRectangle({ x: 0, y: 0, width, height, color: rgb(1, 1, 1) });
+  card.drawRectangle({ x: 8, y: 8, width: width - 16, height: height - 16, borderWidth: 0.7, borderColor: muted });
+  function centered(text, y, size = 10, face = font) {
+    const value = safeText(text);
+    card.drawText(value, { x: (width - face.widthOfTextAtSize(value, size)) / 2, y, size, font: face, color: ink });
+  }
+  centered("PULL FINISHED HOLO", height - 47, 11, bold);
+  const words = safeText(holo.name).split(/\s+/), lines = [];
+  let current = "";
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (current && bold.widthOfTextAtSize(candidate, 13) > width - 32) {
+      lines.push(current);
+      current = word;
+    } else current = candidate;
+  }
+  if (current) lines.push(current);
+  let y = height - 81;
+  for (const line of lines) {
+    const size = Math.min(13, (width - 32) / bold.widthOfTextAtSize(line, 1));
+    centered(line, y, size, bold);
+    y -= 17;
+  }
+  centered(holoNumber(holo), y - 8, 11, bold);
+  centered(holo.printingId, y - 25, 9);
+  centered("Insert the finished holo card", 60, 9);
+  centered("when packing this pack.", 47, 9);
+  centered("Do not pack this placeholder.", 27, 9, bold);
+  // Embed the marker's font objects before copying its page into the sheet.
+  // Otherwise the form can contain text operators with unresolved font refs.
+  await marker.flush();
+  const embedded = await document.embedPage(card);
+  page.drawPage(embedded, cardPlacement(position, rotation));
 }
 function cropCard(original, position) {
   // Raster crops use the nearest exported pixel on each edge. Placement keeps
@@ -197,6 +245,10 @@ export async function renderJob({
             tuned,
           );
           for (const position of positions) {
+            if (manifest.holoHandling === "pull-finished" && position.pullFinishedHolo) {
+              await drawHoloPull(page, doc, position, tuned ? position.rotation : 0);
+              continue;
+            }
             const image = await doc.embedPng(bytes.get(position.printingId));
             drawCard(page, image, position, tuned ? position.rotation : 0);
           }
@@ -218,6 +270,12 @@ export async function renderJob({
         page.drawImage(image, { x: 0, y: 0, width: 612, height: 792 });
       } else if (side === "fronts") {
         for (const slot of sheet.slots) {
+          if (manifest.holoHandling === "pull-finished" && slot.pullFinishedHolo) {
+            await drawHoloPull(page, doc, {
+              ...slot, width: manifest.layout.cardWidth, height: manifest.layout.cardHeight,
+            });
+            continue;
+          }
           const image = await doc.embedPng(bytes.get(slot.printingId));
           page.drawImage(image, {
             x: slot.x * POINT,
@@ -273,7 +331,8 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
   const doc = await PDFDocument.create(),
     font = await doc.embedFont(StandardFonts.Helvetica),
     bold = await doc.embedFont(StandardFonts.HelveticaBold),
-    cutterLayout = isCutterLayout(manifest.layout.version);
+    cutterLayout = isCutterLayout(manifest.layout.version),
+    pullFinished = manifest.holoHandling === "pull-finished";
   const url = staffUrl(siteOrigin, manifest.order.orderId);
   const qr = await doc.embedPng(
     await QRCode.toBuffer(url, {
@@ -402,23 +461,25 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
     "Confirm each physical print in the staff checklist. Printer acceptance alone is not confirmation.",
   );
   line(
-    "Apply holo stickers at your preferred assembly stage; confirm every sticker before quality check.",
+    pullFinished
+      ? "Pull each finished holo card shown in a placeholder slot. Insert it into the matching pack; discard the placeholder and confirm each pull before quality check."
+      : "Apply holo stickers at your preferred assembly stage; confirm every sticker before quality check.",
   );
   if (manifest.sheets.some((s) => s.productId))
     line(
       "Fixed products use the saved Figma sheets. Separate any reference inserts before packing.",
     );
   y -= 12;
-  line(`HOLO STICKERS: ${manifest.holoChecklist.length}`, {
+  line(`${pullFinished ? "FINISHED HOLOS TO PULL" : "HOLO STICKERS"}: ${manifest.holoChecklist.length}`, {
     heading: true,
     gap: 23,
   });
   for (const holo of manifest.holoChecklist)
     line(
-      `[ ] ${holo.packId}: ${holo.name} (${holo.printingId}), row ${holo.row}, column ${holo.column}`,
+      `[ ] ${holo.packId}: ${holo.name} (${pullFinished ? holoNumber(holo) : holo.printingId}), row ${holo.row}, column ${holo.column}`,
     );
   if (!manifest.holoChecklist.length)
-    line("No holo stickers required for these selected printings.");
+    line(pullFinished ? "No finished holo cards to pull for these packs." : "No holo stickers required for these selected printings.");
   y -= 12;
   if (manifest.accessoryChecklist?.length) {
     line("PICK ACCESSORIES", { heading: true, gap: 23 });
@@ -428,10 +489,12 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
   }
   line("FINAL CHECK", { heading: true, gap: 23 });
   line("[ ] Correct sheets and contents  [ ] Glue dry and edges clean");
-  line("[ ] Every holo sticker applied  [ ] Accessories included  [ ] Packed");
+  line(pullFinished
+    ? "[ ] Finished holos inserted; placeholders removed  [ ] Accessories included  [ ] Packed"
+    : "[ ] Every holo sticker applied  [ ] Accessories included  [ ] Packed");
   line(
     manifest.jobKind === "stock"
-      ? "Confirm quality check, then receive the completed batch into inventory in the staff checklist."
+      ? "After quality check and packaging, scan each completed product barcode into finished inventory. Printing alone does not add stock."
       : "Buyer updates are sent after confirmed milestones. The QR opens a staff sign-in page.",
   );
   y -= 12;

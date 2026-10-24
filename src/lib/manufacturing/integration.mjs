@@ -169,15 +169,42 @@ export function validateRelease(release) {
   return release;
 }
 
+// Barcode strings preserve leading zeros and case. Scanner Enter is handled by
+// the receiving form, never folded into a product code.
+export function validatedBarcode(value) {
+  if (typeof value !== "string" || !/^[\x21-\x7e][\x20-\x7e]{0,127}$/.test(value) || value.trim() !== value)
+    throw new Error("Scan or enter a barcode using 1 to 128 printable characters.");
+  return value;
+}
+export function validatedReceiptItems(items) {
+  if (!Array.isArray(items) || !items.length || items.length > 100)
+    throw new Error("Scan at least one packaged product.");
+  const seen = new Set();
+  let total = 0;
+  const normalized = items.map((item) => {
+    const barcode = validatedBarcode(item?.barcode);
+    if (seen.has(barcode) || !Number.isSafeInteger(item.quantity) || item.quantity < 1 || item.quantity > 100)
+      throw new Error("Use one positive count per barcode, up to 100 products per receipt.");
+    seen.add(barcode);
+    total += item.quantity;
+    return { barcode, quantity: item.quantity };
+  });
+  if (total > 100) throw new Error("Receive at most 100 products at a time.");
+  return normalized.sort((a, b) => a.barcode < b.barcode ? -1 : a.barcode > b.barcode ? 1 : 0);
+}
+
 export function manufacturingService(db) {
   async function result(query) {
     const { data, error } = await query;
-    if (error)
-      throw new Error(
+    if (error) {
+      const failure = new Error(
         error.code === "P0001"
           ? error.message
           : "Manufacturing storage rejected the request. Reload and check the migration or agent lease.",
       );
+      failure.status = error.code === "P0001" ? 409 : 503;
+      throw failure;
+    }
     return data;
   }
   const rpc = (name, args) => result(db.rpc(`manufacturing_${name}`, args));
@@ -358,14 +385,14 @@ export function manufacturingService(db) {
       return unpack(await rpc("send_to_printers", { p_order: id }));
     },
     async inventory() {
-      const [stock, jobs, movements] = await Promise.all([
+      const [stock, jobs, movements, barcodes] = await Promise.all([
         result(
           db.from("manufacturing_stock").select("*").order("product_name"),
         ),
         result(
           db
             .from("manufacturing_orders")
-            .select("stock_request,phase")
+            .select("stock_request,received_quantities,phase")
             .eq("job_kind", "stock")
             .is("inventory_posted_at", null),
         ),
@@ -376,6 +403,7 @@ export function manufacturingService(db) {
             .order("created_at", { ascending: false })
             .limit(50),
         ),
+        result(db.from("manufacturing_product_barcodes").select("barcode,product_id").order("barcode")),
       ]);
       return {
         stock: stock.map((s) => ({
@@ -384,13 +412,41 @@ export function manufacturingService(db) {
           planned: jobs.reduce(
             (sum, j) =>
               sum +
-              (j.stock_request.find((i) => i.productId === s.product_id)
-                ?.quantity ?? 0),
+              Math.max(0, (j.stock_request.find((i) => i.productId === s.product_id)
+                ?.quantity ?? 0) - (j.received_quantities?.[s.product_id] ?? 0)),
             0,
           ),
         })),
         movements,
+        barcodes,
       };
+    },
+    async setProductBarcode(barcode, productId) {
+      const normalized = validatedBarcode(barcode);
+      if (typeof productId !== "string" || !/^[a-z0-9-]{1,100}$/.test(productId))
+        throw new Error("Choose a finished product for this barcode.");
+      return rpc("set_product_barcode", { p_barcode: normalized, p_product: productId });
+    },
+    async receiveStock(id, orderId, items, qualityConfirmed) {
+      let normalized;
+      try {
+        if (!uuid(id) || !uuid(orderId)) throw new Error("A receiving request and stock build ID are required.");
+        if (qualityConfirmed !== true) throw new Error("Confirm these products are packaged and quality checked.");
+        normalized = validatedReceiptItems(items);
+      } catch (error) {
+        error.status = 422;
+        throw error;
+      }
+      try {
+        return await rpc("receive_stock", {
+          p_id: id, p_order: orderId, p_items: normalized, p_quality_confirmed: true,
+        });
+      } catch (error) {
+        // A transport failure may arrive after the transaction committed. The
+        // browser must keep this exact receipt ID until the outcome is known.
+        if (error.status !== 409) error.status = 503;
+        throw error;
+      }
     },
     async createStock(id, items) {
       if (!uuid(id)) throw new Error("A stock build ID is required.");
@@ -426,7 +482,7 @@ export function manufacturingService(db) {
         db
           .from("manufacturing_orders")
           .select(
-            "order_id,job_kind,display_number,inventory_plan,inventory_posted_at,print_requested_at,phase,revision,issue,release_id,created_at,updated_at,store_orders(order_number,payment_status,fulfillment_status,production_due_date,payment_livemode)",
+            "order_id,job_kind,display_number,inventory_plan,inventory_posted_at,received_quantities,print_requested_at,phase,revision,issue,release_id,created_at,updated_at,store_orders(order_number,payment_status,fulfillment_status,production_due_date,payment_livemode)",
           )
           .order("created_at", { ascending: false })
           .limit(100),

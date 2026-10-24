@@ -129,13 +129,21 @@ export function applyManufacturingEvent(original, manifest, event) {
           state.holos[item.id] = false;
       }
       break;
-    case "holo_applied": {
+    case "holo_applied":
+    case "holo_pulled": {
+      const pullFinished = manifest.holoHandling === "pull-finished";
+      if (event.type !== (pullFinished ? "holo_pulled" : "holo_applied"))
+        throw new Error(pullFinished
+          ? "This pack requires a finished holo card to be pulled, not a sticker confirmation."
+          : "This saved pack requires its original holo sticker confirmation.");
       const item = manifest.holoChecklist.find(
         (item) => item.id === event.holoId,
       );
       if (!item || state.sheets[item.sheetId].fronts !== "confirmed")
         throw new Error(
-          "Confirm the matching front sheet before applying a holo sticker.",
+          pullFinished
+            ? "Confirm the matching front sheet before confirming the finished holo card was pulled."
+            : "Confirm the matching front sheet before applying a holo sticker.",
         );
       state.holos[item.id] = true;
       break;
@@ -155,7 +163,9 @@ export function applyManufacturingEvent(original, manifest, event) {
     case "quality_checked":
       if (!workflowReadiness(state).canQualityCheck)
         throw new Error(
-          "Complete printing, finishing, every holo sticker, accessories, and reserved stock picks first.",
+          manifest.holoHandling === "pull-finished"
+            ? "Complete printing, finishing, every finished holo pull, accessories, and reserved stock picks first."
+            : "Complete printing, finishing, every holo sticker, accessories, and reserved stock picks first.",
         );
       state.qualityChecked = true;
       break;

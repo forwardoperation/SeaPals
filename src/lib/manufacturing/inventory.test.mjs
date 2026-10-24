@@ -479,7 +479,7 @@ test("independent stock builds are received once after finishing and have no cus
       await event("cut", { sheetId: sheet.sheetId });
     }
     for (const h of m.holoChecklist)
-      await event("holo_applied", { holoId: h.id });
+      await event(m.holoHandling === "pull-finished" ? "holo_pulled" : "holo_applied", { holoId: h.id });
     await event("quality_checked");
     assert.equal((await stock()).on_hand, 0);
     await event("packed");
