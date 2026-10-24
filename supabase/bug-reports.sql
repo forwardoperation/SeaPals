@@ -52,3 +52,7 @@ create policy "Bug reports are private"
 
 revoke all on table public.bug_reports from anon, authenticated;
 revoke all on sequence public.bug_reports_report_number_seq from anon, authenticated;
+
+-- Server submission and review routes must not depend on project default grants.
+grant select, insert, update on table public.bug_reports to service_role;
+grant usage, select on sequence public.bug_reports_report_number_seq to service_role;

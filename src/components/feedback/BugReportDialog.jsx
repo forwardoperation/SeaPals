@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { BUG_REPORT_IMPACT_OPTIONS } from "@/lib/bugReports.mjs";
+import { submitBugReport } from "@/lib/submitBugReport.mjs";
 
 const FOCUSABLE_SELECTOR = [
   "a[href]",
@@ -199,24 +200,17 @@ export default function BugReportDialog({
     setMessage("");
 
     try {
-      const response = await fetch("/api/bug-reports", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          surface,
-          summary,
-          description,
-          steps,
-          expectedBehavior,
-          impact,
-          clientReportId,
-          context: frozenContextRef.current ?? context,
-          website: "",
-        }),
+      const result = await submitBugReport({
+        surface,
+        summary,
+        description,
+        steps,
+        expectedBehavior,
+        impact,
+        clientReportId,
+        context: frozenContextRef.current ?? context,
+        website: "",
       });
-      const result = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(result?.error ?? "The report could not be saved.");
 
       setStatus("success");
       setMessage(`Thank you. ${reportReference(result?.report?.number)} is in the review list.`);

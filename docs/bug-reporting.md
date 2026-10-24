@@ -11,6 +11,14 @@ Reefbound and the standalone Simulator share one private bug-report queue. Playe
 
 The SQL enables row-level security, denies browser roles direct access, and leaves reads/writes to server routes using the service role.
 
+### Verify storage before releasing the reporter
+
+Run `npm run bugs:list -- --surface=simulator --status=all --sort=newest` against the intended server environment. An empty list is a successful check; `Could not find the table 'public.bug_reports' in the schema cache` is not. Apply `supabase/bug-reports.sql` to that Supabase project and repeat the read-only check. The SQL is safe to rerun and preserves existing reports.
+
+On October 23, 2026, the production project's read-only queue check returned that missing-table error while investigating a player's failed simulator report. The table setup must be applied before hosted submissions can succeed; deploying the form alone does not create it. Local database integration tests exercise the migration, server-role access, private browser roles, and repeat submissions without sending real reports.
+
+The report form bounds diagnostics before sending, times out stalled requests after 30 seconds, and keeps the player's text and report identifier for retry. A success message requires a saved report reference from the server.
+
 ## Retention maintenance
 
 Bug reports are retained for up to 24 months. At least monthly, an owner should run this maintenance statement in the Supabase SQL editor (or schedule the equivalent with Supabase Cron):

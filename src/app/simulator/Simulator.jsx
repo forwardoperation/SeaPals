@@ -9191,6 +9191,7 @@ export default function Simulator({
         return candidates.length ? "" : "Restocking needs a Fish in your discard pile.";
       }
       if (card.id === "recovery") return discardPile.length ? "" : "Recovery has no card to recover because your discard pile is empty.";
+      if (card.id === "ocean-jake") return lostZone.length ? "" : "Ocean Jake needs a card in your Lost Zone.";
       if (card.id === "scientist-jes") {
         const searchEffect = (card.effects ?? []).find((effect) => effect.type === EffectType.SEARCH_DECK);
         const hasHabitatToSearch = [...foundationDeck, ...palsDeck].some((cardId) => cardMatchesSearchCriteria(cardsById[cardId], searchEffect));
