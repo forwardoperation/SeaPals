@@ -126,7 +126,11 @@ async function inspect(file) {
   const images = page.node.Resources().lookup(PDFName.of("XObject")).entries().map(([, ref]) => {
     const stream = doc.context.lookup(ref, PDFRawStream);
     assert.equal(stream.dict.get(PDFName.of("Subtype")), PDFName.of("Image"));
-    return { width: stream.dict.lookup(PDFName.of("Width")).asNumber(), height: stream.dict.lookup(PDFName.of("Height")).asNumber(), pixels: Buffer.from(decodePDFRawStream(stream).decode()) };
+    const maskRef = stream.dict.get(PDFName.of("SMask")), mask = maskRef ? doc.context.lookup(maskRef, PDFRawStream) : null;
+    return { width: stream.dict.lookup(PDFName.of("Width")).asNumber(), height: stream.dict.lookup(PDFName.of("Height")).asNumber(), pixels: Buffer.from(decodePDFRawStream(stream).decode()),
+      mask: mask ? { width: mask.dict.lookup(PDFName.of("Width")).asNumber(), height: mask.dict.lookup(PDFName.of("Height")).asNumber(),
+        colorSpace: mask.dict.get(PDFName.of("ColorSpace")), bits: mask.dict.lookup(PDFName.of("BitsPerComponent")).asNumber(),
+        pixels: Buffer.from(decodePDFRawStream(mask).decode()) } : null };
   });
   return { content, placements, images };
 }
@@ -192,5 +196,39 @@ test("V5 and V6 manifests reject the other release geometry before rendering any
     const outputDir = path.join(root, `reject-${version}`);
     await assert.rejects(renderJob({ ...args, release: mixed, outputDir }), /matching versioned|matching.*templates/);
     await assert.rejects(readdir(outputDir), { code: "ENOENT" });
+  }
+});
+
+
+test("fixed source crops preserve transparent and translucent edges as PDF soft masks over the ocean backdrop", async () => {
+  const args = fixture("v6", true), source = new PNG({ width: 2550, height: 3300 });
+  for (const [index, p] of sourcePositions.entries()) {
+    paint(source, { x: p.x + 2, y: p.y + 2, width: p.width - 4, height: p.height - 4 }, colors[index]);
+    // Include an antialiased edge pixel as well as completely transparent edges.
+    source.data.set([...colors[index], 128], ((p.y + 1) * source.width + p.x + 1) * 4);
+  }
+  const saved = await savePng(source, "fixture-page", { positions: sourcePositions.toReversed() });
+  args.release.assets["sheet-grid-fixture"] = saved.asset;
+  args.assetFiles["sheet-grid-fixture"] = saved.file;
+  args.outputDir = path.join(root, "v6-transparent-fixed");
+  const jobs = await renderJob(args), front = await inspect(jobs.find(job => job.side === "fronts").file);
+  assert.equal(front.images.length, 10); assert.equal(front.placements.length, 10);
+  placement(front.placements[0], { x: 0, y: 0, width: 2550, height: 3300 }, "ocean below transparent crops");
+  const expectedAlpha = Buffer.alloc(720 * 1008);
+  for (let y = 2; y < 1006; y++) expectedAlpha.fill(255, y * 720 + 2, y * 720 + 718);
+  expectedAlpha[721] = 128;
+  for (const [index, position] of positionsAt(150).entries()) {
+    const card = front.images[index + 1];
+    placement(front.placements[index + 1], position, `transparent card ${index + 1}`);
+    assert.deepEqual([card.width, card.height], [720, 1008]);
+    assert.ok(card.mask, "A transparent crop must retain its PDF SMask instead of flattening against white");
+    assert.deepEqual([card.mask.width, card.mask.height], [720, 1008]);
+    assert.equal(card.mask.colorSpace, PDFName.of("DeviceGray")); assert.equal(card.mask.bits, 8);
+    assert.ok(card.mask.pixels.equals(expectedAlpha), "All transparent, translucent, and opaque source alpha pixels survive cropping and embedding");
+    const opaquePixel = (500 * 720 + 350) * 3;
+    assert.deepEqual([...card.pixels.subarray(opaquePixel, opaquePixel + 3)], colors[index]);
+    const backgroundPixel = (Math.floor(position.y) * 2550 + Math.floor(position.x)) * 3;
+    assert.deepEqual([...front.images[0].pixels.subarray(backgroundPixel, backgroundPixel + 3)], [17, 99, 151],
+      "The transparent card corner exposes the already-drawn ocean backdrop");
   }
 });

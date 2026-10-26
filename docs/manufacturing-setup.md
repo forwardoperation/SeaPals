@@ -46,6 +46,16 @@ This preserves previously saved jobs and reprints. The current Figma frames
 on **Decks - Drop Off** still use the older names `blue-water 1` through
 `blue-water 7`; their saved node IDs determine the actual export source.
 
+Keep the outer Drop Off sheet and its `card_backs` grid fills removed or hidden.
+Those ancestors must export transparently so the cutter template's water shows
+around the cards. A solid parent fill becomes part of each cropped card and
+covers the water; the sync now rejects it before exports, cached-release reuse,
+or publication. Drop Off exports use absolute frame bounds to preserve the
+full 2550 x 3300 page, including its now-transparent margins; exports for other
+assets keep their existing bounds. Card-instance fills and artwork remain
+unchanged. This check applies to new Drop Off source exports; saved releases
+retain their original pixels and geometry for reproducible reprints.
+
 ## Reef, Deep, and Oceanic boosters activated - October 20, 2026
 
 The combined Reef, Deep, and Oceanic release was published and verified live

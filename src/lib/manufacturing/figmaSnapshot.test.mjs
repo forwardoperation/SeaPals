@@ -28,6 +28,10 @@ const source = {
     backs: V3_BACK_TEMPLATE,
   },
 };
+const dropOffSource = {
+  ...source,
+  sources: [{ id: "sheet-blue-water-4", kind: "sheet", nodeId: "2224:312944" }],
+};
 
 // Geometry validation is covered separately by cutterSync. This small saved V3
 // fixture lets snapshot tests exercise real template validation and call order.
@@ -75,6 +79,8 @@ function figmaFixture({
   file = snapshot,
   templates = file,
   mutateTemplates = () => {},
+  dropOff = file,
+  mutateDropOff = () => {},
   fail = null,
 } = {}) {
   const calls = [];
@@ -85,6 +91,13 @@ function figmaFixture({
       if (fail) throw fail;
       const url = new URL(`https://api.figma.com/v1/${route}`);
       if (url.pathname.endsWith("/nodes")) {
+        if (url.searchParams.get("depth") === "2") {
+          const response = { ...dropOff, nodes: {
+            "2224:312944": { document: { id: "2224:312944", fills: [], children: [{ name: "card_backs", fills: [] }] } },
+          } };
+          mutateDropOff(response);
+          return response;
+        }
         const response = {
           ...templates,
           nodes: {
@@ -173,6 +186,33 @@ test("template validation runs before a matching snapshot may authorize an uncha
   }, /Cutter template|ocean backdrop/);
   assert.equal(skipReached, false);
   assert.equal(f.calls.length, 2);
+});
+
+test("selected Drop Off parent fills block an unchanged skip and cached publication", async () => {
+  const f = figmaFixture({ mutateDropOff(response) {
+    response.nodes["2224:312944"].document.children[0].fills = [{ type: "SOLID", color: { r: 0.2, g: 0.4, b: 0.6, a: 1 } }];
+  } });
+  let skipReached = false, writesOrUploads = 0;
+  await assert.rejects(async () => {
+    const current = await readFigmaSnapshot(f.figma, dropOffSource, snapshot.version);
+    skipReached = canReuseFigmaSnapshot(cached(), current, sourceHash);
+  }, /Drop Off.*opaque background.*water/);
+  await assert.rejects(withVerifiedFigmaSnapshot(f.figma, dropOffSource, snapshot, async () => { writesOrUploads++; }), /Drop Off.*opaque background.*water/);
+  assert.equal(skipReached, false);
+  assert.equal(writesOrUploads, 0);
+});
+
+test("selected Drop Off checks share snapshot provenance and finish before a guarded operation", async () => {
+  const f = figmaFixture();
+  let actions = 0;
+  await withVerifiedFigmaSnapshot(f.figma, dropOffSource, snapshot, async () => {
+    assert.equal(f.calls.length, 3);
+    actions++;
+  });
+  assert.equal(actions, 1);
+  const drifted = figmaFixture({ dropOff: changedSnapshot });
+  await assert.rejects(withVerifiedFigmaSnapshot(drifted.figma, dropOffSource, snapshot, () => { actions++; }), /changed.*Drop Off/i);
+  assert.equal(actions, 1, "No operation may run after a different sheet snapshot");
 });
 
 test("snapshot comparison rejects changed or absent provenance even when the Figma version is unchanged", () => {

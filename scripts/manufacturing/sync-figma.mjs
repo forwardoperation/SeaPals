@@ -6,6 +6,7 @@ import {
   BOOSTER_PRODUCTS,
   FIXED_PRODUCTS,
   fixedArtworkSources,
+  fixedSheetLabel,
   fixedSheetAssets,
 } from "../../src/lib/manufacturing/recipes.mjs";
 import {
@@ -343,6 +344,56 @@ export function sheetPositions(document) {
     );
   return positions;
 }
+
+// Fixed sheets are cropped after export. A parent fill is already flattened
+// into those crops, so it would hide the water underneath each printed card.
+// This is a new-source check only; saved releases keep their original pixels.
+const isDropOffSheet = (item) => item.kind === "sheet" && /^sheet-blue-water-[1-7]$/.test(item.id);
+
+export function validateDropOffSheetBackgrounds(document, source) {
+  const invalid = (detail) => {
+    throw new Error(
+      `Drop Off sheet ${fixedSheetLabel(source.id)}: ${detail}. Visible parent fills flatten an opaque background into the card crops and cover the water. Remove or hide fills on the sheet and its card_backs grid before syncing; the active artwork release is unchanged.`,
+    );
+  };
+  if (!document || document.id !== source.nodeId || document.visible === false)
+    invalid("the expected visible source sheet is missing");
+  const grids = (document.children ?? []).filter(
+    (child) => child.name === "card_backs" && child.visible !== false,
+  );
+  if (grids.length !== 1) invalid("one visible card_backs grid is required");
+  for (const [label, parent] of [["sheet", document], ["card_backs grid", grids[0]]]) {
+    const fills = parent.fills ?? parent.background ?? [];
+    if (fills.some((fill) => fill.visible !== false && (fill.opacity ?? 1) > 0 &&
+      (fill.type !== "SOLID" || (fill.color?.a ?? 1) > 0)))
+      invalid(`the ${label} has a visible fill`);
+  }
+}
+
+export async function checkDropOffSheetBackgrounds(figma, source, version) {
+  const sheets = (source.sources ?? []).filter(isDropOffSheet);
+  if (!sheets.length) return null;
+  if (!version || sheets.some((item) => !item.nodeId))
+    throw new Error("Drop Off background checks require mapped sheets and a pinned Figma version.");
+  const ids = sheets.map((item) => item.nodeId).join(",");
+  const response = await figma(
+    `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&depth=2&version=${encodeURIComponent(version)}`,
+  );
+  for (const item of sheets)
+    validateDropOffSheetBackgrounds(response.nodes?.[item.nodeId]?.document, item);
+  return response;
+}
+
+export function figmaImageRoutes(fileKey, batch, version) {
+  // Transparent Drop Off pages need the complete Letter frame bounds. Other
+  // assets retain their existing Figma render bounds, even in a mixed batch.
+  return [false, true].flatMap((absoluteBounds) => {
+    const nodes = batch.filter((item) => isDropOffSheet(item) === absoluteBounds);
+    if (!nodes.length) return [];
+    const ids = [...new Set(nodes.map((item) => item.nodeId))].join(",");
+    return [`images/${fileKey}?ids=${encodeURIComponent(ids)}&format=png&scale=1&version=${encodeURIComponent(version)}${absoluteBounds ? "&use_absolute_bounds=true" : ""}`];
+  });
+}
 function texts(node, found = []) {
   if (node.type === "TEXT" && typeof node.characters === "string")
     found.push(node.characters.trim());
@@ -435,6 +486,11 @@ export async function readFigmaSnapshot(figma, source, version) {
   const templates = await checkCutterTemplates(figma, source, version);
   if (!sameFigmaSnapshot(snapshot, parseFigmaSnapshot(templates, version)))
     throw new Error("Figma changed while validating the source snapshot. The active release is unchanged; retry from a fresh snapshot.");
+  // Check selected deck ancestors before unchanged/resume shortcuts and again
+  // before publication, including when every PNG is already cached locally.
+  const sheets = await checkDropOffSheetBackgrounds(figma, source, version);
+  if (sheets && !sameFigmaSnapshot(snapshot, parseFigmaSnapshot(sheets, version)))
+    throw new Error("Figma changed while validating Drop Off sheet backgrounds. The active release is unchanged; retry from a fresh snapshot.");
   return snapshot;
 }
 
@@ -649,22 +705,21 @@ async function main() {
           `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&version=${encodeURIComponent(version)}`,
           stopScheduling,
         ),
-        figma(
-          `images/${source.fileKey}?ids=${encodeURIComponent(ids)}&format=png&scale=1&version=${encodeURIComponent(version)}`,
-          stopScheduling,
-        ),
+        ...figmaImageRoutes(source.fileKey, batch, version).map((route) =>
+          figma(route, stopScheduling)),
       ]);
       const failures = responses.filter((response) => response.status === "rejected");
       if (failures.length)
         throw new AggregateError(failures.map((response) => response.reason), failures.map((response) => response.reason.message).join(" "));
-      const [nodes, images] = responses.map((response) => response.value);
+      const [nodes, ...imageResponses] = responses.map((response) => response.value);
+      const images = Object.assign({}, ...imageResponses.map((response) => response.images));
       if (!sameFigmaSnapshot(figmaSnapshot, parseFigmaSnapshot(nodes, version))) {
         stopScheduling();
         throw new Error("Figma changed during an export batch. The active release is unchanged; choose a new snapshot and release ID.");
       }
       for (const item of batch) {
         const node = nodes.nodes?.[item.nodeId]?.document,
-          url = images.images?.[item.nodeId];
+          url = images[item.nodeId];
         if (!node || !url)
           throw new Error(`Missing Figma export for ${item.id}.`);
         if (
