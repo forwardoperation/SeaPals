@@ -3,8 +3,33 @@
 The implementation connects paid-order intake, immutable booster draws, private
 Figma PNG releases, separate Epson/Canon print jobs, a QR work ticket, a staff
 checklist, and buyer milestone emails. **Printing is enabled for Reef, Deep,
-and Oceanic booster jobs approved with Send to printers.** Buyer manufacturing
+and Oceanic booster jobs and Drop Off decks approved with Send to printers.** Buyer manufacturing
 notifications and paid test-order intake remain disabled.
+
+## October 26 template shift: immutable V6 layout
+
+V6 moves the ordinary Epson front grid from x135 to x150: every card moves
+15 pixels right (0.05 inch at 300 DPI). The water inside the native front-page
+background moves separately from x119 to x139. The ordinary Canon rear and
+both holographic templates retain their previous geometry. V5 remains supported
+with its original offsets; saved manifests and reprints keep their pinned release.
+Publishing V6 changes the default for newly created jobs, without rewriting an
+existing manifest or retrying a blocked job.
+
+The template-only refresh retains the 217 approved card PNGs and seven Drop Off
+sheet PNGs from `figma-2414718747195682930-26c3b0d2-f8014107`, whose Figma snapshot
+is `2414718747195682930` / `2026-10-26T17:23:49Z`. Its four native template PNGs
+come from snapshot `2414752317081305228` / `2026-10-26T18:41:52Z`.
+`templateRefresh` records the baseline release/hash and the new template snapshot;
+`assetProvenance` identifies each retained or refreshed asset. The top-level
+`figmaSnapshot` continues to describe the retained artwork baseline. This is a
+template update, not a claim that every card was re-exported from the later file.
+
+The normal sync scope includes Drop Off plus all three Dive Packs (228 private
+assets). Keep `blue-water` in subsequent published scopes so new Drop Off work
+continues to have its seven sheet assets. The direct CLI can export other scopes
+explicitly; publishing a narrower scope intentionally replaces availability for
+new jobs rather than merging assets from the previous active release.
 
 ## Expansion-deck artwork and Drop Off sheet names
 
@@ -629,12 +654,14 @@ Use Node 24 and `npm ci` (including dev dependencies on the printer PC). The PDF
 renderer, PNG decoder, and QR generator are local tools and are not imported by
 the public website. `npm.cmd` avoids Windows PowerShell script-policy issues.
 
-To refresh all three booster sets together, use
-`--products reef-dive-pack,deep-dive-pack,oceanic-dive-pack`. This selects all
-217 eligible printings, the complete rear page, and the front backdrop
-(219 assets). A Reef-only scope remains available with `--products reef-dive-pack`
-(95 card printings plus the two page assets, 97 total). Every scope retains the
-full catalog; it never narrows random draws to whichever images are available.
+The normal refresh keeps all currently available products together:
+`--products blue-water,reef-dive-pack,deep-dive-pack,oceanic-dive-pack`. This selects
+217 eligible card printings, seven Drop Off sheets, and four ordinary/holo template
+assets (228 total). A deliberate Dive Pack-only scope selects the three booster
+IDs (221 assets) and excludes Drop Off. A Reef-only scope remains available with
+`--products reef-dive-pack` (95 card printings plus four template assets, 99 total).
+Every scope retains the full catalog; it never narrows random draws to whichever
+images are available.
 Any product missing required artwork, including fixed decks outside the selected
 scope, stops before drawing.
 Already-finished inventory can still be fulfilled without new card artwork.
@@ -654,10 +681,10 @@ and stops if either changed.
 
 ```powershell
 # Export privately for review; no publication or printing.
-node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products reef-dive-pack,deep-dive-pack,oceanic-dive-pack --batch-size 1 --concurrency 2
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products blue-water,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --batch-size 1 --concurrency 2
 
 # Publish the reviewed scope at its exact saved version and release ID.
-node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products reef-dive-pack,deep-dive-pack,oceanic-dive-pack --version <reviewed-version> --release <reviewed-release-id> --publish
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products blue-water,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --version <reviewed-version> --release <reviewed-release-id> --publish
 ```
 
 Review the new release before publishing. All included assets must be complete
@@ -673,10 +700,10 @@ node scripts/manufacturing/sync-figma.mjs --check
 
 # Secrets belong in an ignored local environment file, not command arguments.
 # sync.env: FIGMA_ACCESS_TOKEN and STORE_ADMIN_TOKEN.
-node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --publish
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products blue-water,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --publish
 
 # Subsequent runs only export/publish when the Figma version or mappings change.
-node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --publish --if-changed
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products blue-water,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --publish --if-changed
 
 # Read-only readiness check, including the deployed database and private bucket.
 node --env-file=.env.local --env-file=.private/manufacturing/agent.env scripts/manufacturing/doctor.mjs --online
@@ -749,7 +776,8 @@ Use the following instructions when creating a separate recurring chat:
 > after rate limits. Report a newly published release or an actionable failure;
 > stay quiet when nothing has changed.
 
-The wrapper defaults to one asset per batch with 2 concurrent batches, following
+The wrapper publishes the four-product scope above and defaults to one asset per
+batch with 2 concurrent batches, following
 timeouts on grouped deck-sheet requests during the initial export. It accepts `-BatchSize`
 from 1 through 10 and `-Concurrency` from 1 through 3. To use one request group
 at a time, append `-Concurrency 1`. These options change only request grouping;
@@ -757,8 +785,8 @@ they preserve the same release and cached exports.
 
 The unchanged check compares the Figma file version, modification time, and
 source mappings with the last successfully published release, after validating
-both templates. Each changed snapshot exports the complete eligible artwork
-set, even if only one card changed; it can therefore be a lengthy run.
+both templates. Each changed snapshot exports the complete selected artwork
+scope, even if only one card changed; it can therefore be a lengthy run.
 Interrupted downloads resume only when all three provenance fields match.
 This is snapshot-level caching, not a per-card change detector.
 

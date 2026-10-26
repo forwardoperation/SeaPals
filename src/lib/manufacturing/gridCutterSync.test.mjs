@@ -1,8 +1,8 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { validateCutterTemplate, checkCutterTemplates } from '../../../scripts/manufacturing/sync-figma.mjs';
-import { PRINT_LAYOUT, BACK_TEMPLATE, HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE } from './printPlan.mjs';
+import { V5_PRINT_LAYOUT as PRINT_LAYOUT, BACK_TEMPLATE, V5_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE, PRINT_LAYOUT as CURRENT_PRINT_LAYOUT, HOLO_PRINT_LAYOUT as CURRENT_HOLO_PRINT_LAYOUT } from './printPlan.mjs';
 
 // Recorded REST geometry contains no image references, artwork paths, or private
 // export URLs. The empty grids intentionally test placement without card guides.
@@ -101,4 +101,47 @@ test('V5 validation requests all four templates at one pinned Figma snapshot', a
     assert.equal(url.searchParams.get('geometry'), 'paths');
     return { nodes: Object.fromEntries(templates.map(t => [t.nodeId, { document: nodeFor(t) }])) };
   }, source, 'pinned-oct26');
+});
+
+
+const shiftedFixture = JSON.parse(await readFile(new URL('../../../scripts/manufacturing/fixtures/grid-template-oct26-shifted.json', import.meta.url)));
+const currentTemplates = [CURRENT_PRINT_LAYOUT, BACK_TEMPLATE, CURRENT_HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE];
+const shiftedNode = template => structuredClone(shiftedFixture.documents[template.nodeId]);
+
+test('V6 matches the later Figma front shift while the other three templates remain unchanged', () => {
+  assert.equal(CURRENT_PRINT_LAYOUT.version, 'figma-cutter-nine-up-v6');
+  assert.equal(shiftedFixture.version, '2414752317081305228');
+  assert.equal(grid(shiftedNode(CURRENT_PRINT_LAYOUT)).relativeTransform[0][2], 150);
+  assert.equal(shiftedNode(CURRENT_PRINT_LAYOUT).children[0].children[0].relativeTransform[0][2], 139);
+  for (const [index, current] of currentTemplates.entries()) {
+    const measured = validateCutterTemplate(shiftedNode(current), current);
+    assert.deepEqual(measured, current.positions);
+    measured.forEach((position, slot) => {
+      assert.ok(Math.abs(position.x - templates[index].positions[slot].x - (index === 0 ? 15 : 0)) < 0.000001);
+      for (const key of ['y', 'width', 'height', 'rotation']) assert.equal(position[key], templates[index].positions[slot][key]);
+    });
+  }
+  assert.throws(() => validateCutterTemplate(shiftedNode(CURRENT_PRINT_LAYOUT), PRINT_LAYOUT), /ocean background|card grid/);
+  assert.throws(() => validateCutterTemplate(nodeFor(PRINT_LAYOUT), CURRENT_PRINT_LAYOUT), /ocean background|card grid/);
+  for (const restoreOld of [
+    n => { grid(n).relativeTransform[0][2] = 135; },
+    n => { n.children[0].children[0].relativeTransform[0][2] = 119; },
+  ]) {
+    const changed = shiftedNode(CURRENT_PRINT_LAYOUT); restoreOld(changed);
+    assert.throws(() => validateCutterTemplate(changed, CURRENT_PRINT_LAYOUT), /moved from its saved position/);
+  }
+});
+
+test('V6 sync validates all four template exports against the shifted pinned snapshot', async () => {
+  const source = { fileKey: CURRENT_PRINT_LAYOUT.fileKey, templates: {
+    version: CURRENT_PRINT_LAYOUT.version, fronts: CURRENT_PRINT_LAYOUT, backs: BACK_TEMPLATE,
+    holoFronts: CURRENT_HOLO_PRINT_LAYOUT, holoBacks: HOLO_BACK_TEMPLATE,
+  } };
+  await checkCutterTemplates(async route => {
+    const url = new URL(`https://api.figma.com/v1/${route}`);
+    assert.equal(url.searchParams.get('version'), shiftedFixture.version);
+    assert.equal(url.searchParams.get('geometry'), 'paths');
+    assert.equal(url.searchParams.get('ids'), currentTemplates.map(t => t.nodeId).join(','));
+    return { nodes: Object.fromEntries(currentTemplates.map(t => [t.nodeId, { document: shiftedNode(t) }])) };
+  }, source, shiftedFixture.version);
 });

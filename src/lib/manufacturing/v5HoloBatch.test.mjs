@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, readdir, rm, mkdir, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -6,7 +6,7 @@ import path from "node:path";
 import { PDFArray, PDFDocument, PDFName, PDFRawStream, decodePDFRawStream } from "pdf-lib";
 import { PNG } from "pngjs";
 import { buildPrintingCatalog, contentHash } from "./boosters.mjs";
-import { PRINT_LAYOUT, BACK_TEMPLATE, HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE, createManufacturingManifest } from "./printPlan.mjs";
+import { V5_PRINT_LAYOUT as PRINT_LAYOUT, BACK_TEMPLATE, V5_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE, PRINT_LAYOUT as CURRENT_PRINT_LAYOUT, HOLO_PRINT_LAYOUT as CURRENT_HOLO_PRINT_LAYOUT, createManufacturingManifest } from "./printPlan.mjs";
 import { sha256 } from "./integration.mjs";
 import { createHoloBatch, parseHoloSelections, verifyHoloBatch } from "./holoBatch.mjs";
 import { renderHoloBatch, renderJob } from "../../../scripts/manufacturing/render.mjs";
@@ -155,4 +155,22 @@ test("CLI creates only private new PDF batches and refuses output reuse or publi
   assert.equal(JSON.parse(await readFile(result.manifestPath, "utf8")).batch.quantity, 1);
   await assert.rejects(generateHoloBatch(options), { code: "EEXIST" });
   await assert.rejects(generateHoloBatch({ ...options, outputDir: path.join(root, "public") }), /private/);
+}));
+
+
+test("V6 replenishment keeps the unchanged holo grid and ordinary packs use shifted pull slots", () => temporary(async (_, { release }) => {
+  const current = { ...release, releaseId: 'holo-v6-test', printTemplates: { ...templates,
+    version: CURRENT_PRINT_LAYOUT.version, fronts: CURRENT_PRINT_LAYOUT, holoFronts: CURRENT_HOLO_PRINT_LAYOUT } };
+  const old = createHoloBatch({ release, selections: [{ printingId: holo.printingId, quantity: 9 }] });
+  const batch = createHoloBatch({ release: current, selections: [{ printingId: holo.printingId, quantity: 9 }] });
+  assert.equal(batch.layout.version, 'figma-cutter-nine-up-v6');
+  assert.equal(old.layout.version, 'figma-cutter-nine-up-v5');
+  assert.deepEqual(batch.sheets, old.sheets); assert.deepEqual(batch.backTemplate, old.backTemplate);
+  assert.equal(verifyHoloBatch(batch, current).batchHash, batch.batchHash);
+  assert.equal(verifyHoloBatch(old, release).batchHash, old.batchHash);
+  const manifest = createManufacturingManifest({ request: { orderId: 'v6-pull', orderNumber: 'V6-PULL', items: [{ productId: 'reef-dive-pack', quantity: 1 }] },
+    catalog, artworkRelease: current.releaseId, printTemplates: current.printTemplates, randomIndex: () => 0 });
+  assert.equal(manifest.layout.version, 'figma-cutter-nine-up-v6');
+  assert.equal(manifest.sheets[0].slots[8].x, CURRENT_PRINT_LAYOUT.positions[8].x);
+  assert.equal(manifest.sheets[0].slots[8].pullFinishedHolo.printingId, manifest.packs[0].cards[8].printingId);
 }));

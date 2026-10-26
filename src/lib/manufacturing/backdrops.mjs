@@ -2,6 +2,7 @@ export const CUTTER_LAYOUT_V2 = "figma-cutter-nine-up-v2";
 export const CUTTER_LAYOUT_V3 = "figma-cutter-nine-up-v3";
 export const CUTTER_LAYOUT_V4 = "figma-cutter-nine-up-v4";
 export const CUTTER_LAYOUT_V5 = "figma-cutter-nine-up-v5";
+export const CUTTER_LAYOUT_V6 = "figma-cutter-nine-up-v6";
 
 // Only these two backdrop layers are printable. Their parent frames also
 // contain alignment guides and numbered placeholders, which must stay out.
@@ -76,17 +77,17 @@ export const PRINT_BACKGROUNDS_V5 = Object.freeze({
 export const PRINT_BACKGROUNDS = PRINT_BACKGROUNDS_V5;
 const NO_BACKGROUNDS = Object.freeze({});
 export const backgroundsForLayout = (version) =>
-  version === CUTTER_LAYOUT_V5 ? PRINT_BACKGROUNDS_V5
+  [CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6].includes(version) ? PRINT_BACKGROUNDS_V5
     : version === CUTTER_LAYOUT_V4 ? PRINT_BACKGROUNDS_V4
       : version === CUTTER_LAYOUT_V3 ? PRINT_BACKGROUNDS_V3 : NO_BACKGROUNDS;
 export const hasPrintBackgrounds = (version) =>
-  version === CUTTER_LAYOUT_V3 || version === CUTTER_LAYOUT_V4 || version === CUTTER_LAYOUT_V5;
+  version === CUTTER_LAYOUT_V3 || version === CUTTER_LAYOUT_V4 || version === CUTTER_LAYOUT_V5 || version === CUTTER_LAYOUT_V6;
 
 export const isCutterLayout = (version) =>
   version === CUTTER_LAYOUT_V2 || hasPrintBackgrounds(version);
 
 // standard-back-sheet was ordinary card-back artwork in V2/V3. It becomes a
-// page backdrop only when its matching V4/V5 layout explicitly selects it.
+// page backdrop only when its matching V4/V5/V6 layout explicitly selects it.
 const RESERVED_BACKGROUNDS = Object.freeze([
   ...Object.entries(PRINT_BACKGROUNDS_V3),
   ...Object.entries(PRINT_BACKGROUNDS_V5).filter(([, background]) =>

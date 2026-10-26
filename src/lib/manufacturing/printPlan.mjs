@@ -16,6 +16,7 @@ import {
   CUTTER_LAYOUT_V3,
   CUTTER_LAYOUT_V4,
   CUTTER_LAYOUT_V5,
+  CUTTER_LAYOUT_V6,
   PRINT_BACKGROUNDS,
   PRINT_BACKGROUNDS_V3,
   PRINT_BACKGROUNDS_V4,
@@ -140,7 +141,7 @@ const v5Grid = (nodeId, x, y, cardWidth, cardHeight) => Object.freeze({
   nodeId, x, y, width: 2330, height: 3170, columns: 3, rows: 3,
   cardWidth, cardHeight,
 });
-const v5Front = (nodeId, name, gridNodeId, x, background) => {
+const v5Front = (nodeId, name, gridNodeId, x, background, version = CUTTER_LAYOUT_V5) => {
   const grid = v5Grid(gridNodeId, x, 65.6435546875, cutterWidth, cutterHeight),
     cellWidth = grid.width / grid.columns,
     cellHeight = grid.height / grid.rows,
@@ -153,7 +154,7 @@ const v5Front = (nodeId, name, gridNodeId, x, background) => {
     })));
   return Object.freeze({
     ...LEGACY_PRINT_LAYOUT,
-    version: CUTTER_LAYOUT_V5,
+    version,
     nodeId, name, grid,
     left: positions[0].x,
     top: positions[0].y,
@@ -180,12 +181,20 @@ const v5Back = (nodeId, name, gridNodeId, x, background) => {
   });
 };
 
-export const PRINT_LAYOUT = v5Front(
+// Preserve the original October 26 layout for every pinned V5 job.
+export const V5_PRINT_LAYOUT = v5Front(
   "4290:38532", "die-cut-front-epson", "4290:38534", 135, PRINT_BACKGROUNDS.fronts,
 );
-export const HOLO_PRINT_LAYOUT = v5Front(
+export const V5_HOLO_PRINT_LAYOUT = v5Front(
   "4311:139557", "die-cut-front-epson-holographic-template", "4311:139561", 80, PRINT_BACKGROUNDS.holoFronts,
 );
+// Later printer tuning moves ordinary fronts 15 px right. The water moves
+// independently inside its native full-page PNG; the other three pages retain
+// their geometry. A separate version keeps saved V5 renders reproducible.
+export const PRINT_LAYOUT = v5Front(
+  "4290:38532", "die-cut-front-epson", "4290:38534", 150, PRINT_BACKGROUNDS.fronts, CUTTER_LAYOUT_V6,
+);
+export const HOLO_PRINT_LAYOUT = Object.freeze({ ...V5_HOLO_PRINT_LAYOUT, version: CUTTER_LAYOUT_V6 });
 export const BACK_TEMPLATE = v5Back(
   "4244:451219", "die-cut-rear-canon", "4244:451221", 80, PRINT_BACKGROUNDS.backs,
 );
@@ -211,17 +220,20 @@ export function resolvePrintTemplates(templates) {
     };
   if (!isCutterLayout(templates?.version))
     throw new Error("Unsupported versioned print templates.");
-  const expectedFront = templates.version === CUTTER_LAYOUT_V5 ? PRINT_LAYOUT
+  const dedicatedHolo = [CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6].includes(templates.version),
+    expectedHoloFront = templates.version === CUTTER_LAYOUT_V6 ? HOLO_PRINT_LAYOUT : V5_HOLO_PRINT_LAYOUT;
+  const expectedFront = templates.version === CUTTER_LAYOUT_V6 ? PRINT_LAYOUT
+      : templates.version === CUTTER_LAYOUT_V5 ? V5_PRINT_LAYOUT
       : templates.version === CUTTER_LAYOUT_V4 ? V4_PRINT_LAYOUT
         : templates.version === CUTTER_LAYOUT_V3 ? V3_PRINT_LAYOUT : LEGACY_PRINT_LAYOUT,
-    expectedBack = templates.version === CUTTER_LAYOUT_V5 ? BACK_TEMPLATE
+    expectedBack = dedicatedHolo ? BACK_TEMPLATE
       : templates.version === CUTTER_LAYOUT_V4 ? V4_BACK_TEMPLATE
         : templates.version === CUTTER_LAYOUT_V3 ? V3_BACK_TEMPLATE : LEGACY_BACK_TEMPLATE,
     expectedTemplates = [
       ["fronts", expectedFront],
       ["backs", expectedBack],
-      ...(templates.version === CUTTER_LAYOUT_V5 ? [
-        ["holoFronts", HOLO_PRINT_LAYOUT],
+      ...(dedicatedHolo ? [
+        ["holoFronts", expectedHoloFront],
         ["holoBacks", HOLO_BACK_TEMPLATE],
       ] : []),
     ];
@@ -270,9 +282,9 @@ export function resolvePrintTemplates(templates) {
       version: templates.version,
     },
     backTemplate: reference(templates.backs),
-    ...(templates.version === CUTTER_LAYOUT_V5 ? {
+    ...(dedicatedHolo ? {
       holoLayout: {
-        ...structuredClone(HOLO_PRINT_LAYOUT),
+        ...structuredClone(expectedHoloFront),
         ...reference(templates.holoFronts),
         version: templates.version,
       },
@@ -555,7 +567,7 @@ export function preflightPrintAssets(manifest, release) {
   );
   const errors = [];
   if (
-    [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5].includes(release.printTemplates?.version) &&
+    [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6].includes(release.printTemplates?.version) &&
     manifest.layout.version !== release.printTemplates.version
   )
     errors.push("The full-page Canon artwork requires its matching versioned release templates; it cannot be cropped as a legacy back.");

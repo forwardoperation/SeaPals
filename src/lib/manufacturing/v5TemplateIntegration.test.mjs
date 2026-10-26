@@ -1,8 +1,8 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {buildPrintingCatalog} from './boosters.mjs';
-import {PRINT_LAYOUT,BACK_TEMPLATE,HOLO_PRINT_LAYOUT,HOLO_BACK_TEMPLATE,V4_PRINT_LAYOUT,V4_BACK_TEMPLATE,resolvePrintTemplates,createManufacturingManifest,preflightPrintAssets} from './printPlan.mjs';
+import {V5_PRINT_LAYOUT as PRINT_LAYOUT,BACK_TEMPLATE,V5_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT,HOLO_BACK_TEMPLATE,PRINT_LAYOUT as CURRENT_PRINT_LAYOUT,HOLO_PRINT_LAYOUT as CURRENT_HOLO_PRINT_LAYOUT,V4_PRINT_LAYOUT,V4_BACK_TEMPLATE,resolvePrintTemplates,createManufacturingManifest,preflightPrintAssets} from './printPlan.mjs';
 import {backgroundsForLayout} from './backdrops.mjs';
 import {validateRelease,requireOrderArtwork} from './integration.mjs';
 const read=async n=>JSON.parse(await readFile(new URL(`../../data/${n}`,import.meta.url),'utf8'));
@@ -32,4 +32,20 @@ test('V5 release rejects missing, mixed, or public holo template assets',()=>{
   const r=releaseFixture(),id=r.printTemplates[side].background.assetId;mutate(r,id);assert.throws(()=>validateRelease(r));assert.throws(()=>requireOrderArtwork(request.items,r));
  }
  const old=releaseFixture();old.printTemplates={version:'figma-cutter-nine-up-v4',fronts:V4_PRINT_LAYOUT,backs:V4_BACK_TEMPLATE};old.assets['print-template-front-background']=asset('4116:234587',2439,3239);assert.throws(()=>validateRelease(old),/matching versioned asset identity/);
+});
+
+
+test('V6 resolves new defaults while accepting unchanged pinned V5 and rejecting relabeled geometry',()=>{
+ const current={...template(),version:CURRENT_PRINT_LAYOUT.version,fronts:CURRENT_PRINT_LAYOUT,holoFronts:CURRENT_HOLO_PRINT_LAYOUT};
+ const old=manifest(template()),next=manifest(current);
+ const oldBytes=JSON.stringify(old);
+ assert.equal(old.layout.version,'figma-cutter-nine-up-v5');assert.equal(next.layout.version,'figma-cutter-nine-up-v6');
+ for(let i=0;i<9;i++)assert.ok(Math.abs(next.layout.positions[i].x-old.layout.positions[i].x-15)<1e-7);
+ assert.deepEqual(next.sheets[0].backs,old.sheets[0].backs);
+ assert.deepEqual(resolvePrintTemplates(current).holoLayout.positions,resolvePrintTemplates(template()).holoLayout.positions);
+ const oldRelease=releaseFixture(),newRelease={...releaseFixture(),printTemplates:current};
+ assert.doesNotThrow(()=>validateRelease(newRelease));assert.equal(preflightPrintAssets(next,newRelease).ready,true);
+ assert.equal(preflightPrintAssets(old,oldRelease).ready,true);assert.equal(JSON.stringify(old),oldBytes);
+ assert.equal(preflightPrintAssets(old,newRelease).ready,false);assert.equal(preflightPrintAssets(next,oldRelease).ready,false);
+ for(const swapped of [{...current,fronts:PRINT_LAYOUT},{...template(),fronts:CURRENT_PRINT_LAYOUT}])assert.throws(()=>resolvePrintTemplates(swapped),/geometry/);
 });

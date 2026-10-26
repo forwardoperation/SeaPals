@@ -65,7 +65,7 @@ test("current source mapping pins the complete tuned Canon page and versioned cu
   assert.equal(source.sources.find((s) => s.id === "standard-back-sheet").nodeId, "4244:451219");
   assert.equal(BACK_ART_SOURCE.nodeId, "4244:451219");
   assert.equal(source.sources.some((s) => ["4099:61637", "4099:61666"].includes(s.nodeId)), false);
-  assert.equal(source.templates.version, "figma-cutter-nine-up-v5");
+  assert.equal(source.templates.version, "figma-cutter-nine-up-v6");
   assert.deepEqual(source.templates.fronts.positions, CURRENT_PRINT_LAYOUT.positions);
   assert.deepEqual(source.templates.backs.positions, CURRENT_BACK_TEMPLATE.positions);
   const changed = structuredClone(source);

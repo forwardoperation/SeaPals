@@ -10,6 +10,7 @@ import { validFixedSheetPositions } from "../../src/lib/manufacturing/sourceGeom
 import {
   CUTTER_LAYOUT_V4,
   CUTTER_LAYOUT_V5,
+  CUTTER_LAYOUT_V6,
   hasPrintBackgrounds,
   isCutterLayout,
 } from "../../src/lib/manufacturing/backdrops.mjs";
@@ -210,9 +211,9 @@ export async function renderJob({
         page = doc.addPage(LETTER),
         font = await doc.embedFont(StandardFonts.Helvetica);
       if (isCutterLayout(manifest.layout.version)) {
-        const tuned = [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5].includes(manifest.layout.version);
+        const tuned = [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6].includes(manifest.layout.version);
         // Front artwork is placed over the exported backdrop bounds, whose
-        // raster already includes any Figma rotation. V4/V5 backs are one
+        // raster already includes any Figma rotation. V4/V5/V6 backs are one
         // complete Figma page, including the water, logos, and template marks.
         const background = side === "fronts"
           ? manifest.layout.background
