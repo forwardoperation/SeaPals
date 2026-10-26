@@ -61,11 +61,11 @@ const source = buildSourceMap(
 );
 
 test("current source mapping pins the complete tuned Canon page and versioned cutter geometry", () => {
-  assert.equal(source.sources.length, 281);
+  assert.equal(source.sources.length, 283);
   assert.equal(source.sources.find((s) => s.id === "standard-back-sheet").nodeId, "4244:451219");
   assert.equal(BACK_ART_SOURCE.nodeId, "4244:451219");
   assert.equal(source.sources.some((s) => ["4099:61637", "4099:61666"].includes(s.nodeId)), false);
-  assert.equal(source.templates.version, "figma-cutter-nine-up-v4");
+  assert.equal(source.templates.version, "figma-cutter-nine-up-v5");
   assert.deepEqual(source.templates.fronts.positions, CURRENT_PRINT_LAYOUT.positions);
   assert.deepEqual(source.templates.backs.positions, CURRENT_BACK_TEMPLATE.positions);
   const changed = structuredClone(source);
@@ -73,10 +73,12 @@ test("current source mapping pins the complete tuned Canon page and versioned cu
   assert.notEqual(sha256(Buffer.from(JSON.stringify(changed))), sha256(Buffer.from(JSON.stringify(source))));
 });
 
-test("current sources export only the front ocean and complete rear page, excluding front guides", () => {
+test("current sources export both front backgrounds and complete rear pages, excluding front grids", () => {
   const backdrops = source.sources.filter((item) => item.kind === "backdrop");
   assert.deepEqual(backdrops, [
-    { id: "print-template-front-background", kind: "backdrop", nodeId: "4116:234587" },
+    { id: "print-template-front-background", kind: "backdrop", nodeId: "4317:7887" },
+    { id: "print-template-holo-front-background", kind: "backdrop", nodeId: "4317:8435" },
+    { id: "holographic-back-sheet", kind: "backdrop", nodeId: "4311:139076" },
   ]);
   assert.deepEqual(source.templates.fronts.background, CURRENT_PRINT_LAYOUT.background);
   assert.deepEqual(source.templates.backs.background, {

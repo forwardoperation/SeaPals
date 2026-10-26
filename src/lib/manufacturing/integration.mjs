@@ -146,7 +146,7 @@ export function validateRelease(release) {
     if (side) {
       if (!hasPrintBackgrounds(release.printTemplates?.version))
         throw new Error("A private background requires matching versioned print templates.");
-      if (backgroundsForLayout(release.printTemplates.version)[side].assetId !== id)
+      if (backgroundsForLayout(release.printTemplates.version)[side]?.assetId !== id)
         throw new Error("A private background requires its matching versioned asset identity.");
       validateBackgroundAsset(asset, side, release.printTemplates.version);
     } else if (id === "standard-back-sheet" || id.startsWith("sheet-")) {

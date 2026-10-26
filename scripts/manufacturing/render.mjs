@@ -4,10 +4,12 @@ import { readFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { PNG } from "pngjs";
 import { preflightPrintAssets } from "../../src/lib/manufacturing/printPlan.mjs";
+import { verifyHoloBatch } from "../../src/lib/manufacturing/holoBatch.mjs";
 import { sha256 } from "../../src/lib/manufacturing/integration.mjs";
 import { validFixedSheetPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
 import {
   CUTTER_LAYOUT_V4,
+  CUTTER_LAYOUT_V5,
   hasPrintBackgrounds,
   isCutterLayout,
 } from "../../src/lib/manufacturing/backdrops.mjs";
@@ -208,10 +210,10 @@ export async function renderJob({
         page = doc.addPage(LETTER),
         font = await doc.embedFont(StandardFonts.Helvetica);
       if (isCutterLayout(manifest.layout.version)) {
-        const tuned = manifest.layout.version === CUTTER_LAYOUT_V4;
+        const tuned = [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5].includes(manifest.layout.version);
         // Front artwork is placed over the exported backdrop bounds, whose
-        // raster already includes its Figma rotation. V4 backs are one complete
-        // tuned Figma page, including the ocean and all nine white logos.
+        // raster already includes any Figma rotation. V4/V5 backs are one
+        // complete Figma page, including the water, logos, and template marks.
         const background = side === "fronts"
           ? manifest.layout.background
           : sheet.backs.template.background;
@@ -503,4 +505,33 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
     `Booster policy: ${manifest.policy.commons} common / ${manifest.policy.uncommons} uncommon / 1 rare slot; ${manifest.policy.holoBasisPoints / 100}% holo.`,
   );
   return save(doc, file);
+}
+
+// Separate replenishment sheets intentionally print holo artwork. They never
+// enter the customer-order workflow or add sellable products to inventory.
+export async function renderHoloBatch({ batch, release, assetFiles, outputDir }) {
+  verifyHoloBatch(batch, release);
+  const bytes = new Map();
+  for (const id of Object.keys(batch.assets))
+    bytes.set(id, await verifiedPng(assetFiles[id], release.assets[id]));
+  // All images are checked before any output is created.
+  await mkdir(outputDir, { recursive: true });
+  const files = [];
+  for (const sheet of batch.sheets) {
+    for (const side of ["fronts", "backs"]) {
+      const document = await PDFDocument.create(), page = document.addPage(LETTER),
+        background = side === "fronts" ? batch.layout.background : batch.backTemplate.background;
+      drawCard(page, await document.embedPng(bytes.get(background.assetId)), background);
+      if (side === "fronts") {
+        for (const slot of sheet.slots)
+          drawCard(page, await document.embedPng(bytes.get(slot.printingId)), slot, slot.rotation);
+      }
+      // Partial sheets leave unused front slots empty; the complete rear master
+      // stays intact, preserving the cutter/staple marks and tuned offsets.
+      const pdf = await document.save(), file = path.join(outputDir, `${sheet.sheetId}-${side}.pdf`);
+      await writeFile(file, pdf, { flag: "wx", mode: 0o600, flush: true });
+      files.push({ sheetId: sheet.sheetId, side, file, sha256: sha256(pdf), pages: 1 });
+    }
+  }
+  return files;
 }

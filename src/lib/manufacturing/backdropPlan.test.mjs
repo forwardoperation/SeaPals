@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { buildPrintingCatalog, contentHash } from "./boosters.mjs";
 import {
-  BACK_TEMPLATE,
-  PRINT_LAYOUT,
+  V4_BACK_TEMPLATE as BACK_TEMPLATE,
+  V4_PRINT_LAYOUT as PRINT_LAYOUT,
   V3_BACK_TEMPLATE,
   V3_PRINT_LAYOUT,
   createManufacturingManifest,

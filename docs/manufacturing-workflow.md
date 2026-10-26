@@ -45,42 +45,44 @@ status, artwork eligibility, deployment steps, and commands.
 
 ## Source artwork and sheet geometry
 
-New releases use the printer-tuned Page_Templates supplied on October 19, 2026:
-[Epson fronts](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx/Sea-Realm-Production?node-id=4099-61637)
-and [Canon backs](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx/Sea-Realm-Production?node-id=4244-451219).
-Both are 2550 x 3300 pixels, printed on Letter at actual size (300 DPI).
+New releases use the Page_Templates supplied on October 26, 2026. All four
+masters are 2550 x 3300 pixels for Letter at 300 DPI:
 
-The Epson grid keeps nine native 738.5952 x 1034.0333 pixel cards. Each card
-uses the saved page origin and 0.35 degree clockwise rotation from Figma, including
-the grid's parent transform. The first card starts at (153.8959, 54.3233);
-the bottom-left starts at (140.9864, 2167.6172). These are the rotated cards'
-top-left origins, not their enlarged axis-aligned bounds. The front ocean
-rectangle is exported separately with its rotation already baked into the
-2439 x 3239 PNG and placed at the saved fractional page bounds. Do not rotate
-that exported backdrop again. Numbered guides and crop marks stay out of
-production output. Fixed deck cards retain their original source crops and
-are placed on this same tuned grid.
+| Use | Epson front frame | Canon rear frame |
+|---|---|---|
+| Ordinary cards and randomized Dive Packs | `4290:38532` | `4244:451219` |
+| Separate holo replenishment batches | `4311:139557` | `4311:139076` |
 
-The Canon rear source is the complete native page, including water and all
-nine white logos. It is embedded once at 2550 x 3300. Do not crop a logo out
-of this new source, add a second background, reflect it, or apply the old 96%
-scale. The opaque page export keeps the logo and water together through the
-PDF print path. Fronts and backs still print on separate sheets for gluing.
-Card-page identification stays on the separate work ticket.
+The ordinary Epson grid is at (135, 65.6436); the holo grid is at
+(80, 65.6436). Each empty 2330 x 3170 grid has three equal columns and rows.
+Native 738.5952 x 1034.0333 cards are centered in those cells with zero rotation.
+The front background is exported from its full-page component instance so
+water, registration strips, and any holo-only staple labels stay together.
+Fixed deck cards retain their original source crops on the ordinary grid.
 
-New releases save `figma-cutter-nine-up-v4`, the private front backdrop and
-complete rear page, and the exact geometry. The Figma sync checks both
-pinned templates, including native transforms, before exporting. A changed
-template requires an explicit layout update. Missing or incorrect artwork
-blocks preparation before any booster draw; corrupt PNGs block rendering
-before any PDFs are written. No separate alignment print is required.
+Each Canon rear is the complete native page, including nine backs, their
+white gutters, and any holographic-only registration/staple marks. It is
+embedded once at full Letter size, without cropping, reflection, or an extra
+background. The ordinary rear grid is at (80, 85.8400); the holo rear grid is
+at (125, 85.8400). Keep the front/back pair for its intended production type.
+
+New releases save `figma-cutter-nine-up-v5`, all four private template assets,
+and exact geometry. The sync checks the pinned grids and background structure
+before exporting. Changed geometry requires an explicit layout update. A holo
+draw does not switch the whole Dive Pack to the holo template: it still prints
+its named finished-holo pull instruction on the ordinary sheet. Holo masters
+are used only for a separate replenishment batch; see the setup guide for the
+private PDF-generation command. These batches do not add finished products to
+inventory. Packaged products are received by barcode after quality control.
 
 Existing saved manifests keep their original version and private release.
-V3 retains the October 14 ocean layers and its original upright grid; V2
-retains the same upright positions without ocean. Their rear artwork still
+V4 retains the October 19 positions, 0.35 degree front rotation, and complete
+rear water-and-logo page. V3 retains the October 14 ocean layers and upright
+grid; V2 retains the same upright positions without ocean. Their rear artwork
 uses the transparent logo crop from `3758:338124`. V1 retains its original
 scaling/reflection. Reprinting a saved job does not change its cards or apply
-new printer tuning. Create a new stock build to use the updated templates.
+new printer tuning. Create a new stock build to use updated templates. No
+separate alignment print is required, and the printer profiles stay unchanged.
 
 ### Original artwork sources and legacy saved jobs
 

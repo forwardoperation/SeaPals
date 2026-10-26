@@ -15,8 +15,10 @@ import {
   CUTTER_LAYOUT_V2,
   CUTTER_LAYOUT_V3,
   CUTTER_LAYOUT_V4,
+  CUTTER_LAYOUT_V5,
   PRINT_BACKGROUNDS,
   PRINT_BACKGROUNDS_V3,
+  PRINT_BACKGROUNDS_V4,
   backgroundsForLayout,
   backgroundSide,
   hasPrintBackgrounds,
@@ -94,7 +96,7 @@ export const V3_BACK_TEMPLATE = Object.freeze({
   background: PRINT_BACKGROUNDS_V3.backs,
 });
 
-export const PRINT_LAYOUT = Object.freeze({
+export const V4_PRINT_LAYOUT = Object.freeze({
   ...LEGACY_PRINT_LAYOUT,
   version: CUTTER_LAYOUT_V4,
   name: "die-cut-front-epson",
@@ -114,10 +116,10 @@ export const PRINT_LAYOUT = Object.freeze({
     x, y, width: cutterWidth, height: cutterHeight,
     rotation: 0.35000001238844786,
   }))),
-  background: PRINT_BACKGROUNDS.fronts,
+  background: PRINT_BACKGROUNDS_V4.fronts,
 });
 
-export const BACK_TEMPLATE = Object.freeze({
+export const V4_BACK_TEMPLATE = Object.freeze({
   fileKey: LEGACY_PRINT_LAYOUT.fileKey,
   nodeId: "4244:451219",
   name: "die-cut-rear-canon",
@@ -129,8 +131,67 @@ export const BACK_TEMPLATE = Object.freeze({
         x, y, width: 738.5999755859375, height: 1034.0400390625, rotation: 0,
       }))),
   ),
-  background: PRINT_BACKGROUNDS.backs,
+  background: PRINT_BACKGROUNDS_V4.backs,
 });
+
+// The October 26 front grids are empty, equal-track grids. Place native-size
+// card artwork at each cell center rather than stretching it to fill a track.
+const v5Grid = (nodeId, x, y, cardWidth, cardHeight) => Object.freeze({
+  nodeId, x, y, width: 2330, height: 3170, columns: 3, rows: 3,
+  cardWidth, cardHeight,
+});
+const v5Front = (nodeId, name, gridNodeId, x, background) => {
+  const grid = v5Grid(gridNodeId, x, 65.6435546875, cutterWidth, cutterHeight),
+    cellWidth = grid.width / grid.columns,
+    cellHeight = grid.height / grid.rows,
+    positions = Object.freeze(Array.from({ length: 9 }, (_, index) => Object.freeze({
+      x: grid.x + (index % grid.columns) * cellWidth + (cellWidth - cutterWidth) / 2,
+      y: grid.y + Math.floor(index / grid.columns) * cellHeight + (cellHeight - cutterHeight) / 2,
+      width: cutterWidth,
+      height: cutterHeight,
+      rotation: 0,
+    })));
+  return Object.freeze({
+    ...LEGACY_PRINT_LAYOUT,
+    version: CUTTER_LAYOUT_V5,
+    nodeId, name, grid,
+    left: positions[0].x,
+    top: positions[0].y,
+    positions,
+    background,
+  });
+};
+const v5Back = (nodeId, name, gridNodeId, x, background) => {
+  const grid = v5Grid(gridNodeId, x, 85.83999633789062, 738.5999755859375, 1034.0400390625);
+  return Object.freeze({
+    fileKey: LEGACY_PRINT_LAYOUT.fileKey,
+    nodeId, name, width: 2550, height: 3300, grid,
+    positions: Object.freeze(
+      [11.31329345703125, 1067.97998046875, 2124.646484375].flatMap((y) =>
+        [19.033355712890625, 795.7000732421875, 1572.36669921875].map((localX) => Object.freeze({
+          x: grid.x + localX,
+          y: grid.y + y,
+          width: grid.cardWidth,
+          height: grid.cardHeight,
+          rotation: 0,
+        }))),
+    ),
+    background,
+  });
+};
+
+export const PRINT_LAYOUT = v5Front(
+  "4290:38532", "die-cut-front-epson", "4290:38534", 135, PRINT_BACKGROUNDS.fronts,
+);
+export const HOLO_PRINT_LAYOUT = v5Front(
+  "4311:139557", "die-cut-front-epson-holographic-template", "4311:139561", 80, PRINT_BACKGROUNDS.holoFronts,
+);
+export const BACK_TEMPLATE = v5Back(
+  "4244:451219", "die-cut-rear-canon", "4244:451221", 80, PRINT_BACKGROUNDS.backs,
+);
+export const HOLO_BACK_TEMPLATE = v5Back(
+  "4311:139076", "die-cut-rear-canon-holographic-template", "4311:139077", 125, PRINT_BACKGROUNDS.holoBacks,
+);
 
 export const BACK_ART_SOURCE = Object.freeze({
   fileKey: BACK_TEMPLATE.fileKey,
@@ -150,20 +211,33 @@ export function resolvePrintTemplates(templates) {
     };
   if (!isCutterLayout(templates?.version))
     throw new Error("Unsupported versioned print templates.");
-  const expectedFront = templates.version === CUTTER_LAYOUT_V4 ? PRINT_LAYOUT
-      : templates.version === CUTTER_LAYOUT_V3 ? V3_PRINT_LAYOUT : LEGACY_PRINT_LAYOUT,
-    expectedBack = templates.version === CUTTER_LAYOUT_V4 ? BACK_TEMPLATE
-      : templates.version === CUTTER_LAYOUT_V3 ? V3_BACK_TEMPLATE : LEGACY_BACK_TEMPLATE;
-  for (const [side, expected] of [
-    ["fronts", expectedFront],
-    ["backs", expectedBack],
-  ]) {
+  const expectedFront = templates.version === CUTTER_LAYOUT_V5 ? PRINT_LAYOUT
+      : templates.version === CUTTER_LAYOUT_V4 ? V4_PRINT_LAYOUT
+        : templates.version === CUTTER_LAYOUT_V3 ? V3_PRINT_LAYOUT : LEGACY_PRINT_LAYOUT,
+    expectedBack = templates.version === CUTTER_LAYOUT_V5 ? BACK_TEMPLATE
+      : templates.version === CUTTER_LAYOUT_V4 ? V4_BACK_TEMPLATE
+        : templates.version === CUTTER_LAYOUT_V3 ? V3_BACK_TEMPLATE : LEGACY_BACK_TEMPLATE,
+    expectedTemplates = [
+      ["fronts", expectedFront],
+      ["backs", expectedBack],
+      ...(templates.version === CUTTER_LAYOUT_V5 ? [
+        ["holoFronts", HOLO_PRINT_LAYOUT],
+        ["holoBacks", HOLO_BACK_TEMPLATE],
+      ] : []),
+    ];
+  for (const [side, expected] of expectedTemplates) {
     const saved = templates[side];
     if (
       !saved ||
       ["fileKey", "nodeId", "name", "width", "height"].some(
         (key) => saved[key] !== expected[key],
       ) ||
+      (expected.grid && saved.grid !== undefined &&
+        Object.entries(expected.grid).some(([key, value]) =>
+          typeof value === "number"
+            ? !Number.isFinite(saved.grid?.[key]) || Math.abs(saved.grid[key] - value) > 0.01
+            : saved.grid?.[key] !== value,
+        )) ||
       !Array.isArray(saved.positions) ||
       saved.positions.length !== 9 ||
       saved.positions.some((position, index) =>
@@ -196,6 +270,14 @@ export function resolvePrintTemplates(templates) {
       version: templates.version,
     },
     backTemplate: reference(templates.backs),
+    ...(templates.version === CUTTER_LAYOUT_V5 ? {
+      holoLayout: {
+        ...structuredClone(HOLO_PRINT_LAYOUT),
+        ...reference(templates.holoFronts),
+        version: templates.version,
+      },
+      holoBackTemplate: reference(templates.holoBacks),
+    } : {}),
   };
 }
 
@@ -473,8 +555,8 @@ export function preflightPrintAssets(manifest, release) {
   );
   const errors = [];
   if (
-    release.printTemplates?.version === CUTTER_LAYOUT_V4 &&
-    manifest.layout.version !== CUTTER_LAYOUT_V4
+    [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5].includes(release.printTemplates?.version) &&
+    manifest.layout.version !== release.printTemplates.version
   )
     errors.push("The full-page Canon artwork requires its matching versioned release templates; it cannot be cropped as a legacy back.");
   if (hasPrintBackgrounds(manifest.layout.version)) {

@@ -39,7 +39,7 @@ test("eligibility removes approved unmapped cards consistently and records their
   assert.deepEqual(full, before, "The canonical source remains available for the next sync");
   assert.equal(full.catalog.length, 228);
   assert.equal(eligible.catalog.length, 217);
-  assert.equal(eligible.sources.length, 270);
+  assert.equal(eligible.sources.length, 272);
   assert.deepEqual(eligible.missing, []);
   assert.deepEqual(sortedIds(eligible.excludedUnfinished, "printingId"), approvedIds);
   assert.deepEqual(
@@ -109,7 +109,7 @@ test("an unapproved missing card stays in the pool and blocks an incomplete orde
 test("fixed deck sheets, card-back artwork and ocean backgrounds are unaffected by unfinished-card exclusions", () => {
   const full = canonical();
   const fixed = full.sources.filter((item) => item.kind !== "card");
-  assert.equal(fixed.length, 53);
+  assert.equal(fixed.length, 55);
   const eligible = applyUnfinishedArtworkPolicy(full, policy);
   assert.deepEqual(eligible.sources.filter((item) => item.kind !== "card"), fixed);
   assert.deepEqual(eligible.templates, full.templates);

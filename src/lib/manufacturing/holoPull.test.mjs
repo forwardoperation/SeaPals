@@ -7,7 +7,7 @@ import path from "node:path";
 import { PDFArray, PDFDocument, PDFName, PDFRawStream, decodePDFRawStream } from "pdf-lib";
 import { PNG } from "pngjs";
 import { buildPrintingCatalog, contentHash, generateBooster } from "./boosters.mjs";
-import { PRINT_LAYOUT, BACK_TEMPLATE, createManufacturingManifest, preflightPrintAssets, verifyManifest } from "./printPlan.mjs";
+import { V4_PRINT_LAYOUT as PRINT_LAYOUT, V4_BACK_TEMPLATE as BACK_TEMPLATE, createManufacturingManifest, preflightPrintAssets, verifyManifest } from "./printPlan.mjs";
 import { applyManufacturingEvent, createManufacturingState } from "./workflow.mjs";
 import { renderJob } from "../../../scripts/manufacturing/render.mjs";
 

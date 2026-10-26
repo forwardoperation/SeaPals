@@ -6,7 +6,7 @@ import path from "node:path";
 import { PDFArray, PDFDocument, PDFName, PDFRawStream, decodePDFRawStream } from "pdf-lib";
 import { PNG } from "pngjs";
 import { BOOSTER_POLICY, contentHash } from "./boosters.mjs";
-import { PRINT_LAYOUT, BACK_TEMPLATE } from "./printPlan.mjs";
+import { V4_PRINT_LAYOUT as PRINT_LAYOUT, V4_BACK_TEMPLATE as BACK_TEMPLATE } from "./printPlan.mjs";
 import { sha256 } from "./integration.mjs";
 import { renderJob } from "../../../scripts/manufacturing/render.mjs";
 

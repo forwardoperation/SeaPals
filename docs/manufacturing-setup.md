@@ -827,13 +827,13 @@ export mode requires complete mappings for every eligible printing.
   Conditions, dice, and tokens. Standalone prepared accessory SKUs are supported.
   Existing packaging supplies are checked during packing; this integration
   does not generate new box/wrapper artwork or carrier labels.
-- New releases use the October 19 printer-tuned V4 templates: nine native
-  738.5952 ? 1034.0333 Epson cards with saved positions and a 0.35? clockwise
-  rotation, plus the complete Canon rear page with water and nine white logos.
-  The front backdrop's exported rotation is applied once. Fixed-sheet cards
-  use their saved source crops on this grid. Existing V1/V2/V3 jobs retain
-  their original layouts and assets. See `manufacturing-workflow.md` for
-  exact references. No automatic duplexing or separate alignment print is used.
+- New releases use the October 26 V5 templates: upright native Epson cards
+  centered in the supplied grid, plus the complete Canon rear master with its
+  white gutters. Ordinary and holo replenishment have separate front/back
+  templates; randomized packs continue using ordinary sheets with named holo
+  pull instructions. Existing V1/V2/V3/V4 jobs retain their original layouts
+  and assets. See `manufacturing-workflow.md` for the four exact references.
+  No automatic duplexing or separate alignment print is used.
 - Work tickets, fronts, and backs have separate durable attempt states. The
   Canon ticket defaults to the same stock/tray as backs; configure a dedicated
   plain-paper bin in its profile if desired. Sumatra submits exact-size PDFs
@@ -848,8 +848,8 @@ export mode requires complete mappings for every eligible printing.
   draw; front reprints reset their holo checkboxes and both types reset assembly/QC.
   Already submitted pages may still finish after a hold or refund.
 - A submission acknowledgement is not proof of physical output. Staff confirms
-  both sides, glue/drying/cutting, every holo sticker, accessory picking, QC, and
-  packing. Holo finishing may occur before or after gluing/cutting but precedes QC.
+  both sides, glue/drying/cutting, finished holo pulls, accessory picking, QC,
+  and packing. Older saved jobs keep their original sticker confirmations.
 - The QR contains only `/admin/manufacturing?order=<UUID>`. Staff must sign in;
   scanning itself cannot change progress. A copied QR reveals no print image,
   device credential, buyer contact information, or booster contents.
@@ -909,6 +909,31 @@ performs this read-only preflight and reports the prepared file. A successful
 software check is not proof of physical cutting alignment; confirm the next
 operator-requested sheet before cutting a batch. No print is required to inspect
 the generated files. Restart the local helper after changing its code or config.
+
+### Separate holographic replenishment batches
+
+Use the dedicated holo templates to replenish finished loose holo cards. This
+local command generates private PDFs only; it does not send a print job or
+create an order, product receipt, or buyer notification. Choose the exact holo
+printing IDs and quantities from the active private release catalog. Finished
+prerelease holo artwork is allowed. Ordinary Dive Packs keep their named
+"Pull finished holo" placeholders.
+
+```powershell
+node scripts/manufacturing/holo-batch.mjs --release .private/manufacturing/releases/<release-id>/release.json --cards deep-001:9,deep-002:3 --output-dir .private/manufacturing/holo-batches/<new-batch-name>
+```
+
+The release must include V5 ordinary and holo masters. The new output directory
+contains `batch.json` with saved card choices, template geometry and checksums,
+plus `holo-001-fronts.pdf`, `holo-001-backs.pdf`, and subsequent sheet pairs.
+Cards fill cells in reading order; a partial final sheet leaves unused front
+cells empty and keeps the complete rear master. The command accepts at most
+900 cards per batch and refuses to overwrite an existing batch directory.
+Review the PDFs, then print fronts on the Epson and their paired backs on the
+Canon using the calibrated profiles. Keep the original private batch for any
+reprints so the cards and geometry remain pinned. Loose holo replenishment is
+not finished product inventory; only packaged products received by barcode add
+to sellable stock.
 
 ### File index
 

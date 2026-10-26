@@ -12,6 +12,8 @@ import {
   BACK_ART_SOURCE,
   BACK_TEMPLATE,
   PRINT_LAYOUT,
+  HOLO_PRINT_LAYOUT,
+  HOLO_BACK_TEMPLATE,
 } from "../../src/lib/manufacturing/printPlan.mjs";
 import {
   pngDimensions,
@@ -22,6 +24,9 @@ import {
 import { PRIVATE_ROOT, REPO_ROOT, atomicJson } from "./orders.mjs";
 import { validFixedSheetPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
 import { validateTunedTemplate } from "./tuned-template-validation.mjs";
+import { isGridTemplate, validateGridTemplate } from "./grid-template-validation.mjs";
+
+const currentTemplates = [PRINT_LAYOUT, BACK_TEMPLATE, HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE];
 
 export function buildSourceMap(
   setList,
@@ -63,10 +68,10 @@ export function buildSourceMap(
     expectedNumber: `${c.collectorNumber}/${c.setTotal}`,
   }));
   sources.push(
-    // V4 uses the complete Canon page, including water and logos.
+    // Each Canon asset is its complete native page, including all approved marks.
     { id: "standard-back-sheet", kind: "back", nodeId: BACK_ART_SOURCE.nodeId },
     ...fixedArtworkSources(),
-    ...[PRINT_LAYOUT, BACK_TEMPLATE].filter(template => template.background.assetId !== "standard-back-sheet").map((template) => ({
+    ...currentTemplates.filter(template => template.background.assetId !== "standard-back-sheet").map((template) => ({
       id: template.background.assetId,
       kind: "backdrop",
       nodeId: template.background.nodeId,
@@ -80,6 +85,7 @@ export function buildSourceMap(
     height: template.height,
     positions: template.positions,
     background: template.background,
+    ...(template.grid ? { grid: template.grid } : {}),
   });
   return {
     fileKey: gallery.fileKey,
@@ -91,6 +97,8 @@ export function buildSourceMap(
       version: PRINT_LAYOUT.version,
       fronts: reference(PRINT_LAYOUT),
       backs: reference(BACK_TEMPLATE),
+      holoFronts: reference(HOLO_PRINT_LAYOUT),
+      holoBacks: reference(HOLO_BACK_TEMPLATE),
     },
     missing: sources
       .filter((s) => !s.nodeId)
@@ -176,7 +184,7 @@ export function selectProductArtwork(source, products = null) {
   if (!required.size)
     throw new Error("The selected products have no printable artwork to export.");
   required.add("standard-back-sheet");
-  for (const template of [PRINT_LAYOUT, BACK_TEMPLATE])
+  for (const template of currentTemplates)
     required.add(template.background.assetId);
   const sources = source.sources.filter((item) => required.has(item.id));
   if (sources.length !== required.size)
@@ -193,6 +201,7 @@ export function selectProductArtwork(source, products = null) {
 }
 
 export function validateCutterTemplate(document, template) {
+  if (isGridTemplate(template)) return validateGridTemplate(document, template);
   if (template.positions?.some(position => position.rotation !== undefined))
     return validateTunedTemplate(document, template);
   const label = template.name ?? template.nodeId;
@@ -299,7 +308,7 @@ export function validateCutterTemplate(document, template) {
 }
 
 export async function checkCutterTemplates(figma, source, version) {
-  const templates = [source.templates.fronts, source.templates.backs];
+  const templates = [source.templates.fronts, source.templates.backs, source.templates.holoFronts, source.templates.holoBacks].filter(Boolean);
   if (!version) throw new Error("A pinned Figma version is required to check cutter templates.");
   if (templates.some((template) => template.fileKey !== source.fileKey))
     throw new Error("Cutter templates and print artwork must come from the same versioned Figma file.");

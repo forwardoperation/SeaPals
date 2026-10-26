@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { checkCutterTemplates, validateCutterTemplate } from "../../../scripts/manufacturing/sync-figma.mjs";
-import { BACK_TEMPLATE, PRINT_LAYOUT } from "./printPlan.mjs";
+import { V4_BACK_TEMPLATE as BACK_TEMPLATE, V4_PRINT_LAYOUT as PRINT_LAYOUT } from "./printPlan.mjs";
 
 // Geometry-only fixtures transcribed from pinned Figma version
 // 2412156090472208619. They contain no image references, vector paths, or card
