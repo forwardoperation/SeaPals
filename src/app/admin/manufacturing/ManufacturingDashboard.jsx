@@ -4,7 +4,7 @@ import { workflowReadiness } from "@/lib/manufacturing/readiness.mjs";
 import FinishedInventory from "./FinishedInventory";
 import StockReceiving from "./StockReceiving";
 import { RECEIPT_RETRY_KEY, readReceiptRetry, receiptWasRejected } from "./receiving.mjs";
-import { createRefreshGuard, printFeedback } from "./printFeedback.mjs";
+import { createRefreshGuard, formatManufacturingMessage, printFeedback } from "./printFeedback.mjs";
 
 const TOKEN_KEY = "seapals-store-admin-token";
 const STOCK_RETRY_KEY = "seapals-manufacturing-stock-retry";
@@ -546,7 +546,7 @@ export default function ManufacturingDashboard() {
       </form>
       {error && (
         <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">
-          {error}
+          {formatManufacturingMessage(error)}
         </p>
       )}
       {loggedIn && !enabled && (
@@ -717,7 +717,7 @@ export default function ManufacturingDashboard() {
                   </div>
                   {detail.issue && (
                     <p className="my-3 rounded-lg bg-amber-50 p-3 text-amber-900">
-                      {detail.issue}
+                      {formatManufacturingMessage(detail.issue)}
                     </p>
                   )}
                   {detail.phase === "blocked" && !state?.hold && (

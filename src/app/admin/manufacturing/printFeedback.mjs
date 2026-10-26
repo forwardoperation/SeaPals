@@ -1,3 +1,13 @@
+import { fixedSheetLabel } from "../../../lib/manufacturing/recipes.mjs";
+
+// Format persisted issues at display time without changing their stored evidence.
+export function formatManufacturingMessage(message) {
+  return typeof message === "string"
+    ? message.replace(/(^|[^\w-])(sheet-blue-water-[1-7])(?![\w-])/g,
+      (_, prefix, assetId) => prefix + fixedSheetLabel(assetId))
+    : message;
+}
+
 // Read-only display state. A successful submission means Windows accepted the
 // print job; only the operator can confirm the paper actually printed correctly.
 export function printFeedback(detail, enabled, now = Date.now()) {
@@ -24,7 +34,7 @@ export function printFeedback(detail, enabled, now = Date.now()) {
       ? "All planned products have been received into finished inventory."
       : "Printing and manufacturing checks are complete.");
   if (detail.phase === "blocked" || state?.hold)
-    return feedback("Paused — needs attention", detail.issue || "Resolve the manufacturing hold before continuing.", true);
+    return feedback("Paused — needs attention", formatManufacturingMessage(detail.issue) || "Resolve the manufacturing hold before continuing.", true);
   if (statuses.includes("needs_review"))
     return feedback("Print outcome needs review", "Check the physical pages and printer queue before confirming or authorizing a reprint.", true);
   if (detail.job_kind === "stock" && state?.packed)

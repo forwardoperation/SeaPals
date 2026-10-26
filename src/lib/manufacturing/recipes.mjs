@@ -132,6 +132,12 @@ export function fixedSheetAssets(productId) {
       : []),
   ];
 }
+// Display names follow the current product name; saved manifests and private
+// asset keys retain their original identity for reproducible reprints.
+export function fixedSheetLabel(assetId) {
+  const dropOff = /^sheet-blue-water-([1-7])$/.exec(assetId);
+  return dropOff ? `sheets-drop-off-${dropOff[1]}` : assetId;
+}
 export function fixedArtworkSources() {
   return [
     ...Object.entries(DECK_FRAMES).flatMap(([id, nodes]) =>
@@ -139,6 +145,7 @@ export function fixedArtworkSources() {
         id: `sheet-${id}-${index + 1}`,
         nodeId,
         kind: "sheet",
+        ...(id === "blue-water" ? { displayName: `sheets-drop-off-${index + 1}` } : {}),
       })),
     ),
     ...CONDITION_FRAMES.map((nodeId, index) => ({

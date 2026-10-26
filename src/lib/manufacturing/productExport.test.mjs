@@ -79,7 +79,7 @@ test("Reef release validates and supports both rare outcomes while other product
     assert.ok(pack.cards.every((card) => release.assets[card.printingId]));
   }
   for (const productId of ["deep-dive-pack", "oceanic-dive-pack", "coral-garden", "starter-kit"]) {
-    assert.throws(() => requireOrderArtwork([{ productId, quantity: 1 }], release), /No booster draw was created/);
+    assert.throws(() => requireOrderArtwork([{ productId, quantity: 1 }], release), productId.endsWith("-dive-pack") ? /No booster draw was created/ : /No print sheets were prepared/);
   }
 });
 

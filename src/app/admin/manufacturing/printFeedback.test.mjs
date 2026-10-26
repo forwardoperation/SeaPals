@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createRefreshGuard, printFeedback } from "./printFeedback.mjs";
+import { createRefreshGuard, formatManufacturingMessage, printFeedback } from "./printFeedback.mjs";
 
 const now = Date.parse("2026-10-14T18:25:00Z");
 const submittedJob = {
@@ -136,4 +136,15 @@ test("mutation, token change, or logout invalidation rejects late success and fa
     assert.deepEqual(applied, []);
     assert.ok(guard.begin({ replace: false }));
   }
+});
+
+
+test("persisted blocked issues use Drop Off sheet names only for complete legacy asset tokens", () => {
+  const issue = "Artwork is incomplete: sheet-blue-water-1, sheet-blue-water-7. Keep sheet-blue-water-8, sheet-blue-water-10, prefix-sheet-blue-water-1 and sheet-blue-water-1-extra unchanged.";
+  const expected = "Artwork is incomplete: sheets-drop-off-1, sheets-drop-off-7. Keep sheet-blue-water-8, sheet-blue-water-10, prefix-sheet-blue-water-1 and sheet-blue-water-1-extra unchanged.";
+  const detail = Object.freeze({ phase: "blocked", issue });
+  assert.equal(printFeedback(detail, true, now).description, expected);
+  assert.equal(formatManufacturingMessage(issue), expected);
+  assert.equal(detail.issue, issue);
+  assert.equal(formatManufacturingMessage("Printer is offline."), "Printer is offline.");
 });

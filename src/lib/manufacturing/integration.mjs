@@ -13,7 +13,7 @@ import {
   createManufacturingState,
 } from "./workflow.mjs";
 import { validateBoosterPool } from "./boosters.mjs";
-import { BOOSTER_PRODUCTS, fixedSheetAssets } from "./recipes.mjs";
+import { BOOSTER_PRODUCTS, fixedSheetAssets, fixedSheetLabel } from "./recipes.mjs";
 import { validFixedSheetPositions } from "./sourceGeometry.mjs";
 import {
   backgroundsForLayout,
@@ -107,7 +107,7 @@ export function requireOrderArtwork(items, release) {
   const missing = [...ids].filter((id) => !release.assets?.[id]);
   if (missing.length)
     throw new Error(
-      `Artwork is incomplete for this order: ${missing.slice(0, 8).join(", ")}. No booster draw was created. Publish the complete set and retry preparation.`,
+      `Artwork is incomplete for this order: ${missing.slice(0, 8).map(fixedSheetLabel).join(", ")}. ${items.some((item) => BOOSTER_PRODUCTS[item.productId]) ? "No booster draw was created." : "No print sheets were prepared."} Publish the required artwork and retry preparation.`,
     );
 }
 export function assetKey(asset) {

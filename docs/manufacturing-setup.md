@@ -6,6 +6,21 @@ checklist, and buyer milestone emails. **Printing is enabled for Reef, Deep,
 and Oceanic booster jobs approved with Send to printers.** Buyer manufacturing
 notifications and paid test-order intake remain disabled.
 
+## Expansion-deck artwork and Drop Off sheet names
+
+The owner approved printing cards bearing PRERELEASE in expansion decks on
+October 26, 2026. Preserve those labels in the exported artwork. Fixed decks
+use their complete numbered Figma sheets; they do not filter cards by the
+booster catalog's prerelease metadata. A complete verified sheet release is
+still required before an expansion-deck job can print.
+
+Drop Off's seven sheets are displayed as `sheets-drop-off-1` through
+`sheets-drop-off-7`. Their stable private keys remain `sheet-blue-water-1`
+through `sheet-blue-water-7`, and the store product ID remains `blue-water`.
+This preserves previously saved jobs and reprints. The current Figma frames
+on **Decks - Drop Off** still use the older names `blue-water 1` through
+`blue-water 7`; their saved node IDs determine the actual export source.
+
 ## Reef, Deep, and Oceanic boosters activated - October 20, 2026
 
 The combined Reef, Deep, and Oceanic release was published and verified live
