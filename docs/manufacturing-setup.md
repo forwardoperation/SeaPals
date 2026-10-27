@@ -6,6 +6,41 @@ checklist, and buyer milestone emails. **Printing is enabled for Reef, Deep,
 and Oceanic booster jobs and Drop Off decks approved with Send to printers.** Buyer manufacturing
 notifications and paid test-order intake remain disabled.
 
+## Printer queue checks and missing-sheet recovery (October 26)
+
+The local helper checks the exact configured Windows queue before sending each
+PDF and monitors it while Sumatra runs and afterward. It requires three seconds
+of quiet queue state between submissions, stops on reported printer/job errors,
+and checks Windows PrintService event 372 for the exact PDF path and printer.
+The total queue/submission budget is ten minutes; the application itself is
+limited to two minutes. No print settings, resolution, or placement change.
+Optional per-route `queueGuard` settings accept `timeoutMs`, `pollMs`, and
+`quietMs`; the defaults are 600000, 1500, and 3000 respectively.
+
+Each attempt writes a private receipt under
+`.private/manufacturing/print-receipts/<attemptUUID>.json`, including source and
+prepared PDF hashes, application exit status, matching Windows job IDs when
+observed, and bounded queue/error evidence. A fast job can disappear between
+polls. An empty queue or successful application exit does not prove that ink
+reached the paper. Receipts explicitly retain `physicalPrintConfirmed: false`;
+the operator still uses **Paper checked** after inspecting the sheet.
+
+For a blank or damaged page, open the original workshop job and find **Sheet N
+of total** (Drop Off sheets also show their numbered asset label). After the
+current print attempt finishes, choose **Reprint this front** for an Epson page
+or **Reprint this back** for a Canon page, enter the reason, and authorize that
+one reprint. It reuses the saved cards, artwork release, and positions; no page
+needs to be reconstructed and booster contents do not reroll. An interrupted
+attempt must be reviewed before reprinting. The helper never retries physical
+printing automatically and never deletes Windows spool jobs.
+
+Before a driver update, stop the helper only while no approved work is pending,
+check every Windows queue is empty, and back up the printer preferences and
+calibrated device capabilities. Afterward verify the exact queue/port, paper,
+color, one-sided settings, and Epson `expectedDevice` values below before
+restarting the helper. A driver update is not evidence that a physical blank
+sheet issue is resolved; inspect the next operator-requested output.
+
 ## October 26 template shift: immutable V6 layout
 
 V6 moves the ordinary Epson front grid from x135 to x150: every card moves

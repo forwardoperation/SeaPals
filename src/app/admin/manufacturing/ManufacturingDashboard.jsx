@@ -5,6 +5,7 @@ import FinishedInventory from "./FinishedInventory";
 import StockReceiving from "./StockReceiving";
 import { RECEIPT_RETRY_KEY, readReceiptRetry, receiptWasRejected } from "./receiving.mjs";
 import { createRefreshGuard, formatManufacturingMessage, printFeedback } from "./printFeedback.mjs";
+import { reprintReadiness, sheetDisplayLabel } from "./sheetRecovery.mjs";
 
 const TOKEN_KEY = "seapals-store-admin-token";
 const STOCK_RETRY_KEY = "seapals-manufacturing-stock-retry";
@@ -208,6 +209,13 @@ export default function ManufacturingDashboard() {
   }
   async function update(type, fields = {}) {
     if (!detail?.state) return;
+    if (type === "reprint") {
+      const recovery = reprintReadiness(detail);
+      if (recovery.blocked) {
+        setError(recovery.message);
+        return;
+      }
+    }
     const mutation = beginMutation();
     if (!mutation) return;
     try {
@@ -362,6 +370,7 @@ export default function ManufacturingDashboard() {
     }
   }
   const feedback = printFeedback(detail, enabled);
+  const recovery = reprintReadiness(detail);
   const state = detail?.state,
     manifest = detail?.manifest,
     ready = state ? workflowReadiness(state) : null,
@@ -406,8 +415,7 @@ export default function ManufacturingDashboard() {
             : (labels[status] ?? status)}
         </p>
         <div className="flex flex-wrap gap-2">
-          {status === "submitting" &&
-            new Date(detail.leased_until ?? 0) <= new Date() && (
+          {status === "submitting" && !recovery.active && (
               <button
                 className={button}
                 disabled={busy}
@@ -433,9 +441,10 @@ export default function ManufacturingDashboard() {
           )}
           {["submitted", "needs_review", "confirmed"].includes(status) && (
             <button
-              className="rounded-xl border border-slate-300 px-3 py-2 text-sm"
+              className="rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:opacity-40"
               disabled={
                 busy ||
+                recovery.blocked ||
                 state.hold ||
                 (side !== "ticket" && !!detail.inventory_posted_at)
               }
@@ -444,7 +453,7 @@ export default function ManufacturingDashboard() {
                 setReason("");
               }}
             >
-              Reprint…
+              {side === "fronts" ? "Reprint this front" : side === "backs" ? "Reprint this back" : "Reprint work ticket"}
             </button>
           )}
         </div>
@@ -715,6 +724,19 @@ export default function ManufacturingDashboard() {
                       </>
                     )}
                   </div>
+                  {manifest?.sheets.length > 0 && detail.print_requested_at && (
+                    <div className="my-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
+                      <p className="font-bold">Blank or damaged sheet?</p>
+                      <p className="mt-1">
+                        Find its sheet number below and choose Reprint this front or Reprint this back.
+                        Only that side is queued again, using the same saved cards, artwork, and positions.
+                        You do not need to recreate the page. Check the physical output and printer queue first.
+                      </p>
+                      {recovery.message && (
+                        <p className="mt-2 font-bold text-amber-900" role="status">{recovery.message}</p>
+                      )}
+                    </div>
+                  )}
                   {detail.issue && (
                     <p className="my-3 rounded-lg bg-amber-50 p-3 text-amber-900">
                       {formatManufacturingMessage(detail.issue)}
@@ -815,11 +837,11 @@ export default function ManufacturingDashboard() {
               )}
               {manifest?.sheets.map((sheet) => (
                 <article key={sheet.sheetId} className={panel}>
-                  <h3 className="break-words font-black">{sheet.sheetId}</h3>
+                  <h3 className="break-words font-black">{sheetDisplayLabel(manifest, sheet.sheetId)}</h3>
                   <p className="mt-1 text-sm capitalize text-slate-600">
                     {sheet.set
                       ? `${sheet.set === "ocean" ? "Oceanic" : sheet.set} Dive Pack · 9 cards`
-                      : sheet.productId?.replaceAll("-", " ")}
+                      : sheet.productId === "blue-water" ? "Drop Off deck" : sheet.productId?.replaceAll("-", " ")}
                   </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     {["fronts", "backs"].map((side) =>
@@ -1023,9 +1045,14 @@ export default function ManufacturingDashboard() {
               Authorize one reprint
             </h2>
             <p className="my-3 text-sm">
-              Check the physical output and printer queue first. This will queue{" "}
-              {reprint.side} for {reprint.sheetId}. Card contents stay the same.
+              Check the physical output and printer queue first. This will queue only the{" "}
+              {reprint.side === "fronts" ? "Epson front" : reprint.side === "backs" ? "Canon back" : "Canon work ticket"}{" "}
+              for {sheetDisplayLabel(manifest, reprint.sheetId)}.
+              The saved card choices, artwork, and positions stay the same.
             </p>
+            {recovery.message && (
+              <p className="mb-3 text-sm font-bold text-amber-900" role="status">{recovery.message}</p>
+            )}
             <label className="text-sm font-bold">
               Reason
               <textarea
@@ -1038,7 +1065,7 @@ export default function ManufacturingDashboard() {
               />
             </label>
             <div className="mt-4 flex gap-3">
-              <button className={button} disabled={busy || !reason.trim()}>
+              <button className={button} disabled={busy || recovery.blocked || !reason.trim()}>
                 Authorize reprint
               </button>
               <button

@@ -1,12 +1,13 @@
 import { readFile, mkdir, rename, writeFile, access } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { renderJob, verifiedPng } from "./render.mjs";
 import { preflightPrintAssets } from "../../src/lib/manufacturing/printPlan.mjs";
 import { PRIVATE_ROOT as privateRoot, atomicJson } from "./orders.mjs";
 import { preparePrinterPdf, validatePrinterPlacement } from "./printer-placement.mjs";
+import { queueGuardSettings, readPrinterQueue, withPrinterSubmission, waitForPrinterIdle, monitorPrinterSubmission } from "./printer-queue.mjs";
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export function printerArguments(config, job) {
@@ -38,42 +39,109 @@ export function printerArguments(config, job) {
     job.file,
   ];
 }
-export async function submitPdf(config, job) {
-  if (config.calibrationConfirmed !== true)
-    throw new Error(
-      "Calibrate and confirm both printer profiles before submission.",
-    );
-  const prepared = await preparePrinterPdf(config, job);
-  await readFile(prepared.file);
-  const args = printerArguments(config, prepared);
-  await new Promise((resolve, reject) => {
-    const child = spawn(config.sumatraPath, args, {
-      shell: false,
-      windowsHide: true,
-      stdio: "ignore",
-    });
+export function launchPrintApplication(executable, args, { signal, timeoutMs = 120_000 } = {}) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) { reject(new Error("Print submission was stopped before launching.")); return; }
+    let child;
+    try { child = spawn(executable, args, { shell: false, windowsHide: true, stdio: "ignore" }); }
+    catch { reject(new Error("Could not launch the configured print application.")); return; }
+    let finished = false;
+    const complete = (error, code) => {
+      if (finished) return;
+      finished = true; clearTimeout(timer); signal?.removeEventListener("abort", abort);
+      error ? reject(error) : resolve(code);
+    };
+    const abort = () => {
+      child.kill();
+      complete(new Error("Printer submission was interrupted; its physical outcome needs review."));
+    };
     const timer = setTimeout(() => {
       child.kill();
-      reject(
-        new Error(
-          "Printer submission timed out; the physical outcome needs review.",
-        ),
-      );
-    }, 120_000);
-    child.once("error", () => {
-      clearTimeout(timer);
-      reject(new Error("Could not launch the configured print application."));
-    });
-    child.once("exit", (code) => {
-      clearTimeout(timer);
-      code === 0
-        ? resolve()
-        : reject(
-            new Error(
-              "Printer submission returned an error; inspect its queue before retrying.",
-            ),
-          );
-    });
+      complete(new Error("Printer submission timed out; its physical outcome needs review."));
+    }, timeoutMs);
+    signal?.addEventListener("abort", abort, { once: true });
+    child.once("error", () => complete(new Error("Could not launch the configured print application.")));
+    child.once("exit", (code) => complete(null, code));
+  });
+}
+
+export async function submitPdf(config, job, {
+  prepare = preparePrinterPdf, probe = readPrinterQueue, launch = launchPrintApplication,
+  now = () => performance.now(), sleep = pause, assertCanSubmit = () => {},
+  receiptRoot = path.join(privateRoot, "print-receipts"),
+} = {}) {
+  if (config.calibrationConfirmed !== true)
+    throw new Error("Calibrate and confirm both printer profiles before submission.");
+  assertCanSubmit();
+  const prepared = await prepare(config, job);
+  const sourceBytes = await readFile(job.file), preparedBytes = await readFile(prepared.file);
+  const args = printerArguments(config, prepared), route = config[job.side], settings = queueGuardSettings(route);
+  const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
+  return withPrinterSubmission(route.printerName, async () => {
+    const attemptId = randomUUID(), startedAt = new Date().toISOString();
+    await mkdir(receiptRoot, { recursive: true });
+    const receiptFile = path.join(receiptRoot, attemptId + ".json");
+    const receipt = {
+      schemaVersion: 1, attemptId, sheetId: job.sheetId, side: job.side,
+      sourceFile: job.file, sourceSha256: hash(sourceBytes),
+      preparedFile: prepared.file, preparedSha256: hash(preparedBytes),
+      printerName: route.printerName, printSettings: args[3], queueGuard: settings,
+      startedAt, state: "waiting_for_queue", applicationStarted: false,
+      applicationExitCode: null, targetJobObserved: false, windowsJobIds: [],
+      observations: [], observationCount: 0, physicalPrintConfirmed: false,
+    };
+    const save = async (state) => {
+      receipt.state = state; receipt.updatedAt = new Date().toISOString();
+      await atomicJson(receiptFile, receipt);
+    };
+    let observationPhase = "before_submission", lastObservation = "";
+    const observe = async (snapshot) => {
+      receipt.observationCount++;
+      for (const item of snapshot.jobs) if (item.matchesDocument && !receipt.windowsJobIds.includes(item.id)) {
+        receipt.targetJobObserved = true; receipt.windowsJobIds.push(item.id);
+      }
+      const sample = {
+        phase: observationPhase, printerStatus: snapshot.printerStatus, jobCount: snapshot.jobCount,
+        jobs: snapshot.jobs.slice(0, 32), jobsTruncated: snapshot.jobs.length > 32,
+        failures: snapshot.failures,
+      };
+      const identity = JSON.stringify(sample);
+      receipt.lastObservedAt = new Date().toISOString();
+      if (identity !== lastObservation) {
+        lastObservation = identity;
+        receipt.observations.push({ ...sample, at: receipt.lastObservedAt });
+        if (receipt.observations.length > 40) receipt.observations.shift();
+        await save(receipt.state);
+      }
+    };
+    const deadline = now() + settings.timeoutMs;
+    await save(receipt.state);
+    try {
+      await waitForPrinterIdle({ printerName: route.printerName, settings, deadline,
+        probe, pause: sleep, now, assertCanSubmit, onSnapshot: observe });
+      assertCanSubmit();
+      receipt.applicationStarted = true; receipt.launchStartedAt = new Date().toISOString();
+      await save("submitting");
+      observationPhase = "submission";
+      await monitorPrinterSubmission({ printerName: route.printerName, documentPath: prepared.file,
+        sinceUtc: receipt.launchStartedAt, settings, deadline, probe, pause: sleep, now,
+        assertCanSubmit, onSnapshot: observe,
+        launch: (signal) => launch(config.sumatraPath, args, {
+          signal, timeoutMs: Math.max(1, Math.min(120_000, deadline - now())),
+        }),
+        onExit: async (code) => {
+          receipt.applicationExitCode = code; receipt.applicationExitedAt = new Date().toISOString();
+          await save("waiting_for_queue_completion");
+        },
+      });
+      receipt.completedAt = new Date().toISOString();
+      await save("spooler_quiet_needs_paper_check");
+      return { receiptFile, targetJobObserved: receipt.targetJobObserved, physicalPrintConfirmed: false };
+    } catch (error) {
+      receipt.error = error.message;
+      await save(receipt.applicationStarted ? "needs_review" : "not_submitted");
+      throw error;
+    }
   });
 }
 export function agentClient(siteOrigin, token, fetchImpl = fetch) {
@@ -248,7 +316,11 @@ export async function runJob({
       const eventTarget = { sheetId: target.sheetId, side: target.side };
       await event("submission_started", eventTarget);
       try {
-        await print(config, target);
+        await print(config, target, {
+          assertCanSubmit: () => {
+            if (leaseLost) throw new Error("Agent lease was lost while waiting for the printer. Review its physical outcome before retrying.");
+          },
+        });
       } catch (error) {
         await event("submission_uncertain", eventTarget);
         throw error;
