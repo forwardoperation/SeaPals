@@ -86,11 +86,12 @@ come from snapshot `2414752317081305228` / `2026-10-26T18:41:52Z`.
 `figmaSnapshot` continues to describe the retained artwork baseline. This is a
 template update, not a claim that every card was re-exported from the later file.
 
-The normal sync scope includes Drop Off plus all three Dive Packs (228 private
-assets). Keep `blue-water` in subsequent published scopes so new Drop Off work
-continues to have its seven sheet assets. The direct CLI can export other scopes
-explicitly; publishing a narrower scope intentionally replaces availability for
-new jobs rather than merging assets from the previous active release.
+The normal sync scope includes all fifteen manufacturing products: seven decks,
+all three Dive Packs, Conditions, Starter Kit, and the accessory products. Its
+272 private assets comprise 217 eligible card printings, 51 fixed sheets, and four
+ordinary/holo template assets. Keep the complete scope in subsequent refreshes.
+The direct CLI can export other scopes explicitly; publishing a narrower scope
+replaces availability for new jobs rather than merging the previous release.
 
 ## Expansion-deck artwork and Drop Off sheet names
 
@@ -103,19 +104,28 @@ still required before an expansion-deck job can print.
 Drop Off's seven sheets are displayed as `sheets-drop-off-1` through
 `sheets-drop-off-7`. Their stable private keys remain `sheet-blue-water-1`
 through `sheet-blue-water-7`, and the store product ID remains `blue-water`.
-This preserves previously saved jobs and reprints. The current Figma frames
-on **Decks - Drop Off** still use the older names `blue-water 1` through
-`blue-water 7`; their saved node IDs determine the actual export source.
+This preserves previously saved jobs and reprints. The private keys retain the
+older Blue Water identity; saved Figma node IDs determine the actual export source.
 
-Keep the outer Drop Off sheet and its `card_backs` grid fills removed or hidden.
-Those ancestors must export transparently so the cutter template's water shows
-around the cards. A solid parent fill becomes part of each cropped card and
-covers the water; the sync now rejects it before exports, cached-release reuse,
-or publication. Drop Off exports use absolute frame bounds to preserve the
-full 2550 x 3300 page, including its now-transparent margins; exports for other
-assets keep their existing bounds. Card-instance fills and artwork remain
-unchanged. This check applies to new Drop Off source exports; saved releases
-retain their original pixels and geometry for reproducible reprints.
+Fixed sheets export transparently so the cutter template's water shows around
+each card. For ordinary full-page sources, keep the sheet and every ancestor of
+its `card_backs` grid free of visible fills. Sync rejects opaque exported ancestors
+before exports, cached-release reuse, or publication. All sheet exports use absolute
+frame bounds; standalone cards and template assets retain their existing bounds.
+Card-instance fills and artwork remain unchanged. Saved releases retain their
+original pixels and geometry.
+
+Coral Garden uses the replacement October 28 sheets, whose card grids are nested
+inside `Group 134`. Only each explicitly mapped `card_backs` grid is exported; the
+outer page, water background, and separator marks stay intact in Figma and are
+excluded from the grid PNG. The grid is padded without resampling onto transparent
+2550 x 3300 Letter pixels at its measured origin rounded to whole pixels. Saved
+`sourceGeometry` records the export node, measured bounds, integer padding, original
+card rectangles, and fractional crop translation. These source-only translations
+do not move the approved V7 printer positions. Coral's measured larger card sizes
+are accepted only for its own sources. Its final sheet includes eight cards/inserts
+and excludes the reviewed empty ninth frame; historical nine-slot releases remain
+readable for exact reprints.
 
 ## Reef, Deep, and Oceanic boosters activated - October 20, 2026
 
@@ -725,16 +735,16 @@ Use Node 24 and `npm ci` (including dev dependencies on the printer PC). The PDF
 renderer, PNG decoder, and QR generator are local tools and are not imported by
 the public website. `npm.cmd` avoids Windows PowerShell script-policy issues.
 
-The normal refresh keeps all currently available products together:
-`--products blue-water,reef-dive-pack,deep-dive-pack,oceanic-dive-pack`. This selects
-217 eligible card printings, seven Drop Off sheets, and four ordinary/holo template
-assets (228 total). A deliberate Dive Pack-only scope selects the three booster
-IDs (221 assets) and excludes Drop Off. A Reef-only scope remains available with
+The normal refresh keeps all fifteen manufacturing products together through
+`run-sync.ps1`. This selects 217 eligible card printings, all 51 fixed sheets, and
+four ordinary/holo template assets (272 total). Conditions uses two nine-card
+sheets; the final Coral Garden, Murky Water, Stinging Fortress, and Disruption pages each contain
+eight actual cards. Starter Kit and accessory aliases reuse the same sheet assets.
+A deliberate Dive Pack-only scope selects the three booster IDs (221 assets) and
+excludes all fixed decks. A Reef-only scope remains available with
 `--products reef-dive-pack` (95 card printings plus four template assets, 99 total).
 Every scope retains the full catalog; it never narrows random draws to whichever
-images are available.
-Any product missing required artwork, including fixed decks outside the selected
-scope, stops before drawing.
+images are available. Any product missing required artwork stops before drawing.
 Already-finished inventory can still be fulfilled without new card artwork.
 The product scope participates in the source hash and release ID, so its cache
 cannot collide with the full-catalog export. Omitting `--products` keeps the
@@ -752,10 +762,10 @@ and stops if either changed.
 
 ```powershell
 # Export privately for review; no publication or printing.
-node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products blue-water,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --batch-size 1 --concurrency 2
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products coral-garden,blue-water,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,disruption,starter-kit,accessory-set,conditions-deck,dice-pack,reef-point-tokens,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --batch-size 1 --concurrency 2
 
 # Publish the reviewed scope at its exact saved version and release ID.
-node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products blue-water,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --version <reviewed-version> --release <reviewed-release-id> --publish
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products coral-garden,blue-water,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,disruption,starter-kit,accessory-set,conditions-deck,dice-pack,reef-point-tokens,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --version <reviewed-version> --release <reviewed-release-id> --publish
 ```
 
 Review the new release before publishing. All included assets must be complete
@@ -771,10 +781,10 @@ node scripts/manufacturing/sync-figma.mjs --check
 
 # Secrets belong in an ignored local environment file, not command arguments.
 # sync.env: FIGMA_ACCESS_TOKEN and STORE_ADMIN_TOKEN.
-node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products blue-water,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --publish
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products coral-garden,blue-water,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,disruption,starter-kit,accessory-set,conditions-deck,dice-pack,reef-point-tokens,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --publish
 
 # Subsequent runs only export/publish when the Figma version or mappings change.
-node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products blue-water,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --publish --if-changed
+node --env-file=.private/manufacturing/sync.env scripts/manufacturing/sync-figma.mjs --products coral-garden,blue-water,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,disruption,starter-kit,accessory-set,conditions-deck,dice-pack,reef-point-tokens,reef-dive-pack,deep-dive-pack,oceanic-dive-pack --publish --if-changed
 
 # Read-only readiness check, including the deployed database and private bucket.
 node --env-file=.env.local --env-file=.private/manufacturing/agent.env scripts/manufacturing/doctor.mjs --online

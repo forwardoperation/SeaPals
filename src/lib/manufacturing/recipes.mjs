@@ -2,13 +2,13 @@
 // These preserve the existing deck order and reference inserts.
 export const DECK_FRAMES = {
   "coral-garden": [
-    "2311:519240",
-    "2311:519501",
-    "2311:519503",
-    "2311:519505",
-    "2311:519507",
-    "2311:519509",
-    "2311:519511",
+    "4316:271759",
+    "4316:271767",
+    "4316:271774",
+    "4316:271781",
+    "4316:271788",
+    "4316:271795",
+    "4316:271802",
   ],
   "blue-water": [
     "2224:257783",
@@ -65,6 +65,9 @@ export const DECK_FRAMES = {
     "2404:533973",
   ],
 };
+// Coral Garden moved to the owner's nested cutter-layout sheets on October 28.
+// Export only the named card grid so the source page's water and marks stay in Figma.
+export const CORAL_GRID_FRAMES = ["4316:271763","4316:271771","4316:271778","4316:271785","4316:271792","4316:271799","4316:271806"];
 export const CONDITION_FRAMES = ["2366:320222", "2366:320233"];
 export const BOOSTER_PRODUCTS = Object.freeze({
   "reef-dive-pack": "reef",
@@ -145,6 +148,7 @@ export function fixedArtworkSources() {
         id: `sheet-${id}-${index + 1}`,
         nodeId,
         kind: "sheet",
+        ...(id === "coral-garden" ? { exportNodeId: CORAL_GRID_FRAMES[index] } : {}),
         ...(id === "blue-water" ? { displayName: `sheets-drop-off-${index + 1}` } : {}),
       })),
     ),

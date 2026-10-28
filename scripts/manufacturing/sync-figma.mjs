@@ -1,6 +1,7 @@
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { PNG } from "pngjs";
 import { buildPrintingCatalog } from "../../src/lib/manufacturing/boosters.mjs";
 import {
   BOOSTER_PRODUCTS,
@@ -322,75 +323,140 @@ export async function checkCutterTemplates(figma, source, version) {
   return response;
 }
 
+function fixedSheetGridPath(document, source = fixedArtworkSources().find(item => item.nodeId === document?.id)) {
+  const paths = [];
+  function visit(node, parents) {
+    if (!node || node.visible === false) return;
+    const path = [...parents, node];
+    if (node.name === "card_backs") { paths.push(path); return; }
+    for (const child of node.children ?? []) visit(child, path);
+  }
+  visit(document, []);
+  if (paths.length !== 1)
+    throw new Error("The fixed sheet needs exactly one visible Figma card_backs grid.");
+  const path = paths[0];
+  if (source?.exportNodeId && path.at(-1).id !== source.exportNodeId)
+    throw new Error("The fixed sheet's isolated export grid does not match its reviewed source mapping.");
+  return path;
+}
+
 export function sheetPositions(document) {
-  const grid = document.children?.find((n) => n.name === "card_backs");
-  if (!grid || !document.absoluteBoundingBox)
-    throw new Error("The fixed sheet needs its Figma card_backs grid.");
+  const grid = fixedSheetGridPath(document).at(-1);
+  if (!document.absoluteBoundingBox)
+    throw new Error("The fixed sheet needs its Figma Letter page bounds.");
   const positions = (grid.children ?? [])
     .filter((c) => c.visible !== false && c.absoluteBoundingBox)
     .map((c) => {
-      const b = c.absoluteBoundingBox,
-        origin = document.absoluteBoundingBox;
-      return {
-        x: b.x - origin.x,
-        y: b.y - origin.y,
-        width: b.width,
-        height: b.height,
-      };
+      const b = c.absoluteBoundingBox, origin = document.absoluteBoundingBox;
+      return { x: b.x - origin.x, y: b.y - origin.y, width: b.width, height: b.height };
     });
   if (!validFixedSheetPositions(positions, document.id))
-    throw new Error(
-      "The fixed sheet is not a supported card-count or Letter layout. Review its Figma frames.",
-    );
+    throw new Error("The fixed sheet is not a supported card-count or Letter layout. Review its Figma frames.");
   return positions;
 }
 
-// Fixed sheets are cropped after export. A parent fill is already flattened
-// into those crops, so it would hide the water underneath each printed card.
-// This is a new-source check only; saved releases keep their original pixels.
-const isDropOffSheet = (item) => item.kind === "sheet" && /^sheet-blue-water-[1-7]$/.test(item.id);
+const isFixedSheet = (item) => item.kind === "sheet";
 
-export function validateDropOffSheetBackgrounds(document, source) {
+export function validateFixedSheetBackgrounds(document, source) {
   const invalid = (detail) => {
     throw new Error(
-      `Drop Off sheet ${fixedSheetLabel(source.id)}: ${detail}. Visible parent fills flatten an opaque background into the card crops and cover the water. Remove or hide fills on the sheet and its card_backs grid before syncing; the active artwork release is unchanged.`,
+      `Fixed sheet ${fixedSheetLabel(source.id)}: ${detail}. Visible exported ancestor fills flatten an opaque background into the card crops and cover the water. Remove or hide fills on the exported sheet/grid ancestors before syncing; the active artwork release is unchanged.`,
     );
   };
   if (!document || document.id !== source.nodeId || document.visible === false)
     invalid("the expected visible source sheet is missing");
-  const grids = (document.children ?? []).filter(
-    (child) => child.name === "card_backs" && child.visible !== false,
-  );
-  if (grids.length !== 1) invalid("one visible card_backs grid is required");
-  for (const [label, parent] of [["sheet", document], ["card_backs grid", grids[0]]]) {
-    const fills = parent.fills ?? parent.background ?? [];
+  let path;
+  try { path = fixedSheetGridPath(document, source); } catch (error) { invalid(error.message); }
+  if (source.exportNodeId) {
+    const reviewed = fixedArtworkSources().find(item => item.id === source.id);
+    if (reviewed?.nodeId !== source.nodeId || reviewed?.exportNodeId !== source.exportNodeId)
+      invalid("the isolated grid is not a reviewed fixed-sheet export");
+    // Ancestors and siblings above this explicit export root never enter the PNG.
+    path = [path.at(-1)];
+  }
+  if (!source.exportNodeId) {
+    const cards = (path.at(-1).children ?? []).filter(card => card.visible !== false)
+      .map(card => card.absoluteBoundingBox).filter(Boolean);
+    const overlaps = (a, b) => a.x < b.x + b.width && a.x + a.width > b.x &&
+      a.y < b.y + b.height && a.y + a.height > b.y;
+    const checkSibling = (node) => {
+      if (node.visible === false || node.opacity === 0) return;
+      const paints = [...(node.fills ?? []), ...(node.background ?? []), ...(node.strokes ?? [])];
+      if (paints.some(paint => paint.visible !== false && (paint.opacity ?? 1) > 0 &&
+          (paint.type !== "SOLID" || (paint.color?.a ?? 1) > 0))) {
+        const bounds = node.absoluteRenderBounds ?? node.absoluteBoundingBox;
+        if (!bounds || !cards.length || cards.some(card => overlaps(bounds, card)))
+          invalid(`visible non-card layer ${node.name || node.id || "unknown"} overlaps a source card crop or lacks verifiable bounds`);
+      }
+      for (const child of node.children ?? []) checkSibling(child);
+    };
+    for (let index = 0; index < path.length - 1; index++)
+      for (const sibling of path[index].children ?? [])
+        if (sibling !== path[index + 1]) checkSibling(sibling);
+  }
+  for (const parent of path) {
+    const fills = [...(parent.fills ?? []), ...(parent.background ?? [])];
     if (fills.some((fill) => fill.visible !== false && (fill.opacity ?? 1) > 0 &&
       (fill.type !== "SOLID" || (fill.color?.a ?? 1) > 0)))
-      invalid(`the ${label} has a visible fill`);
+      invalid(`the ${parent === document ? "sheet" : parent.name || "ancestor"} has a visible fill`);
   }
 }
 
-export async function checkDropOffSheetBackgrounds(figma, source, version) {
-  const sheets = (source.sources ?? []).filter(isDropOffSheet);
+export function normalizeFixedSheetExport(bytes, document, source) {
+  validateFixedSheetBackgrounds(document, source);
+  const sourcePositions = sheetPositions(document);
+  if (!source.exportNodeId) return { bytes, positions: sourcePositions };
+  const grid = fixedSheetGridPath(document, source).at(-1), page = document.absoluteBoundingBox,
+    bounds = grid.absoluteBoundingBox;
+  if (!bounds || page.width !== 2550 || page.height !== 3300)
+    throw new Error("The isolated grid needs verified Letter page and source bounds.");
+  const sourceBounds = { x: bounds.x - page.x, y: bounds.y - page.y, width: bounds.width, height: bounds.height },
+    padding = { x: Math.round(sourceBounds.x), y: Math.round(sourceBounds.y) };
+  const raw = PNG.sync.read(bytes, { checkCRC: true });
+  if (raw.width !== Math.round(bounds.width) || raw.height !== Math.round(bounds.height) ||
+      padding.x < 0 || padding.y < 0 || padding.x + raw.width > 2550 || padding.y + raw.height > 3300)
+    throw new Error("The isolated grid PNG must match its measured bounds and fit fully inside Letter.");
+  if (sourcePositions.some(p => p.x < sourceBounds.x || p.y < sourceBounds.y ||
+      p.x + p.width > sourceBounds.x + sourceBounds.width || p.y + p.height > sourceBounds.y + sourceBounds.height))
+    throw new Error("The isolated export grid clips one or more measured source cards.");
+  const cropTranslation = { x: padding.x - sourceBounds.x, y: padding.y - sourceBounds.y },
+    positions = sourcePositions.map(p => ({ ...p, x: p.x + cropTranslation.x, y: p.y + cropTranslation.y }));
+  if (!validFixedSheetPositions(positions, source.id))
+    throw new Error("The padded fixed sheet has invalid card crop bounds.");
+  const padded = new PNG({ width: 2550, height: 3300 });
+  PNG.bitblt(raw, padded, 0, 0, raw.width, raw.height, padding.x, padding.y);
+  return {
+    bytes: PNG.sync.write(padded), positions,
+    sourceGeometry: { mode: "isolated-grid-letter", exportNodeId: source.exportNodeId,
+      sourceBounds, padding, cropTranslation, sourcePositions },
+  };
+}
+
+export async function checkFixedSheetBackgrounds(figma, source, version) {
+  const sheets = (source.sources ?? []).filter(isFixedSheet);
   if (!sheets.length) return null;
   if (!version || sheets.some((item) => !item.nodeId))
-    throw new Error("Drop Off background checks require mapped sheets and a pinned Figma version.");
+    throw new Error("Fixed-sheet background checks require mapped sheets and a pinned Figma version.");
   const ids = sheets.map((item) => item.nodeId).join(",");
   const response = await figma(
-    `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&depth=2&version=${encodeURIComponent(version)}`,
+    `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&depth=4&version=${encodeURIComponent(version)}`,
   );
   for (const item of sheets)
-    validateDropOffSheetBackgrounds(response.nodes?.[item.nodeId]?.document, item);
+    validateFixedSheetBackgrounds(response.nodes?.[item.nodeId]?.document, item);
   return response;
 }
 
+// Keep earlier private maintenance scripts compatible with the broader guard.
+export const validateDropOffSheetBackgrounds = validateFixedSheetBackgrounds;
+export const checkDropOffSheetBackgrounds = checkFixedSheetBackgrounds;
+
 export function figmaImageRoutes(fileKey, batch, version) {
-  // Transparent Drop Off pages need the complete Letter frame bounds. Other
-  // assets retain their existing Figma render bounds, even in a mixed batch.
+  // Fixed-sheet crops use coordinates relative to the complete Letter frame,
+  // including transparent margins. Other assets retain their existing bounds.
   return [false, true].flatMap((absoluteBounds) => {
-    const nodes = batch.filter((item) => isDropOffSheet(item) === absoluteBounds);
+    const nodes = batch.filter((item) => isFixedSheet(item) === absoluteBounds);
     if (!nodes.length) return [];
-    const ids = [...new Set(nodes.map((item) => item.nodeId))].join(",");
+    const ids = [...new Set(nodes.map((item) => item.exportNodeId ?? item.nodeId))].join(",");
     return [`images/${fileKey}?ids=${encodeURIComponent(ids)}&format=png&scale=1&version=${encodeURIComponent(version)}${absoluteBounds ? "&use_absolute_bounds=true" : ""}`];
   });
 }
@@ -488,9 +554,9 @@ export async function readFigmaSnapshot(figma, source, version) {
     throw new Error("Figma changed while validating the source snapshot. The active release is unchanged; retry from a fresh snapshot.");
   // Check selected deck ancestors before unchanged/resume shortcuts and again
   // before publication, including when every PNG is already cached locally.
-  const sheets = await checkDropOffSheetBackgrounds(figma, source, version);
+  const sheets = await checkFixedSheetBackgrounds(figma, source, version);
   if (sheets && !sameFigmaSnapshot(snapshot, parseFigmaSnapshot(sheets, version)))
-    throw new Error("Figma changed while validating Drop Off sheet backgrounds. The active release is unchanged; retry from a fresh snapshot.");
+    throw new Error("Figma changed while validating fixed-sheet backgrounds. The active release is unchanged; retry from a fresh snapshot.");
   return snapshot;
 }
 
@@ -719,7 +785,7 @@ async function main() {
       }
       for (const item of batch) {
         const node = nodes.nodes?.[item.nodeId]?.document,
-          url = images[item.nodeId];
+          url = images[item.exportNodeId ?? item.nodeId];
         if (!node || !url)
           throw new Error(`Missing Figma export for ${item.id}.`);
         if (
@@ -737,10 +803,11 @@ async function main() {
           signal: AbortSignal.timeout(90_000),
         });
         if (!response.ok) throw Object.assign(new Error(`Could not download ${item.id} (${response.status}).`), { status: response.status });
-        const bytes = Buffer.from(await response.arrayBuffer());
-        if (bytes.length > 30_000_000)
+        const downloaded = Buffer.from(await response.arrayBuffer());
+        if (downloaded.length > 30_000_000)
           throw new Error("Figma export is too large.");
-        const hash = sha256(bytes),
+        const normalized = item.kind === "sheet" ? normalizeFixedSheetExport(downloaded, node, item) : { bytes: downloaded };
+        const bytes = normalized.bytes, hash = sha256(bytes),
           dimensions = pngDimensions(bytes),
           file = path.join(dir, `${hash}.png`);
         await writeFile(file, bytes, { flush: true });
@@ -750,7 +817,7 @@ async function main() {
           sha256: hash,
           ...dimensions,
           nodeId: item.nodeId,
-          ...(item.kind === "sheet" ? { positions: sheetPositions(node) } : {}),
+          ...(item.kind === "sheet" ? { positions: normalized.positions, ...(normalized.sourceGeometry ? { sourceGeometry: normalized.sourceGeometry } : {}) } : {}),
         };
         await saveProgress();
       }

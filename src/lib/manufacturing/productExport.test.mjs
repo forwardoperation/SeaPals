@@ -10,6 +10,7 @@ import {
 import { contentHash, generateBooster } from "./boosters.mjs";
 import { requireOrderArtwork, validateRelease } from "./integration.mjs";
 import { PRINT_BACKGROUNDS } from "./backdrops.mjs";
+import { BOOSTER_PRODUCTS, FIXED_PRODUCTS, fixedSheetAssets } from "./recipes.mjs";
 
 const read = async (relative) => JSON.parse(await readFile(new URL(relative, import.meta.url), "utf8"));
 const [setList, gallery, holos, policy] = await Promise.all([
@@ -31,6 +32,7 @@ function releaseFor(selected) {
         nodeId: item.nodeId, sha256: hash, path: `manufacturing/sha256/${hash}.png`,
         width: background?.assetWidth ?? background?.width ?? (item.kind === "card" ? 750 : 2550),
         height: background?.assetHeight ?? background?.height ?? (item.kind === "card" ? 1050 : 3300),
+        ...(item.kind === "sheet" ? { positions: Array.from({ length: ["sheet-murky-water-7", "sheet-stinging-fortress-7", "sheet-disruption-7"].includes(item.id) ? 8 : 9 }, (_, index) => ({ x: 167 + index % 3 * 720, y: 106 + Math.floor(index / 3) * 1008, width: 720, height: 1008 })) } : {}),
       }];
     })),
   };
@@ -135,4 +137,24 @@ test("invalid products fail before a sync and missing source entries never produ
   assert.throws(() => selectProductArtwork(source, ["dice-pack"]), /no printable artwork/);
   const missing = { ...source, sources: source.sources.filter((item) => item.id !== "reef-002") };
   assert.throws(() => selectProductArtwork(missing, ["reef-dive-pack"]), /missing required artwork source entries/);
+});
+
+test("the recurring refresh retains all 15 products and every deck and Conditions sheet", async () => {
+  const script = await readFile(new URL("../../../scripts/manufacturing/run-sync.ps1", import.meta.url), "utf8");
+  const match = script.match(/'--products', '([^']+)'/);
+  assert.ok(match, "The scheduled helper must specify its complete published scope");
+  const products = parseProducts(["--products", match[1]]);
+  assert.deepEqual(products, [...Object.keys(FIXED_PRODUCTS), ...Object.keys(BOOSTER_PRODUCTS)].sort());
+  assert.equal(products.length, 15);
+  const selected = selectProductArtwork(source, products);
+  assert.equal(selected.sources.length, 272);
+  assert.equal(selected.sources.filter(item => item.kind === "sheet").length, 51);
+  assert.deepEqual(ids(selected.sources), ids(source.sources));
+  const release = validateRelease(releaseFor(selected));
+  for (const productId of products) requireOrderArtwork([{ productId, quantity: 1 }], release);
+  assert.equal(fixedSheetAssets("starter-kit").length, 16);
+  for (const productId of ["starter-kit", "conditions-deck", "accessory-set"]) {
+    const incomplete = structuredClone(release); delete incomplete.assets["sheet-conditions-2"];
+    assert.throws(() => requireOrderArtwork([{ productId, quantity: 1 }], incomplete), /sheet-conditions-2/);
+  }
 });

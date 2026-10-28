@@ -1,0 +1,1854 @@
+{
+  "version": "2415372445419731966",
+  "lastModified": "2026-10-28T11:07:53Z",
+  "note": "Measured before source repair; card contents and image references omitted. The reviewed blank final slot is hidden in test fixtures before extraction.",
+  "documents": {
+    "4316:271759": {
+      "id": "4316:271759",
+      "name": "coral-garden-1",
+      "type": "FRAME",
+      "absoluteBoundingBox": {
+        "x": 0,
+        "y": 7492,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [
+        {
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "children": [
+        {
+          "id": "4316:271760",
+          "name": "Group 134",
+          "type": "GROUP",
+          "absoluteBoundingBox": {
+            "x": -16,
+            "y": 7427,
+            "width": 2582,
+            "height": 3311
+          },
+          "fills": [],
+          "children": [
+            {
+              "id": "4316:271761",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 91,
+                "y": 7427,
+                "width": 2326,
+                "height": 114
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271762",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 109,
+                "y": 7556,
+                "width": 2337,
+                "height": 3182
+              },
+              "fills": [
+                {
+                  "type": "IMAGE"
+                }
+              ]
+            },
+            {
+              "id": "4316:271763",
+              "name": "card_backs",
+              "type": "FRAME",
+              "absoluteBoundingBox": {
+                "x": 135,
+                "y": 7557.6435546875,
+                "width": 2330,
+                "height": 3170
+              },
+              "fills": [],
+              "children": [
+                {
+                  "id": "4316:271809",
+                  "name": "Coral gardener",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 154.0333251953125,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:271810",
+                  "name": "Coral gardener",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 930.7000122070312,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:271811",
+                  "name": "Dr Evans",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 1707.36669921875,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:271812",
+                  "name": "Restocking",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 154.0333251953125,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:271813",
+                  "name": "Restocking",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 930.7000122070312,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:271814",
+                  "name": "Restocking",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 1707.36669921875,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:271815",
+                  "name": "Scientist Jes",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 154.0333251953125,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:271816",
+                  "name": "Scientist Jes",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 930.7000122070312,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:271817",
+                  "name": "Coral Medicine",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 1707.36669921875,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                }
+              ]
+            },
+            {
+              "id": "4316:271764",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": -16,
+                "y": 8612,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271765",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": -16,
+                "y": 9668,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "4316:271767": {
+      "id": "4316:271767",
+      "name": "coral-garden-2",
+      "type": "FRAME",
+      "absoluteBoundingBox": {
+        "x": 2590,
+        "y": 7492,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [
+        {
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "children": [
+        {
+          "id": "4316:271768",
+          "name": "Group 134",
+          "type": "GROUP",
+          "absoluteBoundingBox": {
+            "x": 2574,
+            "y": 7427,
+            "width": 2582,
+            "height": 3311
+          },
+          "fills": [],
+          "children": [
+            {
+              "id": "4316:271769",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 2681,
+                "y": 7427,
+                "width": 2326,
+                "height": 114
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271770",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 2699,
+                "y": 7556,
+                "width": 2337,
+                "height": 3182
+              },
+              "fills": [
+                {
+                  "type": "IMAGE"
+                }
+              ]
+            },
+            {
+              "id": "4316:271771",
+              "name": "card_backs",
+              "type": "FRAME",
+              "absoluteBoundingBox": {
+                "x": 2725,
+                "y": 7557.6435546875,
+                "width": 2330,
+                "height": 3170
+              },
+              "fills": [],
+              "children": [
+                {
+                  "id": "4316:272688",
+                  "name": "remote-search",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 2743.9833984375,
+                    "y": 7568.88671875,
+                    "width": 738.7000122070312,
+                    "height": 1034.179931640625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:272689",
+                  "name": "remote-search",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 3520.64990234375,
+                    "y": 7568.88671875,
+                    "width": 738.7000122070312,
+                    "height": 1034.179931640625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:272690",
+                  "name": "Fishing",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 4297.31640625,
+                    "y": 7568.88671875,
+                    "width": 738.7000122070312,
+                    "height": 1034.179931640625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:272691",
+                  "name": "Fishing",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 2743.9833984375,
+                    "y": 8625.5537109375,
+                    "width": 738.7000122070312,
+                    "height": 1034.179931640625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:272692",
+                  "name": "Recovery",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 3520.64990234375,
+                    "y": 8625.5537109375,
+                    "width": 738.7000122070312,
+                    "height": 1034.179931640625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:272693",
+                  "name": "reef-manta-ray",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 4297.31640625,
+                    "y": 8625.5537109375,
+                    "width": 738.7000122070312,
+                    "height": 1034.179931640625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:272694",
+                  "name": "bottlenose-dolpin",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 2743.9833984375,
+                    "y": 9682.220703125,
+                    "width": 738.7000122070312,
+                    "height": 1034.179931640625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:272695",
+                  "name": "spinner-dolphins",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 3520.64990234375,
+                    "y": 9682.220703125,
+                    "width": 738.7000122070312,
+                    "height": 1034.179931640625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:272696",
+                  "name": "spinner-dolphins",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 4297.31640625,
+                    "y": 9682.220703125,
+                    "width": 738.7000122070312,
+                    "height": 1034.179931640625
+                  },
+                  "fills": []
+                }
+              ]
+            },
+            {
+              "id": "4316:271772",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 2574,
+                "y": 8612,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271773",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 2574,
+                "y": 9668,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "4316:271774": {
+      "id": "4316:271774",
+      "name": "coral-garden-3",
+      "type": "FRAME",
+      "absoluteBoundingBox": {
+        "x": 5180,
+        "y": 7492,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [
+        {
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "children": [
+        {
+          "id": "4316:271775",
+          "name": "Group 134",
+          "type": "GROUP",
+          "absoluteBoundingBox": {
+            "x": 5164,
+            "y": 7427,
+            "width": 2582,
+            "height": 3311
+          },
+          "fills": [],
+          "children": [
+            {
+              "id": "4316:271776",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 5271,
+                "y": 7427,
+                "width": 2326,
+                "height": 114
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271777",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 5289,
+                "y": 7556,
+                "width": 2337,
+                "height": 3182
+              },
+              "fills": [
+                {
+                  "type": "IMAGE"
+                }
+              ]
+            },
+            {
+              "id": "4316:271778",
+              "name": "card_backs",
+              "type": "FRAME",
+              "absoluteBoundingBox": {
+                "x": 5315,
+                "y": 7557.6435546875,
+                "width": 2330,
+                "height": 3170
+              },
+              "fills": [],
+              "children": [
+                {
+                  "id": "4316:280677",
+                  "name": "goliath-grouper",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 5333.541015625,
+                    "y": 7568.95703125,
+                    "width": 739.5848388671875,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "4316:280678",
+                  "name": "goliath-grouper",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 6110.20751953125,
+                    "y": 7568.95703125,
+                    "width": 739.5848388671875,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "4316:280679",
+                  "name": "Cleaner Shrimp",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 6887.36669921875,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:280680",
+                  "name": "Cleaner Shrimp",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 5334.033203125,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:280681",
+                  "name": "Cleaner Shrimp",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 6110.7001953125,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:280682",
+                  "name": "emerald-crab",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 6887.36669921875,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:280683",
+                  "name": "Arrow Crab",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 5334.033203125,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "4316:280684",
+                  "name": "Arrow Crab",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 6110.7001953125,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "4316:280685",
+                  "name": "blue-crab",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 6887.36669921875,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4316:271779",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 5164,
+                "y": 8612,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271780",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 5164,
+                "y": 9668,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "4316:271781": {
+      "id": "4316:271781",
+      "name": "coral-garden-4",
+      "type": "FRAME",
+      "absoluteBoundingBox": {
+        "x": 7770,
+        "y": 7492,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [
+        {
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "children": [
+        {
+          "id": "4316:271782",
+          "name": "Group 134",
+          "type": "GROUP",
+          "absoluteBoundingBox": {
+            "x": 7754,
+            "y": 7427,
+            "width": 2582,
+            "height": 3311
+          },
+          "fills": [],
+          "children": [
+            {
+              "id": "4316:271783",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 7861,
+                "y": 7427,
+                "width": 2326,
+                "height": 114
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271784",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 7879,
+                "y": 7556,
+                "width": 2337,
+                "height": 3182
+              },
+              "fills": [
+                {
+                  "type": "IMAGE"
+                }
+              ]
+            },
+            {
+              "id": "4316:271785",
+              "name": "card_backs",
+              "type": "FRAME",
+              "absoluteBoundingBox": {
+                "x": 7905,
+                "y": 7557.6435546875,
+                "width": 2330,
+                "height": 3170
+              },
+              "fills": [],
+              "children": [
+                {
+                  "id": "4316:286753",
+                  "name": "Bluestiped Grunt",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 7924.033203125,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "4316:286754",
+                  "name": "Bluestiped Grunt",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 8700.7001953125,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "4316:286755",
+                  "name": "Bluestiped Grunt",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 9477.3671875,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "4316:286756",
+                  "name": "french-angelfish",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 7924.033203125,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:286757",
+                  "name": "french-angelfish",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 8700.7001953125,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:286758",
+                  "name": "Twinspot Butterflyfish",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 9477.3671875,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:286759",
+                  "name": "Twinspot Butterflyfish",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 7924.033203125,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:286760",
+                  "name": "spectacled-parrotfish",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 8700.7001953125,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:286761",
+                  "name": "spectacled-parrotfish",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 9477.3671875,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                }
+              ]
+            },
+            {
+              "id": "4316:271786",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 7754,
+                "y": 8612,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271787",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 7754,
+                "y": 9668,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "4316:271788": {
+      "id": "4316:271788",
+      "name": "coral-garden-5",
+      "type": "FRAME",
+      "absoluteBoundingBox": {
+        "x": 10360,
+        "y": 7492,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [
+        {
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "children": [
+        {
+          "id": "4316:271789",
+          "name": "Group 134",
+          "type": "GROUP",
+          "absoluteBoundingBox": {
+            "x": 10344,
+            "y": 7427,
+            "width": 2582,
+            "height": 3300.6435546875
+          },
+          "fills": [],
+          "children": [
+            {
+              "id": "4316:271790",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 10451,
+                "y": 7427,
+                "width": 2326,
+                "height": 114
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271791",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 10469,
+                "y": 7556,
+                "width": 2337,
+                "height": 3166
+              },
+              "fills": [
+                {
+                  "type": "IMAGE"
+                }
+              ]
+            },
+            {
+              "id": "4316:271792",
+              "name": "card_backs",
+              "type": "FRAME",
+              "absoluteBoundingBox": {
+                "x": 10505,
+                "y": 7557.6435546875,
+                "width": 2330,
+                "height": 3170
+              },
+              "fills": [],
+              "children": [
+                {
+                  "id": "4316:299765",
+                  "name": "Boulderstar - Base",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 10524.033203125,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:299766",
+                  "name": "Boulderstar - Base",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 11300.7001953125,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:299767",
+                  "name": "Boulderstar - Base",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 12077.3671875,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:299768",
+                  "name": "Boulderstar - Stage 1",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 10524.033203125,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:299769",
+                  "name": "Boulderstar - Stage 3",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 11300.7001953125,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:299770",
+                  "name": "Boulderstar - Stage 2",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 12077.3671875,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:299771",
+                  "name": "Elkhorn - Base",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 10524.033203125,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:299772",
+                  "name": "Elkhorn - Base",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 11300.7001953125,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:299773",
+                  "name": "Elkhorn - Base",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 12077.3671875,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                }
+              ]
+            },
+            {
+              "id": "4316:271793",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 10344,
+                "y": 8612,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271794",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 10344,
+                "y": 9668,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "4316:271795": {
+      "id": "4316:271795",
+      "name": "coral-garden-6",
+      "type": "FRAME",
+      "absoluteBoundingBox": {
+        "x": 12950,
+        "y": 7492,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [
+        {
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "children": [
+        {
+          "id": "4316:271796",
+          "name": "Group 134",
+          "type": "GROUP",
+          "absoluteBoundingBox": {
+            "x": 12934,
+            "y": 7427,
+            "width": 2582,
+            "height": 3311
+          },
+          "fills": [],
+          "children": [
+            {
+              "id": "4316:271797",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 13041,
+                "y": 7427,
+                "width": 2326,
+                "height": 114
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271798",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 13059,
+                "y": 7556,
+                "width": 2337,
+                "height": 3182
+              },
+              "fills": [
+                {
+                  "type": "IMAGE"
+                }
+              ]
+            },
+            {
+              "id": "4316:271799",
+              "name": "card_backs",
+              "type": "FRAME",
+              "absoluteBoundingBox": {
+                "x": 13085,
+                "y": 7557.6435546875,
+                "width": 2330,
+                "height": 3170
+              },
+              "fills": [],
+              "children": [
+                {
+                  "id": "4316:317451",
+                  "name": "Elkhorn - Stage 1",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 13104.033203125,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:317452",
+                  "name": "Elkhorn - Stage 3",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 13880.7001953125,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:317453",
+                  "name": "Elkhorn - Stage 2",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 14657.3671875,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:317454",
+                  "name": "Lettuce Coral - Base",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 13104.033203125,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:317455",
+                  "name": "Lettuce Coral - Base",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 13880.7001953125,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:317456",
+                  "name": "Lettuce Coral - Stage 1",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 14657.3671875,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:317457",
+                  "name": "Lettuce Coral - Stage 2",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 13104.033203125,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:317458",
+                  "name": "Clubfinger",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 13880.7001953125,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "4316:317459",
+                  "name": "Clubfinger",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 14657.3671875,
+                    "y": 9682.2900390625,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4316:271800",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 12934,
+                "y": 8612,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271801",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 12934,
+                "y": 9668,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "4316:271802": {
+      "id": "4316:271802",
+      "name": "coral-garden-7",
+      "type": "FRAME",
+      "absoluteBoundingBox": {
+        "x": 15540,
+        "y": 7492,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [
+        {
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "children": [
+        {
+          "id": "4316:271803",
+          "name": "Group 134",
+          "type": "GROUP",
+          "absoluteBoundingBox": {
+            "x": 15524,
+            "y": 7427,
+            "width": 2582,
+            "height": 3300.6435546875
+          },
+          "fills": [],
+          "children": [
+            {
+              "id": "4316:271804",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 15631,
+                "y": 7427,
+                "width": 2326,
+                "height": 114
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271805",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 15649,
+                "y": 7556,
+                "width": 2337,
+                "height": 3168
+              },
+              "fills": [
+                {
+                  "type": "IMAGE"
+                }
+              ]
+            },
+            {
+              "id": "4316:271806",
+              "name": "card_backs",
+              "type": "FRAME",
+              "absoluteBoundingBox": {
+                "x": 15675,
+                "y": 7557.6435546875,
+                "width": 2330,
+                "height": 3170
+              },
+              "fills": [],
+              "children": [
+                {
+                  "id": "4316:334145",
+                  "name": "Clubfinger",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 15694.033203125,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "4316:334146",
+                  "name": "Clubfinger",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 16470.69921875,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "4316:334147",
+                  "name": "Clubfinger",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 17247.3671875,
+                    "y": 7568.95703125,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "visible": false,
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "4316:334148",
+                  "name": "Mustard Coral - Base",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 15694.033203125,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:334149",
+                  "name": "Mustard Coral - Base",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 16470.69921875,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:334150",
+                  "name": "coral-reef",
+                  "type": "INSTANCE",
+                  "absoluteBoundingBox": {
+                    "x": 17247.3671875,
+                    "y": 8625.623046875,
+                    "width": 738.6000366210938,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:334151",
+                  "name": "Frame 2",
+                  "type": "FRAME",
+                  "absoluteBoundingBox": {
+                    "x": 15694.033203125,
+                    "y": 9682.2900390625,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:334201",
+                  "name": "Frame 1",
+                  "type": "FRAME",
+                  "absoluteBoundingBox": {
+                    "x": 16470.69921875,
+                    "y": 9682.2900390625,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "4316:334225",
+                  "name": "Frame 3",
+                  "type": "FRAME",
+                  "absoluteBoundingBox": {
+                    "x": 17247.3671875,
+                    "y": 9682.2900390625,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4316:271807",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 15524,
+                "y": 8612,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "4316:271808",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 15524,
+                "y": 9668,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

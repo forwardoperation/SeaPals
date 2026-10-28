@@ -14,13 +14,23 @@ const EIGHT_CARD_SOURCES = new Set([
   "sheet-disruption-7", "2404:533973",
 ]);
 
+// These larger source cards are measured only on the October 28 Coral sheets.
+// Keep historic Coral crops valid and do not widen other decks' accepted sizes.
+const CORAL_SOURCES = new Set(["4316:271759","4316:271767","4316:271774","4316:271781","4316:271788","4316:271795","4316:271802"]);
+const CORAL_CARD_SIZES = [[738.6000366210938, 1034.0400390625], [738.7000122070312, 1034.179931640625], [739.5848388671875, 1034.0400390625]];
+
 export function validFixedSheetPositions(positions, sourceId) {
-  const count = EIGHT_CARD_SOURCES.has(sourceId) ? 8 : 9;
-  return Array.isArray(positions) && positions.length === count && positions.every((p) =>
+  const coral = CORAL_SOURCES.has(sourceId) || /^sheet-coral-garden-[1-7]$/.test(sourceId ?? "");
+  // Saved Coral sheet 7 releases may include the former ninth blank slot.
+  const counts = sourceId === "sheet-coral-garden-7" ? [8, 9]
+    : EIGHT_CARD_SOURCES.has(sourceId) || sourceId === "4316:271802" ? [8] : [9];
+  return Array.isArray(positions) && counts.includes(positions.length) && positions.every((p) =>
     p && [p.x, p.y, p.width, p.height].every(Number.isFinite) &&
     p.x >= 0 && p.y >= 0 && p.width > 0 && p.height > 0 &&
     p.x + p.width <= 2550 && p.y + p.height <= 3300 &&
     Math.abs(p.width / p.height - 5 / 7) <= 0.003 &&
-    FIXED_CARD_SIZES.some(([width, height]) =>
-      Math.abs(p.width - width) <= 1 && Math.abs(p.height - height) <= 1));
+    (FIXED_CARD_SIZES.some(([width, height]) =>
+      Math.abs(p.width - width) <= 1 && Math.abs(p.height - height) <= 1) ||
+      coral && CORAL_CARD_SIZES.some(([width, height]) =>
+        Math.abs(p.width - width) <= 0.01 && Math.abs(p.height - height) <= 0.01)));
 }

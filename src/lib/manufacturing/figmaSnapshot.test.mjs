@@ -91,9 +91,9 @@ function figmaFixture({
       if (fail) throw fail;
       const url = new URL(`https://api.figma.com/v1/${route}`);
       if (url.pathname.endsWith("/nodes")) {
-        if (url.searchParams.get("depth") === "2") {
+        if (url.searchParams.get("depth") === "4") {
           const response = { ...dropOff, nodes: {
-            "2224:312944": { document: { id: "2224:312944", fills: [], children: [{ name: "card_backs", fills: [] }] } },
+            ...Object.fromEntries(url.searchParams.get("ids").split(",").map(id => [id, { document: { id, fills: [], children: [{ name: "card_backs", fills: [] }] } }])),
           } };
           mutateDropOff(response);
           return response;
@@ -196,8 +196,8 @@ test("selected Drop Off parent fills block an unchanged skip and cached publicat
   await assert.rejects(async () => {
     const current = await readFigmaSnapshot(f.figma, dropOffSource, snapshot.version);
     skipReached = canReuseFigmaSnapshot(cached(), current, sourceHash);
-  }, /Drop Off.*opaque background.*water/);
-  await assert.rejects(withVerifiedFigmaSnapshot(f.figma, dropOffSource, snapshot, async () => { writesOrUploads++; }), /Drop Off.*opaque background.*water/);
+  }, /Fixed sheet.*opaque background.*water/);
+  await assert.rejects(withVerifiedFigmaSnapshot(f.figma, dropOffSource, snapshot, async () => { writesOrUploads++; }), /Fixed sheet.*opaque background.*water/);
   assert.equal(skipReached, false);
   assert.equal(writesOrUploads, 0);
 });
@@ -211,7 +211,7 @@ test("selected Drop Off checks share snapshot provenance and finish before a gua
   });
   assert.equal(actions, 1);
   const drifted = figmaFixture({ dropOff: changedSnapshot });
-  await assert.rejects(withVerifiedFigmaSnapshot(drifted.figma, dropOffSource, snapshot, () => { actions++; }), /changed.*Drop Off/i);
+  await assert.rejects(withVerifiedFigmaSnapshot(drifted.figma, dropOffSource, snapshot, () => { actions++; }), /changed.*fixed-sheet/i);
   assert.equal(actions, 1, "No operation may run after a different sheet snapshot");
 });
 
@@ -324,3 +324,13 @@ test("published legacy releases remain valid without new snapshot metadata", asy
   assert.deepEqual(legacy, before, "Loading an old immutable release must not rewrite its metadata.");
 });
 
+
+test("expansion and Conditions parent fills also stop cached publication", async () => {
+  for (const [id, nodeId] of [["sheet-coral-garden-1", "2311:519240"], ["sheet-darkness-shroud-1", "2298:446032"], ["sheet-conditions-2", "2366:320233"]]) {
+    const selected = { ...source, sources: [{ id, kind: "sheet", nodeId }] };
+    const f = figmaFixture({ mutateDropOff(response) { response.nodes[nodeId].document.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1, a: 1 } }]; } });
+    let writes = 0;
+    await assert.rejects(withVerifiedFigmaSnapshot(f.figma, selected, snapshot, () => { writes++; }), /visible fill.*opaque background.*water/);
+    assert.equal(writes, 0);
+  }
+});
