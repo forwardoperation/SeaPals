@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { validateCutterTemplate, checkCutterTemplates } from '../../../scripts/manufacturing/sync-figma.mjs';
-import { V5_PRINT_LAYOUT as PRINT_LAYOUT, BACK_TEMPLATE, V5_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE, PRINT_LAYOUT as CURRENT_PRINT_LAYOUT, HOLO_PRINT_LAYOUT as CURRENT_HOLO_PRINT_LAYOUT } from './printPlan.mjs';
+import { V5_PRINT_LAYOUT as PRINT_LAYOUT, V5_BACK_TEMPLATE as BACK_TEMPLATE, V5_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT, V5_HOLO_BACK_TEMPLATE as HOLO_BACK_TEMPLATE, V6_PRINT_LAYOUT as CURRENT_PRINT_LAYOUT, V6_HOLO_PRINT_LAYOUT as CURRENT_HOLO_PRINT_LAYOUT } from './printPlan.mjs';
 
 // Recorded REST geometry contains no image references, artwork paths, or private
 // export URLs. The empty grids intentionally test placement without card guides.

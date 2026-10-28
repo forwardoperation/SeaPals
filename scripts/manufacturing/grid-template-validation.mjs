@@ -1,13 +1,13 @@
-import { CUTTER_LAYOUT_V5 } from "../../src/lib/manufacturing/backdrops.mjs";
+import { CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6 } from "../../src/lib/manufacturing/backdrops.mjs";
 
-// V5/V6 use empty centered front grids and native, complete Canon rear pages.
+// V5/V6/V7 use empty centered front grids and native, complete Canon rear pages.
 // Its validation is deliberately separate from V4's rotated guide rectangles.
 const visible = (nodes = []) => nodes.filter(node => node.visible !== false);
 const close = (a, b, tolerance = 0.01) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= tolerance;
 const identity = [[1, 0], [0, 1]];
 const sources = {
-  '4290:38532': { component: '4317:7886', background: '4317:7887', water: '4317:7876', waterX: 139, legacyWaterX: 119 },
-  '4311:139557': { component: '4317:8434', background: '4317:8435', water: '4317:8422', waterX: 71, holo: true },
+  '4290:38532': { component: '4317:7886', background: '4317:7887', water: '4317:7876', waterX: 134, v6WaterX: 139, legacyWaterX: 119 },
+  '4311:139557': { component: '4317:8434', background: '4317:8435', water: '4317:8422', waterX: 86, v6WaterX: 71, legacyWaterX: 71, holo: true },
   '4244:451219': { rear: true },
   '4311:139076': { rear: true, holo: true, component: '4317:8408', background: '4317:8409' },
 };
@@ -73,7 +73,8 @@ export function validateGridTemplate(document, template) {
   if (children.length !== (saved.background ? 2 : 1) || grid?.type !== 'FRAME' || grid.name !== 'card_backs' || grid.id !== expected.nodeId)
     invalid('the saved card_backs grid and background layers are required');
   if (saved.background) checkBackground(children[0], { ...saved,
-    waterX: template.version === CUTTER_LAYOUT_V5 && saved.legacyWaterX !== undefined ? saved.legacyWaterX : saved.waterX,
+    waterX: template.version === CUTTER_LAYOUT_V5 ? saved.legacyWaterX
+      : template.version === CUTTER_LAYOUT_V6 ? saved.v6WaterX : saved.waterX,
   }, invalid);
   clean(grid, invalid, 'card grid');
   if (visible(grid.fills).length || grid.clipsContent !== true) invalid('the card grid must stay transparent and clipped');

@@ -6,6 +6,32 @@ checklist, and buyer milestone emails. **Printing is enabled for Reef, Deep,
 and Oceanic booster jobs and Drop Off decks approved with Send to printers.** Buyer manufacturing
 notifications and paid test-order intake remain disabled.
 
+## October 28 template alignment: immutable V7 layout
+
+V7 follows the four Page_Templates grids in Figma snapshot
+`2415372445419731966` / `2026-10-28T11:07:53Z`:
+
+| Template | Grid x | Change from V6 |
+|---|---:|---:|
+| Ordinary Epson front | 145 | -5 pixels |
+| Holographic Epson front | 95 | +15 pixels |
+| Ordinary Canon rear | 65 | -15 pixels |
+| Holographic Canon rear | 110 | -15 pixels |
+
+All vertical positions, card sizes, grid sizes, and rotations stay unchanged.
+The ordinary front water moves from x139 to x134, and the holo front water
+moves from x71 to x86. The four native template PNGs are refreshed together.
+The release retains all 217 approved card images and seven transparent Drop
+Off sheets from the active artwork release, including their original per-asset
+provenance. No artwork is made public.
+
+V7 applies to new manifests after release activation. Saved V5/V6 jobs and
+reprints keep their original geometry and private assets. To use the adjusted
+templates, create a new stock build or prepare a new order. Ordinary Dive Packs
+still use named finished-holo pull instructions; separate holo replenishment
+uses the holographic pair. Printer driver settings and the calibrated Epson
+page-placement transform are unchanged.
+
 ## Printer queue checks and missing-sheet recovery (October 26)
 
 The local helper checks the exact configured Windows queue before sending each
@@ -915,11 +941,11 @@ export mode requires complete mappings for every eligible printing.
   Conditions, dice, and tokens. Standalone prepared accessory SKUs are supported.
   Existing packaging supplies are checked during packing; this integration
   does not generate new box/wrapper artwork or carrier labels.
-- New releases use the October 26 V5 templates: upright native Epson cards
+- New releases use the October 28 V7 templates: upright native Epson cards
   centered in the supplied grid, plus the complete Canon rear master with its
   white gutters. Ordinary and holo replenishment have separate front/back
   templates; randomized packs continue using ordinary sheets with named holo
-  pull instructions. Existing V1/V2/V3/V4 jobs retain their original layouts
+  pull instructions. Existing V1 through V6 jobs retain their original layouts
   and assets. See `manufacturing-workflow.md` for the four exact references.
   No automatic duplexing or separate alignment print is used.
 - Work tickets, fronts, and backs have separate durable attempt states. The

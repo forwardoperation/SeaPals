@@ -6,7 +6,7 @@ import path from "node:path";
 import { PDFArray, PDFDocument, PDFName, PDFRawStream, decodePDFRawStream } from "pdf-lib";
 import { PNG } from "pngjs";
 import { buildPrintingCatalog, contentHash } from "./boosters.mjs";
-import { V5_PRINT_LAYOUT as PRINT_LAYOUT, BACK_TEMPLATE, V5_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE, PRINT_LAYOUT as CURRENT_PRINT_LAYOUT, HOLO_PRINT_LAYOUT as CURRENT_HOLO_PRINT_LAYOUT, createManufacturingManifest } from "./printPlan.mjs";
+import { V5_PRINT_LAYOUT as PRINT_LAYOUT, V5_BACK_TEMPLATE as BACK_TEMPLATE, V5_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT, V5_HOLO_BACK_TEMPLATE as HOLO_BACK_TEMPLATE, V6_PRINT_LAYOUT as CURRENT_PRINT_LAYOUT, V6_HOLO_PRINT_LAYOUT as CURRENT_HOLO_PRINT_LAYOUT, createManufacturingManifest } from "./printPlan.mjs";
 import { sha256 } from "./integration.mjs";
 import { createHoloBatch, parseHoloSelections, verifyHoloBatch } from "./holoBatch.mjs";
 import { renderHoloBatch, renderJob } from "../../../scripts/manufacturing/render.mjs";

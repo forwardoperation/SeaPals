@@ -7,8 +7,8 @@ import { PDFArray, PDFDocument, PDFName, PDFRawStream, decodePDFRawStream } from
 import { PNG } from "pngjs";
 import { buildPrintingCatalog, contentHash } from "./boosters.mjs";
 import {
-  PRINT_LAYOUT, V5_PRINT_LAYOUT, BACK_TEMPLATE, HOLO_PRINT_LAYOUT,
-  V5_HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE, createManufacturingManifest,
+  V6_PRINT_LAYOUT as PRINT_LAYOUT, V5_PRINT_LAYOUT, V6_BACK_TEMPLATE as BACK_TEMPLATE, V6_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT,
+  V5_HOLO_PRINT_LAYOUT, V6_HOLO_BACK_TEMPLATE as HOLO_BACK_TEMPLATE, createManufacturingManifest,
   preflightPrintAssets,
 } from "./printPlan.mjs";
 import { sha256, validateRelease } from "./integration.mjs";

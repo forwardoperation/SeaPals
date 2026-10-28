@@ -318,7 +318,7 @@ export async function checkCutterTemplates(figma, source, version) {
     `files/${source.fileKey}/nodes?ids=${encodeURIComponent(ids)}&geometry=paths&version=${encodeURIComponent(version)}`,
   );
   for (const template of templates)
-    validateCutterTemplate(response.nodes?.[template.nodeId]?.document, template);
+    validateCutterTemplate(response.nodes?.[template.nodeId]?.document, { ...template, version: source.templates.version });
   return response;
 }
 

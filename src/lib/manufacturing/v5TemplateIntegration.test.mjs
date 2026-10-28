@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {buildPrintingCatalog} from './boosters.mjs';
-import {V5_PRINT_LAYOUT as PRINT_LAYOUT,BACK_TEMPLATE,V5_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT,HOLO_BACK_TEMPLATE,PRINT_LAYOUT as CURRENT_PRINT_LAYOUT,HOLO_PRINT_LAYOUT as CURRENT_HOLO_PRINT_LAYOUT,V4_PRINT_LAYOUT,V4_BACK_TEMPLATE,resolvePrintTemplates,createManufacturingManifest,preflightPrintAssets} from './printPlan.mjs';
+import {V5_PRINT_LAYOUT as PRINT_LAYOUT,V5_BACK_TEMPLATE as BACK_TEMPLATE,V5_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT,V5_HOLO_BACK_TEMPLATE as HOLO_BACK_TEMPLATE,V6_PRINT_LAYOUT as CURRENT_PRINT_LAYOUT,V6_HOLO_PRINT_LAYOUT as CURRENT_HOLO_PRINT_LAYOUT,V4_PRINT_LAYOUT,V4_BACK_TEMPLATE,resolvePrintTemplates,createManufacturingManifest,preflightPrintAssets} from './printPlan.mjs';
 import {backgroundsForLayout} from './backdrops.mjs';
 import {validateRelease,requireOrderArtwork} from './integration.mjs';
 const read=async n=>JSON.parse(await readFile(new URL(`../../data/${n}`,import.meta.url),'utf8'));

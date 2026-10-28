@@ -1,0 +1,3659 @@
+{
+  "version": "2415372445419731966",
+  "lastModified": "2026-10-28T11:07:53Z",
+  "documents": {
+    "4290:38532": {
+      "id": "4290:38532",
+      "name": "die-cut-front-epson",
+      "type": "FRAME",
+      "blendMode": "PASS_THROUGH",
+      "clipsContent": true,
+      "size": {
+        "x": 2550,
+        "y": 3300
+      },
+      "relativeTransform": [
+        [
+          1,
+          0,
+          12936
+        ],
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "absoluteBoundingBox": {
+        "x": 12936,
+        "y": 0,
+        "width": 2550,
+        "height": 3300
+      },
+      "strokeWeight": 1,
+      "strokeAlign": "INSIDE",
+      "fills": [
+        {
+          "type": "SOLID",
+          "blendMode": "NORMAL",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "strokes": [],
+      "effects": [],
+      "children": [
+        {
+          "id": "4317:7887",
+          "name": "die-cut-front-epson",
+          "type": "INSTANCE",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "componentId": "4317:7886",
+          "size": {
+            "x": 2550,
+            "y": 3300
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 12936,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "fills": [],
+          "strokes": [],
+          "effects": [],
+          "children": [
+            {
+              "id": "I4317:7887;4317:7875",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2326,
+                "y": 114
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  91
+                ],
+                [
+                  0,
+                  1,
+                  -65
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 13027,
+                "y": -65,
+                "width": 2326,
+                "height": 114
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "effects": []
+            },
+            {
+              "id": "I4317:7887;4317:7876",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2337,
+                "y": 3182
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  134
+                ],
+                [
+                  0,
+                  1,
+                  64
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 13070,
+                "y": 64,
+                "width": 2337,
+                "height": 3182
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [
+                {
+                  "type": "IMAGE",
+                  "blendMode": "NORMAL"
+                }
+              ],
+              "strokes": [],
+              "effects": []
+            },
+            {
+              "id": "I4317:7887;4317:7878",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2582,
+                "y": 10
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  -16
+                ],
+                [
+                  0,
+                  1,
+                  1120
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 12920,
+                "y": 1120,
+                "width": 2582,
+                "height": 10
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "effects": []
+            },
+            {
+              "id": "I4317:7887;4317:7879",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2582,
+                "y": 10
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  -16
+                ],
+                [
+                  0,
+                  1,
+                  2176
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 12920,
+                "y": 2176,
+                "width": 2582,
+                "height": 10
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "effects": []
+            },
+            {
+              "id": "I4317:7887;4317:7882",
+              "name": "Group 135",
+              "type": "GROUP",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "size": {
+                "x": 78,
+                "y": 231
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  25
+                ],
+                [
+                  0,
+                  1,
+                  468
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 12961,
+                "y": 468,
+                "width": 78,
+                "height": 231
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4317:7887;4317:7880",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 78,
+                    "y": 231
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      0
+                    ],
+                    [
+                      0,
+                      1,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 12961,
+                    "y": 468,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "strokeWeight": 2,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "type": "SOLID",
+                      "blendMode": "NORMAL",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "effects": []
+                },
+                {
+                  "id": "I4317:7887;4317:7881",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 231,
+                    "y": 46
+                  },
+                  "relativeTransform": [
+                    [
+                      0,
+                      -1,
+                      62
+                    ],
+                    [
+                      1,
+                      0,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 12977,
+                    "y": 468,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "strokeWeight": 1,
+                  "strokeAlign": "OUTSIDE",
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "blendMode": "NORMAL",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "effects": []
+                }
+              ]
+            },
+            {
+              "id": "I4317:7887;4317:7883",
+              "name": "Group 136",
+              "type": "GROUP",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "size": {
+                "x": 78,
+                "y": 231
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  25
+                ],
+                [
+                  0,
+                  1,
+                  2646
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 12961,
+                "y": 2646,
+                "width": 78,
+                "height": 231
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4317:7887;4317:7884",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 78,
+                    "y": 231
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      0
+                    ],
+                    [
+                      0,
+                      1,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 12961,
+                    "y": 2646,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "strokeWeight": 2,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "type": "SOLID",
+                      "blendMode": "NORMAL",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "effects": []
+                },
+                {
+                  "id": "I4317:7887;4317:7885",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 231,
+                    "y": 46
+                  },
+                  "relativeTransform": [
+                    [
+                      0,
+                      -1,
+                      62
+                    ],
+                    [
+                      1,
+                      0,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 12977,
+                    "y": 2646,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "strokeWeight": 1,
+                  "strokeAlign": "OUTSIDE",
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "blendMode": "NORMAL",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "effects": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4290:38534",
+          "name": "card_backs",
+          "type": "FRAME",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "size": {
+            "x": 2330,
+            "y": 3170
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              145
+            ],
+            [
+              0,
+              1,
+              65.6435546875
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 13081,
+            "y": 65.6435546875,
+            "width": 2330,
+            "height": 3170
+          },
+          "strokeWeight": 3,
+          "strokeAlign": "INSIDE",
+          "layoutMode": "GRID",
+          "gridRowCount": 3,
+          "gridColumnCount": 3,
+          "gridRowGap": 0,
+          "gridColumnGap": 0,
+          "gridColumnsSizing": "repeat(3,minmax(0,1fr))",
+          "gridRowsSizing": "repeat(3,minmax(0,1fr))",
+          "fills": [],
+          "strokes": [],
+          "effects": [],
+          "children": []
+        }
+      ]
+    },
+    "4244:451219": {
+      "id": "4244:451219",
+      "name": "die-cut-rear-canon",
+      "type": "FRAME",
+      "blendMode": "PASS_THROUGH",
+      "clipsContent": true,
+      "size": {
+        "x": 2550,
+        "y": 3300
+      },
+      "relativeTransform": [
+        [
+          1,
+          0,
+          10290
+        ],
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "absoluteBoundingBox": {
+        "x": 10290,
+        "y": 0,
+        "width": 2550,
+        "height": 3300
+      },
+      "strokeWeight": 1,
+      "strokeAlign": "INSIDE",
+      "fills": [
+        {
+          "type": "SOLID",
+          "blendMode": "NORMAL",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "strokes": [],
+      "effects": [],
+      "children": [
+        {
+          "id": "4244:451221",
+          "name": "card_backs",
+          "type": "FRAME",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "size": {
+            "x": 2330,
+            "y": 3170
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              65
+            ],
+            [
+              0,
+              1,
+              85.83999633789062
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 10355,
+            "y": 85.83999633789062,
+            "width": 2330,
+            "height": 3170
+          },
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "layoutMode": "GRID",
+          "gridRowCount": 3,
+          "gridColumnCount": 3,
+          "gridRowGap": 0,
+          "gridColumnGap": 0,
+          "gridColumnsSizing": "repeat(3,minmax(0,1fr))",
+          "gridRowsSizing": "repeat(3,minmax(0,1fr))",
+          "fills": [],
+          "strokes": [],
+          "effects": [],
+          "children": [
+            {
+              "id": "4244:451222",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  19.033355712890625
+                ],
+                [
+                  0,
+                  1,
+                  11.31329345703125
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 10374.033203125,
+                "y": 97.15328979492188,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4244:451222;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 10373.7333984375,
+                    "y": 97.13330078125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4244:451222;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 10400.8701171875,
+                    "y": 521.1103515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4244:451223",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  795.7000732421875
+                ],
+                [
+                  0,
+                  1,
+                  11.31329345703125
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 11150.7001953125,
+                "y": 97.15328979492188,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4244:451223;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11150.400390625,
+                    "y": 97.13330078125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4244:451223;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11177.537109375,
+                    "y": 521.1103515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4244:451224",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  1572.36669921875
+                ],
+                [
+                  0,
+                  1,
+                  11.31329345703125
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 11927.3671875,
+                "y": 97.15328979492188,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4244:451224;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11927.0673828125,
+                    "y": 97.13330078125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4244:451224;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11954.2041015625,
+                    "y": 521.1103515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4244:451225",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  19.033355712890625
+                ],
+                [
+                  0,
+                  1,
+                  1067.97998046875
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 10374.033203125,
+                "y": 1153.8199462890625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4244:451225;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 10373.7333984375,
+                    "y": 1153.7999267578125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4244:451225;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 10400.8701171875,
+                    "y": 1577.777099609375,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4244:451226",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  795.7000732421875
+                ],
+                [
+                  0,
+                  1,
+                  1067.97998046875
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 11150.7001953125,
+                "y": 1153.8199462890625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4244:451226;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11150.400390625,
+                    "y": 1153.7999267578125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4244:451226;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11177.537109375,
+                    "y": 1577.777099609375,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4244:451227",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  1572.36669921875
+                ],
+                [
+                  0,
+                  1,
+                  1067.97998046875
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 11927.3671875,
+                "y": 1153.8199462890625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4244:451227;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11927.0673828125,
+                    "y": 1153.7999267578125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4244:451227;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11954.2041015625,
+                    "y": 1577.777099609375,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4244:451228",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  19.033355712890625
+                ],
+                [
+                  0,
+                  1,
+                  2124.646484375
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 10374.033203125,
+                "y": 2210.486572265625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4244:451228;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 10373.7333984375,
+                    "y": 2210.466552734375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4244:451228;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 10400.8701171875,
+                    "y": 2634.443603515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4244:451229",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  795.7000732421875
+                ],
+                [
+                  0,
+                  1,
+                  2124.646484375
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 11150.7001953125,
+                "y": 2210.486572265625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4244:451229;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11150.400390625,
+                    "y": 2210.466552734375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4244:451229;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11177.537109375,
+                    "y": 2634.443603515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4244:451230",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  1572.36669921875
+                ],
+                [
+                  0,
+                  1,
+                  2124.646484375
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 11927.3671875,
+                "y": 2210.486572265625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4244:451230;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11927.0673828125,
+                    "y": 2210.466552734375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4244:451230;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 11954.2041015625,
+                    "y": 2634.443603515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "4311:139557": {
+      "id": "4311:139557",
+      "name": "die-cut-front-epson-holographic-template",
+      "type": "FRAME",
+      "blendMode": "PASS_THROUGH",
+      "clipsContent": true,
+      "size": {
+        "x": 2550,
+        "y": 3300
+      },
+      "relativeTransform": [
+        [
+          1,
+          0,
+          18648
+        ],
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "absoluteBoundingBox": {
+        "x": 18648,
+        "y": 0,
+        "width": 2550,
+        "height": 3300
+      },
+      "strokeWeight": 1,
+      "strokeAlign": "INSIDE",
+      "fills": [
+        {
+          "type": "SOLID",
+          "blendMode": "NORMAL",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "strokes": [],
+      "effects": [],
+      "children": [
+        {
+          "id": "4317:8435",
+          "name": "die-cut-front-epson-holographic",
+          "type": "INSTANCE",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "componentId": "4317:8434",
+          "size": {
+            "x": 2550,
+            "y": 3300
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 18648,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "fills": [],
+          "strokes": [],
+          "effects": [],
+          "children": [
+            {
+              "id": "I4317:8435;4317:8421",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2326,
+                "y": 114
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  91
+                ],
+                [
+                  0,
+                  1,
+                  -65
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 18739,
+                "y": -65,
+                "width": 2326,
+                "height": 114
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "effects": []
+            },
+            {
+              "id": "I4317:8435;4317:8422",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2337,
+                "y": 3182
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  86
+                ],
+                [
+                  0,
+                  1,
+                  64
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 18734,
+                "y": 64,
+                "width": 2337,
+                "height": 3182
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [
+                {
+                  "type": "IMAGE",
+                  "blendMode": "NORMAL"
+                }
+              ],
+              "strokes": [],
+              "effects": []
+            },
+            {
+              "id": "I4317:8435;4317:8424",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2582,
+                "y": 10
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  -16
+                ],
+                [
+                  0,
+                  1,
+                  1120
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 18632,
+                "y": 1120,
+                "width": 2582,
+                "height": 10
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "effects": []
+            },
+            {
+              "id": "I4317:8435;4317:8425",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2582,
+                "y": 10
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  -16
+                ],
+                [
+                  0,
+                  1,
+                  2176
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 18632,
+                "y": 2176,
+                "width": 2582,
+                "height": 10
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "effects": []
+            },
+            {
+              "id": "I4317:8435;4317:8426",
+              "name": "HOLOGRAPHIC ONLY",
+              "type": "TEXT",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 999,
+                "y": 78
+              },
+              "relativeTransform": [
+                [
+                  0,
+                  -1,
+                  2499
+                ],
+                [
+                  1,
+                  0,
+                  1146
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 21069,
+                "y": 1146,
+                "width": 78,
+                "height": 999
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "OUTSIDE",
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "effects": [],
+              "characters": "HOLOGRAPHIC ONLY"
+            },
+            {
+              "id": "I4317:8435;4317:8427",
+              "name": "Group 135",
+              "type": "GROUP",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "size": {
+                "x": 78,
+                "y": 231
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  2437
+                ],
+                [
+                  0,
+                  1,
+                  468
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 21085,
+                "y": 468,
+                "width": 78,
+                "height": 231
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4317:8435;4317:8428",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 78,
+                    "y": 231
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      0
+                    ],
+                    [
+                      0,
+                      1,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 21085,
+                    "y": 468,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "strokeWeight": 2,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "type": "SOLID",
+                      "blendMode": "NORMAL",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "effects": []
+                },
+                {
+                  "id": "I4317:8435;4317:8429",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 231,
+                    "y": 46
+                  },
+                  "relativeTransform": [
+                    [
+                      0,
+                      -1,
+                      62
+                    ],
+                    [
+                      1,
+                      0,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 21101,
+                    "y": 468,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "strokeWeight": 1,
+                  "strokeAlign": "OUTSIDE",
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "blendMode": "NORMAL",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "effects": []
+                }
+              ]
+            },
+            {
+              "id": "I4317:8435;4317:8430",
+              "name": "Group 136",
+              "type": "GROUP",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "size": {
+                "x": 78,
+                "y": 231
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  2437
+                ],
+                [
+                  0,
+                  1,
+                  2646
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 21085,
+                "y": 2646,
+                "width": 78,
+                "height": 231
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4317:8435;4317:8431",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 78,
+                    "y": 231
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      0
+                    ],
+                    [
+                      0,
+                      1,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 21085,
+                    "y": 2646,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "strokeWeight": 2,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "type": "SOLID",
+                      "blendMode": "NORMAL",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "effects": []
+                },
+                {
+                  "id": "I4317:8435;4317:8432",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 231,
+                    "y": 46
+                  },
+                  "relativeTransform": [
+                    [
+                      0,
+                      -1,
+                      62
+                    ],
+                    [
+                      1,
+                      0,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 21101,
+                    "y": 2646,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "strokeWeight": 1,
+                  "strokeAlign": "OUTSIDE",
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "blendMode": "NORMAL",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "effects": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4311:139561",
+          "name": "card_backs",
+          "type": "FRAME",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "size": {
+            "x": 2330,
+            "y": 3170
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              95
+            ],
+            [
+              0,
+              1,
+              65.6435546875
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 18743,
+            "y": 65.6435546875,
+            "width": 2330,
+            "height": 3170
+          },
+          "strokeWeight": 3,
+          "strokeAlign": "INSIDE",
+          "layoutMode": "GRID",
+          "gridRowCount": 3,
+          "gridColumnCount": 3,
+          "gridRowGap": 0,
+          "gridColumnGap": 0,
+          "gridColumnsSizing": "repeat(3,minmax(0,1fr))",
+          "gridRowsSizing": "repeat(3,minmax(0,1fr))",
+          "fills": [],
+          "strokes": [],
+          "effects": [],
+          "children": []
+        }
+      ]
+    },
+    "4311:139076": {
+      "id": "4311:139076",
+      "name": "die-cut-rear-canon-holographic-template",
+      "type": "FRAME",
+      "blendMode": "PASS_THROUGH",
+      "clipsContent": true,
+      "size": {
+        "x": 2550,
+        "y": 3300
+      },
+      "relativeTransform": [
+        [
+          1,
+          0,
+          15792
+        ],
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "absoluteBoundingBox": {
+        "x": 15792,
+        "y": 0,
+        "width": 2550,
+        "height": 3300
+      },
+      "strokeWeight": 1,
+      "strokeAlign": "INSIDE",
+      "fills": [
+        {
+          "type": "SOLID",
+          "blendMode": "NORMAL",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "strokes": [],
+      "effects": [],
+      "children": [
+        {
+          "id": "4317:8409",
+          "name": "die-cut-rear-canon-holographic",
+          "type": "INSTANCE",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "componentId": "4317:8408",
+          "size": {
+            "x": 2550,
+            "y": 3300
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 15792,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "fills": [],
+          "strokes": [],
+          "effects": [],
+          "children": [
+            {
+              "id": "I4317:8409;4317:7931",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2326,
+                "y": 114
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  107
+                ],
+                [
+                  0,
+                  1,
+                  -44.79999923706055
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 15899,
+                "y": -44.79999923706055,
+                "width": 2326,
+                "height": 114
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "effects": []
+            },
+            {
+              "id": "I4317:8409;4317:7932",
+              "name": "HOLOGRAPHIC ONLY",
+              "type": "TEXT",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 999,
+                "y": 78
+              },
+              "relativeTransform": [
+                [
+                  0,
+                  1,
+                  39
+                ],
+                [
+                  -1,
+                  0,
+                  2145
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 15831,
+                "y": 1146,
+                "width": 78,
+                "height": 999
+              },
+              "strokeWeight": 1,
+              "strokeAlign": "OUTSIDE",
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "effects": [],
+              "characters": "HOLOGRAPHIC ONLY"
+            }
+          ]
+        },
+        {
+          "id": "4311:139077",
+          "name": "card_backs",
+          "type": "FRAME",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "size": {
+            "x": 2330,
+            "y": 3170
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              110
+            ],
+            [
+              0,
+              1,
+              85.83999633789062
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 15902,
+            "y": 85.83999633789062,
+            "width": 2330,
+            "height": 3170
+          },
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "layoutMode": "GRID",
+          "gridRowCount": 3,
+          "gridColumnCount": 3,
+          "gridRowGap": 0,
+          "gridColumnGap": 0,
+          "gridColumnsSizing": "repeat(3,minmax(0,1fr))",
+          "gridRowsSizing": "repeat(3,minmax(0,1fr))",
+          "fills": [],
+          "strokes": [],
+          "effects": [],
+          "children": [
+            {
+              "id": "4311:139078",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  19.033355712890625
+                ],
+                [
+                  0,
+                  1,
+                  11.31329345703125
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 15921.033203125,
+                "y": 97.15328979492188,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4311:139078;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15920.7333984375,
+                    "y": 97.13330078125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4311:139078;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15947.8701171875,
+                    "y": 521.1103515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139079",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  795.7000732421875
+                ],
+                [
+                  0,
+                  1,
+                  11.31329345703125
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 16697.69921875,
+                "y": 97.15328979492188,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4311:139079;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16697.3984375,
+                    "y": 97.13330078125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4311:139079;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16724.537109375,
+                    "y": 521.1103515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139080",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  1572.36669921875
+                ],
+                [
+                  0,
+                  1,
+                  11.31329345703125
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 17474.3671875,
+                "y": 97.15328979492188,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4311:139080;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17474.06640625,
+                    "y": 97.13330078125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4311:139080;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17501.205078125,
+                    "y": 521.1103515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139081",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  19.033355712890625
+                ],
+                [
+                  0,
+                  1,
+                  1067.97998046875
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 15921.033203125,
+                "y": 1153.8199462890625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4311:139081;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15920.7333984375,
+                    "y": 1153.7999267578125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4311:139081;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15947.8701171875,
+                    "y": 1577.777099609375,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139082",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  795.7000732421875
+                ],
+                [
+                  0,
+                  1,
+                  1067.97998046875
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 16697.69921875,
+                "y": 1153.8199462890625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4311:139082;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16697.3984375,
+                    "y": 1153.7999267578125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4311:139082;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16724.537109375,
+                    "y": 1577.777099609375,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139083",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  1572.36669921875
+                ],
+                [
+                  0,
+                  1,
+                  1067.97998046875
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 17474.3671875,
+                "y": 1153.8199462890625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4311:139083;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17474.06640625,
+                    "y": 1153.7999267578125,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4311:139083;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17501.205078125,
+                    "y": 1577.777099609375,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139084",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  19.033355712890625
+                ],
+                [
+                  0,
+                  1,
+                  2124.646484375
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 15921.033203125,
+                "y": 2210.486572265625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4311:139084;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15920.7333984375,
+                    "y": 2210.466552734375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4311:139084;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15947.8701171875,
+                    "y": 2634.443603515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139085",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  795.7000732421875
+                ],
+                [
+                  0,
+                  1,
+                  2124.646484375
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 16697.69921875,
+                "y": 2210.486572265625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4311:139085;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16697.3984375,
+                    "y": 2210.466552734375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4311:139085;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16724.537109375,
+                    "y": 2634.443603515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139086",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "componentId": "540:2527",
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  1572.36669921875
+                ],
+                [
+                  0,
+                  1,
+                  2124.646484375
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 17474.3671875,
+                "y": 2210.486572265625,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "fills": [],
+              "strokes": [
+                {
+                  "type": "SOLID",
+                  "blendMode": "NORMAL",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4311:139086;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "componentId": "3846:261608",
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17474.06640625,
+                    "y": 2210.466552734375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": []
+                },
+                {
+                  "id": "I4311:139086;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "componentId": "3105:577256",
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17501.205078125,
+                    "y": 2634.443603515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "fills": [],
+                  "strokes": [],
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

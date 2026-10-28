@@ -45,7 +45,7 @@ status, artwork eligibility, deployment steps, and commands.
 
 ## Source artwork and sheet geometry
 
-New releases use the Page_Templates supplied on October 26, 2026. All four
+New releases use the Page_Templates adjusted on October 28, 2026. All four
 masters are 2550 x 3300 pixels for Letter at 300 DPI:
 
 | Use | Epson front frame | Canon rear frame |
@@ -53,8 +53,8 @@ masters are 2550 x 3300 pixels for Letter at 300 DPI:
 | Ordinary cards and randomized Dive Packs | `4290:38532` | `4244:451219` |
 | Separate holo replenishment batches | `4311:139557` | `4311:139076` |
 
-The ordinary Epson grid is at (135, 65.6436); the holo grid is at
-(80, 65.6436). Each empty 2330 x 3170 grid has three equal columns and rows.
+The ordinary Epson grid is at (145, 65.6436); the holo grid is at
+(95, 65.6436). Each empty 2330 x 3170 grid has three equal columns and rows.
 Native 738.5952 x 1034.0333 cards are centered in those cells with zero rotation.
 The front background is exported from its full-page component instance so
 water, registration strips, and any holo-only staple labels stay together.
@@ -63,10 +63,10 @@ Fixed deck cards retain their original source crops on the ordinary grid.
 Each Canon rear is the complete native page, including nine backs, their
 white gutters, and any holographic-only registration/staple marks. It is
 embedded once at full Letter size, without cropping, reflection, or an extra
-background. The ordinary rear grid is at (80, 85.8400); the holo rear grid is
-at (125, 85.8400). Keep the front/back pair for its intended production type.
+background. The ordinary rear grid is at (65, 85.8400); the holo rear grid is
+at (110, 85.8400). Keep the front/back pair for its intended production type.
 
-New releases save `figma-cutter-nine-up-v5`, all four private template assets,
+New releases save `figma-cutter-nine-up-v7`, all four private template assets,
 and exact geometry. The sync checks the pinned grids and background structure
 before exporting. Changed geometry requires an explicit layout update. A holo
 draw does not switch the whole Dive Pack to the holo template: it still prints
@@ -76,6 +76,8 @@ private PDF-generation command. These batches do not add finished products to
 inventory. Packaged products are received by barcode after quality control.
 
 Existing saved manifests keep their original version and private release.
+V5 retains the original October 26 grids; V6 retains its later ordinary-front
+shift to x150 and the original holo/rear positions. Both remain reproducible.
 V4 retains the October 19 positions, 0.35 degree front rotation, and complete
 rear water-and-logo page. V3 retains the October 14 ocean layers and upright
 grid; V2 retains the same upright positions without ocean. Their rear artwork
