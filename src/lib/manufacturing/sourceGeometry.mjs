@@ -21,9 +21,9 @@ const CORAL_CARD_SIZES = [[738.6000366210938, 1034.0400390625], [738.70001220703
 
 export function validFixedSheetPositions(positions, sourceId) {
   const coral = CORAL_SOURCES.has(sourceId) || /^sheet-coral-garden-[1-7]$/.test(sourceId ?? "");
-  // Saved Coral sheet 7 releases may include the former ninth blank slot.
-  const counts = sourceId === "sheet-coral-garden-7" ? [8, 9]
-    : EIGHT_CARD_SOURCES.has(sourceId) || sourceId === "4316:271802" ? [8] : [9];
+  // Preserve saved releases that included a now-audited empty crop.
+  const counts = ["sheet-coral-garden-7", "sheet-darkness-shroud-1", "sheet-open-ocean-hunt-1"].includes(sourceId) ? [8, 9]
+    : EIGHT_CARD_SOURCES.has(sourceId) || ["4316:271802", "2298:446032", "2296:82569"].includes(sourceId) ? [8] : [9];
   return Array.isArray(positions) && counts.includes(positions.length) && positions.every((p) =>
     p && [p.x, p.y, p.width, p.height].every(Number.isFinite) &&
     p.x >= 0 && p.y >= 0 && p.width > 0 && p.height > 0 &&

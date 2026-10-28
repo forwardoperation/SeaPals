@@ -127,6 +127,13 @@ are accepted only for its own sources. Its final sheet includes eight cards/inse
 and excludes the reviewed empty ninth frame; historical nine-slot releases remain
 readable for exact reprints.
 
+Darkness Shroud sheet 1 and Open Ocean Hunt sheet 1 each contain a reviewed,
+childless white frame in source slot 3. Their mapped `omittedNodeIds` exclude only
+those two empty frames from new crops while retaining the original PNG pixels.
+New artwork, text, or effects on either frame stop synchronization for review.
+The remaining eight crops keep reading order; saved nine-crop releases remain
+valid. The source mapping and published asset metadata record the exclusions.
+
 ## Reef, Deep, and Oceanic boosters activated - October 20, 2026
 
 The combined Reef, Deep, and Oceanic release was published and verified live

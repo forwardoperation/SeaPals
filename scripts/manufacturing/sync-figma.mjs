@@ -340,12 +340,28 @@ function fixedSheetGridPath(document, source = fixedArtworkSources().find(item =
   return path;
 }
 
+function checkedOmittedFrames(document, grid) {
+  const source = fixedArtworkSources().find(item => item.nodeId === document.id), omitted = new Set(source?.omittedNodeIds ?? []);
+  for (const node of grid.children ?? []) {
+    if (!omitted.has(node.id)) continue;
+    const paints = [...(node.fills ?? []), ...(node.background ?? [])];
+    const empty = node.type === "FRAME" && Array.isArray(node.children) && node.children.length === 0 &&
+      (node.strokes ?? []).length === 0 && (node.effects ?? []).length === 0 && !node.isMask &&
+      paints.every(paint => paint.visible === false || paint.opacity === 0 ||
+        paint.type === "SOLID" && (paint.color?.a === 0 ||
+          [paint.color?.r, paint.color?.g, paint.color?.b].every(channel => channel === 1)));
+    if (!empty)
+      throw new Error(`The reviewed empty fixed-sheet frame ${node.id} now contains artwork or effects. Review its source mapping before syncing; no card may be silently omitted.`);
+  }
+  return omitted;
+}
+
 export function sheetPositions(document) {
-  const grid = fixedSheetGridPath(document).at(-1);
+  const grid = fixedSheetGridPath(document).at(-1), omitted = checkedOmittedFrames(document, grid);
   if (!document.absoluteBoundingBox)
     throw new Error("The fixed sheet needs its Figma Letter page bounds.");
   const positions = (grid.children ?? [])
-    .filter((c) => c.visible !== false && c.absoluteBoundingBox)
+    .filter((c) => c.visible !== false && c.absoluteBoundingBox && !omitted.has(c.id))
     .map((c) => {
       const b = c.absoluteBoundingBox, origin = document.absoluteBoundingBox;
       return { x: b.x - origin.x, y: b.y - origin.y, width: b.width, height: b.height };
@@ -367,6 +383,7 @@ export function validateFixedSheetBackgrounds(document, source) {
     invalid("the expected visible source sheet is missing");
   let path;
   try { path = fixedSheetGridPath(document, source); } catch (error) { invalid(error.message); }
+  checkedOmittedFrames(document, path.at(-1));
   if (source.exportNodeId) {
     const reviewed = fixedArtworkSources().find(item => item.id === source.id);
     if (reviewed?.nodeId !== source.nodeId || reviewed?.exportNodeId !== source.exportNodeId)
@@ -405,7 +422,8 @@ export function validateFixedSheetBackgrounds(document, source) {
 export function normalizeFixedSheetExport(bytes, document, source) {
   validateFixedSheetBackgrounds(document, source);
   const sourcePositions = sheetPositions(document);
-  if (!source.exportNodeId) return { bytes, positions: sourcePositions };
+  if (!source.exportNodeId) return { bytes, positions: sourcePositions,
+    ...(source.omittedNodeIds?.length ? { omittedNodeIds: [...source.omittedNodeIds] } : {}) };
   const grid = fixedSheetGridPath(document, source).at(-1), page = document.absoluteBoundingBox,
     bounds = grid.absoluteBoundingBox;
   if (!bounds || page.width !== 2550 || page.height !== 3300)
@@ -817,7 +835,9 @@ async function main() {
           sha256: hash,
           ...dimensions,
           nodeId: item.nodeId,
-          ...(item.kind === "sheet" ? { positions: normalized.positions, ...(normalized.sourceGeometry ? { sourceGeometry: normalized.sourceGeometry } : {}) } : {}),
+          ...(item.kind === "sheet" ? { positions: normalized.positions,
+            ...(normalized.sourceGeometry ? { sourceGeometry: normalized.sourceGeometry } : {}),
+            ...(normalized.omittedNodeIds ? { omittedNodeIds: normalized.omittedNodeIds } : {}) } : {}),
         };
         await saveProgress();
       }

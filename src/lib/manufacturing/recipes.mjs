@@ -141,6 +141,11 @@ export function fixedSheetLabel(assetId) {
   const dropOff = /^sheet-blue-water-([1-7])$/.exec(assetId);
   return dropOff ? `sheets-drop-off-${dropOff[1]}` : assetId;
 }
+// Audited childless white placeholders, kept in Figma but omitted from new card crops.
+const EMPTY_FIXED_SHEET_FRAMES = {
+  "sheet-darkness-shroud-1": ["2893:234348"],
+  "sheet-open-ocean-hunt-1": ["2779:45793"],
+};
 export function fixedArtworkSources() {
   return [
     ...Object.entries(DECK_FRAMES).flatMap(([id, nodes]) =>
@@ -148,6 +153,8 @@ export function fixedArtworkSources() {
         id: `sheet-${id}-${index + 1}`,
         nodeId,
         kind: "sheet",
+        ...(EMPTY_FIXED_SHEET_FRAMES[`sheet-${id}-${index + 1}`] ?
+          { omittedNodeIds: [...EMPTY_FIXED_SHEET_FRAMES[`sheet-${id}-${index + 1}`]] } : {}),
         ...(id === "coral-garden" ? { exportNodeId: CORAL_GRID_FRAMES[index] } : {}),
         ...(id === "blue-water" ? { displayName: `sheets-drop-off-${index + 1}` } : {}),
       })),
