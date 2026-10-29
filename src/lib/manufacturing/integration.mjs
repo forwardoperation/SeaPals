@@ -14,7 +14,7 @@ import {
 } from "./workflow.mjs";
 import { validateBoosterPool } from "./boosters.mjs";
 import { BOOSTER_PRODUCTS, fixedSheetAssets, fixedSheetLabel } from "./recipes.mjs";
-import { validFixedSheetPositions } from "./sourceGeometry.mjs";
+import { validFixedSheetPositions, validFixedSheetOutputPositions } from "./sourceGeometry.mjs";
 import {
   backgroundsForLayout,
   backgroundSide,
@@ -142,6 +142,8 @@ export function validateRelease(release) {
   for (const [id, asset] of Object.entries(release.assets ?? {})) {
     if (!/^[A-Za-z0-9_-]{1,150}$/.test(id) || asset.path !== assetKey(asset))
       throw new Error("Invalid private asset entry.");
+    if (!validFixedSheetOutputPositions(asset, id))
+      throw new Error(`Missing or invalid fixed-sheet output positions: ${id}`);
     const side = backgroundSide(id, release.printTemplates?.version);
     if (side) {
       if (!hasPrintBackgrounds(release.printTemplates?.version))

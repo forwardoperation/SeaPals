@@ -445,6 +445,7 @@ export function normalizeFixedSheetExport(bytes, document, source) {
   PNG.bitblt(raw, padded, 0, 0, raw.width, raw.height, padding.x, padding.y);
   return {
     bytes: PNG.sync.write(padded), positions,
+    ...(source.preserveSourcePositions ? { outputPositions: structuredClone(sourcePositions) } : {}),
     sourceGeometry: { mode: "isolated-grid-letter", exportNodeId: source.exportNodeId,
       sourceBounds, padding, cropTranslation, sourcePositions },
   };
@@ -837,7 +838,8 @@ async function main() {
           nodeId: item.nodeId,
           ...(item.kind === "sheet" ? { positions: normalized.positions,
             ...(normalized.sourceGeometry ? { sourceGeometry: normalized.sourceGeometry } : {}),
-            ...(normalized.omittedNodeIds ? { omittedNodeIds: normalized.omittedNodeIds } : {}) } : {}),
+            ...(normalized.omittedNodeIds ? { omittedNodeIds: normalized.omittedNodeIds } : {}),
+            ...(normalized.outputPositions ? { outputPositions: normalized.outputPositions } : {}) } : {}),
         };
         await saveProgress();
       }

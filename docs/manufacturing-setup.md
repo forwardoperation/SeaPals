@@ -134,6 +134,28 @@ New artwork, text, or effects on either frame stop synchronization for review.
 The remaining eight crops keep reading order; saved nine-crop releases remain
 valid. The source mapping and published asset metadata record the exclusions.
 
+## Conditions card borders - October 29, 2026
+
+Conditions now uses the replacement Letter sources `4335:335039` and
+`4335:335350`, exporting only grids `4335:335041` and `4335:335352`. The
+source page backgrounds remain in Figma. Each grid contains nine cards measuring
+698.400024 x 977.760010 pixels, with the first row starting at approximately
+x189.1333/y105.0967 on the Letter page. These smaller native rectangles preserve
+the owner's new water borders.
+
+The padded private PNG stores crop coordinates in `positions`; integer padding
+is recorded in `sourceGeometry`. A separate `outputPositions` array stores the
+original, unshifted page-relative rectangles. Conditions fronts use those exact
+output rectangles instead of expanding the artwork to the generic V7 card slots.
+The native Canon rear page and every other product retain their existing layout.
+
+Release validation and print preflight require the new source/grid identities,
+the measured card sizes, and agreement between output positions, original source
+rectangles, and translated PNG crops. Missing or inconsistent metadata stops
+preparation. Historical Conditions releases without these overrides retain their
+original placement for reproducible reprints. Normal recurring sync saves the
+Conditions overrides along with each new export.
+
 ## Reef, Deep, and Oceanic boosters activated - October 20, 2026
 
 The combined Reef, Deep, and Oceanic release was published and verified live

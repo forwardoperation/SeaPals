@@ -18,6 +18,17 @@ const [setList, gallery, holos, policy] = await Promise.all([
   read("../../../scripts/manufacturing/figma-holo-sources.json"),
   read("../../../scripts/manufacturing/figma-unfinished-printings.json"),
 ]);
+const conditionGeometry = await read("./test-fixtures/conditions-source-geometry-2026-10-29.json");
+function nativeConditionMetadata(item) {
+  const doc = conditionGeometry.documents[item.nodeId];
+  const findGrid = node => node.name === "card_backs" ? node : node.children?.map(findGrid).find(Boolean);
+  const grid = findGrid(doc), origin = doc.absoluteBoundingBox, bounds = grid.absoluteBoundingBox;
+  const sourcePositions = grid.children.map(c => ({ x: c.absoluteBoundingBox.x - origin.x, y: c.absoluteBoundingBox.y - origin.y, width: c.absoluteBoundingBox.width, height: c.absoluteBoundingBox.height }));
+  const sourceBounds = { x: bounds.x - origin.x, y: bounds.y - origin.y, width: bounds.width, height: bounds.height };
+  const padding = { x: Math.round(sourceBounds.x), y: Math.round(sourceBounds.y) }, cropTranslation = { x: padding.x - sourceBounds.x, y: padding.y - sourceBounds.y };
+  return { outputPositions: sourcePositions, positions: sourcePositions.map(p => ({ ...p, x: p.x + cropTranslation.x, y: p.y + cropTranslation.y })),
+    sourceGeometry: { mode: "isolated-grid-letter", exportNodeId: item.exportNodeId, sourceBounds, padding, cropTranslation, sourcePositions } };
+}
 const source = applyUnfinishedArtworkPolicy(buildSourceMap(setList, gallery, holos), policy);
 const ids = (items) => items.map((item) => item.id).sort();
 function releaseFor(selected) {
@@ -33,6 +44,7 @@ function releaseFor(selected) {
         width: background?.assetWidth ?? background?.width ?? (item.kind === "card" ? 750 : 2550),
         height: background?.assetHeight ?? background?.height ?? (item.kind === "card" ? 1050 : 3300),
         ...(item.kind === "sheet" ? { positions: Array.from({ length: ["sheet-murky-water-7", "sheet-stinging-fortress-7", "sheet-disruption-7"].includes(item.id) ? 8 : 9 }, (_, index) => ({ x: 167 + index % 3 * 720, y: 106 + Math.floor(index / 3) * 1008, width: 720, height: 1008 })) } : {}),
+        ...(item.preserveSourcePositions ? nativeConditionMetadata(item) : {}),
       }];
     })),
   };

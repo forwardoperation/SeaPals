@@ -1,0 +1,665 @@
+{
+  "version": "2415771877924352223",
+  "lastModified": "2026-10-29T13:05:55Z",
+  "note": "Native source geometry only; card contents and image references are omitted.",
+  "documents": {
+    "4335:335039": {
+      "id": "4335:335039",
+      "name": "die-cut-front-epson",
+      "type": "FRAME",
+      "absoluteBoundingBox": {
+        "x": -445,
+        "y": 7439,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [
+        {
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "children": [
+        {
+          "id": "4335:335040",
+          "name": "die-cut-front-epson",
+          "type": "INSTANCE",
+          "absoluteBoundingBox": {
+            "x": -445,
+            "y": 7439,
+            "width": 2550,
+            "height": 3300
+          },
+          "fills": [],
+          "children": [
+            {
+              "id": "I4335:335040;4317:7875",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": -354,
+                "y": 7374,
+                "width": 2326,
+                "height": 114
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "I4335:335040;4317:7876",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": -311,
+                "y": 7503,
+                "width": 2337,
+                "height": 3182
+              },
+              "fills": [
+                {
+                  "type": "IMAGE"
+                }
+              ]
+            },
+            {
+              "id": "I4335:335040;4317:7878",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": -461,
+                "y": 8559,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "I4335:335040;4317:7879",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": -461,
+                "y": 9615,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "I4335:335040;4317:7882",
+              "name": "Group 135",
+              "type": "GROUP",
+              "absoluteBoundingBox": {
+                "x": -420,
+                "y": 7907,
+                "width": 78,
+                "height": 231
+              },
+              "fills": [],
+              "children": [
+                {
+                  "id": "I4335:335040;4317:7880",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "absoluteBoundingBox": {
+                    "x": -420,
+                    "y": 7907,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "I4335:335040;4317:7881",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "absoluteBoundingBox": {
+                    "x": -404,
+                    "y": 7907,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "I4335:335040;4317:7883",
+              "name": "Group 136",
+              "type": "GROUP",
+              "absoluteBoundingBox": {
+                "x": -420,
+                "y": 10085,
+                "width": 78,
+                "height": 231
+              },
+              "fills": [],
+              "children": [
+                {
+                  "id": "I4335:335040;4317:7884",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "absoluteBoundingBox": {
+                    "x": -420,
+                    "y": 10085,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "I4335:335040;4317:7885",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "absoluteBoundingBox": {
+                    "x": -404,
+                    "y": 10085,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4335:335041",
+          "name": "card_backs",
+          "type": "FRAME",
+          "absoluteBoundingBox": {
+            "x": -295,
+            "y": 7504.6435546875,
+            "width": 2330,
+            "height": 3170
+          },
+          "fills": [],
+          "children": [
+            {
+              "id": "4335:335053",
+              "name": "Red Tide",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": -255.86669921875,
+                "y": 7544.0966796875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335054",
+              "name": "Abundant Sunlight",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 520.800048828125,
+                "y": 7544.0966796875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335055",
+              "name": "Clear Water",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 1297.4666748046875,
+                "y": 7544.0966796875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335056",
+              "name": "Murky Water",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": -255.86669921875,
+                "y": 8600.763671875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335057",
+              "name": "Bleak Overcast",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 520.800048828125,
+                "y": 8600.763671875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335058",
+              "name": "Undertow",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 1297.4666748046875,
+                "y": 8600.763671875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335059",
+              "name": "Algae Bloom",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": -255.86669921875,
+                "y": 9657.4296875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335060",
+              "name": "Jelly Field",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 520.800048828125,
+                "y": 9657.4296875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335061",
+              "name": "Severe Coral Bleaching",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 1297.4666748046875,
+                "y": 9657.4296875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "4335:335350": {
+      "id": "4335:335350",
+      "name": "die-cut-front-epson",
+      "type": "FRAME",
+      "absoluteBoundingBox": {
+        "x": 2145,
+        "y": 7439,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [
+        {
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "children": [
+        {
+          "id": "4335:335351",
+          "name": "die-cut-front-epson",
+          "type": "INSTANCE",
+          "absoluteBoundingBox": {
+            "x": 2145,
+            "y": 7439,
+            "width": 2550,
+            "height": 3300
+          },
+          "fills": [],
+          "children": [
+            {
+              "id": "I4335:335351;4317:7875",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 2236,
+                "y": 7374,
+                "width": 2326,
+                "height": 114
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "I4335:335351;4317:7876",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 2279,
+                "y": 7503,
+                "width": 2337,
+                "height": 3182
+              },
+              "fills": [
+                {
+                  "type": "IMAGE"
+                }
+              ]
+            },
+            {
+              "id": "I4335:335351;4317:7878",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 2129,
+                "y": 8559,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "I4335:335351;4317:7879",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "absoluteBoundingBox": {
+                "x": 2129,
+                "y": 9615,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "I4335:335351;4317:7882",
+              "name": "Group 135",
+              "type": "GROUP",
+              "absoluteBoundingBox": {
+                "x": 2170,
+                "y": 7907,
+                "width": 78,
+                "height": 231
+              },
+              "fills": [],
+              "children": [
+                {
+                  "id": "I4335:335351;4317:7880",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "absoluteBoundingBox": {
+                    "x": 2170,
+                    "y": 7907,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "I4335:335351;4317:7881",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "absoluteBoundingBox": {
+                    "x": 2186,
+                    "y": 7907,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "I4335:335351;4317:7883",
+              "name": "Group 136",
+              "type": "GROUP",
+              "absoluteBoundingBox": {
+                "x": 2170,
+                "y": 10085,
+                "width": 78,
+                "height": 231
+              },
+              "fills": [],
+              "children": [
+                {
+                  "id": "I4335:335351;4317:7884",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "absoluteBoundingBox": {
+                    "x": 2170,
+                    "y": 10085,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "fills": []
+                },
+                {
+                  "id": "I4335:335351;4317:7885",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "absoluteBoundingBox": {
+                    "x": 2186,
+                    "y": 10085,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "fills": [
+                    {
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4335:335352",
+          "name": "card_backs",
+          "type": "FRAME",
+          "absoluteBoundingBox": {
+            "x": 2295,
+            "y": 7504.6435546875,
+            "width": 2330,
+            "height": 3170
+          },
+          "fills": [],
+          "children": [
+            {
+              "id": "4335:335659",
+              "name": "Fishing Nets",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 2334.1331787109375,
+                "y": 7544.0966796875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335660",
+              "name": "Coral Disease",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3110.8001708984375,
+                "y": 7544.0966796875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335661",
+              "name": "Hurricane",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3887.4666748046875,
+                "y": 7544.0966796875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335662",
+              "name": "Sardine Run",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 2334.1331787109375,
+                "y": 8600.763671875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335663",
+              "name": "Krill Ball!",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3110.8001708984375,
+                "y": 8600.763671875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335664",
+              "name": "Nutrient Rich",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3887.4666748046875,
+                "y": 8600.763671875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335665",
+              "name": "Abundant Sunlight",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 2334.1331787109375,
+                "y": 9657.4296875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335666",
+              "name": "Midnight",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3110.8001708984375,
+                "y": 9657.4296875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            },
+            {
+              "id": "4335:335667",
+              "name": "Undertow",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3887.4666748046875,
+                "y": 9657.4296875,
+                "width": 698.4000244140625,
+                "height": 977.760009765625
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

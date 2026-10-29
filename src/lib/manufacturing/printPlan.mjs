@@ -10,7 +10,7 @@ import {
   FIXED_PRODUCTS,
   fixedSheetAssets,
 } from "./recipes.mjs";
-import { validFixedSheetPositions } from "./sourceGeometry.mjs";
+import { validFixedSheetPositions, validFixedSheetOutputPositions } from "./sourceGeometry.mjs";
 import {
   CUTTER_LAYOUT_V2,
   CUTTER_LAYOUT_V3,
@@ -623,6 +623,8 @@ export function preflightPrintAssets(manifest, release) {
       }
       continue;
     }
+    if (!validFixedSheetOutputPositions(asset, id))
+      errors.push(`${id}: valid linked fixed-sheet output positions are required`);
     if (!asset?.path || !/^[a-f0-9]{64}$/.test(asset.sha256 ?? ""))
       errors.push(`${id}: missing private asset or checksum`);
     else if (

@@ -68,7 +68,9 @@ export const DECK_FRAMES = {
 // Coral Garden moved to the owner's nested cutter-layout sheets on October 28.
 // Export only the named card grid so the source page's water and marks stay in Figma.
 export const CORAL_GRID_FRAMES = ["4316:271763","4316:271771","4316:271778","4316:271785","4316:271792","4316:271799","4316:271806"];
-export const CONDITION_FRAMES = ["2366:320222", "2366:320233"];
+// October 29 Conditions pages preserve their native inset card positions.
+export const CONDITION_FRAMES = ["4335:335039", "4335:335350"];
+export const CONDITION_GRID_FRAMES = ["4335:335041", "4335:335352"];
 export const BOOSTER_PRODUCTS = Object.freeze({
   "reef-dive-pack": "reef",
   "deep-dive-pack": "deep",
@@ -163,6 +165,8 @@ export function fixedArtworkSources() {
       id: `sheet-conditions-${index + 1}`,
       nodeId,
       kind: "sheet",
+      exportNodeId: CONDITION_GRID_FRAMES[index],
+      preserveSourcePositions: true,
     })),
   ];
 }

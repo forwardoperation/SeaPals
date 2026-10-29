@@ -6,12 +6,18 @@ import path from 'node:path';
 import { PDFArray, PDFDocument, PDFName, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 import { PNG } from 'pngjs';
 import { buildPrintingCatalog, contentHash } from './boosters.mjs';
-import { PRINT_LAYOUT, BACK_TEMPLATE, HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE, V6_PRINT_LAYOUT, V6_BACK_TEMPLATE, V6_HOLO_PRINT_LAYOUT, V6_HOLO_BACK_TEMPLATE, createManufacturingManifest } from './printPlan.mjs';
+import { PRINT_LAYOUT, BACK_TEMPLATE, HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE, V6_PRINT_LAYOUT, V6_BACK_TEMPLATE, V6_HOLO_PRINT_LAYOUT, V6_HOLO_BACK_TEMPLATE, createManufacturingManifest, preflightPrintAssets } from './printPlan.mjs';
 import { createHoloBatch } from './holoBatch.mjs';
 import { sha256, validateRelease } from './integration.mjs';
+import { fixedArtworkSources } from "./recipes.mjs";
+import { validFixedSheetOutputPositions, validFixedSheetPositions } from "./sourceGeometry.mjs";
+import { normalizeFixedSheetExport } from "../../../scripts/manufacturing/sync-figma.mjs";
 import { renderJob, renderHoloBatch } from '../../../scripts/manufacturing/render.mjs';
 
 const read = async name => JSON.parse(await readFile(new URL(`../../data/${name}`, import.meta.url), 'utf8'));
+const conditionGeometry = JSON.parse(await readFile(new URL("./test-fixtures/conditions-source-geometry-2026-10-29.json", import.meta.url), "utf8"));
+const conditionSources = fixedArtworkSources().filter(source => source.preserveSourcePositions);
+const conditionExpected = new Map();
 const catalog = buildPrintingCatalog(await read('gallery-set-list.json'), await read('gallery-images.json'));
 const holo = catalog.find(card => card.set === 'reef' && card.rarity === 'Holo Rare');
 const templates = { version: PRINT_LAYOUT.version, fronts: PRINT_LAYOUT, backs: BACK_TEMPLATE, holoFronts: HOLO_PRINT_LAYOUT, holoBacks: HOLO_BACK_TEMPLATE };
@@ -79,6 +85,19 @@ before(async () => {
   const sheet = image(2550, 3300);
   for (const [i, p] of sourcePositions.entries()) paint(sheet, p.x + 2, p.y + 2, p.width - 4, p.height - 4, colors[i]);
   await add('sheet-v7-fixture', sheet, 'fixture-fixed', { positions: sourcePositions.toReversed() });
+  for (const source of conditionSources) {
+    const doc = conditionGeometry.documents[source.nodeId];
+    const findGrid = node => node.name === "card_backs" ? node : node.children?.map(findGrid).find(Boolean);
+    const grid = findGrid(doc), bounds = grid.absoluteBoundingBox, raw = image(2330, 3170);
+    for (const [index, card] of grid.children.entries()) {
+      const b = card.absoluteBoundingBox, x = Math.round(b.x - bounds.x), y = Math.round(b.y - bounds.y);
+      paint(raw, x + 2, y + 2, Math.round(b.width) - 4, Math.round(b.height) - 4, colors[index]);
+    }
+    const normalized = normalizeFixedSheetExport(PNG.sync.write(raw), doc, source);
+    const { bytes, ...metadata } = normalized, padded = PNG.sync.read(bytes, { checkCRC: true });
+    await add(source.id, padded, source.nodeId, metadata);
+    conditionExpected.set(source.id, { padded, output: normalized.outputPositions, crops: normalized.positions });
+  }
   release = validateRelease({ releaseId: 'v7-render-test', figmaVersion: 'fixture-v7', catalog, printTemplates: templates, assets });
 });
 after(async () => {
@@ -165,4 +184,83 @@ test('A V7 job rejects an older release geometry before creating any PDF', async
   const outputDir = path.join(root, 'mixed-rejected');
   await assert.rejects(renderJob({ manifest: manifest(), release: { ...release, printTemplates: oldTemplates }, assetFiles, outputDir, siteOrigin: 'https://searealm.com' }), /matching.*templates|matching versioned/);
   await assert.rejects(readdir(outputDir), { code: 'ENOENT' });
+});
+
+function conditionsManifest() {
+  return createManufacturingManifest({ request: { orderId: "conditions-native-test", orderNumber: "CONDITIONS-NATIVE", items: [{ productId: "conditions-deck", quantity: 1 }] },
+    catalog, artworkRelease: "v7-render-test", printTemplates: templates, now: "2026-10-29T13:05:55.000Z" });
+}
+
+test("new Conditions pages preserve all eighteen native inset rectangles and unresampled card pixels", async () => {
+  const saved = conditionsManifest();
+  const jobs = await renderJob({ manifest: saved, release, assetFiles, outputDir: path.join(root, "conditions-native"), siteOrigin: "https://searealm.com" });
+  const fronts = jobs.filter(job => job.side === "fronts"); assert.equal(fronts.length, 2);
+  for (const [sheetIndex, job] of fronts.entries()) {
+    const source = conditionSources[sheetIndex], expected = conditionExpected.get(source.id), front = await inspect(job.file);
+    assert.equal(front.placements.length, 10); assert.equal(front.images.length, 10);
+    for (const [index, p] of expected.output.entries()) {
+      placement(front.placements[index + 1], p, `native Conditions ${sheetIndex + 1} card ${index + 1}`);
+      assert.equal(p.width, 698.4000244140625); assert.equal(p.height, 977.760009765625);
+      assert.notEqual(p.width, cardWidth, "The inset card cannot expand back to the generic V7 width");
+      const c = expected.crops[index], x = Math.round(c.x), y = Math.round(c.y),
+        width = Math.round(c.x + c.width) - x, height = Math.round(c.y + c.height) - y,
+        crop = image(width, height);
+      PNG.bitblt(expected.padded, crop, x, y, width, height, 0, 0);
+      const embedded = front.images[index + 1];
+      assert.deepEqual([embedded.width, embedded.height], [width, height]);
+      assert.ok(embedded.pixels.equals(rgbBytes(crop)), "PDF retains every cropped native RGB pixel");
+      const alpha = Buffer.from(Array.from({ length: width * height }, (_, i) => crop.data[i * 4 + 3]));
+      assert.ok(embedded.mask?.equals(alpha), "PDF retains every cropped native alpha value");
+    }
+    assert.equal(expected.output[0].y, 105.0966796875);
+    assert.equal(expected.crops[0].y - expected.output[0].y, 0.3564453125);
+  }
+  for (const back of jobs.filter(job => job.side === "backs")) rear(await inspect(back.file), rearPixels);
+});
+
+test("new Conditions release and preflight reject absent, mismatched or transplanted native output geometry", async () => {
+  const id = "sheet-conditions-1", original = release.assets[id];
+  assert.equal(validFixedSheetOutputPositions(original, id), true);
+  assert.equal(validFixedSheetPositions(original.positions, "sheet-blue-water-1"), false);
+  const corruptions = [
+    asset => { delete asset.outputPositions; },
+    asset => { delete asset.sourceGeometry; },
+    asset => { asset.outputPositions[0].x += 1; },
+    asset => { asset.positions[0].y += 1; },
+    asset => { asset.sourceGeometry.sourcePositions[0].y += 1; },
+    asset => { asset.sourceGeometry.padding.y += 1; },
+    asset => { asset.sourceGeometry.cropTranslation.y = 0; },
+    asset => { asset.sourceGeometry.sourceBounds.width += 1; },
+    asset => { asset.sourceGeometry.exportNodeId = "wrong-grid"; },
+    asset => { asset.nodeId = "2366:320222"; },
+    asset => { asset.outputPositions[0].width = cardWidth; },
+    asset => { asset.outputPositions[0].rotation = 1; },
+    asset => { asset.outputPositions.pop(); },
+  ];
+  for (const corrupt of corruptions) {
+    const asset = structuredClone(original); corrupt(asset);
+    const bad = { ...release, assets: { ...release.assets, [id]: asset } };
+    assert.equal(validFixedSheetOutputPositions(asset, id), false);
+    assert.throws(() => validateRelease(bad), /output positions/);
+    assert.equal(preflightPrintAssets(conditionsManifest(), bad).ready, false);
+  }
+  assert.equal(validFixedSheetOutputPositions(original, "sheet-coral-garden-1"), false);
+  const bad = structuredClone(release); delete bad.assets[id].outputPositions;
+  const outputDir = path.join(root, "conditions-invalid");
+  await assert.rejects(renderJob({ manifest: conditionsManifest(), release: bad, assetFiles, outputDir, siteOrigin: "https://searealm.com" }), /output positions/);
+  await assert.rejects(readdir(outputDir), { code: "ENOENT" });
+});
+
+test("historical Conditions assets without output overrides keep their original V7 cutter placement", async () => {
+  const old = { ...release, assets: { ...release.assets } }, oldFiles = { ...assetFiles };
+  for (const [index, source] of conditionSources.entries()) {
+    old.assets[source.id] = { ...release.assets["sheet-v7-fixture"], nodeId: ["2366:320222", "2366:320233"][index] };
+    oldFiles[source.id] = assetFiles["sheet-v7-fixture"];
+  }
+  assert.equal(validateRelease(old), old);
+  const jobs = await renderJob({ manifest: conditionsManifest(), release: old, assetFiles: oldFiles, outputDir: path.join(root, "conditions-historical"), siteOrigin: "https://searealm.com" });
+  for (const job of jobs.filter(job => job.side === "fronts")) {
+    const front = await inspect(job.file);
+    for (const [index, p] of positionsAt(145).entries()) placement(front.placements[index + 1], p, `historical Conditions slot ${index + 1}`);
+  }
 });

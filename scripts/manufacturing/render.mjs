@@ -224,14 +224,18 @@ export async function renderJob({
           drawCard(page, image, background);
         }
         if (side === "fronts" && sheet.fronts.assetId) {
-          const savedPositions = release.assets[sheet.fronts.assetId].positions;
+          const asset = release.assets[sheet.fronts.assetId], savedPositions = asset.positions;
           if (!validFixedSheetPositions(savedPositions, sheet.fronts.assetId))
             throw new Error("The saved fixed sheet needs valid source card positions.");
           const original = PNG.sync.read(bytes.get(sheet.fronts.assetId)),
             sourcePositions = savedPositions.toSorted((a, b) =>
               Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y,
             ),
-            positions = cutterPositions(manifest.layout.positions, "front template", tuned);
+            // Conditions preserves its reviewed native card insets; older sheets
+            // continue using the immutable cutter template from their manifest.
+            positions = asset.outputPositions?.toSorted((a, b) =>
+              Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y,
+            ) ?? cutterPositions(manifest.layout.positions, "front template", tuned);
           for (const [index, sourcePosition] of sourcePositions.entries()) {
             const image = await doc.embedPng(
               cropCard(original, sourcePosition),
