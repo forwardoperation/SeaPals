@@ -13,6 +13,11 @@ const catalog = buildPrintingCatalog(
 );
 const migration = (name) => readFile(new URL(`../../../supabase/${name}.sql`, import.meta.url), "utf8");
 const dispatchSql = await migration("manufacturing-dispatch");
+const receivingSql = (await migration("manufacturing-receiving")).replace(/\r\n/g, "\n");
+const batchPrintSql = await migration("manufacturing-batch-print");
+const legacyMilestone = "if p_event->>'type'='confirm_printed' and p_event->>'side'<>'ticket' then milestone:='in_production'; end if;";
+const finishingMilestone = "if p_event->>'role'='operator' and (p_event->>'type'='glued' or\n      (p_event->>'type'='confirm_printed' and p_event->>'side'<>'ticket')) then milestone:='in_production'; end if;";
+const commitSignature = "public.manufacturing_commit(uuid,uuid,integer,jsonb,jsonb,text)";
 
 // Exercise the production service and SQL functions without Supabase, artwork
 // downloads, printer access, or any buyer notifications being sent.
@@ -63,7 +68,7 @@ function serviceClient(db) {
   };
 }
 
-async function fixture({ dispatch = true } = {}) {
+async function fixture({ dispatch = true, receiving = false } = {}) {
   const db = new PGlite();
   await db.exec(`create role anon; create role authenticated; create role service_role;
     create table store_orders(id uuid primary key,order_number text,payment_status text default 'pending',payment_livemode boolean default true,
@@ -76,6 +81,11 @@ async function fixture({ dispatch = true } = {}) {
   if (dispatch) {
     await db.exec(dispatchSql);
     await db.exec(dispatchSql);
+  }
+  if (receiving) {
+    assert.ok(receivingSql.includes(finishingMilestone));
+    // Start from the installed legacy predicate, then exercise the focused upgrade.
+    await db.exec(receivingSql.replace(finishingMilestone, legacyMilestone));
   }
   const rpc = async (name, args) => (await db.query(
     `select manufacturing_${name}(${args.map((_, i) => `$${i + 1}`).join(",")}) as value`, args,
@@ -365,5 +375,136 @@ test("approval allocates missing finished-stock plans once and exposes no public
       await f.db.exec("reset role");
     }
     assert.equal((await f.db.query("select has_function_privilege('service_role','manufacturing_send_to_printers(uuid)','EXECUTE') as allowed")).rows[0].allowed, true);
+  } finally { await f.db.close(); }
+});
+
+test("batch migration changes only the installed milestone predicate and preserves grants and active jobs", async () => {
+  const f = await fixture({ receiving: true });
+  try {
+    const id = await f.order({ productId: "dice-pack" }), token = randomUUID();
+    await f.s.sendToPrinters(id);
+    await f.s.claim(token);
+    const functionInfo = async () => (await f.db.query(
+      "select pg_get_functiondef(oid) as definition,proowner,proacl,prosecdef,proconfig from pg_proc where oid=$1::regprocedure",
+      [commitSignature],
+    )).rows[0];
+    const original = await functionInfo();
+    await f.db.exec(original.definition.replace("  select * into o from store_orders", "  -- Preserve unrelated installed changes.\n  select * into o from store_orders"));
+    const before = await functionInfo(), job = await f.row(id);
+    await f.db.exec(batchPrintSql);
+    const upgraded = await functionInfo();
+    assert.deepEqual(upgraded, { ...before, definition: before.definition.replace(legacyMilestone, finishingMilestone) });
+    await f.db.exec(batchPrintSql);
+    assert.deepEqual(await functionInfo(), upgraded, "Reapplying does not redefine or alter the function");
+    assert.deepEqual(await f.row(id), job, "Migration does not change saved state, approval, manifest, or live lease");
+    for (const role of ["anon", "authenticated"]) {
+      await f.db.exec(`set role ${role}`);
+      await assert.rejects(f.rpc("commit", [id, token, 0, {}, {}, "active"]), /permission denied/);
+      await f.db.exec("reset role");
+    }
+    assert.equal((await f.db.query("select has_function_privilege('service_role',$1,'EXECUTE') as allowed", [commitSignature])).rows[0].allowed, true);
+    for (const unexpected of ["if false then milestone:='in_production'; end if;", legacyMilestone + "\n    " + legacyMilestone]) {
+      const definition = upgraded.definition.replace(finishingMilestone, unexpected);
+      await f.db.exec(definition);
+      await assert.rejects(f.db.exec(batchPrintSql), /Unexpected manufacturing_commit milestone predicate/);
+      await f.db.exec("rollback");
+      assert.equal((await functionInfo()).definition, definition, "An unfamiliar or ambiguous predicate is not overwritten");
+    }
+    await f.db.exec(receivingSql.replace(/\n/g, "\r\n"));
+    const canonical = await functionInfo();
+    await f.db.exec(batchPrintSql.replace(/\r?\n/g, "\r\n"));
+    assert.deepEqual(await functionInfo(), canonical, "The updated receiving baseline is recognized without rewriting Windows line endings");
+  } finally { await f.db.close(); }
+});
+
+test("all queued sheets submit under one lease without Paper checked and gluing queues in-production once", async () => {
+  const f = await fixture({ receiving: true });
+  try {
+    await f.db.exec(batchPrintSql);
+    await f.artwork();
+    const id = await f.order({ quantity: 2 }), token = randomUUID();
+    await f.s.sendToPrinters(id);
+    const prepared = await f.s.claim(token);
+    assert.equal(prepared.manifest.sheets.length, 2);
+    const targets = [{ side: "ticket" }, ...prepared.manifest.sheets.flatMap(({ sheetId }) => [
+      { sheetId, side: "fronts" }, { sheetId, side: "backs" },
+    ])];
+    for (const [i, target] of targets.entries()) {
+      await f.event(id, "submission_started", target, "agent", token);
+      const submitting = await f.row(id);
+      assert.equal(submitting.phase, "active");
+      assert.equal(submitting.lease_token, token);
+      await f.event(id, "submission_succeeded", target, "agent", token);
+      const submitted = await f.row(id), hasQueuedPages = i < targets.length - 1;
+      assert.equal(submitted.phase, hasQueuedPages ? "active" : "awaiting_operator");
+      assert.equal(submitted.lease_token, hasQueuedPages ? token : null);
+      assert.equal(await f.rpc("heartbeat", [id, token]), hasQueuedPages);
+      assert.equal(await f.s.claim(randomUUID()), null, "A submitted job cannot be duplicated by another claim");
+    }
+    const printed = await f.row(id);
+    assert.equal(printed.state.ticket.ticket, "submitted");
+    for (const sheet of Object.values(printed.state.sheets)) {
+      assert.equal(sheet.fronts, "submitted");
+      assert.equal(sheet.backs, "submitted");
+    }
+    const status = async () => (await f.db.query("select fulfillment_status from store_orders where id=$1", [id])).rows[0].fulfillment_status;
+    const notices = async () => (await f.db.query("select milestone,status from manufacturing_notifications where order_id=$1 order by milestone", [id])).rows;
+    assert.equal(await status(), "unfulfilled", "Spool acceptance is not physical production evidence");
+    assert.deepEqual(await notices(), []);
+    const first = prepared.manifest.sheets[0].sheetId;
+    await assert.rejects(f.event(id, "glued", { sheetId: first }, "agent", token), /Only an operator/);
+    await f.event(id, "glued", { sheetId: first });
+    assert.equal(await status(), "in_production");
+    assert.deepEqual(await notices(), [{ milestone: "in_production", status: "pending" }]);
+    for (const { sheetId } of prepared.manifest.sheets) {
+      if (sheetId !== first) await f.event(id, "glued", { sheetId });
+      await f.event(id, "cut", { sheetId });
+    }
+    for (const holo of prepared.manifest.holoChecklist)
+      await f.event(id, prepared.manifest.holoHandling === "pull-finished" ? "holo_pulled" : "holo_applied", { holoId: holo.id });
+    await f.event(id, "quality_checked");
+    assert.equal(await status(), "packing");
+    await f.event(id, "confirm_printed", { sheetId: first, side: "fronts" });
+    assert.equal(await status(), "packing", "A legacy confirmation cannot downgrade fulfillment");
+    assert.deepEqual(await notices(), [{ milestone: "in_production", status: "pending" }, { milestone: "packing", status: "pending" }]);
+    await f.event(id, "packed");
+    assert.equal((await f.row(id)).phase, "complete");
+  } finally { await f.db.close(); }
+});
+
+test("legacy paper confirmation still starts production, while tickets and stock builds do not notify buyers", async () => {
+  const f = await fixture({ receiving: true });
+  try {
+    await f.db.exec(batchPrintSql);
+    await f.artwork();
+    const id = await f.order(), token = randomUUID();
+    await f.s.sendToPrinters(id);
+    const prepared = await f.s.claim(token);
+    for (const type of ["submission_started", "submission_succeeded"])
+      await f.event(id, type, { side: "ticket" }, "agent", token);
+    await f.event(id, "confirm_printed", { side: "ticket" });
+    assert.equal((await f.db.query("select fulfillment_status from store_orders where id=$1", [id])).rows[0].fulfillment_status, "unfulfilled");
+    assert.equal((await f.db.query("select count(*)::integer as n from manufacturing_notifications")).rows[0].n, 0);
+    const target = { sheetId: prepared.manifest.sheets[0].sheetId, side: "fronts" };
+    for (const type of ["submission_started", "submission_succeeded"])
+      await f.event(id, type, target, "agent", token);
+    await f.event(id, "confirm_printed", target);
+    assert.equal((await f.db.query("select fulfillment_status from store_orders where id=$1", [id])).rows[0].fulfillment_status, "in_production");
+    const notices = (await f.db.query("select * from manufacturing_notifications")).rows;
+    assert.equal(notices.length, 1);
+    const stockId = await f.build([{ productId: "reef-dive-pack", quantity: 1 }]), stockToken = randomUUID();
+    await f.s.sendToPrinters(stockId);
+    const stock = await f.s.claim(stockToken);
+    assert.equal(stock.order_id, stockId);
+    const inventory = await f.stock(), movements = await f.movements();
+    const sheetId = stock.manifest.sheets[0].sheetId;
+    for (const print of [{ side: "ticket" }, { sheetId, side: "fronts" }, { sheetId, side: "backs" }])
+      for (const type of ["submission_started", "submission_succeeded"])
+        await f.event(stockId, type, print, "agent", stockToken);
+    await f.event(stockId, "glued", { sheetId });
+    assert.deepEqual((await f.db.query("select * from manufacturing_notifications")).rows, notices);
+    assert.deepEqual(await f.stock(), inventory, "Gluing is not a finished-product receipt");
+    assert.deepEqual(await f.movements(), movements);
+    assert.equal((await f.row(stockId)).inventory_posted_at, null);
   } finally { await f.db.close(); }
 });

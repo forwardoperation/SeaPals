@@ -344,6 +344,43 @@ test("spool success is not physical confirmation; both sides are required before
   assert.equal(run.state().sheets[sheetId].glued, true);
 });
 
+test("submitted sheets can be assembled and quality checked without per-side paper confirmations", () => {
+  const saved = manifest();
+  const run = exercise(saved);
+  for (const { sheetId } of saved.sheets) {
+    for (const side of ["fronts", "backs"]) {
+      run.apply("submission_started", { sheetId, side, role: "agent" });
+      run.apply("submission_succeeded", { sheetId, side, role: "agent" });
+    }
+    run.apply("glued", { sheetId });
+    run.apply("cut", { sheetId });
+  }
+  for (const { id } of saved.holoChecklist) run.apply("holo_pulled", { holoId: id });
+  assert.equal(workflowReadiness(run.state()).canQualityCheck, true);
+  assert.equal(workflowReadiness(run.state()).canPack, false);
+  assert.throws(() => run.apply("quality_checked", { role: "agent" }), /Only an operator/);
+  assert.throws(() => run.apply("packed"), /Quality check/);
+  run.apply("quality_checked");
+  run.apply("packed");
+  assert.equal(run.state().packed, true);
+  assert.ok(Object.values(run.state().sheets).every(s => s.fronts === "submitted" && s.backs === "submitted"));
+  assert.ok(!run.state().events.some(e => e.type === "confirm_printed"));
+});
+
+test("queued, active, and uncertain print sides still prevent finishing and quality checks", () => {
+  const saved = manifest(), sheetId = saved.sheets[0].sheetId;
+  for (const status of ["queued", "submitting", "needs_review"]) {
+    const run = exercise(saved);
+    run.print(sheetId, "backs");
+    if (status !== "queued") run.apply("submission_started", { sheetId, side: "fronts", role: "agent" });
+    if (status === "needs_review") run.apply("submission_uncertain", { sheetId, side: "fronts", role: "agent" });
+    assert.throws(() => run.apply("glued", { sheetId }), /Both matching/);
+    assert.throws(() => run.apply("holo_pulled", { holoId: saved.holoChecklist[0].id }), /matching front/);
+    assert.equal(workflowReadiness(run.state()).allPrinted, false);
+    assert.equal(workflowReadiness(run.state()).canQualityCheck, false);
+  }
+});
+
 test("finished holo pulls may precede or follow gluing/cutting, but always gate QC", () => {
   for (const early of [true, false]) {
     const saved = manifest();

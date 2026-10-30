@@ -49,7 +49,8 @@ prepared PDF hashes, application exit status, matching Windows job IDs when
 observed, and bounded queue/error evidence. A fast job can disappear between
 polls. An empty queue or successful application exit does not prove that ink
 reached the paper. Receipts explicitly retain `physicalPrintConfirmed: false`;
-the operator still uses **Paper checked** after inspecting the sheet.
+the full requested batch continues automatically without per-sheet paper checks.
+Inspect physical output during finishing and the final quality check.
 
 For a blank or damaged page, open the original workshop job and find **Sheet N
 of total** (Drop Off sheets also show their numbered asset label). After the
@@ -415,9 +416,11 @@ orders and stock builds. Approval does not consume inventory or notify a buyer.
 Printing still waits for the global printing switch and the local agent.
 The authenticated dashboard refreshes the queue and selected job every five
 seconds while visible. It shows waiting, preparation, submission, and review
-states with sent/checked counts. Successful submission means the local print
+states with sent/total counts. Successful submission means the local print
 helper handed the job to Windows; it does not confirm that paper emerged or
-printed correctly. Check the output and use **Paper checked** for each side.
+printed correctly. No routine paper confirmation is required between pages or
+before gluing. Resolve actual interrupted attempts and use the per-side reprint
+controls for blank or damaged sheets; quality checks still precede packing.
 Background refreshes cannot send, retry, reroll, or confirm a job.
 The first eligible agent claim generates and saves randomized packs for the
 shortfall; retries and explicit reprints use those saved contents. Fully stocked
@@ -997,12 +1000,17 @@ export mode requires complete mappings for every eligible printing.
   again under an order lock. Orders on hold never begin another submission.
 - An interrupted `submitting` attempt becomes `needs_review`; it is never
   automatically printed again. Check the printer queue and paper, then use
-  **Paper checked** or **Reprint** with a reason. Reprints reuse the same art and
+  **Page printed successfully** or **Reprint** with a reason. Reprints reuse the same art and
   draw; front reprints reset their holo checkboxes and both types reset assembly/QC.
   Already submitted pages may still finish after a hold or refund.
 - A submission acknowledgement is not proof of physical output. Staff confirms
-  both sides, glue/drying/cutting, finished holo pulls, accessory picking, QC,
+  glue/drying/cutting, finished holo pulls, accessory picking, QC,
   and packing. Older saved jobs keep their original sticker confirmations.
+- Agent acknowledgements tolerate unrelated staff finishing updates without
+  retrying a physical print. Holds, reprints, conflicting print attempts, and
+  lost leases still stop submission. Run `supabase/manufacturing-batch-print.sql`
+  after the receiving schema to retain the buyer's in-production milestone
+  when staff confirms gluing instead of individual printed pages.
 - The QR contains only `/admin/manufacturing?order=<UUID>`. Staff must sign in;
   scanning itself cannot change progress. A copied QR reveals no print image,
   device credential, buyer contact information, or booster contents.

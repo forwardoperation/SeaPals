@@ -144,7 +144,9 @@ begin
     lease_token=case when p_phase='active' then lease_token else null end,
     leased_until=case when p_phase='active' then leased_until else null end where order_id=p_order returning * into m;
   if m.job_kind='order' then
-    if p_event->>'type'='confirm_printed' and p_event->>'side'<>'ticket' then milestone:='in_production'; end if;
+    -- Operator gluing is physical production evidence; spool acceptance alone is not.
+    if p_event->>'role'='operator' and (p_event->>'type'='glued' or
+      (p_event->>'type'='confirm_printed' and p_event->>'side'<>'ticket')) then milestone:='in_production'; end if;
     if p_event->>'type'='quality_checked' then milestone:='packing'; end if;
     if milestone is not null and manufacturing_eligible(o) then
       if (milestone='in_production' and o.fulfillment_status='unfulfilled') or (milestone='packing' and o.fulfillment_status in ('unfulfilled','in_production')) then

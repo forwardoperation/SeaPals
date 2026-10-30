@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { workflowReadiness } from "@/lib/manufacturing/readiness.mjs";
+import { isPrintSubmitted, workflowReadiness } from "@/lib/manufacturing/readiness.mjs";
 import FinishedInventory from "./FinishedInventory";
 import StockReceiving from "./StockReceiving";
 import { RECEIPT_RETRY_KEY, readReceiptRetry, receiptWasRejected } from "./receiving.mjs";
@@ -15,7 +15,7 @@ const button =
 const labels = {
   queued: "Waiting for printer",
   submitting: "Sending to printer",
-  submitted: "Sent to printer — check paper",
+  submitted: "Sent to printer",
   needs_review: "Print outcome needs review",
   confirmed: "Printed and checked",
 };
@@ -426,17 +426,18 @@ export default function ManufacturingDashboard() {
                 Review interrupted attempt
               </button>
             )}
-          {["submitted", "needs_review"].includes(status) && (
+          {status === "needs_review" && (
             <button
               className={button}
               disabled={
                 busy ||
+                recovery.active ||
                 state.hold ||
                 (side !== "ticket" && !!detail.inventory_posted_at)
               }
               onClick={() => update("confirm_printed", { sheetId, side })}
             >
-              Paper checked
+              Page printed successfully
             </button>
           )}
           {["submitted", "needs_review", "confirmed"].includes(status) && (
@@ -677,8 +678,7 @@ export default function ManufacturingDashboard() {
                         </p>
                         {!!feedback.total && (
                           <p className="mt-2 text-sm font-bold">
-                            {feedback.sent}/{feedback.total} print jobs sent &middot;{" "}
-                            {feedback.checked}/{feedback.total} checked
+                            {feedback.sent}/{feedback.total} print jobs sent
                           </p>
                         )}
                         <p className="mt-2 text-xs text-slate-500">
@@ -859,8 +859,8 @@ export default function ManufacturingDashboard() {
                         busy ||
                         state.hold ||
                         state.sheets[sheet.sheetId].glued ||
-                        state.sheets[sheet.sheetId].fronts !== "confirmed" ||
-                        state.sheets[sheet.sheetId].backs !== "confirmed"
+                        !isPrintSubmitted(state.sheets[sheet.sheetId].fronts) ||
+                        !isPrintSubmitted(state.sheets[sheet.sheetId].backs)
                       }
                       onClick={() =>
                         update("glued", { sheetId: sheet.sheetId })
@@ -905,7 +905,7 @@ export default function ManufacturingDashboard() {
                             busy ||
                             state.hold ||
                             state.holos[holo.id] ||
-                            state.sheets[sheet.sheetId].fronts !== "confirmed"
+                            !isPrintSubmitted(state.sheets[sheet.sheetId].fronts)
                           }
                           onClick={() =>
                             update(manifest.holoHandling === "pull-finished" ? "holo_pulled" : "holo_applied", { holoId: holo.id })

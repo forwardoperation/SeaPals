@@ -341,38 +341,70 @@ export function manufacturingService(db) {
     }
   }
   async function event(orderId, input, role, token = null) {
-    const r = await row(orderId);
-    if (!r.manifest_text)
-      throw new Error("The order has not been prepared yet.");
-    const manifest = verifyManifest(JSON.parse(r.manifest_text));
+    // Retain the original event identity and revision even when unrelated staff
+    // progress races a printer acknowledgement. Retries must have one fingerprint.
     const e = normalizedEvent(input, role);
-    if (r.inventory_posted_at && e.type === "reprint" && e.side !== "ticket")
-      throw new Error(
-        "This build was received into stock. Adjust damaged stock and create a replacement build.",
-      );
-    if (
-      role === "operator" &&
-      e.type === "submission_uncertain" &&
-      new Date(r.leased_until) > new Date()
-    )
-      throw new Error(
-        "The print agent is still active. Wait for its lease to expire before reviewing an interrupted attempt.",
-      );
-    const next = applyManufacturingEvent(r.state, manifest, e);
-    if (next === r.state) return unpack(r);
-    return unpack(
-      await rpc("commit", {
-        p_order: orderId,
-        p_token: token,
-        p_expected: r.revision,
-        p_state: next,
-        p_event: e,
-        p_phase: productionPhase(
-          next,
-          Boolean(r.lease_token && new Date(r.leased_until) > new Date()),
-        ),
-      }),
-    );
+    const progressEvents = new Set([
+      "confirm_printed", "glued", "cut", "holo_applied", "holo_pulled",
+      "accessory_picked", "stock_picked",
+    ]);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const r = await row(orderId);
+      if (!r.manifest_text)
+        throw new Error("The order has not been prepared yet.");
+      const manifest = verifyManifest(JSON.parse(r.manifest_text));
+      if (r.inventory_posted_at && e.type === "reprint" && e.side !== "ticket")
+        throw new Error(
+          "This build was received into stock. Adjust damaged stock and create a replacement build.",
+        );
+      if (
+        role === "operator" &&
+        e.type === "submission_uncertain" &&
+        new Date(r.leased_until) > new Date()
+      )
+        throw new Error(
+          "The print agent is still active. Wait for its lease to expire before reviewing an interrupted attempt.",
+        );
+      let currentRevision = e.expectedRevision;
+      const interveningCount = r.state.revision - e.expectedRevision;
+      const intervening = Array.isArray(r.state.events) && interveningCount > 0
+        ? r.state.events.slice(-interveningCount) : [];
+      if (
+        role === "agent" &&
+        ["submission_started", "submission_succeeded", "submission_uncertain"].includes(e.type) &&
+        interveningCount > 0 && intervening.length === interveningCount &&
+        intervening.every((entry, index) =>
+          (entry?.appliedRevision ?? entry?.expectedRevision + 1) === e.expectedRevision + index + 1 &&
+          entry?.role === "operator" && progressEvents.has(entry.type) &&
+          !(entry.type === "confirm_printed" && entry.sheetId === e.sheetId && entry.side === e.side))
+      ) currentRevision = r.state.revision;
+      // Receipts can advance the revision without recording an event. Only a
+      // complete contiguous suffix proves which changes occurred after this request.
+      // Target-state, hold and idempotency checks still run against the latest
+      // state. A reprint, another agent, or an uncertain attempt is never rebased.
+      const next = applyManufacturingEvent(r.state, manifest, e, { currentRevision });
+      if (next === r.state) return unpack(r);
+      try {
+        return unpack(
+          await rpc("commit", {
+            p_order: orderId,
+            p_token: token,
+            p_expected: r.revision,
+            p_state: next,
+            p_event: e,
+            p_phase: productionPhase(
+              next,
+              Boolean(r.lease_token && new Date(r.leased_until) > new Date()),
+            ),
+          }),
+        );
+      } catch (error) {
+        // Retry only a known compare-and-swap conflict, not a lease failure or
+        // unknown acknowledgement. Physical printing is outside this operation.
+        if (role !== "agent" || attempt === 2 || error.status !== 409 || error.message !== "Revision conflict")
+          throw error;
+      }
+    }
   }
   return {
     rpc,

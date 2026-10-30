@@ -1,8 +1,12 @@
 // Browser-safe summary; mutations and manifest validation stay on the server.
+// Successful submission permits finishing; physical quality is checked before packing.
+export const isPrintSubmitted = (status) =>
+  status === "submitted" || status === "confirmed";
+
 export function workflowReadiness(state) {
   const sheets = Object.values(state.sheets);
   const allPrinted = sheets.every(
-    (sheet) => sheet.fronts === "confirmed" && sheet.backs === "confirmed",
+    (sheet) => isPrintSubmitted(sheet.fronts) && isPrintSubmitted(sheet.backs),
   );
   const allGlued = sheets.every((sheet) => sheet.glued);
   const allCut = sheets.every((sheet) => sheet.cut);

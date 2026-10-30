@@ -15,13 +15,19 @@ const submittedJob = {
 };
 const job = () => structuredClone(submittedJob);
 
-test("accepted Windows submissions remain unchecked until the operator checks paper", () => {
-  const result = printFeedback(job(), true, now);
-  assert.equal(result.title, "Sent to printers — check paper");
+test("accepted Windows submissions allow finishing without per-page checks or claiming physical completion", () => {
+  const detail = job();
+  const savedState = structuredClone(detail.state);
+  const result = printFeedback(detail, true, now);
+  assert.equal(result.title, "Sent to printers");
   assert.equal(result.sent, 3);
   assert.equal(result.total, 3);
-  assert.equal(result.checked, 0);
+  assert.equal(Object.hasOwn(result, "checked"), false);
   assert.match(result.description, /Windows accepted/);
+  assert.match(result.description, /No page-by-page confirmations are needed/);
+  assert.match(result.description, /Once the sheets finish printing/);
+  assert.deepEqual(detail.state, savedState);
+  assert.equal(detail.state.qualityChecked, undefined);
   // Turning printing off afterward must not erase already accepted submissions.
   assert.deepEqual(printFeedback(job(), false, now), result);
 });
@@ -47,7 +53,7 @@ test("partial submissions count accepted jobs while an interrupted attempt requi
   let result = printFeedback(detail, true, now);
   assert.equal(result.title, "Sending pages to printers");
   assert.equal(result.sent, 1);
-  assert.equal(result.checked, 0);
+  assert.match(result.description, /Remaining pages continue automatically/);
   detail.leased_until = new Date(now - 1).toISOString();
   result = printFeedback(detail, true, now);
   assert.equal(result.title, "Interrupted print attempt — check paper");
@@ -65,8 +71,8 @@ test("holds take precedence and finishing pages does not prematurely complete ma
   const detail = job();
   detail.state.ticket.ticket = "confirmed";
   detail.state.sheets["reef-1"] = { fronts: "confirmed", backs: "confirmed" };
-  assert.equal(printFeedback(detail, true, now).title, "All printed pages checked");
-  assert.equal(printFeedback(detail, true, now).checked, 3);
+  assert.equal(printFeedback(detail, true, now).title, "Sent to printers");
+  assert.equal(printFeedback(detail, true, now).sent, 3);
   detail.state.hold = true;
   assert.equal(printFeedback(detail, true, now).attention, true);
   detail.state.hold = false;
@@ -94,8 +100,6 @@ test("packed stock remains awaiting receipt until actual finished inventory is p
 
 test("new holo jobs say to pull finished cards and legacy jobs retain sticker instructions", () => {
   const detail = job();
-  detail.state.ticket.ticket = "confirmed";
-  detail.state.sheets["reef-1"] = { fronts: "confirmed", backs: "confirmed" };
   assert.match(printFeedback(detail, true, now).description, /applying holo stickers/);
   detail.manifest.holoHandling = "pull-finished";
   assert.match(printFeedback(detail, true, now).description, /pulling the listed finished holo cards/);
@@ -147,4 +151,48 @@ test("persisted blocked issues use Drop Off sheet names only for complete legacy
   assert.equal(formatManufacturingMessage(issue), expected);
   assert.equal(detail.issue, issue);
   assert.equal(formatManufacturingMessage("Printer is offline."), "Printer is offline.");
+});
+
+
+test("mixed legacy and new submissions keep batch progress without requesting paper checks", () => {
+  const detail = job();
+  detail.state.ticket.ticket = "confirmed";
+  detail.state.sheets["reef-1"] = { fronts: "submitted", backs: "queued" };
+  detail.leased_until = new Date(now + 60_000).toISOString();
+  const progress = printFeedback(detail, true, now);
+  assert.equal(progress.title, "Sending remaining pages to printers");
+  assert.equal(progress.sent, 2);
+  assert.equal(progress.total, 3);
+  assert.equal(progress.attention, false);
+  detail.state.sheets["reef-1"].backs = "submitted";
+  const sent = printFeedback(detail, true, now);
+  assert.equal(sent.title, "Sent to printers");
+  assert.equal(sent.sent, 3);
+  assert.notEqual(sent.title, "Job complete");
+});
+
+test("missing or invalid leases cannot leave interrupted print attempts looking active", () => {
+  const detail = job();
+  detail.state.sheets["reef-1"].fronts = "submitting";
+  for (const leasedUntil of [null, undefined, "invalid", new Date(now).toISOString()]) {
+    detail.leased_until = leasedUntil;
+    const result = printFeedback(detail, true, now);
+    assert.equal(result.title, "Interrupted print attempt — check paper");
+    assert.equal(result.attention, true);
+  }
+  detail.state.sheets["reef-1"].fronts = "needs_review";
+  assert.match(printFeedback(detail, true, now).description, /Page printed successfully/);
+  assert.match(printFeedback(detail, true, now).description, /missing or damaged/);
+});
+
+test("stock-only orders with a work ticket do not request card assembly or page checks", () => {
+  const detail = job();
+  detail.manifest.sheets = [];
+  detail.state.sheets = {};
+  const result = printFeedback(detail, true, now);
+  assert.equal(result.title, "Sent to printers");
+  assert.equal(result.total, 1);
+  assert.equal(result.sent, 1);
+  assert.match(result.description, /Once the work ticket prints/);
+  assert.doesNotMatch(result.description, /gluing|cutting|Paper checked/);
 });

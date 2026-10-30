@@ -131,8 +131,10 @@ its own document/media profile so it does not unexpectedly consume card stock.
    click **Send to printers**. Both printers receive independently tracked jobs with the same order,
    pack, and sheet-pair identifiers. All pages for the order must pass artwork
    preflight before the first printer receives a job.
-2. An operator confirms the front sheet and back sheet actually printed.
-   Acceptance by a print spooler is not confirmation of usable output.
+2. The helper sends the full requested batch without page-by-page paper checks.
+   Acceptance by a print spooler is not confirmation of usable output. Use the
+   per-side reprint controls for blank or damaged pages; only actual interrupted
+   attempts require review before resuming.
 3. Match the identified pair, glue the sheets, and confirm gluing.
 4. Cut the assembled sheet and confirm cutting.
 5. Pull the listed finished holo card, discard its printed instruction slot,

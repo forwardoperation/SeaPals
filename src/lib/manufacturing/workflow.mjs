@@ -1,6 +1,6 @@
 import { contentHash } from "./boosters.mjs";
 import { verifyManifest } from "./printPlan.mjs";
-import { workflowReadiness } from "./readiness.mjs";
+import { isPrintSubmitted, workflowReadiness } from "./readiness.mjs";
 export { workflowReadiness } from "./readiness.mjs";
 
 export function createManufacturingState(manifest) {
@@ -38,7 +38,10 @@ export function createManufacturingState(manifest) {
   };
 }
 
-export function applyManufacturingEvent(original, manifest, event) {
+export function applyManufacturingEvent(
+  original, manifest, event,
+  { currentRevision = event?.expectedRevision } = {},
+) {
   verifyManifest(manifest);
   if (original.manifestHash !== manifest.manifestHash)
     throw new Error("State belongs to a different manifest.");
@@ -56,7 +59,9 @@ export function applyManufacturingEvent(original, manifest, event) {
       throw new Error("Event ID was reused for a different action.");
     return original;
   }
-  if (event.expectedRevision !== original.revision)
+  // The service may reconcile an agent event across verified unrelated staff
+  // progress. Preserve the original event for stable retry fingerprints.
+  if (currentRevision !== original.revision)
     throw new Error("Production state changed. Reload before updating.");
   const state = structuredClone(original);
   const sheet =
@@ -139,19 +144,19 @@ export function applyManufacturingEvent(original, manifest, event) {
       const item = manifest.holoChecklist.find(
         (item) => item.id === event.holoId,
       );
-      if (!item || state.sheets[item.sheetId].fronts !== "confirmed")
+      if (!item || !isPrintSubmitted(state.sheets[item.sheetId].fronts))
         throw new Error(
           pullFinished
-            ? "Confirm the matching front sheet before confirming the finished holo card was pulled."
-            : "Confirm the matching front sheet before applying a holo sticker.",
+            ? "Send the matching front sheet to the printer and resolve any print issue before confirming the finished holo card was pulled."
+            : "Send the matching front sheet to the printer and resolve any print issue before applying a holo sticker.",
         );
       state.holos[item.id] = true;
       break;
     }
     case "glued":
-      if (!sheet || sheet.fronts !== "confirmed" || sheet.backs !== "confirmed")
+      if (!sheet || !isPrintSubmitted(sheet.fronts) || !isPrintSubmitted(sheet.backs))
         throw new Error(
-          "Both matching sheets must be confirmed printed before gluing.",
+          "Both matching sheets must be sent to the printers with any print issues resolved before gluing.",
         );
       sheet.glued = true;
       break;
@@ -197,6 +202,7 @@ export function applyManufacturingEvent(original, manifest, event) {
   state.events.push({
     ...event,
     fingerprint,
+    appliedRevision: state.revision,
     recordedAt: new Date().toISOString(),
   });
   return state;
