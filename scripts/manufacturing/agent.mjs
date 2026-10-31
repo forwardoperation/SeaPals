@@ -257,10 +257,21 @@ export async function runJob({
     const r = await client.post(payload);
     state = r.state;
     await atomicJson(path.join(dir, "last-state.json"), state);
+    return r;
   }
   try {
+    if (job.manifest.jobKind === "stock" &&
+        ["queued", "submitting", "needs_review"].includes(state.ticket?.ticket)) {
+      // Saved stock manifests keep their hashes and card selections. Retire
+      // only the old ticket requirement with an explicit non-print event.
+      const retired = await event("stock_ticket_skipped", { sheetId: "work-ticket", side: "ticket" });
+      // Retiring the final pending page settles the phase and releases the lease
+      // on the server. Do not issue a second settle against that released lease.
+      if (["awaiting_operator", "complete"].includes(retired.phase))
+        return { orderId: job.order_id, phase: retired.phase };
+    }
     const targets = [
-      { sheetId: "work-ticket", side: "ticket" },
+      ...(job.manifest.jobKind === "stock" ? [] : [{ sheetId: "work-ticket", side: "ticket" }]),
       ...job.manifest.sheets.flatMap((s) =>
         ["fronts", "backs"].map((side) => ({ sheetId: s.sheetId, side })),
       ),
@@ -297,7 +308,7 @@ export async function runJob({
       }
       files[id] = file;
     }
-    const jobs = await render({
+    const rendered = await render({
       manifest: job.manifest,
       release: job.release,
       order: job.order,
@@ -305,6 +316,9 @@ export async function runJob({
       outputDir: path.join(dir, "pdf"),
       siteOrigin,
     });
+    // Also discard a legacy renderer's cached ticket; it is never a stock print target.
+    const jobs = job.manifest.jobKind === "stock"
+      ? rendered.filter((target) => target.side !== "ticket") : rendered;
     // Validate every pending printer placement before any page is submitted.
     // submitPdf rechecks the device immediately before its individual submission.
     for (const target of jobs) {

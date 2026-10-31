@@ -23,7 +23,7 @@ export function createManufacturingState(manifest) {
     holos: Object.fromEntries(
       manifest.holoChecklist.map((item) => [item.id, false]),
     ),
-    ticket: { ticket: "queued" },
+    ticket: { ticket: manifest.jobKind === "stock" ? "not_required" : "queued" },
     accessories: Object.fromEntries(
       (manifest.accessoryChecklist ?? []).map((item) => [item.id, false]),
     ),
@@ -80,9 +80,13 @@ export function applyManufacturingEvent(
     "submission_started",
     "submission_succeeded",
     "submission_uncertain",
+    "stock_ticket_skipped",
   ];
   if (event.role === "agent" && !agentActions.includes(event.type))
     throw new Error("Only an operator can confirm physical work.");
+  if (manifest.jobKind === "stock" && side === "ticket" &&
+      ["submission_started", "reprint"].includes(event.type))
+    throw new Error("Stock builds do not print work tickets.");
   if (
     state.hold &&
     ![
@@ -94,6 +98,16 @@ export function applyManufacturingEvent(
   )
     throw new Error("This order is on hold.");
   switch (event.type) {
+    case "stock_ticket_skipped":
+      if (event.role !== "agent" || manifest.jobKind !== "stock" ||
+          event.sheetId !== "work-ticket" || side !== "ticket" ||
+          !["queued", "submitting", "needs_review"].includes(state.ticket?.ticket))
+        throw new Error("Only the print agent can retire a pending stock-build ticket.");
+      // Retire obsolete paper, not a card page or a successful print receipt.
+      // Preserve the old attempt status in the event history, including an
+      // unknown physical outcome. The normal printer queue guard still applies.
+      state.ticket.ticket = "not_required";
+      break;
     case "submission_started":
       if (sheet[side] !== "queued")
         throw new Error(
@@ -201,6 +215,8 @@ export function applyManufacturingEvent(
   state.revision++;
   state.events.push({
     ...event,
+    ...(event.type === "stock_ticket_skipped"
+      ? { previousTicketStatus: original.ticket.ticket } : {}),
     fingerprint,
     appliedRevision: state.revision,
     recordedAt: new Date().toISOString(),

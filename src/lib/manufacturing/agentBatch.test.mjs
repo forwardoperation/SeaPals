@@ -26,10 +26,10 @@ async function temporary(action) {
   }
 }
 
-function fixture(root, { quantity = 3, productId = "starter-kit" } = {}) {
+function fixture(root, { quantity = 3, productId = "starter-kit", jobKind = "order", legacyTicketStatus, allCardsSubmitted = false } = {}) {
   const manifest = createManufacturingManifest({
     request: { orderId: randomUUID(), orderNumber: "BATCH-TEST", items: [{ productId, quantity }] },
-    catalog: [], artworkRelease: "batch-test",
+    catalog: [], artworkRelease: "batch-test", jobKind,
   });
   const release = { releaseId: "batch-test", assets: {} };
   for (const id of preflightPrintAssets(manifest, release).requiredAssetIds)
@@ -37,15 +37,21 @@ function fixture(root, { quantity = 3, productId = "starter-kit" } = {}) {
   assert.equal(preflightPrintAssets(manifest, release).ready, true);
   const token = randomUUID();
   let row = {
+    job_kind: jobKind,
     order_id: manifest.order.orderId, manifest_text: JSON.stringify(manifest),
     manifest, state: createManufacturingState(manifest), revision: 0, release,
     lease_token: token, leased_until: new Date(Date.now() + 120000).toISOString(),
   };
+  if (legacyTicketStatus) row.state.ticket.ticket = legacyTicketStatus;
+  if (allCardsSubmitted) for (const sheet of Object.values(row.state.sheets))
+    sheet.fronts = sheet.backs = "submitted";
   const targets = [
-    { sheetId: "work-ticket", side: "ticket" },
+    ...(jobKind === "stock" ? [] : [{ sheetId: "work-ticket", side: "ticket" }]),
     ...manifest.sheets.flatMap((sheet) => ["fronts", "backs"].map((side) => ({ sheetId: sheet.sheetId, side }))),
   ];
-  const jobs = targets.map((target) => ({ ...target, file: path.join(root, "mock.pdf") }));
+  // Include a legacy cached stock ticket to verify the agent never submits it.
+  const jobs = [...(jobKind === "stock" ? [{ sheetId: "work-ticket", side: "ticket" }] : []), ...targets]
+    .map((target) => ({ ...target, file: path.join(root, "mock.pdf") }));
   const printed = [], blocked = [];
   let settled = 0, onPrint = async () => {};
   const status = (target) => target.side === "ticket" ? row.state.ticket.ticket : row.state.sheets[target.sheetId][target.side];
@@ -151,4 +157,44 @@ test("a real print error still stops later pages and blocks automatic recovery o
   assert.equal(f.printed.length, 2, "uncertain attempts must not be retried automatically");
   assert.equal(f.settled(), 0);
   assert.equal(f.blocked.length, 2);
+}));
+
+test("three stock decks print only their 42 card pages and resume without any work ticket", async () => temporary(async (root) => {
+  const f = fixture(root, { jobKind: "stock", productId: "coral-garden", quantity: 3 });
+  assert.equal(f.targets.length, 42);
+  await f.run();
+  assert.deepEqual(f.printed, f.targets);
+  assert.equal(f.state().ticket.ticket, "not_required");
+  assert.equal(f.state().events.some((e) => e.side === "ticket"), false);
+  await f.run();
+  assert.equal(f.printed.length, 42, "resume must not print a cached ticket or repeat cards");
+  assert.deepEqual(f.blocked, []);
+}));
+
+test("saved stock tickets are explicitly retired without claiming a successful paper print", async () => temporary(async (root) => {
+  for (const legacyTicketStatus of ["queued", "submitting", "needs_review"]) {
+    const f = fixture(root, { jobKind: "stock", productId: "coral-garden", quantity: 1, legacyTicketStatus });
+    const beforeHash = f.state().manifestHash;
+    await f.run();
+    assert.deepEqual(f.printed, f.targets);
+    assert.equal(f.state().manifestHash, beforeHash);
+    assert.equal(f.state().ticket.ticket, "not_required");
+    const events = f.state().events.filter((e) => e.side === "ticket");
+    assert.equal(events.length, 1);
+    assert.equal(events[0].type, "stock_ticket_skipped");
+    assert.equal(events[0].previousTicketStatus, legacyTicketStatus);
+    assert.deepEqual(f.blocked, []);
+  }
+}));
+
+test("retiring the last pending stock ticket ends cleanly without settling a released lease", async () => temporary(async (root) => {
+  for (const legacyTicketStatus of ["queued", "submitting", "needs_review"]) {
+    const f = fixture(root, { jobKind: "stock", productId: "coral-garden", quantity: 1, legacyTicketStatus, allCardsSubmitted: true });
+    const result = await f.run();
+    assert.equal(result.phase, "awaiting_operator");
+    assert.equal(f.state().ticket.ticket, "not_required");
+    assert.equal(f.settled(), 0);
+    assert.deepEqual(f.printed, []);
+    assert.deepEqual(f.blocked, []);
+  }
 }));

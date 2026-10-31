@@ -6,6 +6,12 @@ checklist, and buyer milestone emails. **Printing is enabled for Reef, Deep,
 and Oceanic booster jobs and Drop Off decks approved with Send to printers.** Buyer manufacturing
 notifications and paid test-order intake remain disabled.
 
+Stock builds print only card fronts and backs. Their work tickets are not required,
+including tickets in existing saved builds; the helper records an explicit skip
+without claiming that paper printed. Customer orders keep their QR work tickets.
+Packaged products still enter inventory only through barcode receiving after
+quality checks. Accessory-only stock builds need no printed pages.
+
 ## Private artwork retention and recovery
 
 Apply `supabase/manufacturing-artwork-retention.sql` **after all existing

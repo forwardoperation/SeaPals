@@ -1,3 +1,4 @@
+import { isStockBuild, printStatuses } from "./printStatus.mjs";
 import { isPrintSubmitted } from "../../../lib/manufacturing/readiness.mjs";
 import { fixedSheetLabel } from "../../../lib/manufacturing/recipes.mjs";
 
@@ -14,11 +15,7 @@ export function formatManufacturingMessage(message) {
 export function printFeedback(detail, enabled, now = Date.now()) {
   if (!detail) return null;
   const state = detail.state;
-  const statuses = Object.values(state?.sheets ?? {}).flatMap((sheet) => [
-    sheet.fronts,
-    sheet.backs,
-  ]);
-  if (state?.ticket) statuses.push(state.ticket.ticket);
+  const statuses = printStatuses(detail);
   const counts = {
     total: statuses.length,
     sent: statuses.filter(isPrintSubmitted).length,
@@ -47,6 +44,8 @@ export function printFeedback(detail, enabled, now = Date.now()) {
       return feedback("Interrupted print attempt — check paper", "The print helper's lease expired during submission. Review the attempt below before printing again.", true);
     return feedback("Sending pages to printers", "The local print helper is sending pages to Windows. Remaining pages continue automatically; no page-by-page confirmations are needed.");
   }
+  if (isStockBuild(detail) && state && detail.manifest?.sheets?.length === 0 && counts.total === 0)
+    return feedback("No card pages required", "Continue picking, quality checks, and packaging, then scan the finished products to receive them into inventory.");
   if (counts.total && counts.sent === counts.total) {
     const finishing = !detail.manifest?.sheets?.length
       ? "Once the work ticket prints, continue picking, quality checks, and packing."

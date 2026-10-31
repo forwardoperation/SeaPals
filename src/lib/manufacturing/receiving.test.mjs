@@ -200,6 +200,16 @@ test("receipt revisions reject stale events and partial reprints never reset rec
   await assert.rejects(rpc("commit", [id, null, m.revision, { ...m.state, revision: m.revision + 1 }, { type: "reprint", role: "operator", side: "fronts" }, "queued"]), /Finished stock already received/);
 }));
 
+test("stock tickets marked not required allow final packaged receipt without weakening card print checks", async () => withFixture(async ({ receive, job, setState, stock, row }) => {
+  const id = await job(1);
+  await setState(id, { ticket: { ticket: "not_required" }, sheets: { first: { fronts: "needs_review", backs: "confirmed" } } });
+  await assert.rejects(receive(id), /pending or uncertain/);
+  await setState(id, { sheets: { first: { fronts: "submitted", backs: "submitted" } } });
+  assert.equal((await receive(id)).complete, true);
+  assert.equal((await stock()).on_hand, 1);
+  assert.equal((await row(id)).state.ticket.ticket, "not_required");
+}));
+
 test("legacy batch receipts migrate without changing stock and cannot be credited again", async () => withFixture(async ({ db, rpc, job, row, stock }) => {
   const id = await job(3);
   const m = await row(id);

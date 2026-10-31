@@ -56,7 +56,7 @@ export async function previewFixture({
   });
   let state = createManufacturingState(manifest);
   for (const target of [
-    { sheetId: "work-ticket", side: "ticket" },
+    ...(manifest.jobKind === "stock" ? [] : [{ sheetId: "work-ticket", side: "ticket" }]),
     ...manifest.sheets.flatMap((s) =>
       ["fronts", "backs"].map((side) => ({ sheetId: s.sheetId, side })),
     ),

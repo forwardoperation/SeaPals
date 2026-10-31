@@ -6,6 +6,7 @@ import StockReceiving from "./StockReceiving";
 import { RECEIPT_RETRY_KEY, readReceiptRetry, receiptWasRejected } from "./receiving.mjs";
 import { createRefreshGuard, formatManufacturingMessage, printFeedback } from "./printFeedback.mjs";
 import { reprintReadiness, sheetDisplayLabel } from "./sheetRecovery.mjs";
+import { requiresWorkTicket } from "./printStatus.mjs";
 
 const TOKEN_KEY = "seapals-store-admin-token";
 const STOCK_RETRY_KEY = "seapals-manufacturing-stock-retry";
@@ -690,7 +691,7 @@ export default function ManufacturingDashboard() {
                         <h3 className="font-bold">Review and send this job</h3>
                         <p className="my-2 text-sm text-slate-600">
                           {detail.job_kind === "stock"
-                            ? "Print the fronts, backs, and work ticket for this stock build."
+                            ? "Print only the card fronts and backs for this stock build."
                             : "Use reserved finished stock and print only the shortfall, plus a work ticket."}
                           {" "}Any new booster gets 5 commons, 3 uncommons, and
                           1 rare or holo rare from its set. Its cards are saved
@@ -777,7 +778,7 @@ export default function ManufacturingDashboard() {
                   )}
                 </div>
               )}
-              {state?.ticket && (
+              {state?.ticket && requiresWorkTicket(detail) && (
                 <div className={panel}>
                   {printControl("work-ticket", "ticket", state.ticket.ticket)}
                 </div>

@@ -1,3 +1,4 @@
+import { printStatuses } from "./printStatus.mjs";
 import { fixedSheetLabel } from "../../../lib/manufacturing/recipes.mjs";
 
 // A sheet number follows the saved manifest order, which is also the order
@@ -15,10 +16,7 @@ export function sheetDisplayLabel(manifest, sheetId) {
 // Wait for its lease to end, then reconcile any interrupted attempt first.
 export function reprintReadiness(detail, now = Date.now()) {
   const active = new Date(detail?.leased_until ?? 0).getTime() > now;
-  const states = detail?.state;
-  const submitting = states?.ticket?.ticket === "submitting" ||
-    Object.values(states?.sheets ?? {}).some((sheet) =>
-      sheet.fronts === "submitting" || sheet.backs === "submitting");
+  const submitting = printStatuses(detail).includes("submitting");
   const interrupted = !active && submitting;
   return {
     active,

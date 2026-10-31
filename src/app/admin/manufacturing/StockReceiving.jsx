@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { printStatuses } from "./printStatus.mjs";
 import { finalReceiptNeedsPrintReview, receivingLines, receiptPayload, removeScan, scanProduct } from "./receiving.mjs";
 
 const field = "mt-1 block w-full rounded-lg border border-slate-300 bg-white p-2";
@@ -26,8 +27,7 @@ export default function StockReceiving({ detail, stock, barcodes, busy, pendingR
     ? pendingReceipt.payload.items.map((item) => ({ ...item, productId: barcodes.find((b) => b.barcode === item.barcode)?.product_id }))
     : items;
   const count = displayedItems.reduce((total, item) => total + item.quantity, 0);
-  const statuses = Object.values(detail.state?.sheets ?? {}).flatMap((sheet) => [sheet.fronts, sheet.backs]);
-  if (detail.state?.ticket) statuses.push(detail.state.ticket.ticket);
+  const statuses = printStatuses(detail);
   const leased = new Date(detail.leased_until ?? 0).getTime() > Date.now();
   const unavailable = detail.inventory_posted_at ? "All planned products in this build have been received."
     : detail.state?.hold || detail.phase === "blocked" ? "Resolve the manufacturing hold before receiving products."

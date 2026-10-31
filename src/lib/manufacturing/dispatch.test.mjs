@@ -165,8 +165,7 @@ test("double clicks preserve the approval, lease, manifest and state even after 
     await f.s.sendToPrinters(id);
     assert.deepEqual(await f.row(id), leased);
     assert.equal(await f.s.claim(randomUUID()), null, "A repeated send cannot steal an active lease");
-    await f.event(id, "submission_started", { side: "ticket" }, "agent", token);
-    await f.event(id, "submission_succeeded", { side: "ticket" }, "agent", token);
+    assert.equal(prepared.state.ticket.ticket, "not_required");
     await f.event(id, "hold", { reason: "Inspect stock" });
     const held = await f.row(id);
     await f.s.sendToPrinters(id);
@@ -262,8 +261,10 @@ test("an in-flight pre-migration print can acknowledge completion without starti
   const f = await fixture({ dispatch: false });
   try {
     const id = await f.build(), token = randomUUID();
-    await f.s.claim(token);
-    await f.event(id, "submission_started", { side: "ticket" }, "agent", token);
+    const prepared = await f.s.claim(token);
+    // Preserve a ticket attempt made by the old helper before the new policy.
+    const legacy = { ...prepared.state, revision: 1, ticket: { ticket: "submitting" } };
+    await f.db.query("update manufacturing_orders set state=$2,revision=1 where order_id=$1", [id, legacy]);
     await f.db.exec(dispatchSql);
     await f.event(id, "submission_succeeded", { side: "ticket" }, "agent", token);
     assert.equal((await f.row(id)).state.ticket.ticket, "submitted");
@@ -498,7 +499,8 @@ test("legacy paper confirmation still starts production, while tickets and stock
     assert.equal(stock.order_id, stockId);
     const inventory = await f.stock(), movements = await f.movements();
     const sheetId = stock.manifest.sheets[0].sheetId;
-    for (const print of [{ side: "ticket" }, { sheetId, side: "fronts" }, { sheetId, side: "backs" }])
+    assert.equal(stock.state.ticket.ticket, "not_required");
+    for (const print of [{ sheetId, side: "fronts" }, { sheetId, side: "backs" }])
       for (const type of ["submission_started", "submission_succeeded"])
         await f.event(stockId, type, print, "agent", stockToken);
     await f.event(stockId, "glued", { sheetId });
@@ -506,5 +508,29 @@ test("legacy paper confirmation still starts production, while tickets and stock
     assert.deepEqual(await f.stock(), inventory, "Gluing is not a finished-product receipt");
     assert.deepEqual(await f.movements(), movements);
     assert.equal((await f.row(stockId)).inventory_posted_at, null);
+  } finally { await f.db.close(); }
+});
+
+test("legacy stock ticket retirement releases its lease without printing or changing inventory", async () => {
+  const f = await fixture();
+  try {
+    for (const status of ["queued", "submitting", "needs_review"]) {
+      const id = await f.build(), token = randomUUID();
+      await f.s.sendToPrinters(id);
+      const prepared = await f.s.claim(token);
+      const legacy = { ...prepared.state, ticket: { ticket: status } };
+      await f.db.query("update manufacturing_orders set state=$2 where order_id=$1", [id, legacy]);
+      const inventory = await f.stock(), movements = await f.movements();
+      const retired = await f.event(id, "stock_ticket_skipped", { sheetId: "work-ticket", side: "ticket" }, "agent", token);
+      assert.equal(retired.state.ticket.ticket, "not_required");
+      const saved = await f.row(id);
+      assert.equal(saved.phase, "awaiting_operator");
+      assert.equal(saved.lease_token, null);
+      assert.equal(saved.state.events.at(-1).previousTicketStatus, status);
+      assert.equal(saved.manifest_text, JSON.stringify(prepared.manifest));
+      assert.deepEqual(await f.stock(), inventory);
+      assert.deepEqual(await f.movements(), movements);
+    }
+    assert.equal((await f.db.query("select count(*)::integer as n from manufacturing_notifications")).rows[0].n, 0);
   } finally { await f.db.close(); }
 });

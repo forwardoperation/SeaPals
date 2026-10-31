@@ -199,13 +199,15 @@ export async function renderJob({
   for (const id of check.requiredAssetIds)
     bytes.set(id, await verifiedPng(assetFiles[id], release.assets[id]));
   const jobs = [];
-  const ticketFile = await renderTicket({
-    manifest,
-    order,
-    siteOrigin,
-    file: path.join(outputDir, "work-ticket.pdf"),
-  });
-  jobs.push({ sheetId: "work-ticket", side: "ticket", file: ticketFile });
+  if (manifest.jobKind !== "stock") {
+    const ticketFile = await renderTicket({
+      manifest,
+      order,
+      siteOrigin,
+      file: path.join(outputDir, "work-ticket.pdf"),
+    });
+    jobs.push({ sheetId: "work-ticket", side: "ticket", file: ticketFile });
+  }
   for (const sheet of manifest.sheets) {
     for (const side of ["fronts", "backs"]) {
       const doc = await PDFDocument.create(),
