@@ -6,6 +6,67 @@ checklist, and buyer milestone emails. **Printing is enabled for Reef, Deep,
 and Oceanic booster jobs and Drop Off decks approved with Send to printers.** Buyer manufacturing
 notifications and paid test-order intake remain disabled.
 
+## Private artwork retention and recovery
+
+Apply `supabase/manufacturing-artwork-retention.sql` **after all existing
+manufacturing migrations**, including inventory, dispatch, and receiving. It
+adds an archival registry and guards publication and job references during
+reviewed storage cleanup. It does not delete artwork or alter print jobs. The
+migration is safe to reapply. Reapply it after rerunning a baseline migration
+that replaces `manufacturing_publish`, so the publication guard remains installed.
+
+Run this read-only check from the local checkout with its server environment:
+
+```powershell
+node --env-file=.env.local scripts/manufacturing/storage-audit.mjs --project-ref ehlrzpcusxsbdsddyykm --output .private/manufacturing/storage-audit-YYYY-MM-DD.json
+```
+
+The output file must be new. The report covers the private manufacturing bucket
+in that project, not organization-wide storage. It reports usage, active and
+job-pinned releases, online and archived releases, and possible cleanup savings.
+The default seven-day grace period applies to true orphan objects, measured from
+the later of creation or modification. `--grace-days <days>` changes that period.
+To review the additional savings from archiving a particular unpinned online
+release, add `--archive-release <release-id>`; this only changes the report.
+After that release has been archived, omit the option and use the saved registry.
+
+Protect the **entire active release and every release pinned by any job**, including
+completed, blocked, and unprepared jobs. Saved manifest references are checked as
+well as the job's release column. Other online releases remain protected unless
+explicitly selected for archival; shared hashes are retained while any protected
+release needs them. Identical PNG bytes already share one content-addressed object.
+The audit refuses incomplete pagination, missing references or online assets,
+unexpected paths, changing snapshots, and archived releases still pinned by jobs.
+It reports cleanup activity without exposing its token. Resolve those failures
+before considering a cleanup; a report is not authorization to delete.
+
+Before a separately approved cleanup, preserve the exact release manifest and
+candidate PNGs in a verified recovery archive, checking SHA-256 and file sizes.
+Ignored caches on the same PC are useful recovery copies but are not independent
+backups. The service-only cleanup guard records `archived_at` and `archive_ref`,
+rechecks job/release references, and blocks publication until cleanup finishes.
+Actual object removal is a separate, reviewed Storage operation. If interrupted,
+inspect the saved cleanup receipt and remaining objects before completing the
+matching guarded operation; do not blindly clear the guard. This workflow installs
+**no automatic deletion and no scheduled task**. The audit has no apply/delete mode.
+
+To restore an archived release, follow its `archive_ref`, restore its exact missing
+PNGs under their original private hash keys with the required upload metadata,
+and verify every manifest-listed object's checksum and dimensions. Then clear
+`archived_at` and `archive_ref` together through the service-only maintenance path.
+The database rejects that change while cleanup is active or artwork is missing.
+Restoring the registry does not activate the release: explicitly publish the exact
+immutable manifest only if it should become the default for new work. Existing
+saved jobs, booster draws, inventory, and reprint geometry stay unchanged.
+
+The approved October 30, 2026 cleanup archived 346 obsolete PNGs locally before
+removing their cloud copies, reducing this bucket from 1,585,399,544 to 941,078,335
+bytes (437 PNGs). All eight saved jobs and their complete releases were retained.
+`local:2026-10-30-storage-quota` resolves to
+`.private/manufacturing/archives/2026-10-30-storage-quota/` in the main local
+checkout; its plan, exact manifests, PNGs, and cleanup receipt support recovery.
+This is a local recovery archive, not a separate off-device backup.
+
 ## October 28 template alignment: immutable V7 layout
 
 V7 follows the four Page_Templates grids in Figma snapshot
