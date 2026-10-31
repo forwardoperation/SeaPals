@@ -1,10 +1,12 @@
 ﻿import { readFile, mkdir, rename, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
-import { PDFDocument, PDFName, PDFNumber } from "pdf-lib";
+import { PDFDocument, PDFName, PDFNumber, pushGraphicsState, popGraphicsState, rectangle, clip, endPath } from "pdf-lib";
 import { readPrinterCapabilities } from "./printer-capabilities.mjs";
+import { readPrinterImageableArea, validatedPrinterImageableArea, validateImageableArea, IMAGEABLE_AREA_TOLERANCE } from "./printer-imageable-area.mjs";
 
 const MODE = "fill-driver-page";
+const IMAGEABLE_MODE = "fill-imageable-area";
 const PROFILE_VERSION = 1;
 const DEVICE_FIELDS = [
   "rasterDpiX", "rasterDpiY", "physicalWidth", "physicalHeight",
@@ -23,9 +25,13 @@ export function validatePrinterPlacement(config, job) {
   const route = config?.[job?.side];
   const placement = route?.pagePlacement;
   if (placement === undefined) return null;
-  if (job.side !== "fronts")
+  const imageable = placement?.mode === IMAGEABLE_MODE;
+  if (imageable && job.side !== "backs")
+    throw new Error("Imageable-area placement is supported only for rear pages.");
+  if (!imageable && job.side !== "fronts")
     throw new Error("Driver-page placement is supported only for Epson fronts.");
-  if (!exactKeys(placement, ["mode", "expectedDevice"]) || placement.mode !== MODE)
+  if (!exactKeys(placement, imageable ? ["mode", "expectedDevice", "expectedImageableArea"] : ["mode", "expectedDevice"]) ||
+      ![MODE, IMAGEABLE_MODE].includes(placement.mode))
     throw new Error("Configure a supported fill-driver-page placement profile.");
   if (typeof route.printerName !== "string" || !route.printerName.trim() ||
       route.printerName !== route.printerName.trim() || /[\r\n\0]/.test(route.printerName))
@@ -46,6 +52,13 @@ export function validatePrinterPlacement(config, job) {
     throw new Error("Driver-page placement requires a complete portrait borderless device profile with equal X/Y resolution.");
   if (typeof job.file !== "string" || !path.isAbsolute(job.file))
     throw new Error("Print file must be absolute.");
+  if (imageable) {
+    if (Math.abs(device.physicalWidth * 72 / device.rasterDpiX - 612) > 0.001 ||
+        Math.abs(device.physicalHeight * 72 / device.rasterDpiY - 792) > 0.001)
+      throw new Error("Imageable-area placement requires GDI to expose the complete physical Letter page without offsets.");
+    return { mode: IMAGEABLE_MODE, expectedDevice: { ...device },
+      expectedImageableArea: validateImageableArea(placement.expectedImageableArea) };
+  }
   return { mode: MODE, expectedDevice: { ...device } };
 }
 
@@ -79,13 +92,31 @@ function verifySourcePage(document) {
  * canvas. The original page is uniformly scaled to cover that canvas and centered.
  * Sumatra must still use noscale, so it does not apply a second layout operation.
  */
-export async function preparePrinterPdf(config, job, { probe = readPrinterCapabilities } = {}) {
+export async function preparePrinterPdf(config, job, {
+  probe = readPrinterCapabilities, probeImageableArea = readPrinterImageableArea,
+} = {}) {
   const placement = validatePrinterPlacement(config, job);
   if (!placement) return job;
   if (typeof probe !== "function") throw new Error("A printer capabilities probe is required.");
   const route = config[job.side];
   const actual = await probe(route.printerName);
-  verifyDevice(actual, placement.expectedDevice);
+  const imageable = placement.mode === IMAGEABLE_MODE;
+  if (imageable) {
+    if (actual?.paperSize !== 1 || actual?.orientation !== 1)
+      throw new Error("Rear imageable-area placement requires the current printer to use portrait Letter paper.");
+    const mismatch = DEVICE_FIELDS.find((field) => actual[field] !== placement.expectedDevice[field]);
+    if (mismatch) throw new Error("Rear printer capabilities changed (" + mismatch + "); review the imageable-area profile before printing.");
+  } else verifyDevice(actual, placement.expectedDevice);
+  let imageableSnapshot;
+  if (imageable) {
+    if (typeof probeImageableArea !== "function") throw new Error("An imageable-area probe is required.");
+    imageableSnapshot = validatedPrinterImageableArea(await probeImageableArea(route.printerName), route.printerName);
+    if (imageableSnapshot.resolutionX !== actual.rasterDpiX || imageableSnapshot.resolutionY !== actual.rasterDpiY)
+      throw new Error("The WPF ticket resolution does not match the pinned GDI printer profile.");
+    const mismatch = Object.keys(placement.expectedImageableArea).find((field) => field !== "unit" &&
+      Math.abs(imageableSnapshot.area[field] - placement.expectedImageableArea[field]) > IMAGEABLE_AREA_TOLERANCE);
+    if (mismatch) throw new Error("Rear imageable area changed (" + mismatch + "); review the placement profile before printing.");
+  }
 
   const sourceBytes = await readFile(job.file);
   const source = await PDFDocument.load(sourceBytes, { updateMetadata: false });
@@ -98,14 +129,24 @@ export async function preparePrinterPdf(config, job, { probe = readPrinterCapabi
     printerName: route.printerName,
     printSettings: REQUIRED_SETTINGS,
     expectedDevice: Object.fromEntries(DEVICE_FIELDS.map((field) => [field, device[field]])),
+    ...(imageable ? { expectedImageableArea: placement.expectedImageableArea } : {}),
   };
   const profileSha256 = sha256(JSON.stringify(profile));
   const cacheKey = sha256(JSON.stringify({ sourceSha256, profileSha256 }));
-  const widthPoints = device.physicalWidth * 72 / device.rasterDpiX;
-  const heightPoints = device.physicalHeight * 72 / device.rasterDpiY;
-  const scale = Math.max(widthPoints / 612, heightPoints / 792);
-  const offsetXPoints = (widthPoints - 612 * scale) / 2;
-  const offsetYPoints = (heightPoints - 792 * scale) / 2;
+  const widthPoints = imageable ? 612 : device.physicalWidth * 72 / device.rasterDpiX;
+  const heightPoints = imageable ? 792 : device.physicalHeight * 72 / device.rasterDpiY;
+  const area = placement.expectedImageableArea;
+  // Convert WPF's top-left dip96 coordinates to PDF's bottom-left point units.
+  // GDI must expose the whole Letter page, so Sumatra noscale adds no second offset.
+  const clipRectangle = imageable ? {
+    x: area.originX * 72 / 96,
+    y: 792 - (area.originY + area.height) * 72 / 96,
+    width: area.width * 72 / 96,
+    height: area.height * 72 / 96,
+  } : null;
+  const scale = Math.max((clipRectangle?.width ?? widthPoints) / 612, (clipRectangle?.height ?? heightPoints) / 792);
+  const offsetXPoints = clipRectangle ? clipRectangle.x + (clipRectangle.width - 612 * scale) / 2 : (widthPoints - 612 * scale) / 2;
+  const offsetYPoints = clipRectangle ? clipRectangle.y + (clipRectangle.height - 792 * scale) / 2 : (heightPoints - 792 * scale) / 2;
 
   const output = await PDFDocument.create();
   // Stable metadata permits verification of an existing cache entry against the
@@ -117,12 +158,14 @@ export async function preparePrinterPdf(config, job, { probe = readPrinterCapabi
   const [embedded] = await output.embedPdf(source, [0]);
   const page = output.addPage([widthPoints, heightPoints]);
   page.setCropBox(0, 0, widthPoints, heightPoints);
+  if (clipRectangle) page.pushOperators(pushGraphicsState(), rectangle(clipRectangle.x, clipRectangle.y, clipRectangle.width, clipRectangle.height), clip(), endPath());
   page.drawPage(embedded, {
     x: offsetXPoints,
     y: offsetYPoints,
     xScale: scale,
     yScale: scale,
   });
+  if (clipRectangle) page.pushOperators(popGraphicsState());
   const outputBytes = Buffer.from(await output.save());
   const outputSha256 = sha256(outputBytes);
   const outputDirectory = path.join(path.dirname(job.file), "printer-ready");
@@ -139,6 +182,7 @@ export async function preparePrinterPdf(config, job, { probe = readPrinterCapabi
     scale,
     offsetXPoints,
     offsetYPoints,
+    ...(imageable ? { expectedImageableArea: placement.expectedImageableArea, imageableSnapshot, clipRectangle } : {}),
   };
   const metadataFile = path.join(outputDirectory, `${cacheKey}.placement.json`);
   await writeVerifiedArtifact(outputFile, outputBytes);

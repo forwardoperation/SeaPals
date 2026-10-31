@@ -27,7 +27,7 @@ export function printerArguments(config, job) {
   // The transport page is larger than nominal Letter. Force DMPAPER_LETTER
   // numerically: Epson's localized "Letter (8.5 x 11 in)" does not match
   // Sumatra's paper=letter name lookup, and this PDF cannot auto-detect Letter.
-  const settings = placement
+  const settings = placement?.mode === "fill-driver-page"
     ? route.printSettings.replace("paper=letter", "paperkind=1")
     : route.printSettings;
   return [

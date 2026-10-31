@@ -1123,7 +1123,7 @@ printing, rejects a mismatch, and creates a private `printer-ready` PDF alongsid
 the canonical file. It centers and uniformly scales the complete Letter page to
 cover the 628.4 × 802 point borderless canvas (scale 1.0267973856, vertical crop
 5.6117647059 points per edge). Figma geometry, card selection, and the source PDF
-stay unchanged. Canon backs and tickets retain their existing actual-size path.
+stay unchanged. This Epson profile does not affect Canon backs or work tickets.
 
 All pending placements are checked before the first submission, and Epson is
 checked again immediately before its page is sent. Local test validation also
@@ -1131,6 +1131,61 @@ performs this read-only preflight and reports the prepared file. A successful
 software check is not proof of physical cutting alignment; confirm the next
 operator-requested sheet before cutting a batch. No print is required to inspect
 the generated files. Restart the local helper after changing its code or config.
+
+### Canon backs matching the Windows Photos PNG dialog (October 31)
+
+The verified manual rear-sheet print uses `Canon MF750C II Series UFR II`,
+Letter portrait, **Full page**, **Normal** margins, and **Fill page**. Its WPF/XPS
+imageable area has 5 mm margins. The same queue's effective GDI user profile
+reports a full Letter page with zero hardware offsets, so sending the canonical
+PDF at 100% makes the backs larger and the bottom row lower than the manual PNG.
+Matching Figma and PDF pixels alone does not establish matching paper placement.
+
+For this measured Canon profile, add the following property to `backs` in the
+private printer config. Keep `noscale,simplex,color,paper=letter`:
+
+```json
+"pagePlacement": {
+  "mode": "fill-imageable-area",
+  "expectedDevice": {
+    "rasterDpiX": 1200, "rasterDpiY": 1200,
+    "physicalWidth": 10200, "physicalHeight": 13200,
+    "offsetX": 0, "offsetY": 0,
+    "printableWidth": 10200, "printableHeight": 13200
+  },
+  "expectedImageableArea": {
+    "unit": "dip96",
+    "pageWidth": 816, "pageHeight": 1056,
+    "originX": 18.897637795275593,
+    "originY": 18.897637795275593,
+    "width": 778.2047244094489,
+    "height": 1018.2047244094489
+  }
+}
+```
+
+These measurements are specific to this printer and user profile. The helper
+reads GDI capabilities and the WPF imageable area for an in-memory
+Letter/portrait/color/simplex ticket, without changing saved printer preferences.
+It checks both against the profile before submission and rejects changed bounds
+or resolution. The WPF ticket describes the queried layout; Sumatra's existing
+GDI settings still control the actual print submission.
+
+The derived PDF remains Letter. It uniformly scales the canonical page to
+96.4209019%, centers it at 3.863636 mm right and 5 mm down, and clips to the
+5 mm imageable margins. This reproduces Photos' **Fill page** behavior rather
+than stretching the cards or applying an arbitrary vertical shift. The measured
+Photos preview's 36 card edges match this transform within 1.36 screenshot
+pixels; the original 100% placement differs by up to 7.76 pixels.
+
+Only rear-page transport PDFs receive this adjustment, including separate holo
+batches routed through `backs`. Figma exports, canonical PDFs, stored manifests,
+Epson fronts, and work tickets retain their existing behavior. Existing source
+files stay available for a deliberate reprint; enabling the profile does not
+reprint completed pages. The private `printer-ready` PDF and placement sidecar
+record the source hash, measured bounds, and transform. No mid-batch paper
+confirmation is introduced. Software and preview checks do not replace physical
+confirmation on the next operator-requested print.
 
 ### Separate holographic replenishment batches
 
