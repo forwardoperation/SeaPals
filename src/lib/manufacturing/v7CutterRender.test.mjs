@@ -6,7 +6,7 @@ import path from 'node:path';
 import { PDFArray, PDFDocument, PDFName, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 import { PNG } from 'pngjs';
 import { buildPrintingCatalog, contentHash } from './boosters.mjs';
-import { PRINT_LAYOUT, BACK_TEMPLATE, HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE, V6_PRINT_LAYOUT, V6_BACK_TEMPLATE, V6_HOLO_PRINT_LAYOUT, V6_HOLO_BACK_TEMPLATE, createManufacturingManifest, preflightPrintAssets } from './printPlan.mjs';
+import { PRINT_LAYOUT as V8_PRINT_LAYOUT, BACK_TEMPLATE as V8_BACK_TEMPLATE, V7_PRINT_LAYOUT as PRINT_LAYOUT, V7_BACK_TEMPLATE as BACK_TEMPLATE, V7_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT, V7_HOLO_BACK_TEMPLATE as HOLO_BACK_TEMPLATE, V6_PRINT_LAYOUT, V6_BACK_TEMPLATE, V6_HOLO_PRINT_LAYOUT, V6_HOLO_BACK_TEMPLATE, createManufacturingManifest, preflightPrintAssets } from './printPlan.mjs';
 import { createHoloBatch } from './holoBatch.mjs';
 import { sha256, validateRelease } from './integration.mjs';
 import { fixedArtworkSources } from "./recipes.mjs";
@@ -263,4 +263,37 @@ test("historical Conditions assets without output overrides keep their original 
     const front = await inspect(job.file);
     for (const [index, p] of positionsAt(145).entries()) placement(front.placements[index + 1], p, `historical Conditions slot ${index + 1}`);
   }
+});
+
+
+test("V8 Conditions moves the native inset grid to the shared template without scaling or changing saved V7 assets", async () => {
+  const currentTemplates = { version: V8_PRINT_LAYOUT.version, fronts: V8_PRINT_LAYOUT, backs: V8_BACK_TEMPLATE };
+  const current = structuredClone(release), before = JSON.stringify(release);
+  current.printTemplates = currentTemplates;
+  delete current.assets["print-template-holo-front-background"];
+  delete current.assets["holographic-back-sheet"];
+  current.assets["print-template-front-background"].nodeId = V8_PRINT_LAYOUT.background.nodeId;
+  current.assets["standard-back-sheet"].nodeId = V8_BACK_TEMPLATE.background.nodeId;
+  validateRelease(current);
+  const manifest = createManufacturingManifest({ request: { orderId: "conditions-shared-v8", orderNumber: "CONDITIONS-SHARED", items: [{ productId: "conditions-deck", quantity: 1 }] },
+    catalog, artworkRelease: current.releaseId, printTemplates: currentTemplates, jobKind: "stock", now: "2026-11-01T12:00:00.000Z" });
+  const saved = JSON.stringify({ manifest, release: current });
+  const jobs = await renderJob({ manifest, release: current, assetFiles, outputDir: path.join(root, "conditions-shared-v8"), siteOrigin: "https://searealm.com" });
+  const fronts = jobs.filter(job => job.side === "fronts"); assert.equal(fronts.length, 2);
+  for (const [sheetIndex, job] of fronts.entries()) {
+    const source = conditionSources[sheetIndex], expected = conditionExpected.get(source.id), output = await inspect(job.file);
+    assert.equal(output.placements.length, 10);
+    assert.deepEqual(current.assets[source.id].sourceGeometry.sourceBounds, { x: 150, y: 65.6435546875, width: 2330, height: 3170 });
+    for (const [index, native] of expected.output.entries()) {
+      const moved = { ...native, x: native.x - 80, y: native.y - 2.8035545349121094 };
+      placement(output.placements[index + 1], moved, 'shared Conditions ' + sheetIndex + ' slot ' + index);
+      assert.equal(moved.width, 698.4000244140625); assert.equal(moved.height, 977.760009765625);
+      const c = expected.crops[index], x = Math.round(c.x), y = Math.round(c.y), width = Math.round(c.x + c.width) - x, height = Math.round(c.y + c.height) - y;
+      const crop = image(width, height); PNG.bitblt(expected.padded, crop, x, y, width, height, 0, 0);
+      assert.deepEqual([output.images[index + 1].width, output.images[index + 1].height], [width, height]);
+      assert.ok(output.images[index + 1].pixels.equals(rgbBytes(crop)), 'Moving the grid preserves every native card pixel');
+    }
+  }
+  assert.equal(JSON.stringify({ manifest, release: current }), saved, 'Rendering cannot rewrite pinned source geometry');
+  assert.equal(JSON.stringify(release), before, 'Historical V7 release remains unchanged');
 });

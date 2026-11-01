@@ -14,8 +14,6 @@ import {
   BACK_ART_SOURCE,
   BACK_TEMPLATE,
   PRINT_LAYOUT,
-  HOLO_PRINT_LAYOUT,
-  HOLO_BACK_TEMPLATE,
 } from "../../src/lib/manufacturing/printPlan.mjs";
 import {
   pngDimensions,
@@ -28,7 +26,7 @@ import { validFixedSheetPositions } from "../../src/lib/manufacturing/sourceGeom
 import { validateTunedTemplate } from "./tuned-template-validation.mjs";
 import { isGridTemplate, validateGridTemplate } from "./grid-template-validation.mjs";
 
-const currentTemplates = [PRINT_LAYOUT, BACK_TEMPLATE, HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE];
+const currentTemplates = [PRINT_LAYOUT, BACK_TEMPLATE];
 
 export function buildSourceMap(
   setList,
@@ -99,8 +97,6 @@ export function buildSourceMap(
       version: PRINT_LAYOUT.version,
       fronts: reference(PRINT_LAYOUT),
       backs: reference(BACK_TEMPLATE),
-      holoFronts: reference(HOLO_PRINT_LAYOUT),
-      holoBacks: reference(HOLO_BACK_TEMPLATE),
     },
     missing: sources
       .filter((s) => !s.nodeId)

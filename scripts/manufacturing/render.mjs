@@ -12,6 +12,7 @@ import {
   CUTTER_LAYOUT_V5,
   CUTTER_LAYOUT_V6,
   CUTTER_LAYOUT_V7,
+  CUTTER_LAYOUT_V8,
   hasPrintBackgrounds,
   isCutterLayout,
 } from "../../src/lib/manufacturing/backdrops.mjs";
@@ -214,9 +215,9 @@ export async function renderJob({
         page = doc.addPage(LETTER),
         font = await doc.embedFont(StandardFonts.Helvetica);
       if (isCutterLayout(manifest.layout.version)) {
-        const tuned = [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7].includes(manifest.layout.version);
+        const tuned = [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8].includes(manifest.layout.version);
         // Front artwork is placed over the exported backdrop bounds, whose
-        // raster already includes any Figma rotation. V4/V5/V6/V7 backs are one
+        // raster already includes any Figma rotation. V4/V5/V6/V7/V8 backs are one
         // complete Figma page, including the water, logos, and template marks.
         const background = side === "fronts"
           ? manifest.layout.background
@@ -233,11 +234,16 @@ export async function renderJob({
             sourcePositions = savedPositions.toSorted((a, b) =>
               Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y,
             ),
-            // Conditions preserves its reviewed native card insets; older sheets
-            // continue using the immutable cutter template from their manifest.
+            // Preserve native Conditions insets and dimensions. Shared V8 pages
+            // move that grid as a unit to the manifest's approved grid origin;
+            // older manifests retain the absolute placement saved with the art.
             positions = asset.outputPositions?.toSorted((a, b) =>
               Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y,
-            ) ?? cutterPositions(manifest.layout.positions, "front template", tuned);
+            ).map(position => manifest.layout.version === CUTTER_LAYOUT_V8 ? {
+              ...position,
+              x: position.x + manifest.layout.grid.x - asset.sourceGeometry.sourceBounds.x,
+              y: position.y + manifest.layout.grid.y - asset.sourceGeometry.sourceBounds.y,
+            } : position) ?? cutterPositions(manifest.layout.positions, "front template", tuned);
           for (const [index, sourcePosition] of sourcePositions.entries()) {
             const image = await doc.embedPng(
               cropCard(original, sourcePosition),

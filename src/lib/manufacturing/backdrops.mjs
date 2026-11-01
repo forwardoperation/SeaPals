@@ -4,6 +4,7 @@ export const CUTTER_LAYOUT_V4 = "figma-cutter-nine-up-v4";
 export const CUTTER_LAYOUT_V5 = "figma-cutter-nine-up-v5";
 export const CUTTER_LAYOUT_V6 = "figma-cutter-nine-up-v6";
 export const CUTTER_LAYOUT_V7 = "figma-cutter-nine-up-v7";
+export const CUTTER_LAYOUT_V8 = "figma-cutter-nine-up-v8";
 
 // Only these two backdrop layers are printable. Their parent frames also
 // contain alignment guides and numbered placeholders, which must stay out.
@@ -75,20 +76,35 @@ export const PRINT_BACKGROUNDS_V5 = Object.freeze({
   }),
 });
 
-export const PRINT_BACKGROUNDS = PRINT_BACKGROUNDS_V5;
+// November 1 uses one pair for ordinary cards and holo replenishment. Both
+// exports are complete native pages; the front frame contains no card artwork.
+export const PRINT_BACKGROUNDS_V8 = Object.freeze({
+  fronts: Object.freeze({
+    assetId: "print-template-front-background",
+    nodeId: "4311:139557",
+    x: 0, y: 0, width: 2550, height: 3300,
+  }),
+  backs: Object.freeze({
+    assetId: "standard-back-sheet",
+    nodeId: "4311:139076",
+    x: 0, y: 0, width: 2550, height: 3300,
+  }),
+});
+export const PRINT_BACKGROUNDS = PRINT_BACKGROUNDS_V8;
 const NO_BACKGROUNDS = Object.freeze({});
 export const backgroundsForLayout = (version) =>
-  [CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7].includes(version) ? PRINT_BACKGROUNDS_V5
+  version === CUTTER_LAYOUT_V8 ? PRINT_BACKGROUNDS_V8
+    : [CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7].includes(version) ? PRINT_BACKGROUNDS_V5
     : version === CUTTER_LAYOUT_V4 ? PRINT_BACKGROUNDS_V4
       : version === CUTTER_LAYOUT_V3 ? PRINT_BACKGROUNDS_V3 : NO_BACKGROUNDS;
 export const hasPrintBackgrounds = (version) =>
-  version === CUTTER_LAYOUT_V3 || version === CUTTER_LAYOUT_V4 || version === CUTTER_LAYOUT_V5 || version === CUTTER_LAYOUT_V6 || version === CUTTER_LAYOUT_V7;
+  version === CUTTER_LAYOUT_V3 || version === CUTTER_LAYOUT_V4 || version === CUTTER_LAYOUT_V5 || version === CUTTER_LAYOUT_V6 || version === CUTTER_LAYOUT_V7 || version === CUTTER_LAYOUT_V8;
 
 export const isCutterLayout = (version) =>
   version === CUTTER_LAYOUT_V2 || hasPrintBackgrounds(version);
 
 // standard-back-sheet was ordinary card-back artwork in V2/V3. It becomes a
-// page backdrop only when its matching V4/V5/V6/V7 layout explicitly selects it.
+// page backdrop only when its matching V4/V5/V6/V7/V8 layout explicitly selects it.
 const RESERVED_BACKGROUNDS = Object.freeze([
   ...Object.entries(PRINT_BACKGROUNDS_V3),
   ...Object.entries(PRINT_BACKGROUNDS_V5).filter(([, background]) =>

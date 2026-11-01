@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { buildPrintingCatalog } from './boosters.mjs';
 import {
-  PRINT_LAYOUT, BACK_TEMPLATE, HOLO_PRINT_LAYOUT, HOLO_BACK_TEMPLATE,
+  V7_PRINT_LAYOUT as PRINT_LAYOUT, V7_BACK_TEMPLATE as BACK_TEMPLATE, V7_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT, V7_HOLO_BACK_TEMPLATE as HOLO_BACK_TEMPLATE,
   V5_PRINT_LAYOUT, V5_BACK_TEMPLATE, V5_HOLO_PRINT_LAYOUT, V5_HOLO_BACK_TEMPLATE,
   V6_PRINT_LAYOUT, V6_BACK_TEMPLATE, V6_HOLO_PRINT_LAYOUT, V6_HOLO_BACK_TEMPLATE,
   resolvePrintTemplates, createManufacturingManifest, preflightPrintAssets, verifyManifest,

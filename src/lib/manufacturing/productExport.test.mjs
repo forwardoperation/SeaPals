@@ -53,18 +53,18 @@ function releaseFor(selected) {
 test("omitting products preserves the full export and its existing cache hash", () => {
   assert.equal(parseProducts([]), null);
   assert.equal(selectProductArtwork(source), source);
-  assert.equal(source.sources.length, 272);
+  assert.equal(source.sources.length, 270);
   assert.equal(source.exportScope, undefined);
 });
 
-test("Reef export includes all 95 eligible printings and four shared template assets without shrinking the catalog", () => {
+test("Reef export includes all 95 eligible printings and two shared template assets without shrinking the catalog", () => {
   const before = structuredClone(source);
   const selected = selectProductArtwork(source, ["reef-dive-pack"]);
   const reef = source.catalog.filter((card) => card.set === "reef");
-  assert.equal(selected.sources.length, 99);
+  assert.equal(selected.sources.length, 97);
   assert.deepEqual(ids(selected.sources), [
     ...reef.map((card) => card.printingId), "standard-back-sheet",
-    "print-template-front-background", "print-template-holo-front-background", "holographic-back-sheet",
+    "print-template-front-background",
   ].sort());
   assert.deepEqual(selected.catalog, source.catalog);
   assert.equal(selected.catalog.length, 217);
@@ -126,13 +126,13 @@ test("comma-separated selections are deterministic and share common back/backgro
   const reversed = selectProductArtwork(source, [...products].reverse());
   assert.equal(contentHash(selected), contentHash(reversed));
   assert.notEqual(contentHash(selected), contentHash(selectProductArtwork(source, ["reef-dive-pack"])));
-  assert.equal(selected.sources.length, source.catalog.filter((card) => card.set !== "ocean").length + 4);
+  assert.equal(selected.sources.length, source.catalog.filter((card) => card.set !== "ocean").length + 2);
   assert.equal(new Set(ids(selected.sources)).size, selected.sources.length);
 });
 
 test("fixed products select their complete sheets and shared assets", () => {
   const selected = selectProductArtwork(source, ["coral-garden"]);
-  assert.equal(selected.sources.length, 11);
+  assert.equal(selected.sources.length, 9);
   assert.equal(selected.sources.filter((item) => item.kind === "sheet").length, 7);
   assert.ok(selected.sources.every((item) => item.kind !== "card"));
   assert.deepEqual(selected.catalog, source.catalog);
@@ -159,7 +159,7 @@ test("the recurring refresh retains all 15 products and every deck and Condition
   assert.deepEqual(products, [...Object.keys(FIXED_PRODUCTS), ...Object.keys(BOOSTER_PRODUCTS)].sort());
   assert.equal(products.length, 15);
   const selected = selectProductArtwork(source, products);
-  assert.equal(selected.sources.length, 272);
+  assert.equal(selected.sources.length, 270);
   assert.equal(selected.sources.filter(item => item.kind === "sheet").length, 51);
   assert.deepEqual(ids(selected.sources), ids(source.sources));
   const release = validateRelease(releaseFor(selected));

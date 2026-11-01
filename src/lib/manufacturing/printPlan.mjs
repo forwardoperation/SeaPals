@@ -18,7 +18,9 @@ import {
   CUTTER_LAYOUT_V5,
   CUTTER_LAYOUT_V6,
   CUTTER_LAYOUT_V7,
+  CUTTER_LAYOUT_V8,
   PRINT_BACKGROUNDS,
+  PRINT_BACKGROUNDS_V5,
   PRINT_BACKGROUNDS_V3,
   PRINT_BACKGROUNDS_V4,
   backgroundsForLayout,
@@ -142,8 +144,8 @@ const v5Grid = (nodeId, x, y, cardWidth, cardHeight) => Object.freeze({
   nodeId, x, y, width: 2330, height: 3170, columns: 3, rows: 3,
   cardWidth, cardHeight,
 });
-const v5Front = (nodeId, name, gridNodeId, x, background, version = CUTTER_LAYOUT_V5) => {
-  const grid = v5Grid(gridNodeId, x, 65.6435546875, cutterWidth, cutterHeight),
+const v5Front = (nodeId, name, gridNodeId, x, background, version = CUTTER_LAYOUT_V5, y = 65.6435546875) => {
+  const grid = v5Grid(gridNodeId, x, y, cutterWidth, cutterHeight),
     cellWidth = grid.width / grid.columns,
     cellHeight = grid.height / grid.rows,
     positions = Object.freeze(Array.from({ length: 9 }, (_, index) => Object.freeze({
@@ -184,41 +186,52 @@ const v5Back = (nodeId, name, gridNodeId, x, background) => {
 
 // Preserve the original October 26 layout for every pinned V5 job.
 export const V5_PRINT_LAYOUT = v5Front(
-  "4290:38532", "die-cut-front-epson", "4290:38534", 135, PRINT_BACKGROUNDS.fronts,
+  "4290:38532", "die-cut-front-epson", "4290:38534", 135, PRINT_BACKGROUNDS_V5.fronts,
 );
 export const V5_HOLO_PRINT_LAYOUT = v5Front(
-  "4311:139557", "die-cut-front-epson-holographic-template", "4311:139561", 80, PRINT_BACKGROUNDS.holoFronts,
+  "4311:139557", "die-cut-front-epson-holographic-template", "4311:139561", 80, PRINT_BACKGROUNDS_V5.holoFronts,
 );
 // Later printer tuning moves ordinary fronts 15 px right. The water moves
 // independently inside its native full-page PNG; the other three pages retain
 // their geometry. A separate version keeps saved V5 renders reproducible.
 export const V6_PRINT_LAYOUT = v5Front(
-  "4290:38532", "die-cut-front-epson", "4290:38534", 150, PRINT_BACKGROUNDS.fronts, CUTTER_LAYOUT_V6,
+  "4290:38532", "die-cut-front-epson", "4290:38534", 150, PRINT_BACKGROUNDS_V5.fronts, CUTTER_LAYOUT_V6,
 );
 export const V6_HOLO_PRINT_LAYOUT = Object.freeze({ ...V5_HOLO_PRINT_LAYOUT, version: CUTTER_LAYOUT_V6 });
 export const V5_BACK_TEMPLATE = v5Back(
-  "4244:451219", "die-cut-rear-canon", "4244:451221", 80, PRINT_BACKGROUNDS.backs,
+  "4244:451219", "die-cut-rear-canon", "4244:451221", 80, PRINT_BACKGROUNDS_V5.backs,
 );
 export const V5_HOLO_BACK_TEMPLATE = v5Back(
-  "4311:139076", "die-cut-rear-canon-holographic-template", "4311:139077", 125, PRINT_BACKGROUNDS.holoBacks,
+  "4311:139076", "die-cut-rear-canon-holographic-template", "4311:139077", 125, PRINT_BACKGROUNDS_V5.holoBacks,
 );
 export const V6_BACK_TEMPLATE = V5_BACK_TEMPLATE;
 export const V6_HOLO_BACK_TEMPLATE = V5_HOLO_BACK_TEMPLATE;
 
 // October 28 tuning changes each independent grid origin. Keep every earlier
 // layout immutable so saved manifests and explicit reprints remain reproducible.
-export const PRINT_LAYOUT = v5Front(
-  "4290:38532", "die-cut-front-epson", "4290:38534", 145, PRINT_BACKGROUNDS.fronts, CUTTER_LAYOUT_V7,
+export const V7_PRINT_LAYOUT = v5Front(
+  "4290:38532", "die-cut-front-epson", "4290:38534", 145, PRINT_BACKGROUNDS_V5.fronts, CUTTER_LAYOUT_V7,
 );
-export const HOLO_PRINT_LAYOUT = v5Front(
-  "4311:139557", "die-cut-front-epson-holographic-template", "4311:139561", 95, PRINT_BACKGROUNDS.holoFronts, CUTTER_LAYOUT_V7,
+export const V7_HOLO_PRINT_LAYOUT = v5Front(
+  "4311:139557", "die-cut-front-epson-holographic-template", "4311:139561", 95, PRINT_BACKGROUNDS_V5.holoFronts, CUTTER_LAYOUT_V7,
+);
+export const V7_BACK_TEMPLATE = v5Back(
+  "4244:451219", "die-cut-rear-canon", "4244:451221", 65, PRINT_BACKGROUNDS_V5.backs,
+);
+export const V7_HOLO_BACK_TEMPLATE = v5Back(
+  "4311:139076", "die-cut-rear-canon-holographic-template", "4311:139077", 110, PRINT_BACKGROUNDS_V5.holoBacks,
+);
+
+// November 1 unifies ordinary and holo pages without rewriting saved layouts.
+export const PRINT_LAYOUT = v5Front(
+  "4311:139557", "die-cut-front-epson-template", "4311:139561", 70,
+  PRINT_BACKGROUNDS.fronts, CUTTER_LAYOUT_V8, 62.84000015258789,
 );
 export const BACK_TEMPLATE = v5Back(
-  "4244:451219", "die-cut-rear-canon", "4244:451221", 65, PRINT_BACKGROUNDS.backs,
+  "4311:139076", "die-cut-rear-canon-template", "4311:139077", 131.400390625, PRINT_BACKGROUNDS.backs,
 );
-export const HOLO_BACK_TEMPLATE = v5Back(
-  "4311:139076", "die-cut-rear-canon-holographic-template", "4311:139077", 110, PRINT_BACKGROUNDS.holoBacks,
-);
+export const HOLO_PRINT_LAYOUT = PRINT_LAYOUT;
+export const HOLO_BACK_TEMPLATE = BACK_TEMPLATE;
 
 export const BACK_ART_SOURCE = Object.freeze({
   fileKey: BACK_TEMPLATE.fileKey,
@@ -238,15 +251,21 @@ export function resolvePrintTemplates(templates) {
     };
   if (!isCutterLayout(templates?.version))
     throw new Error("Unsupported versioned print templates.");
-  const dedicatedHolo = [CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7].includes(templates.version),
-    expectedHoloFront = templates.version === CUTTER_LAYOUT_V7 ? HOLO_PRINT_LAYOUT
+  if (templates.version === CUTTER_LAYOUT_V8 &&
+      (templates.holoFronts !== undefined || templates.holoBacks !== undefined))
+    throw new Error("Shared print templates cannot contain separate holo front or back sources.");
+  const sharedHolo = templates.version === CUTTER_LAYOUT_V8,
+    dedicatedHolo = [CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7].includes(templates.version),
+    expectedHoloFront = templates.version === CUTTER_LAYOUT_V7 ? V7_HOLO_PRINT_LAYOUT
       : templates.version === CUTTER_LAYOUT_V6 ? V6_HOLO_PRINT_LAYOUT : V5_HOLO_PRINT_LAYOUT;
-  const expectedFront = templates.version === CUTTER_LAYOUT_V7 ? PRINT_LAYOUT
+  const expectedFront = sharedHolo ? PRINT_LAYOUT
+      : templates.version === CUTTER_LAYOUT_V7 ? V7_PRINT_LAYOUT
       : templates.version === CUTTER_LAYOUT_V6 ? V6_PRINT_LAYOUT
       : templates.version === CUTTER_LAYOUT_V5 ? V5_PRINT_LAYOUT
       : templates.version === CUTTER_LAYOUT_V4 ? V4_PRINT_LAYOUT
         : templates.version === CUTTER_LAYOUT_V3 ? V3_PRINT_LAYOUT : LEGACY_PRINT_LAYOUT,
-    expectedBack = templates.version === CUTTER_LAYOUT_V7 ? BACK_TEMPLATE
+    expectedBack = sharedHolo ? BACK_TEMPLATE
+      : templates.version === CUTTER_LAYOUT_V7 ? V7_BACK_TEMPLATE
       : dedicatedHolo ? V5_BACK_TEMPLATE
       : templates.version === CUTTER_LAYOUT_V4 ? V4_BACK_TEMPLATE
         : templates.version === CUTTER_LAYOUT_V3 ? V3_BACK_TEMPLATE : LEGACY_BACK_TEMPLATE,
@@ -255,7 +274,7 @@ export function resolvePrintTemplates(templates) {
       ["backs", expectedBack],
       ...(dedicatedHolo ? [
         ["holoFronts", expectedHoloFront],
-        ["holoBacks", templates.version === CUTTER_LAYOUT_V7 ? HOLO_BACK_TEMPLATE : V5_HOLO_BACK_TEMPLATE],
+        ["holoBacks", templates.version === CUTTER_LAYOUT_V7 ? V7_HOLO_BACK_TEMPLATE : V5_HOLO_BACK_TEMPLATE],
       ] : []),
     ];
   for (const [side, expected] of expectedTemplates) {
@@ -303,6 +322,14 @@ export function resolvePrintTemplates(templates) {
       version: templates.version,
     },
     backTemplate: reference(templates.backs),
+    ...(sharedHolo ? {
+      holoLayout: {
+        ...structuredClone(expectedFront),
+        ...reference(templates.fronts),
+        version: templates.version,
+      },
+      holoBackTemplate: reference(templates.backs),
+    } : {}),
     ...(dedicatedHolo ? {
       holoLayout: {
         ...structuredClone(expectedHoloFront),
@@ -588,7 +615,7 @@ export function preflightPrintAssets(manifest, release) {
   );
   const errors = [];
   if (
-    [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7].includes(release.printTemplates?.version) &&
+    [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8].includes(release.printTemplates?.version) &&
     manifest.layout.version !== release.printTemplates.version
   )
     errors.push("The full-page Canon artwork requires its matching versioned release templates; it cannot be cropped as a legacy back.");

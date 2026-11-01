@@ -61,11 +61,11 @@ const source = buildSourceMap(
 );
 
 test("current source mapping pins the complete tuned Canon page and versioned cutter geometry", () => {
-  assert.equal(source.sources.length, 283);
-  assert.equal(source.sources.find((s) => s.id === "standard-back-sheet").nodeId, "4244:451219");
-  assert.equal(BACK_ART_SOURCE.nodeId, "4244:451219");
+  assert.equal(source.sources.length, 281);
+  assert.equal(source.sources.find((s) => s.id === "standard-back-sheet").nodeId, "4311:139076");
+  assert.equal(BACK_ART_SOURCE.nodeId, "4311:139076");
   assert.equal(source.sources.some((s) => ["4099:61637", "4099:61666"].includes(s.nodeId)), false);
-  assert.equal(source.templates.version, "figma-cutter-nine-up-v7");
+  assert.equal(source.templates.version, "figma-cutter-nine-up-v8");
   assert.deepEqual(source.templates.fronts.positions, CURRENT_PRINT_LAYOUT.positions);
   assert.deepEqual(source.templates.backs.positions, CURRENT_BACK_TEMPLATE.positions);
   const changed = structuredClone(source);
@@ -73,18 +73,18 @@ test("current source mapping pins the complete tuned Canon page and versioned cu
   assert.notEqual(sha256(Buffer.from(JSON.stringify(changed))), sha256(Buffer.from(JSON.stringify(source))));
 });
 
-test("current sources export both front backgrounds and complete rear pages, excluding front grids", () => {
+test("current sources export the shared empty front and complete rear pages without retired holo assets", () => {
   const backdrops = source.sources.filter((item) => item.kind === "backdrop");
   assert.deepEqual(backdrops, [
-    { id: "print-template-front-background", kind: "backdrop", nodeId: "4317:7887" },
-    { id: "print-template-holo-front-background", kind: "backdrop", nodeId: "4317:8435" },
-    { id: "holographic-back-sheet", kind: "backdrop", nodeId: "4311:139076" },
+    { id: "print-template-front-background", kind: "backdrop", nodeId: "4311:139557" },
   ]);
   assert.deepEqual(source.templates.fronts.background, CURRENT_PRINT_LAYOUT.background);
   assert.deepEqual(source.templates.backs.background, {
-    assetId: "standard-back-sheet", nodeId: "4244:451219", x: 0, y: 0, width: 2550, height: 3300,
+    assetId: "standard-back-sheet", nodeId: "4311:139076", x: 0, y: 0, width: 2550, height: 3300,
   });
-  assert.ok(!source.sources.some((item) => item.nodeId === source.templates.fronts.nodeId));
+  assert.equal(source.sources.filter((item) => item.nodeId === source.templates.fronts.nodeId).length, 1);
+  assert.deepEqual(Object.keys(source.templates).sort(), ["backs", "fronts", "version"]);
+  assert.ok(!source.sources.some((item) => ["print-template-holo-front-background", "holographic-back-sheet"].includes(item.id)));
   assert.equal(source.sources.filter((item) => item.nodeId === source.templates.backs.nodeId).length, 1);
   assert.ok(!source.sources.some((item) => item.id === "print-template-back-background"));
   assert.equal(new Set(source.sources.map((item) => item.id)).size, source.sources.length);

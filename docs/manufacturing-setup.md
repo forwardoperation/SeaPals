@@ -73,6 +73,31 @@ bytes (437 PNGs). All eight saved jobs and their complete releases were retained
 checkout; its plan, exact manifests, PNGs, and cleanup receipt support recovery.
 This is a local recovery archive, not a separate off-device backup.
 
+## November 1 shared templates: immutable V8 layout
+
+New releases use one pair from Page_Templates for standard cards and separate
+holo replenishment batches: front frame `4311:139557`
+(`die-cut-front-epson-template`) and rear frame `4311:139076`
+(`die-cut-rear-canon-template`). The second front frame with sample cards is
+not a template source. The shared front exports the complete empty page with
+its water background; the shared rear exports its water, logos, staple marks,
+and top bar as one native 2550 x 3300 PNG.
+
+The measured front grid begins at (70, 62.84000015258789), and the rear grid at
+(131.400390625, 85.83999633789062), in Figma pixels. Both grids remain 2330 x 3170
+with nine centered native-size cards. V8 stores only `fronts` and `backs`;
+holo batches resolve those same references. It rejects separate holo sources.
+Only `print-template-front-background` and `standard-back-sheet` are needed.
+
+V2-V7 remain supported with their original assets and geometry. Saved jobs and
+reprints keep their pinned releases; new jobs use V8 after publication. Dive
+packs retain named finished-holo pull instructions. The 217 card images and
+51 fixed sheets retain their original provenance, including Conditions' reviewed
+native insets. In V8 those insets move with the shared grid while keeping their
+original dimensions; V7 keeps the old positions. The active release has 270 assets.
+Printer transport settings,
+stock ticket suppression, and barcode receiving are unchanged.
+
 ## October 28 template alignment: immutable V7 layout
 
 V7 follows the four Page_Templates grids in Figma snapshot
@@ -1195,7 +1220,8 @@ confirmation on the next operator-requested print.
 
 ### Separate holographic replenishment batches
 
-Use the dedicated holo templates to replenish finished loose holo cards. This
+Use the current shared templates to replenish finished loose holo cards. Older
+pinned V5-V7 releases retain their dedicated holo templates. This
 local command generates private PDFs only; it does not send a print job or
 create an order, product receipt, or buyer notification. Choose the exact holo
 printing IDs and quantities from the active private release catalog. Finished
