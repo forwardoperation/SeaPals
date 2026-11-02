@@ -5,7 +5,8 @@ import { randomUUID } from "node:crypto";
 import { PGlite } from "@electric-sql/pglite";
 import { buildPrintingCatalog } from "./boosters.mjs";
 import { manufacturingService } from "./integration.mjs";
-import { applyManufacturingEvent } from "./workflow.mjs";
+import { applyManufacturingEvent, createManufacturingState } from "./workflow.mjs";
+import { createManufacturingManifest } from "./printPlan.mjs";
 
 const catalog = buildPrintingCatalog(
   JSON.parse(await readFile(new URL("../../data/gallery-set-list.json", import.meta.url))),
@@ -50,6 +51,7 @@ function serviceClient(db) {
           terms.push(`${identifier(key)}=$${values.length}`);
           return q;
         },
+        not(key, operator, value) { assert.equal(operator, "is"); assert.equal(value, null); terms.push(`${identifier(key)} is not null`); return q; },
         order() { return q; },
         limit() { return q; },
         single() { single = true; return q; },
@@ -209,6 +211,8 @@ test("saved booster cards and artwork remain identical through duplicate sends, 
     await f.event(id, "submission_started", target, "agent", secondToken);
     await f.event(id, "submission_succeeded", target, "agent", secondToken);
     await f.event(id, "confirm_printed", target);
+    await assert.rejects(f.event(id, "reprint", { ...target, reason: "Smudged front sheet" }), /print helper to finish/);
+    await f.db.query("update manufacturing_orders set leased_until=now()-interval '1 second' where order_id=$1", [id]);
     await f.event(id, "reprint", { ...target, reason: "Smudged front sheet" });
     await f.db.query("update manufacturing_orders set leased_until=now()-interval '1 second' where order_id=$1", [id]);
     const reprint = await f.s.claim(randomUUID());
@@ -532,5 +536,157 @@ test("legacy stock ticket retirement releases its lease without printing or chan
       assert.deepEqual(await f.movements(), movements);
     }
     assert.equal((await f.db.query("select count(*)::integer as n from manufacturing_notifications")).rows[0].n, 0);
+  } finally { await f.db.close(); }
+});
+
+
+// Selected page recovery remains one existing-job transaction; no new stock job,
+// inventory receipt, catalog lookup, or booster draw is created.
+async function pageReprintFixture() {
+  const f = await fixture({ receiving: true });
+  await f.artwork();
+  const items = [{ productId: "coral-garden", quantity: 1 }, { productId: "starter-kit", quantity: 1 }, { productId: "reef-dive-pack", quantity: 1 }];
+  const id = await f.build(items), r = await f.row(id);
+  const manifest = createManufacturingManifest({ request: { orderId: id, orderNumber: r.display_number, items },
+    catalog, artworkRelease: r.release_id, jobKind: "stock", randomIndex: () => 0 });
+  const state = createManufacturingState(manifest);
+  for (const page of Object.values(state.sheets)) Object.assign(page, { fronts: "confirmed", backs: "confirmed", glued: true, cut: true });
+  for (const key of Object.keys(state.holos)) state.holos[key] = true;
+  state.qualityChecked = true;
+  await f.db.query("update manufacturing_orders set manifest_text=$2,state=$3,phase='awaiting_operator',print_requested_at=now() where order_id=$1", [id, JSON.stringify(manifest), state]);
+  const pages = manifest.sheets.filter(s => s.productId === "coral-garden");
+  const input = { id: randomUUID(), type: "reprint", expectedRevision: 0, productId: "coral-garden", reason: "Replace damaged pages",
+    targets: [{ sheetId: pages[1].sheetId, side: "fronts" }, { sheetId: pages[4].sheetId, side: "fronts" }, { sheetId: pages[4].sheetId, side: "backs" }] };
+  return { ...f, id, manifest, state, pages, input };
+}
+
+test("selected page reprints commit once, preserve the saved draw, and never credit inventory", async () => {
+  const f = await pageReprintFixture();
+  try {
+    const before = await f.row(f.id), stock = await f.stock(), movements = await f.movements();
+    const result = await f.s.event(f.id, f.input, "operator");
+    assert.equal(result.revision, 1);
+    assert.equal(result.state.events.length, 1);
+    assert.equal(result.state.events[0].type, "reprint");
+    assert.equal(result.state.events[0].side, "fronts", "existing SQL received-stock guard sees a real non-ticket side");
+    assert.equal(result.phase, "queued");
+    for (const [id, page] of Object.entries(result.state.sheets)) {
+      for (const side of ["fronts", "backs"])
+        assert.equal(page[side], f.input.targets.some(t => t.sheetId === id && t.side === side) ? "queued" : "confirmed");
+      const changed = f.input.targets.some(t => t.sheetId === id);
+      assert.equal(page.glued, !changed); assert.equal(page.cut, !changed);
+    }
+    assert.equal(result.state.qualityChecked, false);
+    assert.deepEqual(result.manifest, f.manifest);
+    assert.deepEqual(result.manifest.packs, f.manifest.packs);
+    assert.equal((await f.row(f.id)).manifest_text, before.manifest_text);
+    assert.deepEqual(await f.stock(), stock); assert.deepEqual(await f.movements(), movements);
+    assert.deepEqual(result.received_quantities, before.received_quantities);
+    assert.equal(Number((await f.db.query("select count(*) as n from manufacturing_notifications")).rows[0].n), 0);
+    await f.db.query("update manufacturing_orders set phase='active',lease_token=$2,leased_until=now()+interval '2 minutes' where order_id=$1", [f.id, randomUUID()]);
+    const retry = await f.s.event(f.id, f.input, "operator");
+    assert.equal(retry.revision, 1); assert.equal(retry.state.events.length, 1);
+    await assert.rejects(f.s.event(f.id, { ...f.input, reason: "Different request" }, "operator"), /reused for a different/);
+  } finally { await f.db.close(); }
+});
+
+test("invalid or cross-product page selections fail atomically", async () => {
+  const f = await pageReprintFixture();
+  try {
+    const before = await f.row(f.id), other = f.manifest.sheets.find(s => s.productId === "starter-kit");
+    for (const update of [
+      { targets: [] }, { targets: [...f.input.targets, f.input.targets[0]] },
+      { targets: [...f.input.targets, { sheetId: "missing", side: "fronts" }] },
+      { targets: [{ sheetId: other.sheetId, side: "fronts" }] },
+      { targets: [{ sheetId: f.pages[0].sheetId, side: "ticket" }] },
+      { productId: "reef-dive-pack" }, { reason: "" }, { expectedRevision: 9 },
+    ]) {
+      await assert.rejects(f.s.event(f.id, { ...f.input, ...update }, "operator"));
+      assert.deepEqual(await f.row(f.id), before);
+    }
+    await assert.rejects(f.s.event(f.id, f.input, "agent", randomUUID()), /Only staff/);
+    assert.deepEqual(await f.row(f.id), before);
+  } finally { await f.db.close(); }
+});
+
+test("page reprints reject live leases, unfinished queues, unrequested work and received stock", async () => {
+  const f = await pageReprintFixture();
+  try {
+    const before = await f.row(f.id);
+    for (const patch of [
+      { phase: "active", leased_until: new Date(Date.now() + 120000).toISOString() },
+      { phase: "active" }, { print_requested_at: null }, { inventory_posted_at: new Date().toISOString() },
+      { received_quantities: { "coral-garden": 1 } },
+      { state: { ...f.state, hold: true } },
+      ...["queued", "submitting"].map(status => ({ state: { ...f.state, sheets: { ...f.state.sheets,
+        [f.manifest.sheets[0].sheetId]: { ...f.state.sheets[f.manifest.sheets[0].sheetId], fronts: status } } } })),
+    ]) {
+      const entries = Object.entries(patch);
+      await f.db.query("update manufacturing_orders set " + entries.map(([k], i) => k + "=$" + (i + 2)).join(",") + " where order_id=$1", [f.id, ...entries.map(([,v]) => v)]);
+      const changed = await f.row(f.id);
+      await assert.rejects(f.s.event(f.id, f.input, "operator"));
+      assert.deepEqual(await f.row(f.id), changed, "rejected request cannot mutate the job");
+      await f.db.query("update manufacturing_orders set state=$2,phase=$3,leased_until=$4,print_requested_at=$5,inventory_posted_at=$6,received_quantities=$7 where order_id=$1",
+        [f.id, before.state, before.phase, before.leased_until, before.print_requested_at, before.inventory_posted_at, before.received_quantities]);
+    }
+    const next = await f.s.event(f.id, f.input, "operator");
+    await f.db.query("update manufacturing_orders set state=$2,revision=0,inventory_posted_at=now() where order_id=$1", [f.id, before.state]);
+    await assert.rejects(f.rpc("commit", [f.id, null, 0, next.state, next.state.events[0], "queued"]), /Finished stock already received/);
+    assert.equal((await f.row(f.id)).revision, 0, "SQL still protects received stock for the batch form");
+  } finally { await f.db.close(); }
+});
+
+test("product page history is read-only, product-scoped and exposes saved page statuses", async () => {
+  const f = await pageReprintFixture();
+  try {
+    const before = await f.row(f.id), products = await f.s.productPages("coral-garden");
+    assert.equal(products.historyLimit, 100); assert.equal(products.jobs.length, 1);
+    const job = products.jobs[0];
+    assert.equal(job.orderId, f.id); assert.equal(job.manifestHash, f.manifest.manifestHash);
+    assert.equal(job.pages.length, 7); assert.equal(job.reprintBlockedReason, "");
+    assert.equal(job.pages[0].label, "Coral Garden \u00b7 Page 1");
+    const kit = (await f.s.productPages("starter-kit")).jobs[0];
+    assert.ok(kit.pages.some(page => page.label === "Drop Off \u00b7 Page 1"));
+    assert.ok(kit.pages.some(page => page.label === "Conditions \u00b7 Page 2"));
+    assert.ok(job.pages.every(p => p.frontsStatus === "confirmed" && p.backsStatus === "confirmed"));
+    assert.deepEqual(job.pages.map(p => p.sheetId), f.pages.map(p => p.sheetId));
+    assert.equal(job.manifest, undefined); assert.equal(job.state, undefined); assert.equal(job.lease_token, undefined);
+    await assert.rejects(f.s.productPages("reef-dive-pack"), /multiple print pages/);
+    assert.deepEqual(await f.row(f.id), before);
+    const pending = structuredClone(f.state); pending.sheets[f.manifest.sheets[0].sheetId].fronts = "queued";
+    await f.db.query("update manufacturing_orders set state=$2 where order_id=$1", [f.id, pending]);
+    assert.match((await f.s.productPages("coral-garden")).jobs[0].reprintBlockedReason, /current print queue/,
+      "pending pages in another product block a selected-only reprint");
+  } finally { await f.db.close(); }
+});
+
+
+test("lost batch commit acknowledgements require the same request ID and retry without another queue mutation", async () => {
+  const f = await pageReprintFixture();
+  try {
+    const client = serviceClient(f.db), rpc = client.rpc.bind(client), from = client.from.bind(client);
+    let loseReply = true, loseRead = false;
+    client.from = table => {
+      const query = from(table);
+      if (loseRead && table === "manufacturing_orders") {
+        loseRead = false;
+        query.then = (resolve, reject) => Promise.reject(new TypeError("Read connection interrupted")).then(resolve, reject);
+      }
+      return query;
+    };
+    client.rpc = async (name, args) => {
+      const result = await rpc(name, args);
+      if (name === "manufacturing_commit" && loseReply) { loseReply = false; throw new TypeError("Connection interrupted"); }
+      return result;
+    };
+    const s = manufacturingService(client);
+    await assert.rejects(s.event(f.id, f.input, "operator"), error => error.status === 503);
+    assert.equal((await f.row(f.id)).revision, 1, "commit can succeed before its response is lost");
+    loseRead = true;
+    await assert.rejects(s.event(f.id, f.input, "operator"), error => error.status === 503,
+      "a retry read failure remains unknown and must retain the same request ID");
+    assert.equal((await f.row(f.id)).revision, 1);
+    const retry = await s.event(f.id, f.input, "operator");
+    assert.equal(retry.revision, 1); assert.equal(retry.state.events.length, 1);
   } finally { await f.db.close(); }
 });

@@ -1,3 +1,5 @@
+import { CUTTER_LAYOUT_V8 } from "./backdrops.mjs";
+
 // Source crops measured across all 51 fixed sheets at Figma version
 // 2409981651040810260. These are independent of the cutter's output geometry.
 const FIXED_CARD_SIZES = [
@@ -76,4 +78,15 @@ export function validFixedSheetOutputPositions(asset, assetId) {
       p.y < q.y + q.height && p.y + p.height > q.y)) return false;
   }
   return true;
+}
+
+// Shared by the printer renderer and staff preview; preserve historical layouts.
+export function fixedSheetOutputPositions(asset, layout) {
+  return asset.outputPositions?.toSorted((a, b) =>
+    Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y,
+  ).map(position => layout.version === CUTTER_LAYOUT_V8 ? {
+    ...position,
+    x: position.x + layout.grid.x - asset.sourceGeometry.sourceBounds.x,
+    y: position.y + layout.grid.y - asset.sourceGeometry.sourceBounds.y,
+  } : position);
 }

@@ -1,5 +1,7 @@
 "use client";
-import { useState } from "react";
+import { Fragment, useState } from "react";
+import ProductPrintPages from "./ProductPrintPages";
+import { productPageCount } from "./productPages.mjs";
 
 const buttonClass = "rounded-xl bg-cyan-900 px-4 py-3 text-sm font-bold text-white disabled:opacity-40";
 
@@ -11,7 +13,13 @@ export default function FinishedInventory({
   onOperation,
   onSetBarcode,
   selected,
+  sessionKey,
+  onLoadProductPages,
+  onLoadPagePreview,
+  onReprintPages,
+  onOpenJob,
 }) {
+  const [expandedProduct, setExpandedProduct] = useState("");
   const [mode, setMode] = useState("build_stock"),
     [product, setProduct] = useState("reef-dive-pack"),
     [quantity, setQuantity] = useState("1"),
@@ -46,15 +54,31 @@ export default function FinishedInventory({
               </tr>
             </thead>
             <tbody>
-              {stock.map((s) => (
-                <tr key={s.product_id} className="border-b border-slate-100">
-                  <th className="p-2 font-medium">{s.product_name}</th>
-                  <td className="p-2">{s.on_hand}</td>
-                  <td className="p-2">{s.reserved}</td>
-                  <td className="p-2 font-bold">{s.available}</td>
-                  <td className="p-2">{s.planned}</td>
-                </tr>
-              ))}
+              {stock.map((s) => {
+                const pageCount = productPageCount(s.product_id), expandable = pageCount > 1 && !!onLoadProductPages;
+                const expanded = expandedProduct === s.product_id;
+                return <Fragment key={s.product_id}>
+                  <tr className={`border-b ${expanded ? "border-cyan-200 bg-cyan-50/60" : "border-slate-100"}`}>
+                    <th scope="row" className="p-2 text-left font-medium">
+                      {expandable ? <button type="button" className="flex w-full items-center gap-2 rounded-md py-1 text-left text-cyan-950 hover:text-cyan-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-700" aria-expanded={expanded} aria-controls={`product-pages-${s.product_id}`} onClick={() => setExpandedProduct(expanded ? "" : s.product_id)}>
+                        <span aria-hidden="true" className="w-3 shrink-0 text-xs">{expanded ? "▼" : "▶"}</span>
+                        <span className="min-w-0"><span className="block">{s.product_name}</span><span className="text-[11px] font-normal text-slate-500">{pageCount} print pages</span></span>
+                      </button> : <span className="block py-1">{s.product_name}</span>}
+                    </th>
+                    <td className="p-2">{s.on_hand}</td>
+                    <td className="p-2">{s.reserved}</td>
+                    <td className="p-2 font-bold">{s.available}</td>
+                    <td className="p-2">{s.planned}</td>
+                  </tr>
+                  {expandable && expanded && <tr>
+                    <td colSpan={5} className="border-b border-cyan-200 bg-slate-50 p-3 sm:p-4">
+                      <div id={`product-pages-${s.product_id}`}>
+                        <ProductPrintPages key={`${sessionKey}:${s.product_id}`} productId={s.product_id} productName={s.product_name} busy={busy} sessionKey={sessionKey} onLoadProductPages={onLoadProductPages} onLoadPagePreview={onLoadPagePreview} onReprintPages={onReprintPages} onOpenJob={onOpenJob} />
+                      </div>
+                    </td>
+                  </tr>}
+                </Fragment>;
+              })}
             </tbody>
           </table>
         </div>

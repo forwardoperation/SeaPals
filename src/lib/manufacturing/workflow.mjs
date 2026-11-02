@@ -1,5 +1,6 @@
 import { contentHash } from "./boosters.mjs";
 import { verifyManifest } from "./printPlan.mjs";
+import { fixedSheetAssets } from "./recipes.mjs";
 import { isPrintSubmitted, workflowReadiness } from "./readiness.mjs";
 export { workflowReadiness } from "./readiness.mjs";
 
@@ -38,6 +39,27 @@ export function createManufacturingState(manifest) {
   };
 }
 
+// One batch is one operator event and one revision. The first real target stays
+// on the event so the existing database reprint/received-stock guard still applies.
+export function normalizedPageReprint(input) {
+  if (input.type !== "reprint" || typeof input.productId !== "string" ||
+      fixedSheetAssets(input.productId).length < 2 || !Array.isArray(input.targets) ||
+      !input.targets.length || input.targets.length > 1000)
+    throw new Error("Choose pages from one multi-page product.");
+  const seen = new Set();
+  const targets = input.targets.map(target => {
+    if (!target || typeof target.sheetId !== "string" ||
+        !/^[A-Za-z0-9_-]{1,200}$/.test(target.sheetId) ||
+        !["fronts", "backs"].includes(target.side))
+      throw new Error("Choose a saved page and its front or back.");
+    const key = target.sheetId + ":" + target.side;
+    if (seen.has(key)) throw new Error("A print side can be selected only once.");
+    seen.add(key);
+    return { sheetId: target.sheetId, side: target.side };
+  });
+  return { productId: input.productId, targets, ...targets[0] };
+}
+
 export function applyManufacturingEvent(
   original, manifest, event,
   { currentRevision = event?.expectedRevision } = {},
@@ -63,6 +85,21 @@ export function applyManufacturingEvent(
   // progress. Preserve the original event for stable retry fingerprints.
   if (currentRevision !== original.revision)
     throw new Error("Production state changed. Reload before updating.");
+  const batch = event.targets === undefined ? null : normalizedPageReprint(event);
+  if (batch) {
+    if (event.role !== "operator" || event.sheetId !== batch.sheetId || event.side !== batch.side)
+      throw new Error("Only an operator can authorize the selected page reprint.");
+    const statuses = Object.values(original.sheets).flatMap(s => [s.fronts, s.backs]);
+    if (manifest.jobKind !== "stock") statuses.push(original.ticket?.ticket);
+    if (statuses.includes("submitting") || statuses.includes("queued"))
+      throw new Error("Finish or resolve the current print queue before reprinting selected pages.");
+    for (const target of batch.targets) {
+      const saved = manifest.sheets.find(s => s.sheetId === target.sheetId);
+      if (!saved || saved.productId !== batch.productId ||
+          !["submitted", "confirmed", "needs_review"].includes(original.sheets[target.sheetId]?.[target.side]))
+        throw new Error("Every selected page must be a previously submitted page of this product.");
+    }
+  }
   const state = structuredClone(original);
   const sheet =
     event.side === "ticket" ? state.ticket : state.sheets[event.sheetId];
@@ -135,17 +172,18 @@ export function applyManufacturingEvent(
         throw new Error("A reprint reason is required.");
       if (sheet[side] === "submitting")
         throw new Error("Reconcile the active printer attempt first.");
-      sheet[side] = "queued";
-      if (side === "ticket") break;
-      sheet.glued = false;
-      sheet.cut = false;
-      state.qualityChecked = false;
-      state.packed = false;
-      if (side === "fronts") {
-        for (const item of manifest.holoChecklist.filter(
-          (item) => item.sheetId === event.sheetId,
-        ))
-          state.holos[item.id] = false;
+      for (const target of batch?.targets ?? [{ sheetId: event.sheetId, side }]) {
+        const page = target.side === "ticket" ? state.ticket : state.sheets[target.sheetId];
+        page[target.side] = "queued";
+        if (target.side === "ticket") continue;
+        page.glued = false;
+        page.cut = false;
+        state.qualityChecked = false;
+        state.packed = false;
+        if (target.side === "fronts") {
+          for (const item of manifest.holoChecklist.filter(item => item.sheetId === target.sheetId))
+            state.holos[item.id] = false;
+        }
       }
       break;
     case "holo_applied":

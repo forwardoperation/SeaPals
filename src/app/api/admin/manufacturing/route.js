@@ -18,7 +18,11 @@ function auth(request) {
 export async function GET(request) {
   if (!auth(request)) return json({ error: "Unauthorized." }, 401);
   try {
-    const id = new URL(request.url).searchParams.get("orderId");
+    const params = new URL(request.url).searchParams, id = params.get("orderId"), productId = params.get("productId");
+    if (productId !== null) {
+      if (id) return json({ error: "Choose a product or an order, not both." }, 400);
+      return json(await service().productPages(productId));
+    }
     if (id && !uuid(id)) return json({ error: "Invalid order ID." }, 400);
     if (!id) {
       const s = service();
@@ -30,7 +34,8 @@ export async function GET(request) {
       });
     }
     return json(await service().detail(id));
-  } catch {
+  } catch (error) {
+    if (error.status === 400) return json({ error: error.message }, 400);
     return json(
       {
         error:

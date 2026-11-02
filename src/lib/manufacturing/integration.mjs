@@ -11,6 +11,7 @@ import {
 import {
   applyManufacturingEvent,
   createManufacturingState,
+  normalizedPageReprint,
 } from "./workflow.mjs";
 import { validateBoosterPool } from "./boosters.mjs";
 import { BOOSTER_PRODUCTS, fixedSheetAssets, fixedSheetLabel } from "./recipes.mjs";
@@ -71,8 +72,38 @@ export function normalizedEvent(input, role) {
   ])
     if (input[key] !== undefined)
       event[key] = String(input[key]).slice(0, key === "reason" ? 500 : 200);
+  if (input.targets !== undefined) {
+    if (role !== "operator") throw new Error("Only staff can authorize page reprints.");
+    Object.assign(event, normalizedPageReprint(input));
+  }
   return event;
 }
+
+const pageDeckNames = {
+  "coral-garden": "Coral Garden", "blue-water": "Drop Off", "conditions": "Conditions",
+  "darkness-shroud": "Darkness Shroud", "open-ocean-hunt": "Open Ocean",
+  "murky-water": "Murky Water", "stinging-fortress": "Stinging Fortress", "disruption": "Disruption",
+};
+function pageDisplayLabel(assetId, fallback) {
+  const match = /^sheet-(.+)-(\d+)$/.exec(assetId ?? "");
+  return match && pageDeckNames[match[1]] ? `${pageDeckNames[match[1]]} \u00b7 Page ${match[2]}` : `Page ${fallback}`;
+}
+
+export function pageReprintBlockedReason(row, manifest, now = Date.now()) {
+  if (!manifest || !row?.state) return "This job has not been prepared yet.";
+  if (!["stock", "order"].includes(row.job_kind ?? "order")) return "This job cannot be reprinted here.";
+  if (row.inventory_posted_at || Object.values(row.received_quantities ?? {}).some(q => Number(q) > 0)) return "This build has received stock. Adjust damaged stock and create a replacement build.";
+  if (row.state.hold) return "Release the job hold before reprinting pages.";
+  if (!row.print_requested_at) return "Send this job to printers before requesting reprints.";
+  if (Date.parse(row.leased_until ?? "") > now) return "Wait for the print helper to finish this job before reprinting pages.";
+  const statuses = Object.values(row.state.sheets ?? {}).flatMap(s => [s.fronts, s.backs]);
+  if (manifest.jobKind !== "stock") statuses.push(row.state.ticket?.ticket);
+  if (statuses.includes("submitting")) return "Review the interrupted print attempt before reprinting pages.";
+  if (statuses.includes("queued")) return "Finish or resolve the current print queue before reprinting selected pages.";
+  if (!["awaiting_operator", "complete"].includes(row.phase)) return "Finish or resolve this workshop job before reprinting selected pages.";
+  return "";
+}
+
 export function productionPhase(state, leaseActive = false) {
   const statuses = [
     state.ticket?.ticket,
@@ -197,7 +228,15 @@ export function validatedReceiptItems(items) {
 
 export function manufacturingService(db) {
   async function result(query) {
-    const { data, error } = await query;
+    let data, error;
+    try { ({ data, error } = await query); }
+    catch {
+      // A read failure during an event retry cannot prove that an earlier
+      // commit failed. Keep every unknown transport outcome retryable.
+      const failure = new Error("Manufacturing storage could not be reached. Retry the same request.");
+      failure.status = 503;
+      throw failure;
+    }
     if (error) {
       const failure = new Error(
         error.code === "P0001"
@@ -353,7 +392,15 @@ export function manufacturingService(db) {
       if (!r.manifest_text)
         throw new Error("The order has not been prepared yet.");
       const manifest = verifyManifest(JSON.parse(r.manifest_text));
-      if (r.inventory_posted_at && e.type === "reprint" && e.side !== "ticket")
+      const replay = r.state.events.some(entry => entry.id === e.id);
+      if (!replay && role === "operator" && e.type === "reprint" &&
+          Date.parse(r.leased_until ?? "") > Date.now())
+        throw new Error("Wait for the print helper to finish this job before reprinting pages.");
+      if (!replay && e.targets) {
+        const reason = pageReprintBlockedReason(r, manifest);
+        if (reason) throw new Error(reason);
+      }
+      if (!replay && r.inventory_posted_at && e.type === "reprint" && e.side !== "ticket")
         throw new Error(
           "This build was received into stock. Adjust damaged stock and create a replacement build.",
         );
@@ -399,6 +446,8 @@ export function manufacturingService(db) {
           }),
         );
       } catch (error) {
+        // A rejected transport may occur after commit. Preserve the request ID.
+        if (error.status !== 409) error.status = 503;
         // Retry only a known compare-and-swap conflict, not a lease failure or
         // unknown acknowledgement. Physical printing is outside this operation.
         if (role !== "agent" || attempt === 2 || error.status !== 409 || error.message !== "Revision conflict")
@@ -521,6 +570,32 @@ export function manufacturingService(db) {
           .order("created_at", { ascending: false })
           .limit(100),
       );
+    },
+    async productPages(productId) {
+      if (typeof productId !== "string" || fixedSheetAssets(productId).length < 2) {
+        const error = new Error("Choose a product with multiple print pages."); error.status = 400; throw error;
+      }
+      // Bound the response and explain the window to the UI. Only prepared jobs
+      // are useful; no release, manifest or booster contents are created here.
+      const rows = await result(db.from("manufacturing_orders")
+        .select("order_id,job_kind,display_number,created_at,phase,revision,release_id,manifest_text,state,print_requested_at,leased_until,inventory_posted_at,received_quantities")
+        .not("manifest_text", "is", null).order("created_at", { ascending: false }).limit(100));
+      const jobs = [];
+      for (const r of rows) {
+        const manifest = verifyManifest(JSON.parse(r.manifest_text));
+        const pages = manifest.sheets.filter(sheet => sheet.productId === productId).map((sheet, index) => ({
+          sheetId: sheet.sheetId, label: pageDisplayLabel(sheet.fronts.assetId, index + 1),
+          unit: sheet.unit ?? 1, frontsStatus: r.state?.sheets?.[sheet.sheetId]?.fronts ?? "unknown",
+          backsStatus: r.state?.sheets?.[sheet.sheetId]?.backs ?? "unknown",
+        }));
+        if (!pages.length) continue;
+        jobs.push({ orderId: r.order_id, displayNumber: r.display_number || manifest.order.orderNumber,
+          createdAt: r.created_at, phase: r.phase, revision: r.revision, releaseId: r.release_id,
+          manifestHash: manifest.manifestHash, printRequestedAt: r.print_requested_at, leasedUntil: r.leased_until,
+          hold: Boolean(r.state?.hold), received: Boolean(r.inventory_posted_at || Object.values(r.received_quantities ?? {}).some(q => Number(q) > 0)),
+          reprintBlockedReason: pageReprintBlockedReason(r, manifest), pages });
+      }
+      return { productId, jobs, historyLimit: 100 };
     },
     async detail(id) {
       const [r, o, notifications] = await Promise.all([

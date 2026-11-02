@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { isPrintSubmitted, workflowReadiness } from "@/lib/manufacturing/readiness.mjs";
 import FinishedInventory from "./FinishedInventory";
 import StockReceiving from "./StockReceiving";
@@ -307,6 +307,49 @@ export default function ManufacturingDashboard() {
       return false;
     }
   }
+  const privatePageRead = useCallback(async (query, { signal, binary = false } = {}) => {
+    const version = authVersion.current;
+    const response = await fetch(query, {
+      headers: { "x-admin-token": tokenRef.current }, cache: "no-store", signal,
+    });
+    if (version !== authVersion.current) throw new DOMException("Session changed.", "AbortError");
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      if (version !== authVersion.current || signal?.aborted) throw new DOMException("Session changed.", "AbortError");
+      const error = new Error(result.error || "Could not load the saved print pages.");
+      error.status = response.status;
+      if (response.status === 401) invalidateSession();
+      throw error;
+    }
+    const data = await (binary ? response.blob() : response.json());
+    if (version !== authVersion.current || signal?.aborted) throw new DOMException("Session changed.", "AbortError");
+    return data;
+  }, []);
+  const loadProductPages = useCallback((productId, { signal } = {}) =>
+    privatePageRead("/api/admin/manufacturing?productId=" + encodeURIComponent(productId), { signal }), [privatePageRead]);
+  const loadPagePreview = useCallback(({ orderId, sheetId, side, assetId, signal }) => {
+    const query = new URLSearchParams({ orderId, sheetId, side });
+    if (assetId) query.set("assetId", assetId);
+    return privatePageRead("/api/admin/manufacturing/preview?" + query, { signal, binary: !!assetId });
+  }, [privatePageRead]);
+  const reprintProductPages = useCallback(async ({ orderId, revision, productId, targets, reason, id }) => {
+    const mutation = beginMutation();
+    if (!mutation) throw new Error("Another workshop action is in progress.");
+    try {
+      const result = await request({ action: "event", orderId, event: {
+        id, type: "reprint", expectedRevision: revision, productId, targets, reason,
+      } }, null, mutation);
+      if (!mutation.isCurrent()) throw new DOMException("Session changed.", "AbortError");
+      await load(selectedRef.current);
+      return result;
+    } catch (e) {
+      if (e.status === 401 && mutation.isCurrent()) invalidateSession();
+      throw e;
+    } finally {
+      if (mutation.isCurrent()) setWorking(false);
+    }
+  }, []);
+  const openPrintJob = useCallback(id => load(id), []);
   async function setProductBarcode({ barcode, productId }) {
     const mutation = beginMutation();
     if (!mutation) return false;
@@ -579,6 +622,11 @@ export default function ManufacturingDashboard() {
             busy={busy}
             onOperation={stockOperation}
             onSetBarcode={setProductBarcode}
+            onLoadProductPages={loadProductPages}
+            onLoadPagePreview={loadPagePreview}
+            onReprintPages={reprintProductPages}
+            onOpenJob={openPrintJob}
+            sessionKey={authVersion.current}
             selected={selected}
           />
           <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">

@@ -12,6 +12,25 @@ without claiming that paper printed. Customer orders keep their QR work tickets.
 Packaged products still enter inventory only through barcode receiving after
 quality checks. Accessory-only stock builds need no printed pages.
 
+## Preview and reprint selected product pages
+
+In Finished inventory, expand a product with multiple print pages. Choose its
+saved print run, preview Epson fronts or Canon backs, and select the individual
+sheets to replace. Repeated product copies in a build are listed separately.
+The selector searches the latest 100 prepared workshop jobs.
+
+Choose fronts, backs, or both and enter a reason before using Reprint. All
+selected sides queue in one atomic event with the saved artwork release, card
+contents, and placement. The preview uses the same crop and positioning rules
+as the printer renderer and loads private assets only after staff authentication.
+Printing and reprinting never credit finished inventory.
+
+A run must have finished its current printer submissions before replacement
+pages can be queued. Resolve holds or interrupted attempts in the workshop.
+Runs with received stock require a replacement stock build instead. If a request
+loses its response, Retry same reprint checks the original request ID so it cannot
+queue a second copy. No database migration is required for this page picker.
+
 ## Private artwork retention and recovery
 
 Apply `supabase/manufacturing-artwork-retention.sql` **after all existing

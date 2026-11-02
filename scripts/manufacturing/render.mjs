@@ -6,7 +6,7 @@ import { PNG } from "pngjs";
 import { preflightPrintAssets } from "../../src/lib/manufacturing/printPlan.mjs";
 import { verifyHoloBatch } from "../../src/lib/manufacturing/holoBatch.mjs";
 import { sha256 } from "../../src/lib/manufacturing/integration.mjs";
-import { validFixedSheetPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
+import { validFixedSheetPositions, fixedSheetOutputPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
 import {
   CUTTER_LAYOUT_V4,
   CUTTER_LAYOUT_V5,
@@ -237,13 +237,7 @@ export async function renderJob({
             // Preserve native Conditions insets and dimensions. Shared V8 pages
             // move that grid as a unit to the manifest's approved grid origin;
             // older manifests retain the absolute placement saved with the art.
-            positions = asset.outputPositions?.toSorted((a, b) =>
-              Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y,
-            ).map(position => manifest.layout.version === CUTTER_LAYOUT_V8 ? {
-              ...position,
-              x: position.x + manifest.layout.grid.x - asset.sourceGeometry.sourceBounds.x,
-              y: position.y + manifest.layout.grid.y - asset.sourceGeometry.sourceBounds.y,
-            } : position) ?? cutterPositions(manifest.layout.positions, "front template", tuned);
+            positions = fixedSheetOutputPositions(asset, manifest.layout) ?? cutterPositions(manifest.layout.positions, "front template", tuned);
           for (const [index, sourcePosition] of sourcePositions.entries()) {
             const image = await doc.embedPng(
               cropCard(original, sourcePosition),
