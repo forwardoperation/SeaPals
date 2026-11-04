@@ -9,6 +9,7 @@ import {
   fixedArtworkSources,
   fixedSheetLabel,
   fixedSheetAssets,
+  EMPTY_FIXED_SHEET_RECTANGLES,
 } from "../../src/lib/manufacturing/recipes.mjs";
 import {
   BACK_ART_SOURCE,
@@ -338,16 +339,28 @@ function fixedSheetGridPath(document, source = fixedArtworkSources().find(item =
 
 function checkedOmittedFrames(document, grid) {
   const source = fixedArtworkSources().find(item => item.nodeId === document.id), omitted = new Set(source?.omittedNodeIds ?? []);
+  const rectangles = new Set(EMPTY_FIXED_SHEET_RECTANGLES[source?.id] ?? []);
   for (const node of grid.children ?? []) {
     if (!omitted.has(node.id)) continue;
     const paints = [...(node.fills ?? []), ...(node.background ?? [])];
-    const empty = node.type === "FRAME" && Array.isArray(node.children) && node.children.length === 0 &&
-      (node.strokes ?? []).length === 0 && (node.effects ?? []).length === 0 && !node.isMask &&
-      paints.every(paint => paint.visible === false || paint.opacity === 0 ||
-        paint.type === "SOLID" && (paint.color?.a === 0 ||
-          [paint.color?.r, paint.color?.g, paint.color?.b].every(channel => channel === 1)));
+    const unmarked = (node.strokes ?? []).length === 0 && (node.effects ?? []).length === 0 && !node.isMask;
+    const fill = node.fills?.[0];
+    // A new rectangle cannot become a frame or acquire hidden artwork. Historic
+    // FRAME placeholders keep their previous transparent/white paint allowance.
+    const empty = rectangles.has(node.id)
+      ? node.type === "RECTANGLE" &&
+        (node.children === undefined || Array.isArray(node.children) && node.children.length === 0) &&
+        unmarked && (node.opacity ?? 1) === 1 && ["NORMAL", "PASS_THROUGH"].includes(node.blendMode ?? "NORMAL") &&
+        (node.background ?? []).length === 0 && node.fills?.length === 1 &&
+        fill.type === "SOLID" && fill.visible !== false && (fill.opacity ?? 1) === 1 &&
+        (fill.blendMode ?? "NORMAL") === "NORMAL" && (fill.color?.a ?? 1) === 1 &&
+        [fill.color?.r, fill.color?.g, fill.color?.b].every(channel => channel === 1)
+      : node.type === "FRAME" && Array.isArray(node.children) && node.children.length === 0 &&
+        unmarked && paints.every(paint => paint.visible === false || paint.opacity === 0 ||
+          paint.type === "SOLID" && (paint.color?.a === 0 ||
+            [paint.color?.r, paint.color?.g, paint.color?.b].every(channel => channel === 1)));
     if (!empty)
-      throw new Error(`The reviewed empty fixed-sheet frame ${node.id} now contains artwork or effects. Review its source mapping before syncing; no card may be silently omitted.`);
+      throw new Error(`The reviewed empty fixed-sheet node ${node.id} now contains artwork or effects. Review its source mapping before syncing; no card may be silently omitted.`);
   }
   return omitted;
 }
@@ -441,6 +454,7 @@ export function normalizeFixedSheetExport(bytes, document, source) {
   PNG.bitblt(raw, padded, 0, 0, raw.width, raw.height, padding.x, padding.y);
   return {
     bytes: PNG.sync.write(padded), positions,
+    ...(source.omittedNodeIds?.length ? { omittedNodeIds: [...source.omittedNodeIds] } : {}),
     ...(source.preserveSourcePositions ? { outputPositions: structuredClone(sourcePositions) } : {}),
     sourceGeometry: { mode: "isolated-grid-letter", exportNodeId: source.exportNodeId,
       sourceBounds, padding, cropTranslation, sourcePositions },

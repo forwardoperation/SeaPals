@@ -1,12 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { PNG } from "pngjs";
 import { buildPrintingCatalog } from "./boosters.mjs";
 import { createManufacturingManifest, preflightPrintAssets } from "./printPlan.mjs";
 import { validateRelease } from "./integration.mjs";
 import { validFixedSheetPositions } from "./sourceGeometry.mjs";
 import { normalizeFixedSheetExport, sheetPositions, validateFixedSheetBackgrounds } from "../../../scripts/manufacturing/sync-figma.mjs";
-import { fixedArtworkSources } from "./recipes.mjs";
+import { fixedArtworkSources, EMPTY_FIXED_SHEET_RECTANGLES } from "./recipes.mjs";
 
 const read = async (name) => JSON.parse(await readFile(new URL(`../../data/${name}`, import.meta.url), "utf8"));
 const catalog = buildPrintingCatalog(await read("gallery-set-list.json"), await read("gallery-images.json"));
@@ -128,7 +129,8 @@ test("smaller fixed-sheet crops do not lower standalone booster-artwork resoluti
   assert.throws(() => validateRelease(release), /Incorrect card dimensions/);
 });
 
-const omittedSources = fixedArtworkSources().filter(source => source.omittedNodeIds?.length);
+const omittedSources = fixedArtworkSources().filter(source =>
+  ["sheet-darkness-shroud-1", "sheet-open-ocean-hunt-1"].includes(source.id));
 function documentWithReviewedBlank(source) {
   const doc = documentFor(positions(), source.nodeId);
   doc.children[0].children.forEach((child, index) => Object.assign(child, { id: `card-${index}`, type: "INSTANCE" }));
@@ -188,4 +190,89 @@ test("placeholder omission is limited to its reviewed page and node identities",
   assert.throws(() => sheetPositions(doc), /supported card-count/);
   for (const id of ["sheet-darkness-shroud-2", "sheet-open-ocean-hunt-2", "2298:446827", "2296:82830"])
     assert.equal(validFixedSheetPositions(positions().slice(0, 8), id), false);
+});
+
+const rectangleSources = fixedArtworkSources().filter(source => Object.hasOwn(EMPTY_FIXED_SHEET_RECTANGLES, source.id));
+function documentWithReviewedRectangle(source) {
+  const doc = documentFor(positions(), source.nodeId), grid = doc.children[0];
+  Object.assign(grid, { id: source.exportNodeId ?? "grid", type: "FRAME", fills: [],
+    absoluteBoundingBox: { x: -3900, y: 600, width: 2330, height: 3170 } });
+  grid.children.forEach((child, index) => Object.assign(child, { id: "real-card-" + index, type: "INSTANCE" }));
+  Object.assign(grid.children[8], { id: source.omittedNodeIds[0], name: "Rectangle 17", type: "RECTANGLE", blendMode: "PASS_THROUGH",
+    fills: [{ type: "SOLID", color: { r: 1, g: 1, b: 1, a: 1 } }], strokes: [], effects: [], opacity: 1 });
+  if (source.exportNodeId) Object.assign(grid.children[8].absoluteBoundingBox, {
+    width: 776.6666870117188, height: 1056.6666259765625,
+  });
+  return doc;
+}
+
+test("the three new reviewed white rectangles leave exactly eight real card crops", () => {
+  assert.deepEqual(rectangleSources.map(source => [source.id, source.omittedNodeIds]), [
+    ["sheet-coral-garden-7", ["4499:508122"]],
+    ["sheet-murky-water-7", ["4500:191319"]],
+    ["sheet-stinging-fortress-7", ["4500:301116"]],
+  ]);
+  for (const source of rectangleSources) {
+    const doc = documentWithReviewedRectangle(source), original = structuredClone(doc);
+    const expected = positions().slice(0, 8);
+    validateFixedSheetBackgrounds(doc, source);
+    assert.deepEqual(sheetPositions(doc), expected);
+    const bytes = source.exportNodeId
+      ? PNG.sync.write(new PNG({ width: 2330, height: 3170 }))
+      : Buffer.from("Verified complete-page pixels remain unchanged");
+    const normalized = normalizeFixedSheetExport(bytes, doc, source);
+    assert.deepEqual(normalized.positions, expected);
+    assert.deepEqual(normalized.omittedNodeIds, source.omittedNodeIds,
+      "Isolated Coral exports must preserve the omission metadata too");
+    if (!source.exportNodeId) assert.equal(normalized.bytes, bytes);
+    else {
+      assert.deepEqual(normalized.sourceGeometry.sourcePositions, expected);
+      const png = PNG.sync.read(normalized.bytes);
+      assert.equal(png.width, 2550); assert.equal(png.height, 3300);
+    }
+    assert.deepEqual(doc, original, "Source card artwork, placement and Figma metadata are not modified");
+  }
+});
+
+test("new rectangle omissions reject any artwork, effects, mask or nonwhite rendering change", () => {
+  const mutations = [
+    node => { node.fills = [{ type: "IMAGE", imageRef: "new-art" }]; },
+    node => { node.children = [{ type: "TEXT", characters: "New card" }]; },
+    node => { node.children = null; },
+    node => { node.fills[0].color.r = 0.9; },
+    node => { node.fills[0].color.a = 0.5; },
+    node => { node.fills[0].opacity = 0.5; },
+    node => { node.fills[0].visible = false; },
+    node => { node.fills[0].blendMode = "MULTIPLY"; },
+    node => { node.fills = []; },
+    node => { node.background = [{ type: "IMAGE", imageRef: "hidden-art" }]; },
+    node => { node.strokes = [{ type: "SOLID" }]; },
+    node => { node.effects = [{ type: "DROP_SHADOW" }]; },
+    node => { node.isMask = true; },
+    node => { node.opacity = 0.5; },
+    node => { node.blendMode = "MULTIPLY"; },
+    node => { node.type = "FRAME"; node.children = []; },
+    node => { node.type = "INSTANCE"; },
+  ];
+  for (const source of rectangleSources) for (const mutate of mutations) {
+    const doc = documentWithReviewedRectangle(source); mutate(doc.children[0].children[8]);
+    assert.throws(() => sheetPositions(doc), /now contains artwork or effects.*silently omitted/);
+    assert.throws(() => validateFixedSheetBackgrounds(doc, source), /now contains artwork or effects.*silently omitted/);
+  }
+});
+
+test("rectangle omission cannot broaden historic frame rules or discard unreviewed white nodes", () => {
+  for (const source of omittedSources) {
+    const doc = documentWithReviewedBlank(source);
+    doc.children[0].children[2].type = "RECTANGLE";
+    assert.throws(() => sheetPositions(doc), /now contains artwork or effects.*silently omitted/);
+  }
+  for (const source of rectangleSources) {
+    const doc = documentWithReviewedRectangle(source);
+    doc.children[0].children[8].id = "unreviewed-white-rectangle";
+    assert.throws(() => sheetPositions(doc), /supported card-count/);
+  }
+  const doc = documentWithReviewedRectangle(rectangleSources.find(source => source.id === "sheet-murky-water-7"));
+  doc.id = "2224:257783";
+  assert.deepEqual(sheetPositions(doc), positions(), "The same rectangle identity on another page is not omitted");
 });

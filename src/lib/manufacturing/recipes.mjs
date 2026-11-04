@@ -143,10 +143,18 @@ export function fixedSheetLabel(assetId) {
   const dropOff = /^sheet-blue-water-([1-7])$/.exec(assetId);
   return dropOff ? `sheets-drop-off-${dropOff[1]}` : assetId;
 }
-// Audited childless white placeholders, kept in Figma but omitted from new card crops.
+// Audited leaf rectangles added to the otherwise empty final slot on November 4.
+// These exact page/node identities may be omitted only while they remain plain white.
+export const EMPTY_FIXED_SHEET_RECTANGLES = Object.freeze({
+  "sheet-coral-garden-7": Object.freeze(["4499:508122"]),
+  "sheet-murky-water-7": Object.freeze(["4500:191319"]),
+  "sheet-stinging-fortress-7": Object.freeze(["4500:301116"]),
+});
+// Historic childless frames retain their existing, separately validated rules.
 const EMPTY_FIXED_SHEET_FRAMES = {
   "sheet-darkness-shroud-1": ["2893:234348"],
   "sheet-open-ocean-hunt-1": ["2779:45793"],
+  ...EMPTY_FIXED_SHEET_RECTANGLES,
 };
 export function fixedArtworkSources() {
   return [
