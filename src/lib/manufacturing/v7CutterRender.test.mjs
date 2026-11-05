@@ -9,14 +9,14 @@ import { buildPrintingCatalog, contentHash } from './boosters.mjs';
 import { PRINT_LAYOUT as V8_PRINT_LAYOUT, BACK_TEMPLATE as V8_BACK_TEMPLATE, V7_PRINT_LAYOUT as PRINT_LAYOUT, V7_BACK_TEMPLATE as BACK_TEMPLATE, V7_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT, V7_HOLO_BACK_TEMPLATE as HOLO_BACK_TEMPLATE, V6_PRINT_LAYOUT, V6_BACK_TEMPLATE, V6_HOLO_PRINT_LAYOUT, V6_HOLO_BACK_TEMPLATE, createManufacturingManifest, preflightPrintAssets } from './printPlan.mjs';
 import { createHoloBatch } from './holoBatch.mjs';
 import { sha256, validateRelease } from './integration.mjs';
-import { fixedArtworkSources } from "./recipes.mjs";
+import { LEGACY_CONDITION_SOURCES } from "./recipes.mjs";
 import { validFixedSheetOutputPositions, validFixedSheetPositions } from "./sourceGeometry.mjs";
 import { normalizeFixedSheetExport } from "../../../scripts/manufacturing/sync-figma.mjs";
 import { renderJob, renderHoloBatch } from '../../../scripts/manufacturing/render.mjs';
 
 const read = async name => JSON.parse(await readFile(new URL(`../../data/${name}`, import.meta.url), 'utf8'));
 const conditionGeometry = JSON.parse(await readFile(new URL("./test-fixtures/conditions-source-geometry-2026-10-29.json", import.meta.url), "utf8"));
-const conditionSources = fixedArtworkSources().filter(source => source.preserveSourcePositions);
+const conditionSources = LEGACY_CONDITION_SOURCES;
 const conditionExpected = new Map();
 const catalog = buildPrintingCatalog(await read('gallery-set-list.json'), await read('gallery-images.json'));
 const holo = catalog.find(card => card.set === 'reef' && card.rarity === 'Holo Rare');

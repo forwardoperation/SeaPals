@@ -10,6 +10,7 @@ import {
   fixedSheetLabel,
   fixedSheetAssets,
   EMPTY_FIXED_SHEET_RECTANGLES,
+  LEGACY_CONDITION_SOURCES,
 } from "../../src/lib/manufacturing/recipes.mjs";
 import {
   BACK_ART_SOURCE,
@@ -23,7 +24,7 @@ import {
   validateRelease,
 } from "../../src/lib/manufacturing/integration.mjs";
 import { PRIVATE_ROOT, REPO_ROOT, atomicJson } from "./orders.mjs";
-import { validFixedSheetPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
+import { validFixedSheetPositions, validFixedSheetOutputPositions, conditionOutputMapping } from "../../src/lib/manufacturing/sourceGeometry.mjs";
 import { validateTunedTemplate } from "./tuned-template-validation.mjs";
 import { isGridTemplate, validateGridTemplate } from "./grid-template-validation.mjs";
 
@@ -394,8 +395,10 @@ export function validateFixedSheetBackgrounds(document, source) {
   try { path = fixedSheetGridPath(document, source); } catch (error) { invalid(error.message); }
   checkedOmittedFrames(document, path.at(-1));
   if (source.exportNodeId) {
-    const reviewed = fixedArtworkSources().find(item => item.id === source.id);
-    if (reviewed?.nodeId !== source.nodeId || reviewed?.exportNodeId !== source.exportNodeId)
+    const reviewed = [...fixedArtworkSources(), ...LEGACY_CONDITION_SOURCES].find(item =>
+      item.id === source.id && item.nodeId === source.nodeId && item.exportNodeId === source.exportNodeId);
+    if (!reviewed || reviewed.outputProfile !== source.outputProfile ||
+        Boolean(reviewed.preserveSourcePositions) !== Boolean(source.preserveSourcePositions))
       invalid("the isolated grid is not a reviewed fixed-sheet export");
     // Ancestors and siblings above this explicit export root never enter the PNG.
     path = [path.at(-1)];
@@ -452,13 +455,19 @@ export function normalizeFixedSheetExport(bytes, document, source) {
     throw new Error("The padded fixed sheet has invalid card crop bounds.");
   const padded = new PNG({ width: 2550, height: 3300 });
   PNG.bitblt(raw, padded, 0, 0, raw.width, raw.height, padding.x, padding.y);
-  return {
+  const mapping = source.outputProfile ? conditionOutputMapping(source.id) : null;
+  const normalized = {
     bytes: PNG.sync.write(padded), positions,
     ...(source.omittedNodeIds?.length ? { omittedNodeIds: [...source.omittedNodeIds] } : {}),
     ...(source.preserveSourcePositions ? { outputPositions: structuredClone(sourcePositions) } : {}),
-    sourceGeometry: { mode: "isolated-grid-letter", exportNodeId: source.exportNodeId,
-      sourceBounds, padding, cropTranslation, sourcePositions },
+    ...(mapping ? { outputPositions: mapping.outputPositions } : {}),
+    sourceGeometry: { mode: mapping ? "mapped-grid-letter" : "isolated-grid-letter",
+      exportNodeId: grid.id, sourceBounds, padding, cropTranslation, sourcePositions,
+      ...(mapping ? { outputProfile: source.outputProfile, outputReferenceBounds: mapping.outputReferenceBounds } : {}) },
   };
+  if (source.outputProfile && (!mapping || !validFixedSheetOutputPositions({ nodeId: source.nodeId, ...normalized }, source.id)))
+    throw new Error("The Conditions artwork does not match its reviewed source-to-output mapping.");
+  return normalized;
 }
 
 export async function checkFixedSheetBackgrounds(figma, source, version) {

@@ -1,0 +1,689 @@
+{
+  "figmaSnapshot": {
+    "version": "2418343922278898990",
+    "lastModified": "2026-11-05T11:38:04Z"
+  },
+  "documents": {
+    "2366:320222": {
+      "id": "2366:320222",
+      "name": "conditions 1",
+      "type": "FRAME",
+      "absoluteBoundingBox": {
+        "x": -445,
+        "y": 3827,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [],
+      "background": [],
+      "children": [
+        {
+          "id": "2366:320223",
+          "name": "card_backs",
+          "type": "FRAME",
+          "absoluteBoundingBox": {
+            "x": -278,
+            "y": 3933,
+            "width": 2216,
+            "height": 3088
+          },
+          "fills": [],
+          "background": [],
+          "children": [
+            {
+              "id": "2366:320224",
+              "name": "Red Tide",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": -278,
+                "y": 3933,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [],
+              "background": []
+            },
+            {
+              "id": "2366:320225",
+              "name": "Abundant Sunlight",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 460.666748046875,
+                "y": 3933,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2366:320226",
+              "name": "Clear Water",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 1199.33349609375,
+                "y": 3933,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2366:320227",
+              "name": "Murky Water",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": -278,
+                "y": 4962.33349609375,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2366:320228",
+              "name": "Bleak Overcast",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 460.666748046875,
+                "y": 4962.33349609375,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2366:320229",
+              "name": "Undertow",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 1199.33349609375,
+                "y": 4962.33349609375,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2366:320230",
+              "name": "Algae Bloom",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": -278,
+                "y": 5991.6669921875,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2366:320231",
+              "name": "Jelly Field",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 460.666748046875,
+                "y": 5991.6669921875,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2366:320232",
+              "name": "Severe Coral Bleaching",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 1199.33349609375,
+                "y": 5991.6669921875,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "2366:320233": {
+      "id": "2366:320233",
+      "name": "conditions 2",
+      "type": "FRAME",
+      "absoluteBoundingBox": {
+        "x": 2145,
+        "y": 3827,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [],
+      "background": [],
+      "children": [
+        {
+          "id": "2366:320234",
+          "name": "card_backs",
+          "type": "FRAME",
+          "absoluteBoundingBox": {
+            "x": 2312,
+            "y": 3933,
+            "width": 2216,
+            "height": 3088
+          },
+          "fills": [],
+          "background": [],
+          "children": [
+            {
+              "id": "2366:320235",
+              "name": "Fishing Nets",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 2340,
+                "y": 3965,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [],
+              "background": []
+            },
+            {
+              "id": "2366:320236",
+              "name": "Coral Disease",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3063.333251953125,
+                "y": 3965,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [],
+              "background": []
+            },
+            {
+              "id": "2366:320237",
+              "name": "Hurricane",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3786.66650390625,
+                "y": 3965,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [],
+              "background": []
+            },
+            {
+              "id": "2366:320238",
+              "name": "Sardine Run",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 2340,
+                "y": 4976.3330078125,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [],
+              "background": []
+            },
+            {
+              "id": "2366:320239",
+              "name": "Krill Ball!",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3063.333251953125,
+                "y": 4976.3330078125,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [],
+              "background": []
+            },
+            {
+              "id": "2366:320240",
+              "name": "Nutrient Rich",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3786.66650390625,
+                "y": 4976.3330078125,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [],
+              "background": []
+            },
+            {
+              "id": "2366:320241",
+              "name": "Abundant Sunlight",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 2340,
+                "y": 5987.66650390625,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "2366:320242",
+              "name": "Midnight",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3063.333251953125,
+                "y": 5987.66650390625,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [],
+              "background": []
+            },
+            {
+              "id": "2366:320243",
+              "name": "Undertow",
+              "type": "INSTANCE",
+              "absoluteBoundingBox": {
+                "x": 3786.66650390625,
+                "y": 5987.66650390625,
+                "width": 720,
+                "height": 1008
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "baselineOutputReference": {
+    "releaseId": "decks-composite-20261104-8aaaf79e3b94",
+    "manifestSha256": "058f2e4a56d1efbeac076a695bc10c1d67cfe88f9ecdea1f6c76ea7602444969"
+  },
+  "historicFullSheetReleaseId": "decks-2415421149796541083-8661fb89145b",
+  "historicFullSheetAssets": {
+    "sheet-conditions-1": {
+      "nodeId": "2366:320222",
+      "path": "manufacturing/sha256/9573c8cbf9678976c35bcfb965a4c94ec357abf53d5efb261868e1d0dfd76d50.png",
+      "sha256": "9573c8cbf9678976c35bcfb965a4c94ec357abf53d5efb261868e1d0dfd76d50",
+      "width": 2550,
+      "height": 3300,
+      "positions": [
+        {
+          "x": 167,
+          "y": 106,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 905.666748046875,
+          "y": 106,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 1644.33349609375,
+          "y": 106,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 167,
+          "y": 1135.33349609375,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 905.666748046875,
+          "y": 1135.33349609375,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 1644.33349609375,
+          "y": 1135.33349609375,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 167,
+          "y": 2164.6669921875,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 905.666748046875,
+          "y": 2164.6669921875,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 1644.33349609375,
+          "y": 2164.6669921875,
+          "width": 720,
+          "height": 1008
+        }
+      ],
+      "nativeExport": {
+        "nodeId": "2366:320222",
+        "sha256": "9573c8cbf9678976c35bcfb965a4c94ec357abf53d5efb261868e1d0dfd76d50",
+        "width": 2550,
+        "height": 3300,
+        "exportMethod": "figma-native-ui-1x"
+      }
+    },
+    "sheet-conditions-2": {
+      "nodeId": "2366:320233",
+      "path": "manufacturing/sha256/7672d64acf98eb911225f09b80b67265c389068708d42af94df2d789e9e3d4e3.png",
+      "sha256": "7672d64acf98eb911225f09b80b67265c389068708d42af94df2d789e9e3d4e3",
+      "width": 2550,
+      "height": 3300,
+      "positions": [
+        {
+          "x": 195,
+          "y": 138,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 918.333251953125,
+          "y": 138,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 1641.66650390625,
+          "y": 138,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 195,
+          "y": 1149.3330078125,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 918.333251953125,
+          "y": 1149.3330078125,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 1641.66650390625,
+          "y": 1149.3330078125,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 195,
+          "y": 2160.66650390625,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 918.333251953125,
+          "y": 2160.66650390625,
+          "width": 720,
+          "height": 1008
+        },
+        {
+          "x": 1641.66650390625,
+          "y": 2160.66650390625,
+          "width": 720,
+          "height": 1008
+        }
+      ],
+      "nativeExport": {
+        "nodeId": "2366:320233",
+        "sha256": "7672d64acf98eb911225f09b80b67265c389068708d42af94df2d789e9e3d4e3",
+        "width": 2550,
+        "height": 3300,
+        "exportMethod": "figma-native-ui-1x"
+      }
+    }
+  }
+}

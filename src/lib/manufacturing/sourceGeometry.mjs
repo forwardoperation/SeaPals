@@ -29,6 +29,196 @@ const CONDITION_CARD_SIZE = [698.4000244140625, 977.760009765625];
 const nativeConditionSize = p => p && Math.abs(p.width - CONDITION_CARD_SIZE[0]) <= 0.01 &&
   Math.abs(p.height - CONDITION_CARD_SIZE[1]) <= 0.01;
 
+// Conditions source artwork was moved back to its original nine-card grids on
+// November 5. Calibration is preserved exactly from published release
+// decks-composite-20261104-8aaaf79e3b94 (manifest SHA256
+// 058f2e4a56d1efbeac076a695bc10c1d67cfe88f9ecdea1f6c76ea7602444969).
+// Source crop bounds and output reference bounds describe different grids.
+const MAPPED_CONDITION_SOURCES = {
+  "sheet-conditions-1": {
+    "nodeId": "2366:320222",
+    "exportNodeId": "2366:320223",
+    "outputProfile": "conditions-original-grid-v1",
+    "sourceBounds": {
+      "x": 167,
+      "y": 106,
+      "width": 2216,
+      "height": 3088
+    },
+    "outputReferenceBounds": {
+      "x": 150,
+      "y": 65.6435546875,
+      "width": 2330,
+      "height": 3170
+    },
+    "outputPositions": [
+      {
+        "x": 189.13330078125,
+        "y": 105.0966796875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 965.800048828125,
+        "y": 105.0966796875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 1742.4666748046875,
+        "y": 105.0966796875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 189.13330078125,
+        "y": 1161.763671875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 965.800048828125,
+        "y": 1161.763671875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 1742.4666748046875,
+        "y": 1161.763671875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 189.13330078125,
+        "y": 2218.4296875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 965.800048828125,
+        "y": 2218.4296875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 1742.4666748046875,
+        "y": 2218.4296875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      }
+    ]
+  },
+  "sheet-conditions-2": {
+    "nodeId": "2366:320233",
+    "exportNodeId": "2366:320234",
+    "outputProfile": "conditions-original-grid-v1",
+    "sourceBounds": {
+      "x": 167,
+      "y": 106,
+      "width": 2216,
+      "height": 3088
+    },
+    "outputReferenceBounds": {
+      "x": 150,
+      "y": 65.6435546875,
+      "width": 2330,
+      "height": 3170
+    },
+    "outputPositions": [
+      {
+        "x": 189.1331787109375,
+        "y": 105.0966796875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 965.8001708984375,
+        "y": 105.0966796875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 1742.4666748046875,
+        "y": 105.0966796875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 189.1331787109375,
+        "y": 1161.763671875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 965.8001708984375,
+        "y": 1161.763671875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 1742.4666748046875,
+        "y": 1161.763671875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 189.1331787109375,
+        "y": 2218.4296875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 965.8001708984375,
+        "y": 2218.4296875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      },
+      {
+        "x": 1742.4666748046875,
+        "y": 2218.4296875,
+        "width": 698.4000244140625,
+        "height": 977.760009765625
+      }
+    ]
+  }
+};
+
+export function conditionOutputMapping(assetId) {
+  const mapping = Object.hasOwn(MAPPED_CONDITION_SOURCES, assetId ?? "") ? MAPPED_CONDITION_SOURCES[assetId] : null;
+  return mapping ? structuredClone(mapping) : null;
+}
+
+const sameRect = (a, b) => a && b && ["x", "y", "width", "height"].every(key =>
+  Number.isFinite(a[key]) && a[key] === b[key]);
+const samePoint = (a, b) => a && b && ["x", "y"].every(key =>
+  Number.isFinite(a[key]) && a[key] === b[key]);
+
+function validMappedConditionOutputPositions(asset, assetId) {
+  const expected = conditionOutputMapping(assetId), geometry = asset?.sourceGeometry;
+  if (!expected || asset?.nodeId !== expected.nodeId || geometry?.mode !== "mapped-grid-letter" ||
+      geometry.outputProfile !== expected.outputProfile || geometry.exportNodeId !== expected.exportNodeId ||
+      !sameRect(geometry.sourceBounds, expected.sourceBounds) ||
+      !sameRect(geometry.outputReferenceBounds, expected.outputReferenceBounds)) return false;
+  const bounds = geometry.sourceBounds, padding = { x: Math.round(bounds.x), y: Math.round(bounds.y) },
+    delta = { x: padding.x - bounds.x, y: padding.y - bounds.y },
+    originals = geometry.sourcePositions, crops = asset.positions, output = asset.outputPositions;
+  if (!samePoint(geometry.padding, padding) || !samePoint(geometry.cropTranslation, delta) ||
+      !Array.isArray(originals) || originals.length !== 9 || !Array.isArray(crops) || crops.length !== 9 ||
+      !Array.isArray(output) || output.length !== 9 || !validFixedSheetPositions(crops, assetId)) return false;
+  for (const [index, p] of originals.entries()) {
+    if (!p || p.width !== 720 || p.height !== 1008 || (p.rotation ?? 0) !== 0 ||
+        !sameRect(crops[index], { ...p, x: p.x + delta.x, y: p.y + delta.y }) ||
+        !sameRect(output[index], expected.outputPositions[index]) || (output[index].rotation ?? 0) !== 0 ||
+        p.x < bounds.x || p.y < bounds.y || p.x + p.width > bounds.x + bounds.width ||
+        p.y + p.height > bounds.y + bounds.height) return false;
+    if (index && (p.y < originals[index - 1].y - 1 ||
+        Math.abs(p.y - originals[index - 1].y) < 1 && p.x <= originals[index - 1].x)) return false;
+    if (originals.slice(index + 1).some(q => !q || p.x < q.x + q.width && p.x + p.width > q.x &&
+      p.y < q.y + q.height && p.y + p.height > q.y)) return false;
+  }
+  return true;
+}
+
 export function validFixedSheetPositions(positions, sourceId) {
   const coral = CORAL_SOURCES.has(sourceId) || /^sheet-coral-garden-[1-7]$/.test(sourceId ?? "");
   const conditions = Object.hasOwn(CONDITION_OUTPUT_SOURCES, sourceId ?? "") ||
@@ -51,6 +241,11 @@ export function validFixedSheetPositions(positions, sourceId) {
 // New Conditions cards are deliberately inset. Their output bounds are separate
 // from rounded PNG crop coordinates and must remain linked to the saved source.
 export function validFixedSheetOutputPositions(asset, assetId) {
+  if (asset?.sourceGeometry?.mode === "mapped-grid-letter" || asset?.sourceGeometry?.outputProfile !== undefined ||
+      asset?.sourceGeometry?.outputReferenceBounds !== undefined ||
+      (Object.values(MAPPED_CONDITION_SOURCES).some(source => source.nodeId === asset?.nodeId) &&
+        (asset?.sourceGeometry !== undefined || asset?.outputPositions !== undefined)))
+    return validMappedConditionOutputPositions(asset, assetId);
   const expected = Object.hasOwn(CONDITION_OUTPUT_SOURCES, assetId ?? "") ? CONDITION_OUTPUT_SOURCES[assetId] : null, output = asset?.outputPositions;
   const newSource = Object.values(CONDITION_OUTPUT_SOURCES).some(source => source.nodeId === asset?.nodeId);
   if (output === undefined)
@@ -82,11 +277,13 @@ export function validFixedSheetOutputPositions(asset, assetId) {
 
 // Shared by the printer renderer and staff preview; preserve historical layouts.
 export function fixedSheetOutputPositions(asset, layout) {
+  const reference = asset.sourceGeometry?.mode === "mapped-grid-letter"
+    ? asset.sourceGeometry.outputReferenceBounds : asset.sourceGeometry?.sourceBounds;
   return asset.outputPositions?.toSorted((a, b) =>
     Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y,
   ).map(position => layout.version === CUTTER_LAYOUT_V8 ? {
     ...position,
-    x: position.x + layout.grid.x - asset.sourceGeometry.sourceBounds.x,
-    y: position.y + layout.grid.y - asset.sourceGeometry.sourceBounds.y,
+    x: position.x + layout.grid.x - reference.x,
+    y: position.y + layout.grid.y - reference.y,
   } : position);
 }

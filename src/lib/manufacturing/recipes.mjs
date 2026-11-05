@@ -68,9 +68,14 @@ export const DECK_FRAMES = {
 // Coral Garden moved to the owner's nested cutter-layout sheets on October 28.
 // Export only the named card grid so the source page's water and marks stay in Figma.
 export const CORAL_GRID_FRAMES = ["4316:271763","4316:271771","4316:271778","4316:271785","4316:271792","4316:271799","4316:271806"];
-// October 29 Conditions pages preserve their native inset card positions.
-export const CONDITION_FRAMES = ["4335:335039", "4335:335350"];
-export const CONDITION_GRID_FRAMES = ["4335:335041", "4335:335352"];
+// The current Conditions originals supply artwork; the reviewed output profile
+// preserves the calibrated inset positions after the old cutter copies were removed.
+export const CONDITION_FRAMES = ["2366:320222", "2366:320233"];
+export const CONDITION_GRID_FRAMES = ["2366:320223", "2366:320234"];
+export const LEGACY_CONDITION_SOURCES = Object.freeze([
+  Object.freeze({ id: "sheet-conditions-1", kind: "sheet", nodeId: "4335:335039", exportNodeId: "4335:335041", preserveSourcePositions: true }),
+  Object.freeze({ id: "sheet-conditions-2", kind: "sheet", nodeId: "4335:335350", exportNodeId: "4335:335352", preserveSourcePositions: true }),
+]);
 export const BOOSTER_PRODUCTS = Object.freeze({
   "reef-dive-pack": "reef",
   "deep-dive-pack": "deep",
@@ -174,7 +179,7 @@ export function fixedArtworkSources() {
       nodeId,
       kind: "sheet",
       exportNodeId: CONDITION_GRID_FRAMES[index],
-      preserveSourcePositions: true,
+      outputProfile: "conditions-original-grid-v1",
     })),
   ];
 }

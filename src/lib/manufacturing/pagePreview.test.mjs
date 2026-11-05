@@ -16,7 +16,7 @@ import { normalizeFixedSheetExport } from '../../../scripts/manufacturing/sync-f
 
 const read = async name => JSON.parse(await readFile(new URL(`../../data/${name}`, import.meta.url)));
 const catalog = buildPrintingCatalog(await read('gallery-set-list.json'), await read('gallery-images.json'));
-const conditionGeometry = JSON.parse(await readFile(new URL('./test-fixtures/conditions-source-geometry-2026-10-29.json', import.meta.url)));
+const conditionGeometry = JSON.parse(await readFile(new URL('./test-fixtures/conditions-source-geometry-2026-11-05.json', import.meta.url)));
 const sourcePositions = [106.2, 1114.2, 2122.2].flatMap(y => [167.4, 887.4, 1607.4].map(x => ({ x, y, width: 720.4, height: 1008.56 })));
 const layouts = {
   v8: { version: PRINT_LAYOUT.version, fronts: PRINT_LAYOUT, backs: BACK_TEMPLATE },
@@ -42,8 +42,8 @@ before(async () => {
   }
   const fixed = await save(front, 'fixture-fixed', { positions: sourcePositions.toReversed() });
   const conditions = {};
-  for (const source of fixedArtworkSources().filter(item => item.preserveSourcePositions)) {
-    const normalized = normalizeFixedSheetExport(PNG.sync.write(png(2330, 3170, [73, 141, 52])), conditionGeometry.documents[source.nodeId], source);
+  for (const source of fixedArtworkSources().filter(item => item.outputProfile)) {
+    const normalized = normalizeFixedSheetExport(PNG.sync.write(png(2216, 3088, [73, 141, 52])), conditionGeometry.documents[source.nodeId], source);
     const { bytes, ...metadata } = normalized;
     conditions[source.id] = await save(PNG.sync.read(bytes), source.nodeId, metadata);
   }
