@@ -49,6 +49,14 @@ status, artwork eligibility, deployment steps, and commands.
 - Epson fronts use thin photo paper in the standard tray. Canon backs use
   separate sheets. The two sheets are glued together; this is not duplex
   printing and the same sheet does not pass through both printers.
+- Stock builds print their full pinned stock number vertically in the wider
+  side margin of the first logical sheet, on both its Epson front and matching
+  Canon back. Later sheets and customer orders receive no stock label. The
+  label stays within the middle margin, clear of cards, cutting grids, and
+  staple marks; older layouts without a provably safe saved margin omit it.
+  Reprinting the first sheet keeps its label; selecting a later sheet does not
+  make it a new first sheet. This adds no ticket or page and does not change
+  saved card contents, artwork geometry, or printer placement settings.
 - New booster jobs pull already finished holo cards. The holo slot prints a
   disposable instruction; no holo artwork is printed there. Confirm the pull
   in the workshop. Existing saved sticker jobs keep their original behavior.

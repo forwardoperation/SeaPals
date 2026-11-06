@@ -11,6 +11,7 @@ import { backgroundsForLayout } from './backdrops.mjs';
 import { fixedSheetAssets, fixedArtworkSources } from './recipes.mjs';
 import { sha256, validateRelease } from './integration.mjs';
 import { buildPagePreview } from './pagePreview.mjs';
+import { stockSheetLabel } from './stockSheetLabel.mjs';
 import { renderJob } from '../../../scripts/manufacturing/render.mjs';
 import { normalizeFixedSheetExport } from '../../../scripts/manufacturing/sync-figma.mjs';
 
@@ -83,11 +84,30 @@ test('preview reveals only assets needed by the selected saved side, including r
   assert.ok(!JSON.stringify(front).includes('manufacturing/sha256/'), 'Preview contains no storage path or public URL');
   assert.ok(!front.requiredAssetIds.includes('sheet-coral-garden-1'));
   assert.equal(front.layers.length, 10);
+  assert.equal(front.stockLabel, null, 'A later sheet is not relabeled as the top sheet');
   assert.deepEqual(front.layers[1].crop, { x: 167, y: 106, width: 721, height: 1009 }, 'Round both crop edges, not just its size');
   const back = buildPagePreview(saved, releases.v8, sheet.sheetId, 'backs');
   assert.deepEqual(back.requiredAssetIds, ['standard-back-sheet']); assert.equal(back.layers.length, 1);
   assert.deepEqual(back.layers[0].position, { x: 0, y: 0, width: 2550, height: 3300, rotation: 0 });
+  assert.equal(back.stockLabel, null);
   assert.equal(JSON.stringify(saved), before, 'Reading a preview cannot mutate the immutable job');
+});
+
+test('first-stock-sheet preview shares the printer margin label without changing image layers', () => {
+  const saved = manifest(), sheetId = saved.sheets[0].sheetId, before = JSON.stringify(saved);
+  const { manifestHash, ...orderBody } = structuredClone(saved); orderBody.jobKind = 'order';
+  const customer = { ...orderBody, manifestHash: contentHash(orderBody) };
+  for (const side of ['fronts', 'backs']) {
+    const preview = buildPagePreview(saved, releases.v8, sheetId, side);
+    const customerPreview = buildPagePreview(customer, releases.v8, sheetId, side);
+    assert.deepEqual(preview.stockLabel, stockSheetLabel(saved, releases.v8, sheetId, side));
+    assert.equal(preview.stockLabel.text, saved.order.orderNumber);
+    assert.equal(preview.stockLabel.margin, side === 'fronts' ? 'right' : 'left');
+    assert.deepEqual(preview.layers, customerPreview.layers);
+    assert.deepEqual(preview.assets, customerPreview.assets);
+    assert.equal(customerPreview.stockLabel, null);
+  }
+  assert.equal(JSON.stringify(saved), before);
 });
 
 test('preview rejects another sheet, ticket side, altered manifest and mismatched private release', () => {

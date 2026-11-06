@@ -7,6 +7,7 @@ import { preflightPrintAssets } from "../../src/lib/manufacturing/printPlan.mjs"
 import { verifyHoloBatch } from "../../src/lib/manufacturing/holoBatch.mjs";
 import { sha256 } from "../../src/lib/manufacturing/integration.mjs";
 import { validFixedSheetPositions, fixedSheetOutputPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
+import { stockSheetLabel } from "../../src/lib/manufacturing/stockSheetLabel.mjs";
 import {
   CUTTER_LAYOUT_V4,
   CUTTER_LAYOUT_V5,
@@ -330,6 +331,15 @@ export async function renderJob({
           font,
           `${sheet.sheetId} / ${sheet.set ?? sheet.productId ?? ""} / ${side.toUpperCase()} / ${manifest.manifestHash.slice(0, 12)}`,
         );
+      const label = stockSheetLabel(manifest, release, sheet.sheetId, side);
+      if (label) {
+        const stockFont = await doc.embedFont(StandardFonts.CourierBold);
+        page.drawText(label.text, {
+          x: label.x * POINT, y: LETTER[1] - label.y * POINT,
+          size: label.fontSize * POINT, font: stockFont, color: ink,
+          rotate: degrees(-label.rotation),
+        });
+      }
       const file = path.join(outputDir, `${sheet.sheetId}-${side}.pdf`);
       await save(doc, file);
       jobs.push({ sheetId: sheet.sheetId, side, file });

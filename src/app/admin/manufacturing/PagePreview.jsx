@@ -42,6 +42,17 @@ export default function PagePreview({ onLoadPagePreview, orderId, sheetId, side 
         else ctx.drawImage(image, 0, 0, p.width, p.height);
         ctx.restore();
       }
+      if (plan.stockLabel) {
+        const label = plan.stockLabel, box = label.bounds;
+        ctx.save();
+        // Match the printer label while confining browser font metrics to its safe margin.
+        ctx.beginPath(); ctx.rect(box.x, box.y, box.width, box.height); ctx.clip();
+        ctx.translate(label.x, label.y); ctx.rotate(label.rotation * Math.PI / 180);
+        ctx.font = `bold ${label.fontSize}px "Courier New", Courier, monospace`;
+        ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#0f303f';
+        ctx.fillText(label.text, 0, 0);
+        ctx.restore();
+      }
       for (const image of images.values()) image.close();
       images.clear();
       clearTimeout(timeout);

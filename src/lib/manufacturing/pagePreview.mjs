@@ -1,6 +1,7 @@
 import { preflightPrintAssets } from './printPlan.mjs';
 import { fixedSheetAssets } from './recipes.mjs';
 import { fixedSheetOutputPositions } from './sourceGeometry.mjs';
+import { stockSheetLabel } from './stockSheetLabel.mjs';
 import { CUTTER_LAYOUT_V2, CUTTER_LAYOUT_V3, hasPrintBackgrounds, isCutterLayout } from './backdrops.mjs';
 
 // This describes saved page composition, never a new draw or print request.
@@ -49,5 +50,5 @@ export function buildPagePreview(manifest, release, sheetId, side) {
     width: 2550, height: 3300, requiredAssetIds,
     assets: Object.fromEntries(requiredAssetIds.map(id => [id, {
       sha256: release.assets[id].sha256, width: release.assets[id].width, height: release.assets[id].height,
-    }])), layers };
+    }])), layers, stockLabel: stockSheetLabel(manifest, release, sheetId, side) };
 }
