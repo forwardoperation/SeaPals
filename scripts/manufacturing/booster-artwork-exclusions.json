@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "reason": "Uses retired white-bordered artwork. Exclude from new Dive Pack draws until replacement artwork has been reviewed.",
+  "printingIds": [
+    "reef-011",
+    "reef-026",
+    "reef-034",
+    "reef-044",
+    "reef-076"
+  ]
+}

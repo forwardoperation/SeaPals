@@ -26,6 +26,7 @@ import {
 } from "../../src/lib/manufacturing/workflow.mjs";
 import {
   requireOrderArtwork,
+  releaseBoosterCatalog,
   validateRelease,
 } from "../../src/lib/manufacturing/integration.mjs";
 
@@ -163,7 +164,7 @@ async function main() {
       if (release.releaseId !== options.release)
         throw new Error("The local artwork release does not match the requested release ID.");
       requireOrderArtwork(validateOrderRequest(request).items, release);
-      catalog = release.catalog;
+      catalog = releaseBoosterCatalog(release);
       printTemplates = release.printTemplates;
     } else {
       // Keep the original local-fixture workflow when no private release has

@@ -151,6 +151,24 @@ export function applyUnfinishedArtworkPolicy(source, policy) {
   };
 }
 
+// Unlike unfinished-artwork exclusions, these reviewed holds remain in force
+// after a source is mapped or refreshed. Removing a hold requires artwork review.
+export function applyBoosterArtworkPolicy(source, policy) {
+  const catalog = new Map(source.catalog.map((card) => [card.printingId, card]));
+  if (policy?.schemaVersion !== 1 || typeof policy.reason !== "string" ||
+      !policy.reason.trim() || policy.reason.length > 500 || !Array.isArray(policy.printingIds) ||
+      new Set(policy.printingIds).size !== policy.printingIds.length ||
+      policy.printingIds.some((id) => typeof id !== "string" ||
+        !/^(reef|deep|ocean)-\d{3}$/.test(id) || !catalog.has(id)))
+    throw new Error("Invalid approved booster-artwork policy. Review its printing IDs and reason.");
+  const excludedBoosterArtwork = [...policy.printingIds].sort().map((printingId) => ({
+    printingId, cardId: catalog.get(printingId).cardId, name: catalog.get(printingId).name,
+    reason: policy.reason.trim(),
+  }));
+  // Preserve every source and catalog entry for manual holo stock and saved jobs.
+  return { ...source, excludedBoosterArtwork };
+}
+
 function validateProducts(products) {
   if (
     !Array.isArray(products) || !products.length ||
@@ -633,7 +651,7 @@ async function main() {
   const overrides = value("--overrides")
     ? JSON.parse(await readFile(value("--overrides"), "utf8"))
     : {};
-  const source = selectProductArtwork(applyUnfinishedArtworkPolicy(
+  const source = applyBoosterArtworkPolicy(selectProductArtwork(applyUnfinishedArtworkPolicy(
     buildSourceMap(
       await read("src/data/gallery-set-list.json"),
       await read("src/data/gallery-images.json"),
@@ -641,7 +659,7 @@ async function main() {
       overrides,
     ),
     await read("scripts/manufacturing/figma-unfinished-printings.json"),
-  ), products);
+  ), products), await read("scripts/manufacturing/booster-artwork-exclusions.json"));
   await mkdir(PRIVATE_ROOT, { recursive: true });
   await atomicJson(path.join(PRIVATE_ROOT, "source-map.json"), source);
   if (args.includes("--check")) {
@@ -653,6 +671,7 @@ async function main() {
           ...(source.exportScope ? { exportScope: source.exportScope } : {}),
           missing: source.missing,
           excludedUnfinished: source.excludedUnfinished,
+          excludedBoosterArtwork: source.excludedBoosterArtwork,
         },
         null,
         2,
@@ -761,6 +780,7 @@ async function main() {
     catalog: source.catalog,
     missing: source.missing,
     excludedUnfinished: source.excludedUnfinished,
+    excludedBoosterArtwork: source.excludedBoosterArtwork,
     ...(source.exportScope ? { exportScope: source.exportScope } : {}),
     assets: {},
   };

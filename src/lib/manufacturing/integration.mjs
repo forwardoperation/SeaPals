@@ -116,12 +116,31 @@ export function productionPhase(state, leaseActive = false) {
   if (state.packed) return "complete";
   return "awaiting_operator";
 }
+// Release-scoped exclusions apply only to new Dive Pack draws. Keep the full
+// catalog and artwork available for fixed decks, manual holo batches, and reprints.
+export function releaseBoosterCatalog(release) {
+  const catalog = release.catalog;
+  if (release.excludedBoosterArtwork === undefined) return catalog;
+  const excluded = release.excludedBoosterArtwork;
+  const printings = new Map(catalog.map((card) => [card.printingId, card]));
+  if (!Array.isArray(excluded) || new Set(excluded.map((item) => item?.printingId)).size !== excluded.length ||
+      excluded.some((item) => {
+        const card = printings.get(item?.printingId);
+        return !/^(reef|deep|ocean)-\d{3}$/.test(item?.printingId ?? "") || !card ||
+          item.cardId !== card.cardId || item.name !== card.name ||
+          typeof item.reason !== "string" || !item.reason.trim() || item.reason.length > 500;
+      }))
+    throw new Error("Invalid booster-artwork exclusions. Review their printing IDs, card identities, and reasons.");
+  const ids = new Set(excluded.map((item) => item.printingId));
+  return catalog.filter((card) => !ids.has(card.printingId));
+}
+
 export function requireOrderArtwork(items, release) {
-  const ids = new Set();
+  const ids = new Set(), catalog = releaseBoosterCatalog(release);
   for (const item of items) {
     const set = BOOSTER_PRODUCTS[item.productId];
     if (set)
-      for (const card of release.catalog.filter((c) => c.set === set))
+      for (const card of catalog.filter((c) => c.set === set))
         ids.add(card.printingId);
     else for (const id of fixedSheetAssets(item.productId)) ids.add(id);
   }
@@ -163,8 +182,9 @@ export function validateRelease(release) {
     !Array.isArray(release.catalog)
   )
     throw new Error("A versioned artwork release and catalog are required.");
+  const boosterCatalog = releaseBoosterCatalog(release);
   for (const set of ["reef", "deep", "ocean"])
-    validateBoosterPool(release.catalog, set);
+    validateBoosterPool(boosterCatalog, set);
   if (release.printTemplates !== undefined)
     resolvePrintTemplates(release.printTemplates);
   if (hasPrintBackgrounds(release.printTemplates?.version))
@@ -337,7 +357,7 @@ export function manufacturingService(db) {
               quantity: i.quantity,
             })),
           },
-          catalog: art.catalog,
+          catalog: releaseBoosterCatalog(art),
           artworkRelease: art.releaseId,
           printTemplates: art.printTemplates,
           inventoryPlan: r.inventory_plan ?? undefined,
