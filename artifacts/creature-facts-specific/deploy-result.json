@@ -1,0 +1,6 @@
+{
+  "step": "deploy",
+  "exitCode": 0,
+  "finishedAt": "2026-10-13T16:21:16.233Z",
+  "logfile": "artifacts/creature-facts-specific/deploy-release.log"
+}

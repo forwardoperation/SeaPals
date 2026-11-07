@@ -1,27 +1,32 @@
 export const reefEncyclopediaEntries = [
   {
-    name: "Fairy Parrotfish",
-    scientificName: "Scaridae",
-    aliases: ["Parrotfish", "Fairy Parrot Fish"],
-    zone: "Reef",
-    group: "Fish",
-    tagline: "A rainbow reef gardener with a rock-crunching beak.",
-    intro: "Fairy Parrotfish cruise the reef like colorful lawn mowers, scraping algae from hard surfaces. Their bites also grind bits of reef rock into the fine sand that washes onto beaches.",
-    home: "Warm Atlantic and Caribbean coral reefs, seagrass beds, and rocky shallows.",
-    diet: "Mostly algae and tiny organisms scraped from reef surfaces.",
-    size: "Varies by species; many are 1–3 ft (30–90 cm) long",
-    superpower: "Fused teeth form a powerful beak that scrapes rock and makes sand.",
-    funFacts: [
+    "name": "Fairy Parrotfish",
+    "scientificName": "Scarus prasiognathos",
+    "aliases": [
+      "Parrotfish",
+      "Fairy Parrot Fish",
+      "Singapore parrotfish"
+    ],
+    "zone": "Reef",
+    "group": "Fish",
+    "tagline": "A rainbow reef gardener with a rock-crunching beak.",
+    "intro": "Singapore parrotfish graze reef surfaces with fused, beak-like teeth. Terminal-phase fish have a distinctive green throat and brightly edged scales. This card represents the singapore parrotfish.",
+    "home": "Tropical Indo-Pacific coral reefs, where Singapore parrotfish graze hard surfaces.",
+    "diet": "Mostly algae and tiny organisms scraped from reef surfaces.",
+    "size": "Card reference: length 20”; weight ~4.1 lb. Weight is an estimate from a published length–weight model at the listed length.",
+    "superpower": "Fused teeth form a powerful beak that scrapes rock and makes sand.",
+    "funFacts": [
       "A parrotfish beak is built from many tightly packed teeth.",
       "New teeth replace worn ones as the fish keeps scraping.",
       "Many parrotfish change color dramatically as they grow.",
-      "Some species sleep inside a mucus cocoon at night.",
+      "Some species sleep inside a mucus cocoon at night."
     ],
-    lookFor: "Spot bright patchwork colors and a pale, parrot-like beak.",
-    sourceUrls: [
+    "lookFor": "Spot bright patchwork colors and a pale, parrot-like beak.",
+    "sourceUrls": [
+      "https://fishbase.se/summary/Scarus-prasiognathos.html",
       "https://ocean.si.edu/ocean-life/fish/tough-teeth-and-parrotfish-poop",
-      "https://oceanservice.noaa.gov/facts/sand.html",
-    ],
+      "https://oceanservice.noaa.gov/facts/sand.html"
+    ]
   },
   {
     name: "Cleaner Wrasse",
@@ -113,25 +118,32 @@ export const reefEncyclopediaEntries = [
     ],
   },
   {
-    name: "Frogfish",
-    scientificName: "Antennariidae",
-    aliases: ["Anglerfish", "Reef Anglerfish"],
-    zone: "Reef",
-    group: "Fish",
-    tagline: "A camouflaged fisher with its own wiggly lure.",
-    intro: "Frogfish can resemble sponges, algae, or lumpy rocks so closely that prey swims right past. Then the hidden hunter flicks its built-in lure and opens a giant mouth in a flash.",
-    home: "Tropical and subtropical reefs, rubble, seagrass, and sponge gardens.",
-    diet: "Fishes and crustaceans ambushed from extremely close range.",
-    size: "Most are hand-sized; the largest reach about 15 in (38 cm)",
-    superpower: "Its mouth expands suddenly, sucking prey in with rushing water.",
-    funFacts: [
+    "name": "Frogfish",
+    "scientificName": "Antennarius commerson",
+    "aliases": [
+      "Anglerfish",
+      "Reef Anglerfish",
+      "Giant frogfish"
+    ],
+    "zone": "Reef",
+    "group": "Fish",
+    "tagline": "A camouflaged fisher with its own wiggly lure.",
+    "intro": "Giant frogfish blend into sponges and reef growth, then lure prey with a modified fin spine. An expanding mouth pulls the victim in with a sudden gulp. This card represents the giant frogfish.",
+    "home": "Tropical Indo-Pacific reefs, including sponge-covered rock and coral rubble.",
+    "diet": "Fishes and crustaceans ambushed from extremely close range.",
+    "size": "Card reference: length 12”; weight ~660g. Weight is an estimate from a published length–weight model at the listed length.",
+    "superpower": "Its mouth expands suddenly, sucking prey in with rushing water.",
+    "funFacts": [
       "The lure is a modified first spine from the dorsal fin.",
       "Some species grow skin flaps that copy nearby weeds or coral.",
       "Frogfish often walk on stout pectoral fins instead of swimming.",
-      "Their camouflage can include both color and bumpy skin texture.",
+      "Their camouflage can include both color and bumpy skin texture."
     ],
-    lookFor: "Search for a lumpy fish with leg-like fins and a lure above its mouth.",
-    sourceUrls: ["https://www.floridamuseum.ufl.edu/discover-fish/fish-families/antennariidae-frogfishes/"],
+    "lookFor": "Search for a lumpy fish with leg-like fins and a lure above its mouth.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/Antennarius_commerson.html",
+      "https://www.floridamuseum.ufl.edu/discover-fish/fish-families/antennariidae-frogfishes/"
+    ]
   },
   {
     name: "Clownfish",
@@ -549,52 +561,62 @@ export const reefEncyclopediaEntries = [
     ],
   },
   {
-    name: "Sea Urchin",
-    scientificName: "Diadema antillarum",
-    aliases: ["Long-spined Sea Urchin", "Black Longspine Urchin", "Long-spined Urchin"],
-    zone: "Reef",
-    group: "Invertebrate",
-    tagline: "A spiky reef gardener with five self-sharpening teeth.",
-    intro: "Long-spined Sea Urchins emerge after dark to graze algae from Caribbean reefs. Their extra-long movable spines protect the urchin and can shelter tiny fishes between them.",
-    home: "Western Atlantic and Caribbean coral and rocky reefs, ledges, and crevices.",
-    diet: "Mostly reef algae, with occasional tiny animals or drifting food.",
-    size: "Body up to 4 in (10 cm); spines can reach 12 in (30 cm)",
-    superpower: "Five hard teeth scrape algae and help keep space open for corals.",
-    funFacts: [
+    "name": "Sea Urchin",
+    "scientificName": "Diadema antillarum",
+    "aliases": [
+      "Long-spined Sea Urchin",
+      "Black Longspine Urchin",
+      "Long-spined Urchin"
+    ],
+    "zone": "Reef",
+    "group": "Invertebrate",
+    "tagline": "A spiky reef gardener with five self-sharpening teeth.",
+    "intro": "Long-spined Sea Urchins emerge after dark to graze algae from Caribbean reefs. Their extra-long movable spines protect the urchin and can shelter tiny fishes between them.",
+    "home": "Western Atlantic and Caribbean coral and rocky reefs, ledges, and crevices.",
+    "diet": "Mostly reef algae, with occasional tiny animals or drifting food.",
+    "size": "Card reference: test diameter 3”; weight ~160g. Test means the hard body, excluding spines. Weight is a rounded study mean for adults with 2.4–3.1 in tests.",
+    "superpower": "Five hard teeth scrape algae and help keep space open for corals.",
+    "funFacts": [
       "The hard round inner shell is called a test.",
       "Its jaw apparatus is nicknamed Aristotle's lantern.",
       "Hundreds of tube feet work like tiny hydraulic suction cups.",
-      "It senses passing shadows and points its spines toward possible danger.",
+      "It senses passing shadows and points its spines toward possible danger."
     ],
-    lookFor: "Look into reef cracks for a black center surrounded by needle-long spines.",
-    sourceUrls: [
+    "lookFor": "Look into reef cracks for a black center surrounded by needle-long spines.",
+    "sourceUrls": [
+      "https://rediberoamericanaequinodermos.com/wp-content/uploads/2015/09/Luo-Ascorbe-2004-Diadema-La-Parguera-UPR-MSc.pdf",
       "https://www.aquariumofpacific.org/onlinelearningcenter/species/black_longspine_urchin",
-      "https://monitor.noaa.gov/science/creature-features.html",
-    ],
+      "https://monitor.noaa.gov/science/creature-features.html"
+    ]
   },
   {
-    name: "Anemone",
-    scientificName: "Actiniaria",
-    aliases: ["Sea Anemone", "Actinian"],
-    zone: "Reef",
-    group: "Invertebrate",
-    tagline: "A stinging sea animal disguised as a flower.",
-    intro: "Sea Anemones may look like swaying flowers, but they are animal cousins of corals and jellyfish. Their tentacles fire microscopic stinging capsules that capture prey and discourage hungry visitors.",
-    home: "Seafloors worldwide, from sunlit reefs and tide pools to the deep ocean.",
-    diet: "Plankton, shrimp, small fishes, and other animals caught by tentacles.",
-    size: "From under 0.5 in to several feet across, depending on species",
-    superpower: "Thousands of tiny nematocysts fire harpoonlike threads on contact.",
-    funFacts: [
+    "name": "Anemone",
+    "scientificName": "Radianthus magnifica",
+    "aliases": [
+      "Sea Anemone",
+      "Actinian",
+      "Magnificent anemone"
+    ],
+    "zone": "Reef",
+    "group": "Invertebrate",
+    "tagline": "A stinging sea animal disguised as a flower.",
+    "intro": "The magnificent anemone anchors to reef rock with a sticky foot. Its stinging tentacles catch prey and shelter several species of anemonefish. This card represents the magnificent anemone.",
+    "home": "Exposed coral-reef surfaces in the tropical Indo-Pacific, often in bright light and moving water.",
+    "diet": "Small fish and drifting animal prey caught by its tentacles; symbiotic algae also provide energy.",
+    "size": "Card reference: disc width 16”; weight ~350g. A typical disc width and the weight of a published 357 g specimen; these are separate reference measurements.",
+    "superpower": "Thousands of tiny nematocysts fire harpoonlike threads on contact.",
+    "funFacts": [
       "Anemones have one body opening for both food and waste.",
       "A sticky foot anchors the body, but many can slowly glide to a new spot.",
       "Some host clownfish, shrimp, algae, or other helpful partners.",
-      "They have no brain; a spread-out nerve net coordinates their movements.",
+      "They have no brain; a spread-out nerve net coordinates their movements."
     ],
-    lookFor: "Find a soft column topped by a circle of waving tentacles.",
-    sourceUrls: [
-      "https://ocean.si.edu/holding-tank/images-hide/sea-anemones",
-      "https://nationalzoo.si.edu/animals/corals-and-sea-anemones-anthozoa",
-    ],
+    "lookFor": "Find a soft column topped by a circle of waving tentacles.",
+    "sourceUrls": [
+      "https://animaldiversity.org/accounts/Heteractis_magnifica/",
+      "https://www.researchgate.net/publication/229831601_Ontogenetic_changes_in_responses_to_settlement_cues_by_Anemonefish",
+      "https://ocean.si.edu/holding-tank/images-hide/sea-anemones"
+    ]
   },
   {
     name: "Emerald Crab",
@@ -642,97 +664,118 @@ export const reefEncyclopediaEntries = [
     sourceUrls: ["https://www.chesapeakebay.net/discover/field-guide/entry/blue-crab"],
   },
   {
-    name: "Arrow Crab",
-    scientificName: "Stenorhynchus seticornis",
-    aliases: ["Yellowline Arrow Crab", "Spider Crab", "Arrowhead Crab"],
-    zone: "Reef",
-    group: "Invertebrate",
-    tagline: "A tiny reef spider with an arrow-shaped nose.",
-    intro: "Arrow Crabs tiptoe over Caribbean reefs on extremely long, skinny legs. Their triangular bodies and pointed rostrums make them look like animated arrows or underwater spiders.",
-    home: "Atlantic and Caribbean reefs, hiding in sponges, corals, anemones, and crevices.",
-    diet: "Small worms and invertebrates, algae, detritus, and scavenged scraps.",
-    size: "Body 1–2.5 in (2.5–6 cm); legs reach about 4 in (10 cm)",
-    superpower: "Stiltlike legs let it pick through tight reef hiding places at night.",
-    funFacts: [
+    "name": "Arrow Crab",
+    "scientificName": "Stenorhynchus seticornis",
+    "aliases": [
+      "Yellowline Arrow Crab",
+      "Spider Crab",
+      "Arrowhead Crab"
+    ],
+    "zone": "Reef",
+    "group": "Invertebrate",
+    "tagline": "A tiny reef spider with an arrow-shaped nose.",
+    "intro": "Arrow Crabs tiptoe over Caribbean reefs on extremely long, skinny legs. Their triangular bodies and pointed rostrums make them look like animated arrows or underwater spiders.",
+    "home": "Atlantic and Caribbean reefs, hiding in sponges, corals, anemones, and crevices.",
+    "diet": "Small worms and invertebrates, algae, detritus, and scavenged scraps.",
+    "size": "Card reference: span 9.5”; weight ~2g. Weight is the approximate mean of 247 crabs in a survey. The larger leg-span reference is not paired with that weight.",
+    "superpower": "Stiltlike legs let it pick through tight reef hiding places at night.",
+    "funFacts": [
       "Arrow Crabs are true crabs, not spiders.",
       "They usually hide by day and forage after dark.",
       "The long pointed snout is called a rostrum.",
-      "Their delicate-looking walking legs can be more than three times body length.",
+      "Their delicate-looking walking legs can be more than three times body length."
     ],
-    lookFor: "Search for a tiny striped triangle balanced on eight spidery legs.",
-    sourceUrls: [
+    "lookFor": "Search for a tiny striped triangle balanced on eight spidery legs.",
+    "sourceUrls": [
+      "https://www.gsmfc.org/publications/GSMFC%20Number%20237.pdf",
       "https://ocean.si.edu/ocean-life/invertebrates/spiders-mars",
-      "https://monitor.noaa.gov/science/creature-features.html",
-    ],
+      "https://monitor.noaa.gov/science/creature-features.html"
+    ]
   },
   {
-    name: "Mantis Shrimp",
-    scientificName: "Stomatopoda",
-    aliases: ["Stomatopod", "Thumb Splitter"],
-    zone: "Reef",
-    group: "Invertebrate",
-    tagline: "A rainbow-eyed crustacean with spring-loaded hunting arms.",
-    intro: "Mantis Shrimp are not true shrimp but a separate group of fierce, burrow-dwelling crustaceans. Some smash shells with clubs, while others spear prey with barbed folding arms.",
-    home: "Mostly warm shallow seas, living in coral, rock, sand, or mud burrows.",
-    diet: "Snails, crabs, clams, shrimp, worms, and fishes.",
-    size: "About 1–12 in (3–30 cm), depending on species",
-    superpower: "Some spring-loaded clubs strike so fast they create collapsing bubbles.",
-    funFacts: [
+    "name": "Mantis Shrimp",
+    "scientificName": "Odontodactylus scyllarus",
+    "aliases": [
+      "Stomatopod",
+      "Thumb Splitter",
+      "Peacock mantis shrimp"
+    ],
+    "zone": "Reef",
+    "group": "Invertebrate",
+    "tagline": "A rainbow-eyed crustacean with spring-loaded hunting arms.",
+    "intro": "Peacock mantis shrimp smash hard-shelled prey with club-like limbs. Their rapid strikes create cavitation bubbles that collapse in a second impact. This card represents the peacock mantis shrimp.",
+    "home": "Tropical Indo-Pacific reefs and nearby rubble, where peacock mantis shrimp shelter in burrows.",
+    "diet": "Hard-shelled prey such as crabs, snails, and clams.",
+    "size": "Card reference: length 7”; weight 90g. Upper reference length and weight for the peacock mantis shrimp.",
+    "superpower": "Some spring-loaded clubs strike so fast they create collapsing bubbles.",
+    "funFacts": [
       "Smasher species use clubs, while spearers use sharp spines.",
       "Each stalked eye can move independently.",
       "A single eye can judge distance without help from the other.",
-      "Many species detect ultraviolet and polarized light that people cannot see.",
+      "Many species detect ultraviolet and polarized light that people cannot see."
     ],
-    lookFor: "Look for movable stalked eyes and folded mantis-like hunting arms.",
-    sourceUrls: [
-      "https://www.si.edu/collections/snapshot/behold-mantis-shrimp",
-      "https://www.nhm.ac.uk/discover/mantis-shrimps.html",
-    ],
+    "lookFor": "Look for movable stalked eyes and folded mantis-like hunting arms.",
+    "sourceUrls": [
+      "https://www.cousteau.org/species/peacock-mantis-shrimp/",
+      "https://journals.biologists.com/jeb/article/208/19/3655/15838/Extreme-impact-and-cavitation-forces-of-a",
+      "https://www.si.edu/collections/snapshot/behold-mantis-shrimp"
+    ]
   },
   {
-    name: "Leather Starfish",
-    scientificName: "Dermasterias imbricata",
-    aliases: ["Leather Sea Star", "Leather Star", "Garlic Star"],
-    zone: "Reef",
-    group: "Invertebrate",
-    tagline: "A soft sea star that smells surprisingly garlicky.",
-    intro: "Leather Starfish feel smooth and slippery because mucus coats their unusually soft upper surface. They creep across cool Pacific seafloors hunting anemones and other invertebrates.",
-    home: "Rocky and sandy shallows from Alaska to northern Mexico.",
-    diet: "Sea anemones, urchins, sponges, sea cucumbers, and other invertebrates.",
-    size: "Up to 10 in (25 cm) across — dinner-plate width",
-    superpower: "It turns its stomach outward to digest prey outside its body.",
-    funFacts: [
+    "name": "Leather Starfish",
+    "scientificName": "Dermasterias imbricata",
+    "aliases": [
+      "Leather Sea Star",
+      "Leather Star",
+      "Garlic Star"
+    ],
+    "zone": "Reef",
+    "group": "Invertebrate",
+    "tagline": "A soft sea star that smells surprisingly garlicky.",
+    "intro": "Leather Starfish feel smooth and slippery because mucus coats their unusually soft upper surface. They creep across cool Pacific seafloors hunting anemones and other invertebrates.",
+    "home": "Rocky and sandy shallows from Alaska to northern Mexico.",
+    "diet": "Sea anemones, urchins, sponges, sea cucumbers, and other invertebrates.",
+    "size": "Card reference: span 10”; weight ~75g. Weight is a published population estimate; the span is an upper size reference, not a paired measurement.",
+    "superpower": "It turns its stomach outward to digest prey outside its body.",
+    "funFacts": [
       "Its wet-leather texture gives the species its name.",
       "Out of water, it may smell like garlic or spent fireworks.",
       "A small scale worm sometimes rides beneath the star.",
-      "Some swimming anemones detach and flee when a Leather Star touches them.",
+      "Some swimming anemones detach and flee when a Leather Star touches them."
     ],
-    lookFor: "Find five broad arms with smooth mottled red, brown, and gray skin.",
-    sourceUrls: ["https://www.aquariumofpacific.org/onlinelearningcenter/species/leather_sea_star"],
+    "lookFor": "Find five broad arms with smooth mottled red, brown, and gray skin.",
+    "sourceUrls": [
+      "https://epub.sub.uni-hamburg.de/epub/volltexte/2011/12286/pdf/7_4.pdf",
+      "https://www.aquariumofpacific.org/onlinelearningcenter/species/leather_sea_star"
+    ]
   },
   {
-    name: "Cleaner Shrimp",
-    scientificName: "Ancylomenes pedersoni",
-    aliases: ["Pederson Cleaner Shrimp", "Pederson's Shrimp", "Anemone Shrimp"],
-    zone: "Reef",
-    group: "Invertebrate",
-    tagline: "A see-through reef hygienist waving extra-long antennae.",
-    intro: "Cleaner Shrimp advertise their services by rocking and sweeping long white antennae. Visiting fish pause while the shrimp picks parasites and damaged tissue from skin, gills, and even mouths.",
-    home: "Caribbean and western Atlantic reefs, usually beside a host sea anemone.",
-    diet: "Fish parasites, damaged tissue, mucus, plankton, and tiny food scraps.",
-    size: "Body about 1 in (2.5 cm), with much longer antennae",
-    superpower: "Its cleaning dance convinces hungry fish to become peaceful customers.",
-    funFacts: [
-      "The nearly transparent body carries blue-violet markings.",
+    "name": "Cleaner Shrimp",
+    "scientificName": "Lysmata amboinensis",
+    "aliases": [
+      "Pacific Cleaner Shrimp",
+      "Skunk Cleaner Shrimp",
+      "Scarlet Cleaner Shrimp"
+    ],
+    "zone": "Reef",
+    "group": "Invertebrate",
+    "tagline": "A red-and-white reef cleaner waving extra-long antennae.",
+    "intro": "Cleaner Shrimp advertise their services by rocking and sweeping long white antennae. Visiting fish pause while the shrimp picks parasites and damaged tissue from skin, gills, and even mouths.",
+    "home": "Indo-Pacific and Red Sea reefs, where it shelters in crevices and advertises cleaning stations.",
+    "diet": "Fish parasites, damaged tissue, mucus, plankton, and tiny food scraps.",
+    "size": "Card reference: length 1.7”; weight ~2.2g. Rounded mean length and whole weight of 336 shrimp in a study.",
+    "superpower": "Its cleaning dance convinces hungry fish to become peaceful customers.",
+    "funFacts": [
+      "A white stripe runs down its red back.",
       "Long white antennae act like a cleaning-station sign.",
-      "It slowly acclimates to its host anemone's stinging tentacles.",
-      "Client fish may hold still and open their mouths for service.",
+      "It sheds its outer skeleton as it grows.",
+      "Client fish may hold still and open their mouths for service."
     ],
-    lookFor: "Search anemones for a glass-clear shrimp waving two long white antennae.",
-    sourceUrls: [
-      "https://collections.nmnh.si.edu/search/iz/?q=qn+Ancylomenes+pedersoni",
-      "https://www.si.edu/Content/SE/Educator%20Guides/secret_ocean_educators_guide.pdf",
-    ],
+    "lookFor": "Look for a red-and-white shrimp waving long white antennae from a reef crevice.",
+    "sourceUrls": [
+      "https://marinelab.kmou.ac.kr/NFUpload/nfupload_down.php?name=JCB_38%284%29+475-482.pdf&tmp_name=20180804201347.4500.5.0",
+      "https://www.aquariumofpacific.org/onlinelearningcenter/species/pacific_cleaner_shrimp"
+    ]
   },
   {
     name: "Crown of Thorns",
@@ -759,101 +802,122 @@ export const reefEncyclopediaEntries = [
     ],
   },
   {
-    name: "Nudibranch",
-    scientificName: "Nudibranchia",
-    aliases: ["Sea Slug", "Naked-gill Sea Slug"],
-    zone: "Reef",
-    group: "Invertebrate",
-    tagline: "A shell-free sea slug dressed in impossible colors.",
-    intro: "Nudibranchs are soft sea slugs whose dazzling colors can advertise danger or hide them in plain sight. Each species has a favorite menu, from sponges and hydroids to anemones and even other nudibranchs.",
-    home: "Oceans worldwide, from tide pools and coral reefs to the deep seafloor.",
-    diet: "Sponges, hydroids, anemones, bryozoans, eggs, or other slugs, by species.",
-    size: "From rice-grain tiny to about 12 in (30 cm); many are thumb-sized",
-    superpower: "Some steal unfired stinging cells from prey and reuse them for defense.",
-    funFacts: [
+    "name": "Nudibranch",
+    "scientificName": "Chromodoris magnifica",
+    "aliases": [
+      "Sea Slug",
+      "Magnificent Chromodoris",
+      "Naked-gill Sea Slug"
+    ],
+    "zone": "Reef",
+    "group": "Invertebrate",
+    "tagline": "A shell-free sea slug dressed in impossible colors.",
+    "intro": "The magnificent chromodoris is a sea slug with bold dark stripes and an orange-edged mantle. It feeds on sponges and uses chemicals obtained from its food for defense.",
+    "home": "Tropical western Pacific reefs, including areas of Southeast Asia and Australia.",
+    "diet": "Sponges growing on reef surfaces.",
+    "size": "A few inches long",
+    "superpower": "Its vivid pattern advertises chemical defenses obtained from sponge prey.",
+    "funFacts": [
       "Adult nudibranchs have no protective outer shell.",
       "The name means naked gills, referring to exposed breathing structures.",
       "Head horns called rhinophores sense chemicals dissolved in water.",
-      "Every nudibranch has both male and female reproductive organs.",
+      "Every nudibranch has both male and female reproductive organs."
     ],
-    lookFor: "Look for a colorful slug with bunny-ear rhinophores or feathery back gills.",
-    sourceUrls: [
-      "https://www.smithsonianmag.com/science-nature/dive-exotic-world-nudibranchs-spectacular-slugs-sea-180984013/",
-      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/opalescent-nudibranch",
-    ],
+    "lookFor": "Look for a colorful slug with bunny-ear rhinophores or feathery back gills.",
+    "sourceUrls": [
+      "https://seaslugforum.net/find/chrmag"
+    ]
   },
   {
-    name: "Giant Triton",
-    scientificName: "Charonia tritonis",
-    aliases: ["Triton's Trumpet", "Trumpet Triton", "Pacific Triton", "Pū"],
-    zone: "Reef",
-    group: "Invertebrate",
-    tagline: "A giant hunting snail that tackles thorny sea stars.",
-    intro: "Giant Tritons are huge reef snails that track sea stars across Indo-Pacific reefs. A muscular foot grips the prey while a ribbon of tiny teeth rasps through its defenses.",
-    home: "Tropical Indo-Pacific reefs, including the Red Sea and Pacific islands.",
-    diet: "Sea stars, including crown-of-thorns, plus other echinoderms.",
-    size: "Shell up to about 18–20 in (46–50 cm) — backpack length",
-    superpower: "It tolerates crown-of-thorns defenses and eats this formidable coral predator.",
-    funFacts: [
+    "name": "Giant Triton",
+    "scientificName": "Charonia tritonis",
+    "aliases": [
+      "Triton's Trumpet",
+      "Trumpet Triton",
+      "Pacific Triton",
+      "Pū"
+    ],
+    "zone": "Reef",
+    "group": "Invertebrate",
+    "tagline": "A giant hunting snail that tackles thorny sea stars.",
+    "intro": "Giant Tritons are huge reef snails that track sea stars across Indo-Pacific reefs. A muscular foot grips the prey while a ribbon of tiny teeth rasps through its defenses.",
+    "home": "Tropical Indo-Pacific reefs, including the Red Sea and Pacific islands.",
+    "diet": "Sea stars, including crown-of-thorns, plus other echinoderms.",
+    "size": "Card reference: shell length 11.3”; weight ~5.7 lb. Rounded study means for shell length and live whole weight, including the shell.",
+    "superpower": "It tolerates crown-of-thorns defenses and eats this formidable coral predator.",
+    "funFacts": [
       "The tooth-covered feeding ribbon is called a radula.",
       "Its beautiful spiral shell is one of the largest made by a living snail.",
       "People in several Pacific cultures have used empty shells as trumpets.",
-      "A crown-of-thorns sea star may flee when it detects a triton's scent.",
+      "A crown-of-thorns sea star may flee when it detects a triton's scent."
     ],
-    lookFor: "Spot a huge pointed spiral shell patterned cream, brown, and orange.",
-    sourceUrls: [
+    "lookFor": "Spot a huge pointed spiral shell patterned cream, brown, and orange.",
+    "sourceUrls": [
+      "https://www.frontiersin.org/journals/marine-science/articles/10.3389/fmars.2022.1066750/full",
       "https://reeflifesurvey.com/species/charonia-tritonis/",
-      "https://www.aims.gov.au/information-centre/news-and-stories/fish-help-control-crown-thorns-starfish-numbers-great-barrier-reef",
-    ],
+      "https://www.aims.gov.au/information-centre/news-and-stories/fish-help-control-crown-thorns-starfish-numbers-great-barrier-reef"
+    ]
   },
   {
-    name: "Octopus",
-    scientificName: "Octopoda",
-    aliases: ["Octopod", "Devilfish"],
-    zone: "Reef",
-    group: "Invertebrate",
-    tagline: "A soft-bodied puzzle solver with eight sensing arms.",
-    intro: "Octopuses explore reefs with curious arms lined by powerful, taste-sensitive suckers. Their skin can change color, pattern, and bumpiness in moments to hide or communicate.",
-    home: "Every ocean, in dens among reefs, rocks, shells, sand, and deep seafloors.",
-    diet: "Crabs, clams, snails, shrimp, fishes, and other animals.",
-    size: "Species range from fingertip-sized to arm spans over 20 ft (6 m)",
-    superpower: "Color cells and shape-shifting skin create camouflage in a blink.",
-    funFacts: [
-      "An octopus has three hearts.",
-      "Copper-rich blood carries oxygen and makes the blood look blue.",
-      "The beak is the main hard body part, so the rest can squeeze through tight gaps.",
-      "Many octopuses jet away by blasting water through a funnel.",
+    "name": "Day Octopus",
+    "scientificName": "Octopus cyanea",
+    "aliases": [
+      "Octopus",
+      "Octopod",
+      "Devilfish",
+      "Big blue octopus"
     ],
-    lookFor: "Watch for eight sucker-lined arms and eyes peeking from a shell-strewn den.",
-    sourceUrls: [
-      "https://www.smithsonianmag.com/science-nature/ten-wild-facts-about-octopuses-they-have-three-hearts-big-brains-and-blue-blood-7625828/",
+    "zone": "Reef",
+    "group": "Invertebrate",
+    "tagline": "A daytime reef hunter that changes its disguise.",
+    "intro": "Day octopuses hunt across tropical reefs in daylight. They change their skin's color and texture to blend into coral, rocks, and algae while searching for food.",
+    "home": "Warm Indo-Pacific coral reefs, from East Africa to Hawaii, with crevices for dens.",
+    "diet": "Crabs, shrimp, clams, snails, and small fishes.",
+    "size": "Card reference: length 31”; weight 10lb. Rounded upper length and weight references from aquarium sources, not measurements of one individual.",
+    "superpower": "It can raise bumps and ridges on its skin to match the reef around it.",
+    "funFacts": [
+      "Unlike many octopuses, it searches for meals during daylight.",
+      "It often carries prey back to its den before eating.",
+      "Discarded crab and snail shells can form a pile outside its den.",
+      "It can drill a snail shell with its toothed radula to reach the animal inside."
+    ],
+    "lookFor": "Look for eight sucker-lined arms and mottled brown or tan skin that can quickly change color and texture.",
+    "sourceUrls": [
       "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/day-octopus",
-    ],
+      "https://animaldiversity.org/accounts/Octopus_cyanea/",
+      "https://www.waikikiaquarium.org/experience/animal-guide/invertebrates/molluscs/octopus/"
+    ]
   },
   {
-    name: "Oysters",
-    grammaticalNumber: "plural",
-    scientificName: "Ostreidae",
-    aliases: ["Oyster", "True Oysters", "Oyster Reef"],
-    zone: "Reef",
-    group: "Invertebrate",
-    tagline: "Living water filters that build bustling shell cities.",
-    intro: "Oysters draw water across their gills, trapping tiny food while helping clear the water. Generations attach to older shells and build rough reefs filled with hiding places for fish and crabs.",
-    home: "Shallow salty and brackish coasts, bays, estuaries, and tidal creeks worldwide.",
-    diet: "Microscopic algae and organic particles filtered from the water.",
-    size: "Often 3–10 in (8–25 cm), depending on species and age",
-    superpower: "Under good conditions, one adult can filter up to 50 gallons daily.",
-    funFacts: [
+    "name": "Oysters",
+    "grammaticalNumber": "plural",
+    "scientificName": "Crassostrea virginica",
+    "aliases": [
+      "Oyster",
+      "True Oysters",
+      "Oyster Reef",
+      "Eastern oyster"
+    ],
+    "zone": "Reef",
+    "group": "Invertebrate",
+    "tagline": "Living water filters that build bustling shell cities.",
+    "intro": "Eastern oysters filter plankton from coastal water. Their rough shells grow together into reefs that shelter fish, crabs, and other small animals. This card represents the eastern oyster.",
+    "home": "Western Atlantic estuaries and coastal bays, where eastern oysters build reefs in salty and brackish water.",
+    "diet": "Microscopic algae and organic particles filtered from the water.",
+    "size": "Card reference: shell length 2.4”; weight ~48g. Rounded mean shell length and whole weight of 3,653 eastern oysters; includes the shell.",
+    "superpower": "Under good conditions, one adult can filter up to 50 gallons daily.",
+    "funFacts": [
       "Oysters are bivalves, meaning two shells hinge together.",
       "Free-swimming larvae become spat after cementing to a hard surface.",
       "Young oysters often settle directly on older oyster shells.",
-      "Reef crevices shelter small fishes, shrimp, crabs, and other animals.",
+      "Reef crevices shelter small fishes, shrimp, crabs, and other animals."
     ],
-    lookFor: "Find clusters of rough, uneven shells cemented together in shallow water.",
-    sourceUrls: [
+    "lookFor": "Find clusters of rough, uneven shells cemented together in shallow water.",
+    "sourceUrls": [
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC12542368/",
       "https://www.fisheries.noaa.gov/national/habitat-conservation/oyster-reef-habitat",
-      "https://oceanservice.noaa.gov/facts/spat.html",
-    ],
+      "https://oceanservice.noaa.gov/facts/spat.html"
+    ]
   },
   {
     name: "Giant Clam",

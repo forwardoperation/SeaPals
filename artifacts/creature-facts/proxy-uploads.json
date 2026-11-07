@@ -1,0 +1,26 @@
+[
+  {
+    "submitUrl": "https://mcp.figma.com/mcp/upload/26f9aee6-dafa-447c-b4e0-24775851fa18/submit?scaleMode=FILL&currentPageId=4025%3A79142",
+    "targetNodeId": "4028:40889",
+    "cardId": "lionfish",
+    "src": "/images/cards/fish/Reef/Lionfish.png"
+  },
+  {
+    "submitUrl": "https://mcp.figma.com/mcp/upload/2119d64c-f2b7-4361-af3d-1713a1520573/submit?scaleMode=FILL&currentPageId=4025%3A79142",
+    "targetNodeId": "4028:40892",
+    "cardId": "blue-tang",
+    "src": "/images/cards/fish/Reef/blue-tang.png"
+  },
+  {
+    "submitUrl": "https://mcp.figma.com/mcp/upload/a49f9512-9c14-44f4-a835-f6af761a8584/submit?scaleMode=FILL&currentPageId=4025%3A79142",
+    "targetNodeId": "4028:40895",
+    "cardId": "frogfish",
+    "src": "/images/cards/fish/Reef/Frogfish.png"
+  },
+  {
+    "submitUrl": "https://mcp.figma.com/mcp/upload/a919e1d8-92a0-41dc-842d-ff365533ea95/submit?scaleMode=FILL&currentPageId=4025%3A79142",
+    "targetNodeId": "4028:40898",
+    "cardId": "sea-urchin",
+    "src": "/images/cards/invertebrates/Reef/Sea Urchin.png"
+  }
+]

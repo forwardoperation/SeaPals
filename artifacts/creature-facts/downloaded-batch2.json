@@ -1,0 +1,392 @@
+[
+  {
+    "cardId": "green-moray-eel",
+    "nodeId": "241:860",
+    "src": "/images/cards/predator/reef/moray-eel.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "ac79c52c7f93"
+  },
+  {
+    "cardId": "thresher-shark",
+    "nodeId": "1498:54860",
+    "src": "/images/cards/predator/oceanic/thresher-shark.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "2c280b9159f8"
+  },
+  {
+    "cardId": "deep-sea-skate",
+    "nodeId": "1826:14196",
+    "src": "/images/cards/predator/Deep/deep-sea-skate.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "05095dc1b2f0"
+  },
+  {
+    "cardId": "green-sea-turtle",
+    "nodeId": "743:118060",
+    "src": "/images/cards/predator/reef/green-sea-turtle.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "4360b820d688"
+  },
+  {
+    "cardId": "reef-shark",
+    "nodeId": "241:861",
+    "src": "/images/cards/predator/reef/reef-shark.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "0d35ef91d877"
+  },
+  {
+    "cardId": "goliath-grouper",
+    "nodeId": "241:858",
+    "src": "/images/cards/predator/reef/goliath-grouper.png",
+    "width": 376,
+    "height": 525,
+    "sourceWidth": 376,
+    "sourceHeight": 525,
+    "contentHash": "e27291caa095"
+  },
+  {
+    "cardId": "gulper-eel",
+    "nodeId": "1826:14192",
+    "src": "/images/cards/predator/Deep/gulper-eel.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "36342da9c61a"
+  },
+  {
+    "cardId": "goblin-shark",
+    "nodeId": "1756:258533",
+    "src": "/images/cards/predator/Deep/goblin-shark.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "d40954e876b3"
+  },
+  {
+    "cardId": "yellowfin-tuna",
+    "nodeId": "2265:227327",
+    "src": "/images/cards/predator/oceanic/yellowfin-tuna.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "06168ec40404"
+  },
+  {
+    "cardId": "cookie-cutter-shark",
+    "nodeId": "1885:182154",
+    "src": "/images/cards/predator/Deep/cookie-cutter-shark.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "d0e9702a53e0"
+  },
+  {
+    "cardId": "oceanic-whitetip-shark",
+    "nodeId": "2265:227328",
+    "src": "/images/cards/predator/oceanic/oceanic-whitetip.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "bca0dcf148a5"
+  },
+  {
+    "cardId": "blue-shark-oceanic",
+    "nodeId": "2265:227330",
+    "src": "/images/cards/predator/oceanic/blue-shark.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "c1c53eb7da28"
+  },
+  {
+    "cardId": "chimera",
+    "nodeId": "1885:181563",
+    "src": "/images/cards/predator/Deep/chimera.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "6a40e17e3467"
+  },
+  {
+    "cardId": "silky-shark",
+    "nodeId": "2261:223207",
+    "src": "/images/cards/predator/oceanic/silky-shark.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "5a9e3d67d3de"
+  },
+  {
+    "cardId": "frilled-shark",
+    "nodeId": "1885:182155",
+    "src": "/images/cards/predator/Deep/frilled-shark.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "f3950a68290a"
+  },
+  {
+    "cardId": "galapagos-shark",
+    "nodeId": "2265:227329",
+    "src": "/images/cards/predator/oceanic/galapagos-shark.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "fb6b338f46d2"
+  },
+  {
+    "cardId": "emerald-crab",
+    "nodeId": "241:849",
+    "src": "/images/cards/invertebrates/Reef/emerald-crab.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "15833aeee588"
+  },
+  {
+    "cardId": "anemone",
+    "nodeId": "241:848",
+    "src": "/images/cards/invertebrates/Reef/anemone.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "42e377f95405"
+  },
+  {
+    "cardId": "sailfish",
+    "nodeId": "2265:227326",
+    "src": "/images/cards/predator/oceanic/Sailfish.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "c0505727ba8f"
+  },
+  {
+    "cardId": "yellow-lipped-sea-krait",
+    "nodeId": "3483:41046",
+    "src": "/images/cards/predator/reef/yellow-lipped-sea-krait.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "5f99c89210f8"
+  },
+  {
+    "cardId": "nurse-shark",
+    "nodeId": "3387:42923",
+    "src": "/images/cards/predator/reef/nurse-shark.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "8b21deeca94c"
+  },
+  {
+    "cardId": "loggerhead-sea-turtle",
+    "nodeId": "2561:175116",
+    "src": "/images/cards/predator/oceanic/loggerhead-sea-turtle.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "b56097db46af"
+  },
+  {
+    "cardId": "blue-crab",
+    "nodeId": "241:850",
+    "src": "/images/cards/invertebrates/Reef/blue-crab.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "256d1f2e107a"
+  },
+  {
+    "cardId": "wahoo",
+    "nodeId": "2265:227325",
+    "src": "/images/cards/predator/oceanic/wahoo.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "8bd856a15160"
+  },
+  {
+    "cardId": "leather-starfish",
+    "nodeId": "241:855",
+    "src": "/images/cards/invertebrates/Reef/leather-starfish.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "f10790612af3"
+  },
+  {
+    "cardId": "mantis-shrimp",
+    "nodeId": "241:852",
+    "src": "/images/cards/invertebrates/Reef/mantis-shrimp.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "f099f03a8899"
+  },
+  {
+    "cardId": "crown-of-thorns",
+    "nodeId": "241:853",
+    "src": "/images/cards/invertebrates/Reef/crown-of-thorns.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "4d7c75733c35"
+  },
+  {
+    "cardId": "nudibranch",
+    "nodeId": "241:857",
+    "src": "/images/cards/invertebrates/Reef/nudibranch.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "6970077f5c06"
+  },
+  {
+    "cardId": "cleaner-shrimp",
+    "nodeId": "241:854",
+    "src": "/images/cards/invertebrates/Reef/Cleaner Shrimp.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "85dc36ad2373"
+  },
+  {
+    "cardId": "arrow-crab",
+    "nodeId": "241:851",
+    "src": "/images/cards/invertebrates/Reef/arrow-crab.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "5a9b739eb076"
+  },
+  {
+    "cardId": "octopus",
+    "nodeId": "746:146691",
+    "src": "/images/cards/invertebrates/Reef/octopus.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "f567180d3cad"
+  },
+  {
+    "cardId": "giant-triton",
+    "nodeId": "241:856",
+    "src": "/images/cards/invertebrates/Reef/giant-triton.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "2112969163a6"
+  },
+  {
+    "cardId": "vampire-squid",
+    "nodeId": "1916:16630",
+    "src": "/images/cards/invertebrates/Deep/vampire-squid.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "53c8df84bee7"
+  },
+  {
+    "cardId": "giant-tube-worm",
+    "nodeId": "1916:16632",
+    "src": "/images/cards/invertebrates/Deep/giant-tube-worm.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "5a816a7b14e9"
+  },
+  {
+    "cardId": "giant-clam",
+    "nodeId": "1299:11839",
+    "src": "/images/cards/invertebrates/Reef/giant-clam.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "247f51886212"
+  },
+  {
+    "cardId": "brittlestar",
+    "nodeId": "1916:16629",
+    "src": "/images/cards/invertebrates/Deep/brittlestar.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "07b320173d39"
+  },
+  {
+    "cardId": "deep-cucumber",
+    "nodeId": "1916:16624",
+    "src": "/images/cards/invertebrates/Deep/deep-cucumber.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "2112e457701e"
+  },
+  {
+    "cardId": "giant-isopod",
+    "nodeId": "1916:16631",
+    "src": "/images/cards/invertebrates/Deep/giant-isopod.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "dd0287fe46aa"
+  },
+  {
+    "cardId": "oysters",
+    "nodeId": "746:147861",
+    "src": "/images/cards/invertebrates/Reef/oysters.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "95781e3349af"
+  }
+]

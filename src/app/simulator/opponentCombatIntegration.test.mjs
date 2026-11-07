@@ -1,3 +1,4 @@
+import * as reefAbilities from "./reefAbilityRules.mjs";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
@@ -19,6 +20,7 @@ function decide({ difficulty = "hard", cards, attackers, targets, statuses = {},
   const stopAfterSelection = {};
   let captured = null;
   const context = {
+    ...reefAbilities,
     ...combat,
     ...aiCombat,
     ...actions,

@@ -1,0 +1,96 @@
+  function getReefAbilityStates() {
+    return {
+      player: { corals: playerCorals, reefCreatureInstances: playerReefCreatureInstances, orphanCreatureInstances: playerOrphanCreatures, habitats: playerHabitats, habitatInstances: playerHabitatInstances, creatureStatuses, hand, foundationDeck, palsDeck, discardPile, lostZone, rp, resilienceUsedCardIds, blueCrabRecycleUsedTurn, flashingAlarmAttackBonus, supportBlockedUntilRound, aideBlockedUntilRound },
+      opponent,
+    };
+  }
+
+  function completeCreatureStun(instanceId) {
+    const pending = pendingCreatureAction;
+    if (pending?.effect?.type !== "stunCreature" || rp < pending.cost) return;
+    const target = collectReefAbilityCreatures(getReefAbilityStates(), cardsById).find((entry) => entry.instanceId === instanceId && entry.controller === "opponent");
+    if (!target || !pending.candidates.some((entry) => entry.instanceId === instanceId)) return;
+    setRp((current) => current - pending.cost, getPendingCreatureActionRpSpendPresentation(pending, pending.cost));
+    if (actionIsOncePerTurn(pending.action)) setUsedCreatureActions((current) => [...current, pending.actionKey]);
+    setOpponent((current) => ({ ...current, creatureStatuses: stunCreatureAbilities(current.creatureStatuses, instanceId, pending.sourceCardId) }));
+    setPendingCreatureAction(null);
+    const message = `${target.card.name} is Stunned and cannot use abilities through the end of its controller's next turn.`;
+    pushLog(message);
+    setEventOverlay({ type: "utility-result", sourceCardId: pending.sourceCardId, defenderCardId: target.cardId, title: "Stun Strike", message, success: true });
+  }
+
+  function createReefReactionEvents(states, reactions, afterReactions) {
+    const [reaction, ...remaining] = reactions;
+    if (!reaction) return afterReactions(states);
+    const creatures = collectReefAbilityCreatures(states, cardsById);
+    const source = creatures.find((entry) => entry.controller === reaction.controller && entry.instanceId === reaction.instanceId);
+    // A mandatory trigger cannot attack from discard, nor use a stunned card.
+    if (!source || source.card.abilitiesStunned) return createReefReactionEvents(states, remaining, afterReactions);
+    const afterAction = (playerState, opponentState) => createReefReactionEvents({ player: playerState, opponent: opponentState }, remaining, afterReactions);
+    const attack = { ...reaction.attack, triggered: true, actionCost: 0, repeat: 1 };
+    if (source.controller === "opponent") {
+      return createLiveOpponentAttackStepEvents({
+        playerState: states.player, opponentState: states.opponent,
+        onPlayAttack: { cardId: source.cardId, coralId: source.location === "slot" ? source.coralId : null, slotId: source.slotId, reefInstanceId: source.location === "reef" ? source.instanceId : null, orphanInstanceId: source.location === "orphan" ? source.instanceId : null, attack },
+        checkpointPrefix: `reaction-${source.instanceId}`,
+        afterAction,
+      });
+    }
+    return [{ type: "reef-player-reaction", sourceCardId: source.cardId, reaction: { ...source, attack }, playerStateAfter: states.player, opponentStateAfter: states.opponent, afterAction }];
+  }
+
+  function createReefPostCombatEvents(states, combat, afterReactions) {
+    const creatures = collectReefAbilityCreatures(states, cardsById);
+    const attacker = creatures.find((entry) => entry.controller === combat.attackerOwner && entry.instanceId === abilityInstanceId(combat.attackerInstanceId));
+    const defender = creatures.find((entry) => entry.controller !== combat.attackerOwner && entry.instanceId === abilityInstanceId(combat.targetInstanceId));
+    const reactions = combat.success ? getOpportunistTriggers(creatures, combat.attackerOwner, combat.attackerInstanceId) : [];
+    if (!combat.success && defender) {
+      const counter = defender.card.passives?.find((passive) => passive.effect?.type === "counterattack");
+      if (counter && attacker) reactions.push({ ...defender, attack: { type: "attack", attackDice: counter.effect.attackDice, actionName: counter.name, forcedTargetInstanceId: attacker.instanceId } });
+      if (combat.legacyCounterSucceeded) reactions.push(...getOpportunistTriggers(creatures, defender.controller, defender.instanceId));
+    }
+    const flips = !combat.success ? getNeurotoxicDefenseFlips(defender, attacker, creatures, nextGameplayRandom) : [];
+    if (!flips.length) return createReefReactionEvents(states, reactions, afterReactions);
+    const next = { player: cloneLionfishTurnControllerState(states.player, "player"), opponent: cloneLionfishTurnControllerState(states.opponent, "opponent") };
+    const events = [];
+    // Resolve hosted targets first, so removing a host cannot change the
+    // identity of another pending target.
+    for (const flip of [...flips].sort((a, b) => Number(b.target.hostedIndex >= 0) - Number(a.target.hostedIndex >= 0))) {
+      if (flip.result === "heads") {
+        const removed = removeLionfishBoardEntry(next, flip.target);
+        if (removed.removed) {
+          routeLionfishDestroyedCard(next, flip.target.controller, flip.target.cardId, { forceDiscard: true });
+          for (const cardId of removed.hostedCardIds) routeLionfishDestroyedCard(next, flip.target.controller, cardId, { forceDiscard: true });
+        }
+      }
+      const message = `${defender.card.name}'s Neurotoxic Defense: ${flip.result} for ${flip.target.card.name}${flip.result === "heads" ? "; discarded" : "; stays in play"}.`;
+      events.push({ type: "utility-result", title: "Neurotoxic Defense", sourceCardId: defender.cardId, defenderCardId: flip.target.cardId, message, logMessage: message, success: flip.result === "heads", playerStateAfter: next.player, opponentStateAfter: next.opponent, opponentCoinFlip: { result: flip.result, actionName: "Neurotoxic Defense", successResult: "heads", message }, opponentSequence: defender.controller === "opponent" });
+    }
+    // Continue lazily, after the coin results have been presented and committed.
+    return [...events, { type: "reef-continuation", continueReef: () => createReefReactionEvents(next, reactions, afterReactions) }];
+  }
+
+  function beginPlayerReefReaction(event) {
+    const { reaction, afterAction } = event;
+    const states = { player: event.playerStateAfter, opponent: event.opponentStateAfter };
+    const source = collectReefAbilityCreatures(states, cardsById).find((entry) => entry.instanceId === reaction.instanceId && entry.controller === "player");
+    if (!source || source.card.abilitiesStunned) {
+      const [next, ...rest] = afterAction(states.player, states.opponent);
+      presentQueuedEvent(next, rest);
+      return;
+    }
+    let targets = getPlayerAttackTargets(source.card, reaction.attack, states.opponent, states.player.corals, states.player.orphanCreatureInstances);
+    if (reaction.attack.forcedTargetInstanceId) targets = targets.filter((target) => abilityInstanceId(target.instanceId) === reaction.attack.forcedTargetInstanceId);
+    if (!targets.length) {
+      const [next, ...rest] = afterAction(states.player, states.opponent);
+      presentQueuedEvent(next, rest);
+      return;
+    }
+    const reefIndex = source.location === "reef" ? states.player.reefCreatureInstances.findIndex((entry) => entry.instanceId === source.instanceId) : -1;
+    const orphanIndex = source.location === "orphan" ? states.player.orphanCreatureInstances.findIndex((entry) => entry.instanceId === source.instanceId) : -1;
+    const context = createPlayerAttackContext({ attackerCoralId: source.location === "slot" ? source.coralId : null, attackerSlotId: source.location === "reef" ? `reef-${source.instanceId}` : source.location === "orphan" ? `orphan-${source.instanceId}` : source.slotId, attackerCardId: source.cardId, attackerInstanceId: source.instanceId, attackerReefIndex: reefIndex, attackerOrphanIndex: orphanIndex, attackOverride: reaction.attack, triggered: true, onPlay: true, reefAfterAction: afterAction }, source.card, reaction.attack, targets);
+    setAttackContext(context);
+    setEventOverlay(null);
+    pushLog(`${source.card.name}'s ${reaction.attack.actionName} triggered. Choose a highlighted target for its mandatory ${reaction.attack.attackDice} attack.`);
+  }
+

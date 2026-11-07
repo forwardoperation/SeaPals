@@ -427,7 +427,7 @@ test("creature introductions pitch strategy while leaving exact specs for later 
         schoolDensityRequirement: 150,
         playRequirements: [
           "Requires 150 School Density.",
-          "Requires Open Ocean or Coral Reef Habitat in your ecosystem.",
+          "Requires Open Ocean Habitat in your ecosystem.",
         ],
       },
       expected: [/late-game scoring payoff/i, /ocean engine.*major scoring play/i],
@@ -857,7 +857,7 @@ test("authored rule cues stay on the printed block when one block explains sever
     category: "filter-feeder",
     playRequirements: [
       "Requires 150 School Density.",
-      "Requires Open Ocean or Coral Reef Habitat.",
+      "Requires Open Ocean Habitat.",
     ],
     specialRules: ["If destroyed, place this card in your Lost Zone."],
     schoolDensityRequirement: 150,

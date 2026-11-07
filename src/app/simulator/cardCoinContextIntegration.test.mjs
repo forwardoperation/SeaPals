@@ -36,9 +36,8 @@ test("every current board-card coin entry point supplies an action name", () => 
   const callCount = simulatorSource.match(/beginCardCoinFlipPresentation\(\{/g)?.length ?? 0;
   const actionContextCount = simulatorSource.match(/^\s+actionName(?:,|:)/gm)?.length ?? 0;
 
-  assert.equal(callCount, 5, "Recovery, targeted actions, opponent cards, Toxic, and Lionfish share the presenter");
+  assert.equal(callCount, 4, "Targeted actions, opponent cards, Toxic, and Lionfish share the presenter");
   assert.ok(actionContextCount >= callCount);
-  assert.match(simulatorSource, /sourceCardName: card\.name,[\s\S]{0,120}?actionName: "Recover from Discard"/);
   assert.match(simulatorSource, /sourceCardName: sourceCard\.name,[\s\S]{0,120}?actionName,/);
   assert.match(simulatorSource, /sourceCardName: toxicSourceName,[\s\S]{0,120}?actionName: "Toxic"/);
   const opponentPresenter = sourceBetween(

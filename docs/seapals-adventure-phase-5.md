@@ -91,7 +91,7 @@ The Brackwater quest reconciler derives readiness from actual observations, acce
 | Amina qualifier first win | Grants one **Brackwater Discovery Pack**, `tide-mark-brackwater`, and `route-brackwater-current` through `reward-brackwater-qualifier`. |
 | Qualifier rematch | Practice only; cannot recreate the one-time reward. |
 
-The Brackwater Discovery Pack is playable, earned-only, and draws four distinct cards from: Leather Starfish, Oysters, Blue Crab, White Grunt, Bull Shark, Octopus, Arrow Crab, Emerald Crab, Robotic Survey, Scientist Jes, Recovery, and Remote Search.
+The Brackwater Discovery Pack is playable, earned-only, and draws four distinct cards from: Leather Starfish, Oysters, Blue Crab, White Grunt, Bull Shark, Day Octopus, Arrow Crab, Emerald Crab, Robotic Survey, Scientist Jes, Recovery, and Remote Search.
 
 All three Brackwater encounters use the existing Simulator launch, active-deck snapshot, result-provenance, save, inventory, and reward contracts. The chapter does not introduce a parallel duel or collection engine.
 

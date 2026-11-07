@@ -81,7 +81,7 @@ These sources support kelp's habitat-forming role, food-web relationships, repea
 
 All three encounters launch through the existing active-deck snapshot and Simulator result-provenance contract. Required progression never depends on a random pack pull.
 
-The earned-only `pack-pool-kelpwatch` draws four distinct cards from this 12-card pool and guarantees an unowned card when an eligible card remains: Sea Urchin, Anemone, Clownfish, Giant Triton, Crown-of-Thorns, Cleaner Shrimp, Cleaner Wrasse, Octopus, Fairy Parrotfish, Goliath Grouper, Reef Shark, and Marine Sanctuary.
+The earned-only `pack-pool-kelpwatch` draws four distinct cards from this 12-card pool and guarantees an unowned card when an eligible card remains: Sea Urchin, Anemone, Clownfish, Giant Triton, Crown-of-Thorns, Cleaner Shrimp, Cleaner Wrasse, Day Octopus, Fairy Parrotfish, Goliath Grouper, Reef Shark, and Marine Sanctuary.
 
 ## Save, revisit, and recovery acceptance
 

@@ -1,0 +1,436 @@
+{
+  "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
+  "verifiedAt": "2026-10-05",
+  "decks": [
+    {
+      "id": "darkness-shroud",
+      "pageId": "2068:245383",
+      "cards": [
+        {
+          "cardId": "abyss",
+          "quantity": 1
+        },
+        {
+          "cardId": "chimera",
+          "quantity": 2
+        },
+        {
+          "cardId": "giant-squid",
+          "quantity": 1
+        },
+        {
+          "cardId": "goblin-shark",
+          "quantity": 2
+        },
+        {
+          "cardId": "cookie-cutter-shark",
+          "quantity": 2
+        },
+        {
+          "cardId": "giant-red-shrimp",
+          "quantity": 2
+        },
+        {
+          "cardId": "giant-isopod",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep-cucumber",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep-sea-jelly",
+          "quantity": 2
+        },
+        {
+          "cardId": "fangtooth-fish",
+          "quantity": 2
+        },
+        {
+          "cardId": "vampire-squid",
+          "quantity": 2
+        },
+        {
+          "cardId": "humpback-anglerfish",
+          "quantity": 2
+        },
+        {
+          "cardId": "black-swallower",
+          "quantity": 2
+        },
+        {
+          "cardId": "bristlemouth",
+          "quantity": 2
+        },
+        {
+          "cardId": "barrel-eye-fish",
+          "quantity": 2
+        },
+        {
+          "cardId": "owlfish",
+          "quantity": 2
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 1
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 3
+        },
+        {
+          "cardId": "coral-gardener",
+          "quantity": 2
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2
+        },
+        {
+          "cardId": "bamboo_coral_base",
+          "quantity": 4
+        },
+        {
+          "cardId": "bamboo_coral_stage1",
+          "quantity": 2
+        },
+        {
+          "cardId": "bamboo_coral_stage2",
+          "quantity": 2
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep_mushroom_base",
+          "quantity": 4
+        },
+        {
+          "cardId": "deep_mushroom_stage1",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep_mushroom_stage2",
+          "quantity": 2
+        }
+      ],
+      "changes": [
+        {
+          "cardId": "chimera",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "colossal-squid",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "cookie-cutter-shark",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "coral-cement",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "deep-cucumber",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "deep-sea-skate",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "dr-evans",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "fangtooth-fish",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "frilled-shark",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "giant-isopod",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "giant-phantom-jelly",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "goblin-shark",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "gulper-eel",
+          "before": 2,
+          "after": 0
+        },
+        {
+          "cardId": "owlfish",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "super-whirlpool",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "vampire-squid",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "viperfish",
+          "before": 1,
+          "after": 0
+        }
+      ]
+    },
+    {
+      "id": "open-ocean-hunt",
+      "pageId": "2296:82568",
+      "cards": [
+        {
+          "cardId": "cast-net",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 3
+        },
+        {
+          "cardId": "spearfishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 1
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 1
+        },
+        {
+          "cardId": "sardine-ball-base",
+          "quantity": 4
+        },
+        {
+          "cardId": "sardine-ball-stage1",
+          "quantity": 2
+        },
+        {
+          "cardId": "herring-ball-base",
+          "quantity": 4
+        },
+        {
+          "cardId": "sardine-ball-stage2",
+          "quantity": 2
+        },
+        {
+          "cardId": "remora",
+          "quantity": 1
+        },
+        {
+          "cardId": "herring-ball-stage2",
+          "quantity": 2
+        },
+        {
+          "cardId": "herring-ball-stage1",
+          "quantity": 3
+        },
+        {
+          "cardId": "halfbeak",
+          "quantity": 3
+        },
+        {
+          "cardId": "bluefin-tuna-juvenile",
+          "quantity": 1
+        },
+        {
+          "cardId": "ocean-triggerfish",
+          "quantity": 1
+        },
+        {
+          "cardId": "frigate-tuna",
+          "quantity": 1
+        },
+        {
+          "cardId": "bonito-tuna",
+          "quantity": 2
+        },
+        {
+          "cardId": "pompano",
+          "quantity": 1
+        },
+        {
+          "cardId": "mahi-mahi",
+          "quantity": 3
+        },
+        {
+          "cardId": "market-squid",
+          "quantity": 3
+        },
+        {
+          "cardId": "man-o-war",
+          "quantity": 2
+        },
+        {
+          "cardId": "blue-sea-dragon",
+          "quantity": 2
+        },
+        {
+          "cardId": "oceanic-manta-ray",
+          "quantity": 1
+        },
+        {
+          "cardId": "killer-whale-oceanic",
+          "quantity": 1
+        },
+        {
+          "cardId": "yellowfin-tuna",
+          "quantity": 1
+        },
+        {
+          "cardId": "open-ocean",
+          "quantity": 1
+        },
+        {
+          "cardId": "silky-shark",
+          "quantity": 1
+        },
+        {
+          "cardId": "sailfish",
+          "quantity": 1
+        },
+        {
+          "cardId": "loggerhead-sea-turtle",
+          "quantity": 2
+        }
+      ],
+      "changes": [
+        {
+          "cardId": "blue-sea-dragon",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "blue-whale",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "bluefin-tuna",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "bonito-tuna",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "capt-dani",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "dr-evans",
+          "before": 0,
+          "after": 1
+        },
+        {
+          "cardId": "flying-fish",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "lookdown",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "mahi-mahi",
+          "before": 1,
+          "after": 3
+        },
+        {
+          "cardId": "market-squid",
+          "before": 2,
+          "after": 3
+        },
+        {
+          "cardId": "oceanic-manta-ray",
+          "before": 0,
+          "after": 1
+        },
+        {
+          "cardId": "remora",
+          "before": 2,
+          "after": 1
+        },
+        {
+          "cardId": "sardine-ball-stage2",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "shortfin-mako-shark",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "spearfishing",
+          "before": 1,
+          "after": 2
+        },
+        {
+          "cardId": "swordfish",
+          "before": 1,
+          "after": 0
+        },
+        {
+          "cardId": "thresher-shark",
+          "before": 1,
+          "after": 0
+        }
+      ]
+    }
+  ]
+}

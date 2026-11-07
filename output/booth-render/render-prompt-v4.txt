@@ -1,0 +1,13 @@
+Use case: precise-object-edit.
+Edit ONLY the front-right lockable storage/display cabinet in this existing SeaRealm booth render.
+
+Turn the cabinet body180degrees so its two lockable storage doors, handles and key locks face INWARD, toward the booth interior and the queue/checkout area behind the cabinet. Staff access the storage from inside the booth. The broad outside face toward the front aisle/camera must now be a single smooth solid black branded panel carrying the same white SeaRealm / TRADING CARD GAME logo and blue wave, with NO door seams, handles, locks or hinges on that outward face. Keep matching SeaRealm branding on the visible short side. The inward-facing doors are on the hidden rear long side; do not incorrectly put visible doors on the camera-facing side merely to demonstrate them. Keep them closed.
+
+Keep the cabinet in EXACTLY the same place, footprint, height and proportions. Keep the products on top in the same customer-facing arrangement; do NOT rotate the merchandise180degrees. Cabinet black materials, overall design and lighting remain consistent.
+
+Update the nearby callout to:
+"LOCKABLE STOCK STORAGE"
+"Doors face booth interior"
+Redirect its fine white leader to the cabinet's rear/interior edge instead of to an outside handle. The callout should communicate that the doors are on the concealed inside face. No inset, no cutaway, no extra view.
+
+Preserve EVERYTHING ELSE exactly: higher isometric camera, blue carpet,20x10foot footprint, whale artwork and10x8maximum backdrop, left demo table with4chairs, touchscreens, center illuminated glass display, rear-right checkout with3foot clear staff passage, product shelf, queue4x3feet, all existing dimensions and sideheight notes, rear/left drapes, ghosted neighbors, and overall lighting. No additional furniture, no people, no layout or camera changes. This is a narrowly scoped cabinet-orientation edit.

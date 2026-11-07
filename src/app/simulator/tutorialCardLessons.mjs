@@ -395,7 +395,7 @@ const CREATURE_STRATEGY_OVERVIEWS = {
   "bottlenose-dolphin": "is a flexible apex play that refills your hand before applying targeted pressure",
   "cookie-cutter-shark": "is a resource thief that turns the opponent's large hunters into income for your own turns",
   "deep-sea-jelly": "is a combat setup piece that improves future attacks instead of fighting immediately",
-  oysters: "are a Habitat payoff that greatly expands your economy after the ecosystem is established",
+  oysters: "are economy builders that expand your RP bank immediately and gain a larger bonus while Coral Reef is in play",
   "green-sea-turtle": "is a reef stabilizer that repairs a damaged foundation as it enters play",
   "spinner-dolphins": "are coordinated hunters that become more accurate beside Coral Reef",
   "blue-tang": "is a Habitat-gated scoring piece that rewards you for establishing Coral Reef",
@@ -424,7 +424,7 @@ const CREATURE_STRATEGY_CHOICES = {
   "bottlenose-dolphin": "Choose it when you need to refill your hand and challenge a dangerous opposing creature in the same play.",
   "cookie-cutter-shark": "Choose it when the opponent has invested in large hunters and you want their board to fund your turns.",
   "deep-sea-jelly": "Choose it when you are planning an attack sequence and want several ways to improve its odds.",
-  oysters: "Choose it when a Habitat is established and a larger RP bank will unlock more ambitious turns.",
+  oysters: "Choose it when a larger RP bank will unlock more ambitious turns; Coral Reef in either ecosystem doubles its bank bonus.",
   "green-sea-turtle": "Choose it when Coral Reef is established and a damaged foundation needs meaningful repair.",
   "spinner-dolphins": "Choose it when Coral Reef is established and you want coordinated pressure against opposing hunters.",
   "blue-tang": "Choose it when Coral Reef is established and you want to turn that Habitat into immediate scoring value.",
@@ -578,7 +578,7 @@ function describeStrategicAbility(signal, grammar) {
     "fierce-fighter": `${name} forces the opponent to reroll their first successful attack`,
     scatter: `${name} forces the opponent to reroll their first successful attack`,
     camouflage: `${name} forces the opponent to reroll their first successful attack`,
-    "stinging-tentacles": `${name} can stop an incoming attack before it lands`,
+    venomous: `${name} gives attackers disadvantage when they target ${grammar.object}`,
     charm: `${name} weakens every attack made against ${grammar.object}`,
     transparency: `${name} screens out attacks that rely on larger dice`,
     "toxic-immunity": `${name} lets ${grammar.object} hunt Toxic prey without risking Toxic's usual retaliation`,
@@ -592,7 +592,7 @@ function describeStrategicAbility(signal, grammar) {
     "venom-spines": `${name} gives you another chance to damage an opposing Coral foundation`,
     "coral-heal": `${name} repairs a damaged Coral foundation as the card enters play`,
     "slow-eat": `${name} hunts the opponent's Sea Urchins and Anemones`,
-    "starfish-hunt": `${name} hunts opposing Starfish`,
+    "starfish-hunt": `${name} hunts opposing Invertebrates with advantage against Crown of Thorns, then rests next turn`,
     invader: `${name} threatens a Fish each turn, but its coin flip can redirect the attack into your own reef`,
     parasite: `${name} siphons RP from an opponent who relies on Predators or Apex creatures`,
     "big-eyes": `${name} lets ${grammar.object} hunt through the concealment provided by Abyss`,
@@ -602,7 +602,7 @@ function describeStrategicAbility(signal, grammar) {
     massive: `${name} makes attacks against ${grammar.object} less reliable`,
     "tail-whip": `${name} softens the opponent's defense before the follow-up attack`,
     ensnare: `${name} can soften a defender before the next attack`,
-    highlight: `${name} prepares a stronger On Play attack for your next creature`,
+    highlight: `${name} prepares a stronger On Play attack for your next creature this turn`,
     "flashing-alarm": `${name} turns an enemy attack into a boost for your next offensive turn`,
     "expert-hunter": `${name} rewards Coral Reef by making attacks against Fish more reliable`,
     "bite-back": `${name} threatens an immediate counterattack when an opponent misses`,
@@ -630,9 +630,6 @@ function describeStrategicAbility(signal, grammar) {
   if (nameKey === "toxic" && signal.attackWard) {
     return `${name} can make an incoming attack fail before combat begins`;
   }
-  if (nameKey === "toxic-immunity" && cardId === "giant-triton") {
-    return `${name} specifically protects ${grammar.object} from Crown of Thorns' Toxic retaliation`;
-  }
   if (nameKey === "munch") {
     return signal.attack
       ? `${name} lets ${grammar.object} hunt opposing Invertebrates and improves against Man O' War`
@@ -647,7 +644,7 @@ function describeStrategicAbility(signal, grammar) {
   if (nameKey === "hover-strike") return `${name} pressures opposing Deep Fish and Deep Invertebrates`;
   if (nameKey === "quick-grab") return `${name} pressures opposing Deep Invertebrates`;
   if (nameKey === "plenteous") {
-    return `${name} can return a base Krill Bloom from your discard to your deck after this School is attacked and destroyed`;
+    return `${name} shuffles this destroyed School into your Foundation Deck instead of your discard pile`;
   }
   if (nameKey === "symbiosis") {
     return normalizeToken(signal.card?.id) === "anemone"

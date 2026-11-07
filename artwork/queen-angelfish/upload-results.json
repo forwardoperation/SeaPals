@@ -1,0 +1,122 @@
+[
+  {
+    "filename": "01 Pelvic fin.svg",
+    "result": {
+      "success": true,
+      "imageHash": "b10fa35ff3de802bd81d621e4a865139874ab7f1",
+      "sizeBytes": 13964,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:273070"
+    }
+  },
+  {
+    "filename": "02 Dorsal fin.svg",
+    "result": {
+      "success": true,
+      "imageHash": "f621bcd6c299dbbf5c5ea650fbd5e2e9db2673df",
+      "sizeBytes": 20896,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:272872"
+    }
+  },
+  {
+    "filename": "03 Anal fin.svg",
+    "result": {
+      "success": true,
+      "imageHash": "8bd1fed8ae11e935488c977ccf59257373dd7113",
+      "sizeBytes": 20479,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:7726"
+    }
+  },
+  {
+    "filename": "04 Caudal tail fin.svg",
+    "result": {
+      "success": true,
+      "imageHash": "c35fdd6bd3d1207a5f12c62e817b645b3f2acf78",
+      "sizeBytes": 22872,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:272964"
+    }
+  },
+  {
+    "filename": "05 Body and face base.svg",
+    "result": {
+      "success": true,
+      "imageHash": "369dbc26fe438e90b22ff604034fb1e380f65ce6",
+      "sizeBytes": 5686,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:273126"
+    }
+  },
+  {
+    "filename": "06 Scales - individually editable.svg",
+    "result": {
+      "success": true,
+      "imageHash": "40e3535d85eac70f1b96454ca8a5c56797b05ac7",
+      "sizeBytes": 383930,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:273130"
+    }
+  },
+  {
+    "filename": "07 Shadows and contour lines.svg",
+    "result": {
+      "success": true,
+      "imageHash": "67f5c5a93cb77cd4efdd1eccc9d5df82a532cc19",
+      "sizeBytes": 6394,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:274832"
+    }
+  },
+  {
+    "filename": "08 Face - crown gill mouth.svg",
+    "result": {
+      "success": true,
+      "imageHash": "231b4a28ee32cce033abb25145ed19f51b2b910f",
+      "sizeBytes": 8032,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:274842"
+    }
+  },
+  {
+    "filename": "09 Eye - rings pupil glints.svg",
+    "result": {
+      "success": true,
+      "imageHash": "bbb6311586cb489a216ca1d8334a7f4da7628601",
+      "sizeBytes": 5947,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:274859"
+    }
+  },
+  {
+    "filename": "10 Pectoral fin and blue base.svg",
+    "result": {
+      "success": true,
+      "imageHash": "6aa50545f85ea63334c8335e7fb36d72fc5cc3c8",
+      "sizeBytes": 16015,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:274870"
+    }
+  },
+  {
+    "filename": "11 Color highlights and blue fin edges.svg",
+    "result": {
+      "success": true,
+      "imageHash": "bd32517bbe79fa0d63945047eed40a47ba973514",
+      "sizeBytes": 7001,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:274936"
+    }
+  },
+  {
+    "filename": "outline-study.svg",
+    "result": {
+      "success": true,
+      "imageHash": "0cdb285d737536c3694ca7528f695984d5d34be6",
+      "sizeBytes": 8327,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3677:274946"
+    }
+  }
+]

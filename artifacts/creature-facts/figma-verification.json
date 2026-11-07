@@ -1,0 +1,479 @@
+{
+  "verifiedAt": "2026-10-06T02:00:37.491Z",
+  "masterPages": [
+    {
+      "page": "filter",
+      "checked": 8,
+      "errors": []
+    },
+    {
+      "page": "apex",
+      "checked": 16,
+      "errors": []
+    },
+    {
+      "page": "predators",
+      "checked": 23,
+      "errors": []
+    },
+    {
+      "page": "invertebrates",
+      "checked": 27,
+      "errors": []
+    },
+    {
+      "page": "fish",
+      "checked": 62,
+      "errors": []
+    }
+  ],
+  "holoMutation": {
+    "mutatedNodeIds": [
+      "I3961:7868;3068:1062444",
+      "I3961:7868;3068:1062445",
+      "I3961:7868;3068:1062434",
+      "I3961:11860;3068:1062444",
+      "I3961:11860;3068:1062445",
+      "I3961:11860;3068:1062446",
+      "I3961:16244;2055:41895",
+      "I3961:18368;2055:41895",
+      "I3961:23804;1302:14160",
+      "I3961:27666;2082:7551",
+      "I3961:27666;2082:7553",
+      "I3962:26164;2108:268884",
+      "I3962:27265;3068:1062444",
+      "I3962:27265;3068:1062445",
+      "I3962:27265;3068:1062434",
+      "I3962:27994;2108:268883",
+      "I3962:27994;2108:268884",
+      "I3962:30548;1993:12752",
+      "I3962:30548;1993:12708",
+      "I3962:32801;1993:12752",
+      "I3962:32801;1993:12708",
+      "I3962:33792;2115:56916",
+      "I3962:35716;3068:1062444",
+      "I3962:35716;3068:1062445",
+      "I3962:35716;3068:1062447",
+      "I3962:35716;3068:1062434",
+      "I3981:40116;2006:8979",
+      "I3962:40375;2006:8978",
+      "I3962:40375;2006:8979",
+      "I3962:40375;2006:8980",
+      "I3962:42055;2006:8979",
+      "I3962:42055;1809:6836",
+      "I3962:43969;2006:8979",
+      "I3962:48663;1994:41213",
+      "I3962:51004;1994:41784",
+      "I3962:51004;1994:41785",
+      "I3962:51004;1994:41786",
+      "I3962:51004;1867:66607",
+      "I3962:52437;1994:41785",
+      "I3962:52437;1994:41786",
+      "I3962:54558;1993:12219",
+      "I3962:54558;1993:12220",
+      "I3962:54558;1993:12221",
+      "I3962:54558;1867:66437",
+      "I3962:55992;1993:12219",
+      "I3962:55992;1993:12221",
+      "I3962:55992;1867:66437",
+      "3961:42158",
+      "I3961:42160;261:2989",
+      "I3961:42160;261:2990",
+      "I3961:42160;261:2991",
+      "3961:42254",
+      "I3961:42257;261:2989",
+      "I3961:42257;261:2990",
+      "I3961:42257;261:2991"
+    ],
+    "createdNodeIds": [
+      "4036:39168",
+      "4036:39169",
+      "4036:39170",
+      "4036:39171",
+      "4036:39172",
+      "4036:39173",
+      "4036:39174",
+      "4036:39175",
+      "4036:39176",
+      "4036:39177"
+    ],
+    "sizing": [
+      {
+        "id": "I3961:7868;3068:1062444",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 63,
+        "available": 118.44000244140625,
+        "text": "WD: 10’"
+      },
+      {
+        "id": "I3961:7868;3068:1062445",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 88,
+        "available": 186.1199951171875,
+        "text": "Mobulidae"
+      },
+      {
+        "id": "I3961:7868;3068:1062434",
+        "role": "description",
+        "size": 18.799999237060547,
+        "height": 69,
+        "available": 71,
+        "text": "Reef manta rays filter plankton with their head fins and visit cleaning stations. Unique patterns of belly spots help researchers identify individuals."
+      },
+      {
+        "id": "I3961:11860;3068:1062444",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 54,
+        "available": 118.44000244140625,
+        "text": "LT: 20’"
+      },
+      {
+        "id": "I3961:11860;3068:1062445",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 81,
+        "available": 186.1199951171875,
+        "text": "Lamnidae"
+      },
+      {
+        "id": "I3961:11860;3068:1062446",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 93,
+        "available": 121.26000213623047,
+        "text": "WT: 2 Tons"
+      },
+      {
+        "id": "I3961:16244;2055:41895",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 142,
+        "available": 186.1199951171875,
+        "text": "Galeocerdonidae"
+      },
+      {
+        "id": "I3961:18368;2055:41895",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 128,
+        "available": 186.1199951171875,
+        "text": "Carcharhinidae"
+      },
+      {
+        "id": "I3961:23804;1302:14160",
+        "role": "description",
+        "size": 16.799999237060547,
+        "height": 60,
+        "available": 62.040000915527344,
+        "text": "Bottlenose dolphins are intelligent, social marine mammals with sleek gray bodies and short snouts. They use echolocation to find prey."
+      },
+      {
+        "id": "I3961:27666;2082:7551",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 118,
+        "available": 186.1199951171875,
+        "text": "Epinephelidae"
+      },
+      {
+        "id": "I3961:27666;2082:7553",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 65,
+        "available": 141.94000244140625,
+        "text": "Atlantic"
+      },
+      {
+        "id": "I3962:26164;2108:268884",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 137,
+        "available": 186.1199951171875,
+        "text": "Balaenopteridae"
+      },
+      {
+        "id": "I3962:27265;3068:1062444",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 64,
+        "available": 118.44000244140625,
+        "text": "WD: 22’"
+      },
+      {
+        "id": "I3962:27265;3068:1062445",
+        "role": "fact",
+        "size": 18,
+        "width": 93,
+        "available": 186.1199951171875,
+        "text": "Mobulidae"
+      },
+      {
+        "id": "I3962:27265;3068:1062434",
+        "role": "description",
+        "size": 18.799999237060547,
+        "height": 69,
+        "available": 71,
+        "text": "Manta rays glide on giant wings, funneling plankton with their head fins. They also visit cleaning stations where small fish remove parasites."
+      },
+      {
+        "id": "I3962:27994;2108:268883",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 55,
+        "available": 118.44000244140625,
+        "text": "LT: 60’"
+      },
+      {
+        "id": "I3962:27994;2108:268884",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 137,
+        "available": 186.1199951171875,
+        "text": "Balaenopteridae"
+      },
+      {
+        "id": "I3962:30548;1993:12752",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 99,
+        "available": 186.1199951171875,
+        "text": "Delphinidae"
+      },
+      {
+        "id": "I3962:30548;1993:12708",
+        "role": "description",
+        "size": 18.5,
+        "height": 66,
+        "available": 66,
+        "text": "Orcas are the largest members of the dolphin family. Their close-knit groups use different hunting traditions to catch fish, seals, or other whales."
+      },
+      {
+        "id": "I3962:32801;1993:12752",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 81,
+        "available": 186.1199951171875,
+        "text": "Lamnidae"
+      },
+      {
+        "id": "I3962:32801;1993:12708",
+        "role": "description",
+        "size": 18.5,
+        "height": 66,
+        "available": 66,
+        "text": "A powerful, fast-swimming shark, the shortfin mako pursues fish and squid. It can retain heat in parts of its body to stay active in cool water."
+      },
+      {
+        "id": "I3962:33792;2115:56916",
+        "role": "description",
+        "size": 18.5,
+        "height": 66,
+        "available": 66,
+        "text": "This rare shark filters tiny prey, including krill, through its enormous mouth. Its pale upper lip reflects light; it does not produce its own glow."
+      },
+      {
+        "id": "I3962:35716;3068:1062444",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 51,
+        "available": 118.44000244140625,
+        "text": "LT: 18’"
+      },
+      {
+        "id": "I3962:35716;3068:1062445",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 101,
+        "available": 186.1199951171875,
+        "text": "Cranchiidae"
+      },
+      {
+        "id": "I3962:35716;3068:1062447",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 135,
+        "available": 141.94000244140625,
+        "text": "Southern Ocean"
+      },
+      {
+        "id": "I3962:35716;3068:1062434",
+        "role": "description",
+        "size": 18.799999237060547,
+        "height": 69,
+        "available": 71,
+        "text": "The heaviest known squid lives in the cold Southern Ocean. Rotating hooks on its tentacle clubs help it hold slippery prey."
+      },
+      {
+        "id": "I3981:40116;2006:8979",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 110,
+        "available": 186.1199951171875,
+        "text": "Physeteridae"
+      },
+      {
+        "id": "I3962:40375;2006:8978",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 80,
+        "available": 118.44000244140625,
+        "text": "Arms: 33’"
+      },
+      {
+        "id": "I3962:40375;2006:8979",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 85,
+        "available": 186.1199951171875,
+        "text": "Ulmaridae"
+      },
+      {
+        "id": "I3962:40375;2006:8980",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 116,
+        "available": 121.26000213623047,
+        "text": "WT: Unknown"
+      },
+      {
+        "id": "I3962:42055;2006:8979",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 125,
+        "available": 186.1199951171875,
+        "text": "Architeuthidae"
+      },
+      {
+        "id": "I3962:42055;1809:6836",
+        "role": "description",
+        "size": 16.799999237060547,
+        "height": 60,
+        "available": 62.040000915527344,
+        "text": "With enormous eyes adapted to dim light, giant squid roam the ocean depths. Two long feeding tentacles reach out to snatch fish and other squid."
+      },
+      {
+        "id": "I3962:43969;2006:8979",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 108,
+        "available": 186.1199951171875,
+        "text": "Somniosidae"
+      },
+      {
+        "id": "I3962:48663;1994:41213",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 125,
+        "available": 186.1199951171875,
+        "text": "Mitsukurinidae"
+      },
+      {
+        "id": "I3962:51004;1994:41784",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 55,
+        "available": 118.44000244140625,
+        "text": "LT: 16”"
+      },
+      {
+        "id": "I3962:51004;1994:41785",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 95,
+        "available": 186.1199951171875,
+        "text": "Cirolanidae"
+      },
+      {
+        "id": "I3962:51004;1994:41786",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 90,
+        "available": 121.26000213623047,
+        "text": "WT: Varies"
+      },
+      {
+        "id": "I3962:51004;1867:66607",
+        "role": "description",
+        "size": 16.799999237060547,
+        "height": 60,
+        "available": 62.040000915527344,
+        "text": "Giant isopods are deep-sea relatives of woodlice. Their armored bodies protect them as they scavenge, and a slow metabolism helps them endure long fasts."
+      },
+      {
+        "id": "I3962:52437;1994:41785",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 154,
+        "available": 186.1199951171875,
+        "text": "Vampyroteuthidae"
+      },
+      {
+        "id": "I3962:52437;1994:41786",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 116,
+        "available": 121.26000213623047,
+        "text": "WT: Unknown"
+      },
+      {
+        "id": "I3962:54558;1993:12219",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 146,
+        "available": 186.1199951171875,
+        "text": "Opisthoproctidae"
+      },
+      {
+        "id": "I3962:54558;1993:12220",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 116,
+        "available": 121.26000213623047,
+        "text": "WT: Unknown"
+      },
+      {
+        "id": "I3962:54558;1993:12221",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 77,
+        "available": 141.94000244140625,
+        "text": "N. Pacific"
+      },
+      {
+        "id": "I3962:54558;1867:66437",
+        "role": "description",
+        "size": 16.799999237060547,
+        "height": 60,
+        "available": 62.040000915527344,
+        "text": "A transparent dome protects the barreleye's tubular green eyes. The eyes can rotate from looking upward to facing forward as the fish feeds."
+      },
+      {
+        "id": "I3962:55992;1993:12219",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 104,
+        "available": 186.1199951171875,
+        "text": "Latimeriidae"
+      },
+      {
+        "id": "I3962:55992;1993:12221",
+        "role": "fact",
+        "size": 16.920000076293945,
+        "width": 133,
+        "available": 141.94000244140625,
+        "text": "W. Indian Ocean"
+      },
+      {
+        "id": "I3962:55992;1867:66437",
+        "role": "description",
+        "size": 16.799999237060547,
+        "height": 60,
+        "available": 62.040000915527344,
+        "text": "West Indian Ocean coelacanths have fleshy, lobed fins and a distinctive three-part tail. These deep-water fish belong to an ancient lineage."
+      }
+    ]
+  }
+}

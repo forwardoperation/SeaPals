@@ -1,3 +1,4 @@
+import { venomous } from "../abilities";
 import {
   CardCategory,
   CardKind,
@@ -24,7 +25,7 @@ const creatureSchoolMomentum =
   "Momentum: Search your deck for a Creature School card. Show it to your opponent, place it into your hand, then shuffle your deck.";
 
 const plenteous =
-  "Plenteous: If attacked and destroyed, search your discard pile for a base Krill Bloom and shuffle it into your deck.";
+  "Plenteous: If attacked and destroyed, instead of discarding this card, shuffle it into your deck.";
 
 const creatureSchoolStageData = [
   {
@@ -232,7 +233,7 @@ const oceanicCreatureData = [
     rp: 5,
     vp: 5,
     schoolDensityRequirement: 70,
-    playRequirements: ["Requires Open Ocean or Abyss Habitat in your ecosystem."],
+    playRequirements: ["Requires Open Ocean Habitat in your ecosystem."],
     onPlay: [
       "Group Hunt: 1D8+5 attack targeting fish. Perform a second attack for each Tuna in your ecosystem. Max +2 attacks.",
     ],
@@ -295,10 +296,14 @@ const oceanicCreatureData = [
     id: "sperm-whale",
     name: "Sperm Whale",
     class: CreatureClass.APEX,
+    zone: CreatureZone.DEEP,
+    subtype: null,
+    tags: ["creature", "deep", "apex"],
+    set: { id: "deep", name: "Deep", collectorNumber: null, totalInSet: null },
     rp: 9,
     vp: 9,
     playRequirements: [
-      "Can only be played if Open Ocean and 2 Oceanic Predators are in your ecosystem.",
+      "Can only be played if Abyss Habitat is in your ecosystem.",
     ],
     onPlay: [
       "Deep Hunt: Perform 2 D12 attacks targeting filter feeders, apex, predators, or fish.",
@@ -314,17 +319,21 @@ const oceanicCreatureData = [
     id: "pilot-whale-oceanic",
     name: "Pilot Whale",
     class: CreatureClass.APEX,
-    rp: 7,
-    vp: 7,
+    zone: CreatureZone.DEEP,
+    subtype: null,
+    tags: ["creature", "deep", "apex"],
+    set: { id: "deep", name: "Deep", collectorNumber: null, totalInSet: null },
+    rp: 9,
+    vp: 9,
     playRequirements: [
-      "Can only be played if Open Ocean and 2 Oceanic Predators are in your ecosystem.",
+      "Can only be played if Abyss Habitat is in your ecosystem.",
     ],
     onPlay: [
       "Echo Disruption: Your opponent cannot play support cards on their next turn.",
       "Deep Hunt: Perform 2 D12 attacks targeting filter feeders, apex, predators, or fish.",
     ],
-    prerelease: true,
-    defense: "D10",
+    prerelease: false,
+    defense: "D20",
     destroyedDestination: "lost-zone",
     image: "/images/cards/apex/Oceanic/pilot-whale.png",
   },
@@ -351,24 +360,37 @@ const oceanicCreatureData = [
     vp: 10,
     schoolDensityRequirement: 180,
     playRequirements: ["Requires Open Ocean Habitat in your ecosystem."],
-    defense: "D8",
+    defense: "D20",
     image: "/images/cards/filter-feeders/Oceanic/basking-shark.png",
   },
   {
     id: "manta-ray",
-    name: "Manta Ray",
+    name: "Reef Manta Ray",
     class: CreatureClass.FILTER_FEEDER,
     zone: CreatureZone.REEF,
     subtype: null,
     prerelease: false,
-    rp: 8,
-    vp: 10,
-    schoolDensityRequirement: 170,
-    playRequirements: ["Requires Open Ocean or Coral Reef Habitat in your ecosystem."],
-    defense: "D10",
+    rp: 4,
+    vp: 6,
+    schoolDensityRequirement: 135,
+    playRequirements: ["Requires Coral Reef Habitat in your ecosystem."],
+    defense: "D8",
     image: "/images/cards/filter-feeders/Reef/manta-ray.png",
     tags: ["creature", "reef", "filter-feeder"],
     set: { id: "genesis", name: "Genesis", collectorNumber: null, totalInSet: null },
+  },
+  {
+    id: "oceanic-manta-ray",
+    name: "Oceanic Manta Ray",
+    class: CreatureClass.FILTER_FEEDER,
+    prerelease: false,
+    rp: 8,
+    vp: 10,
+    schoolDensityRequirement: 170,
+    playRequirements: ["Requires Open Ocean Habitat in your ecosystem."],
+    defense: "D10",
+    destroyedDestination: "lost-zone",
+    image: "/images/cards/filter-feeders/Oceanic/oceanic-manta-ray.png",
   },
   {
     id: "humpback-whale",
@@ -412,7 +434,7 @@ const oceanicCreatureData = [
     rp: 8,
     vp: 8,
     schoolDensityRequirement: 150,
-    playRequirements: ["Requires Open Ocean or Coral Reef Habitat in your ecosystem."],
+    playRequirements: ["Requires Open Ocean Habitat in your ecosystem."],
     defense: "D8",
     image: "/images/cards/filter-feeders/Oceanic/ocean-sunfish.png",
   },
@@ -603,7 +625,7 @@ const oceanicCreatureData = [
     rp: 2,
     vp: 2,
     schoolDensityRequirement: 20,
-    onPlay: ["Snap: 1D4 attack targeting fish."],
+    actions: ["Snap: D4-1 attack targeting fish. Cost: 1 RP."],
     defense: "D4",
     image: "/images/cards/fish/Oceanic/frigate-tuna.png",
   },
@@ -670,11 +692,11 @@ const oceanicCreatureData = [
     vp: 1,
     schoolDensityRequirement: 20,
     passives: [
-      "Toxic: If targeted, your opponent flips a coin. If tails, the attack fails.",
+      venomous,
       "EcoBoost: +1 RP to your bank cap.",
     ],
     actions: [
-      "Munch: 1D4 attack targeting invertebrates. Add +1 if targeting Man O' War. Cost: 3 RP.",
+      "Munch: 1D4 attack targeting invertebrates. Add +1 if targeting Man O' War. Cost: 2 RP.",
     ],
     defense: "D4-2",
     image: "/images/cards/invertebrates/Oceanic/blue-sea-dragon.png",
@@ -687,10 +709,22 @@ const oceanicCreatureData = [
     vp: 1,
     schoolDensityRequirement: 40,
     passives: [
-      "Stinging Tentacles: If targeted, the opponent must first flip a coin. If tails, the attack fails.",
+      venomous,
     ],
     actions: [
-      "Nerve Agent: Flip a coin. If heads, your opponent's coral is now stunned. Cost: 2 RP.",
+      "Nerve Agent: Flip a coin. If heads, your opponent's coral is now stunned. Cost: 1 RP.",
+      {
+        id: "deadly-poison",
+        name: "Deadly Poison",
+        text: "Inflict 1D4-2 (minimum 0) damage to an opponent's coral.",
+        cost: { rp: 2 },
+        timing: Timing.ACTION_PHASE,
+        effect: {
+          type: EffectType.DAMAGE,
+          target: { controller: "opponent", kind: CardKind.CORAL },
+          amount: { type: "dice", dice: "D4-2", multiplier: 1 },
+        },
+      },
     ],
     defense: "D4-2",
     image: "/images/cards/invertebrates/Oceanic/portugese-man-o-war.png",

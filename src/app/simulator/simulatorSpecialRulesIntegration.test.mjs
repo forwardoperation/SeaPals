@@ -262,7 +262,7 @@ test("Stunned is enforced by live income, action, destruction, and turn-boundary
     "function beginCreatureUtilityAction",
     "function completeCreatureDrawAction",
   );
-  assert.match(playerAction, /if \(inspectedFoundationIsStunned\)/);
+  assert.match(playerAction, /\(!sourceOverride && inspectedFoundationIsStunned\) \|\| creatureAbilitiesAreStunned\(creatureStatuses, sourceCardInstanceId\)/);
 
   const opponentTurn = sourceBetween("function resolveOpponentTurn", "function flipForOpeningTurn");
   assert.match(opponentTurn, /resolveStunnedAtControllerTurnBoundary\([\s\S]*turnComplete: !hasPendingRegenerate/);
@@ -407,17 +407,17 @@ test("Cookie Cutter uses the shared board-supply fallback for both controllers",
   assert.match(opponentTurn, /opponentParasiteTransfer\.recipientAfter/);
 });
 
-test("Lionfish and Spearfishing data identify owner-discard removal", () => {
+test("Lionfish destruction goes to the owner Lost Zone while Spearfishing discards", () => {
   const lionfishStart = fishCardSource.indexOf('id: "lionfish"');
   const lionfishEnd = fishCardSource.indexOf('id: "flounder"', lionfishStart);
   const lionfish = fishCardSource.slice(lionfishStart, lionfishEnd);
   assert.match(lionfish, /This Fish may be targeted by your opponent/);
-  assert.doesNotMatch(lionfish, /destroyedDestination: "lost-zone"/);
+  assert.match(lionfish, /destroyedDestination: "lost-zone"/);
   assert.match(lionfish, /name: "Invader"/);
   assert.match(lionfish, /specializedSupportCardIds: \["spearfishing"\]/);
 
-  assert.equal(cardsById.lionfish.destroyedDestination, "discard");
-  assert.doesNotMatch(cardsById.lionfish.specialRules.join(" "), /Lost Zone/i);
+  assert.equal(cardsById.lionfish.destroyedDestination, "lost-zone");
+  assert.match(cardsById.lionfish.specialRules.join(" "), /Lost Zone/i);
   assert.equal(cardsById.flounder.destroyedDestination, "discard", "ordinary Fish still discard when destroyed");
 
   const spearfishingStart = supportCardSource.indexOf('id: "spearfishing"');
@@ -433,7 +433,7 @@ test("Lionfish Invader data preserves its text and encodes host timing with owne
 
   assert.equal(
     invader.text,
-    "Flip a coin. If heads, perform a D4-1 attack on an opponent's Fish. If tails, perform the attack on one of your own Fish.",
+    "At the start of your turn, flip a coin. If heads, perform a D4 attack on an opponent's Fish. If tails, perform the attack on one of your own Fish.",
   );
   assert.equal(invader.timing, "startOfTurn");
   assert.deepEqual(invader.trigger, {
@@ -444,7 +444,7 @@ test("Lionfish Invader data preserves its text and encodes host timing with owne
     type: "flipCoin",
     heads: {
       type: "attack",
-      attackDice: "D4-1",
+      attackDice: "D4",
       target: {
         controller: "sourceOpponent",
         kind: "creature",
@@ -455,7 +455,7 @@ test("Lionfish Invader data preserves its text and encodes host timing with owne
     },
     tails: {
       type: "attack",
-      attackDice: "D4-1",
+      attackDice: "D4",
       target: {
         controller: "sourceController",
         kind: "creature",

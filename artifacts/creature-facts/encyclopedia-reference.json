@@ -1,0 +1,1208 @@
+[
+  {
+    "name": "Fairy Parrotfish",
+    "scientificName": "Scaridae",
+    "size": "Varies by species; many are 1–3 ft (30–90 cm) long",
+    "home": "Warm Atlantic and Caribbean coral reefs, seagrass beds, and rocky shallows.",
+    "sourceUrls": [
+      "https://ocean.si.edu/ocean-life/fish/tough-teeth-and-parrotfish-poop",
+      "https://oceanservice.noaa.gov/facts/sand.html"
+    ]
+  },
+  {
+    "name": "Cleaner Wrasse",
+    "scientificName": "Labroides dimidiatus",
+    "size": "Up to 5.5 in (14 cm) — about a pencil",
+    "home": "Indo-Pacific coral reefs with prominent rocks or coral heads for cleaning stations.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/Labroides-dimidiatus.html"
+    ]
+  },
+  {
+    "name": "Picasso Triggerfish",
+    "scientificName": "Rhinecanthus aculeatus",
+    "size": "Up to 12 in (30 cm) — about a school ruler",
+    "home": "Shallow Indo-Pacific reef flats, sandy lagoons, and protected coral areas.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/Rhinecanthus-aculeatus.html"
+    ]
+  },
+  {
+    "name": "Bluestriped Grunt",
+    "scientificName": "Haemulon sciurus",
+    "size": "Up to 18 in (46 cm) — about a large pillow",
+    "home": "Western Atlantic reefs, mangroves, and nearby seagrass beds.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/bluestriped-grunt/",
+      "https://www.fishbase.se/summary/Haemulon-sciurus.html"
+    ]
+  },
+  {
+    "name": "White Grunt",
+    "scientificName": "Haemulon plumierii",
+    "size": "Commonly about 17 in (45 cm) - a little longer than a laptop",
+    "home": "Western Atlantic reefs and nearby seagrass beds from the Chesapeake Bay and Gulf of Mexico through the Caribbean to Brazil.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/white-grunt/"
+    ]
+  },
+  {
+    "name": "Frogfish",
+    "scientificName": "Antennariidae",
+    "size": "Most are hand-sized; the largest reach about 15 in (38 cm)",
+    "home": "Tropical and subtropical reefs, rubble, seagrass, and sponge gardens.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/fish-families/antennariidae-frogfishes/"
+    ]
+  },
+  {
+    "name": "Clownfish",
+    "scientificName": "Amphiprioninae",
+    "size": "About 2–7 in (5–18 cm), depending on species",
+    "home": "Warm Indian and Pacific Ocean reefs wherever host anemones grow.",
+    "sourceUrls": [
+      "https://ocean.si.edu/ocean-life/fish/clownfish-their-host-anemone",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/clown-anemonefish/"
+    ]
+  },
+  {
+    "name": "Boxfish",
+    "scientificName": "Ostraciidae",
+    "size": "Usually 4–18 in (10–46 cm), depending on species",
+    "home": "Warm coral reefs, rocky areas, seagrass, and sandy coastal bottoms worldwide.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/honeycomb-cowfish/"
+    ]
+  },
+  {
+    "name": "Porcupine Fish",
+    "scientificName": "Diodon hystrix",
+    "size": "Up to 3 ft (91 cm) — about a baseball bat",
+    "home": "Warm reefs, caves, ledges, and wrecks around the world.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/porcupinefish/"
+    ]
+  },
+  {
+    "name": "Lionfish",
+    "scientificName": "Pterois volitans",
+    "size": "Up to about 18 in (46 cm) — longer than a laptop",
+    "home": "Native Indo-Pacific reefs; also invasive on western Atlantic and Caribbean reefs.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/red-lionfish/",
+      "https://oceanservice.noaa.gov/facts/lionfish-facts.html"
+    ]
+  },
+  {
+    "name": "Southern Flounder",
+    "scientificName": "Paralichthys lethostigma",
+    "size": "Up to about 3 ft (90 cm) — yardstick length",
+    "home": "Western Atlantic bays, estuaries, rivers, and sandy coastal bottoms.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/Paralichthys-lethostigma.html"
+    ]
+  },
+  {
+    "name": "Sargeant Major",
+    "scientificName": "Abudefduf saxatilis",
+    "size": "Up to 9 in (23 cm) — about a dinner plate across",
+    "home": "Western Atlantic reefs, rocks, wrecks, pilings, and floating Sargassum.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/sergeant-major/"
+    ]
+  },
+  {
+    "name": "French Angelfish",
+    "scientificName": "Pomacanthus paru",
+    "size": "Up to 24 in (61 cm) — about a carry-on suitcase",
+    "home": "Shallow western Atlantic and Caribbean coral and rocky reefs.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/french-angelfish/"
+    ]
+  },
+  {
+    "name": "Spanish Hogfish",
+    "scientificName": "Bodianus rufus",
+    "size": "Up to about 16 in (40 cm) — forearm length",
+    "home": "Western Atlantic and Caribbean coral reefs, rocky ledges, and drop-offs.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/Bodianus-rufus.html"
+    ]
+  },
+  {
+    "name": "Twinspot Butterflyfish",
+    "scientificName": "Chaetodontidae",
+    "size": "Around 5 in (13 cm) — about a child's hand",
+    "home": "Warm coral reefs and lagoons, including the Red Sea and Indo-Pacific.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/FamilySummary.php?ID=343"
+    ]
+  },
+  {
+    "name": "Queen Angelfish",
+    "scientificName": "Holacanthus ciliaris",
+    "size": "Up to 18 in (46 cm) — about a laptop",
+    "home": "Warm western Atlantic coral reefs from Florida and Bermuda to Brazil.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/queen-angelfish/"
+    ]
+  },
+  {
+    "name": "Blue Tang",
+    "scientificName": "Acanthurus coeruleus",
+    "size": "Up to about 15 in (38 cm) — longer than a ruler",
+    "home": "Western Atlantic coral reefs and rocky shores, especially in the Caribbean.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/blue-tang/"
+    ]
+  },
+  {
+    "name": "Spectacled Parrotfish",
+    "scientificName": "Chlorurus perspicillatus",
+    "size": "Up to about 2 ft (61 cm) — roughly pillow length",
+    "home": "Clear lagoons and outer reefs around Hawaiʻi and nearby central Pacific islands.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/Chlorurus-perspicillatus.html"
+    ]
+  },
+  {
+    "name": "Green Moray Eel",
+    "scientificName": "Gymnothorax funebris",
+    "size": "Up to about 8 ft (2.4 m) — taller than a doorway",
+    "home": "Western Atlantic reefs, rocky shores, mangroves, and seagrass beds.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/green-moray/"
+    ]
+  },
+  {
+    "name": "Reef Shark",
+    "scientificName": "Carcharhinus melanopterus",
+    "size": "Up to about 6 ft (1.8 m) — adult-human length",
+    "home": "Shallow Indo-Pacific coral reefs, lagoons, and sandy reef flats.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/Carcharhinus-melanopterus.html",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/blacktip-reef-shark/"
+    ]
+  },
+  {
+    "name": "Great Barracuda",
+    "scientificName": "Sphyraena barracuda",
+    "size": "Up to about 6.5 ft (2 m) — longer than a bed",
+    "home": "Tropical Atlantic reefs, mangroves, seagrass beds, and coastal open water.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/great-barracuda/"
+    ]
+  },
+  {
+    "name": "Goliath Grouper",
+    "scientificName": "Epinephelus itajara",
+    "size": "Up to about 8 ft (2.4 m) and 800 lb (363 kg)",
+    "home": "Western Atlantic reefs and wrecks; juveniles grow in mangrove nurseries.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/atlantic-goliath-grouper",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/goliath-grouper/"
+    ]
+  },
+  {
+    "name": "Green Sea Turtle",
+    "scientificName": "Chelonia mydas",
+    "size": "Shell up to about 4 ft (1.2 m); often 250–350 lb",
+    "home": "Tropical and subtropical coasts, reefs, lagoons, and seagrass meadows worldwide.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/green-turtle"
+    ]
+  },
+  {
+    "name": "Spinner Dolphins",
+    "scientificName": "Stenella longirostris",
+    "size": "About 4–7 ft (1.2–2.1 m) — bicycle to sofa length",
+    "home": "Tropical oceans worldwide, with some groups resting near islands and reefs.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/spinner-dolphin"
+    ]
+  },
+  {
+    "name": "Manta Ray",
+    "scientificName": "Mobula alfredi",
+    "size": "Wingspan up to about 18 ft (5.5 m) — wider than a car",
+    "home": "Tropical Indo-Pacific reefs, lagoons, channels, and nearby open water.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/Mobula-alfredi.html",
+      "https://australian.museum/learn/animals/fishes/alfred-manta-manta-alfredi/"
+    ]
+  },
+  {
+    "name": "Sea Urchin",
+    "scientificName": "Diadema antillarum",
+    "size": "Body up to 4 in (10 cm); spines can reach 12 in (30 cm)",
+    "home": "Western Atlantic and Caribbean coral and rocky reefs, ledges, and crevices.",
+    "sourceUrls": [
+      "https://www.aquariumofpacific.org/onlinelearningcenter/species/black_longspine_urchin",
+      "https://monitor.noaa.gov/science/creature-features.html"
+    ]
+  },
+  {
+    "name": "Anemone",
+    "scientificName": "Actiniaria",
+    "size": "From under 0.5 in to several feet across, depending on species",
+    "home": "Seafloors worldwide, from sunlit reefs and tide pools to the deep ocean.",
+    "sourceUrls": [
+      "https://ocean.si.edu/holding-tank/images-hide/sea-anemones",
+      "https://nationalzoo.si.edu/animals/corals-and-sea-anemones-anthozoa"
+    ]
+  },
+  {
+    "name": "Emerald Crab",
+    "scientificName": "Mithraculus sculptus",
+    "size": "Shell about 1.5 in (4 cm) across — cookie-sized",
+    "home": "Caribbean and western Atlantic reefs, rubble, rocks, and seagrass.",
+    "sourceUrls": [
+      "https://www.si.edu/object/mithraculus-sculptus%3Anmnhinvertebratezoology_14594539",
+      "https://www.si.edu/Content/SE/Educator%20Guides/secret_ocean_educators_guide.pdf"
+    ]
+  },
+  {
+    "name": "Blue Crab",
+    "scientificName": "Callinectes sapidus",
+    "size": "Shell up to about 9 in (23 cm) across — dinner-plate width",
+    "home": "Western Atlantic estuaries, seagrass beds, marshes, bays, and coastal shallows.",
+    "sourceUrls": [
+      "https://www.chesapeakebay.net/discover/field-guide/entry/blue-crab"
+    ]
+  },
+  {
+    "name": "Arrow Crab",
+    "scientificName": "Stenorhynchus seticornis",
+    "size": "Body 1–2.5 in (2.5–6 cm); legs reach about 4 in (10 cm)",
+    "home": "Atlantic and Caribbean reefs, hiding in sponges, corals, anemones, and crevices.",
+    "sourceUrls": [
+      "https://ocean.si.edu/ocean-life/invertebrates/spiders-mars",
+      "https://monitor.noaa.gov/science/creature-features.html"
+    ]
+  },
+  {
+    "name": "Mantis Shrimp",
+    "scientificName": "Stomatopoda",
+    "size": "About 1–12 in (3–30 cm), depending on species",
+    "home": "Mostly warm shallow seas, living in coral, rock, sand, or mud burrows.",
+    "sourceUrls": [
+      "https://www.si.edu/collections/snapshot/behold-mantis-shrimp",
+      "https://www.nhm.ac.uk/discover/mantis-shrimps.html"
+    ]
+  },
+  {
+    "name": "Leather Starfish",
+    "scientificName": "Dermasterias imbricata",
+    "size": "Up to 10 in (25 cm) across — dinner-plate width",
+    "home": "Rocky and sandy shallows from Alaska to northern Mexico.",
+    "sourceUrls": [
+      "https://www.aquariumofpacific.org/onlinelearningcenter/species/leather_sea_star"
+    ]
+  },
+  {
+    "name": "Cleaner Shrimp",
+    "scientificName": "Ancylomenes pedersoni",
+    "size": "Body about 1 in (2.5 cm), with much longer antennae",
+    "home": "Caribbean and western Atlantic reefs, usually beside a host sea anemone.",
+    "sourceUrls": [
+      "https://collections.nmnh.si.edu/search/iz/?q=qn+Ancylomenes+pedersoni",
+      "https://www.si.edu/Content/SE/Educator%20Guides/secret_ocean_educators_guide.pdf"
+    ]
+  },
+  {
+    "name": "Crown of Thorns",
+    "scientificName": "Acanthaster cf. solaris",
+    "size": "Commonly 10–14 in; exceptional adults approach 3 ft (1 m) across",
+    "home": "Indo-Pacific coral reefs, including Australia's Great Barrier Reef.",
+    "sourceUrls": [
+      "https://www2.gbrmpa.gov.au/news/star-wars-great-barrier-reef",
+      "https://www.aims.gov.au/research-topics/environmental-issues/crown-thorns-starfish"
+    ]
+  },
+  {
+    "name": "Nudibranch",
+    "scientificName": "Nudibranchia",
+    "size": "From rice-grain tiny to about 12 in (30 cm); many are thumb-sized",
+    "home": "Oceans worldwide, from tide pools and coral reefs to the deep seafloor.",
+    "sourceUrls": [
+      "https://www.smithsonianmag.com/science-nature/dive-exotic-world-nudibranchs-spectacular-slugs-sea-180984013/",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/opalescent-nudibranch"
+    ]
+  },
+  {
+    "name": "Giant Triton",
+    "scientificName": "Charonia tritonis",
+    "size": "Shell up to about 18–20 in (46–50 cm) — backpack length",
+    "home": "Tropical Indo-Pacific reefs, including the Red Sea and Pacific islands.",
+    "sourceUrls": [
+      "https://reeflifesurvey.com/species/charonia-tritonis/",
+      "https://www.aims.gov.au/information-centre/news-and-stories/fish-help-control-crown-thorns-starfish-numbers-great-barrier-reef"
+    ]
+  },
+  {
+    "name": "Octopus",
+    "scientificName": "Octopoda",
+    "size": "Species range from fingertip-sized to arm spans over 20 ft (6 m)",
+    "home": "Every ocean, in dens among reefs, rocks, shells, sand, and deep seafloors.",
+    "sourceUrls": [
+      "https://www.smithsonianmag.com/science-nature/ten-wild-facts-about-octopuses-they-have-three-hearts-big-brains-and-blue-blood-7625828/",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/day-octopus"
+    ]
+  },
+  {
+    "name": "Oysters",
+    "scientificName": "Ostreidae",
+    "size": "Often 3–10 in (8–25 cm), depending on species and age",
+    "home": "Shallow salty and brackish coasts, bays, estuaries, and tidal creeks worldwide.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/national/habitat-conservation/oyster-reef-habitat",
+      "https://oceanservice.noaa.gov/facts/spat.html"
+    ]
+  },
+  {
+    "name": "Giant Clam",
+    "scientificName": "Tridacna gigas",
+    "size": "Up to 4.25 ft (1.3 m) and about 550 lb (250 kg)",
+    "home": "Shallow Indo-Pacific coral reefs, lagoons, sand, and hard reef flats.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/true-giant-clam",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/giant-clam"
+    ]
+  },
+  {
+    "name": "Great White",
+    "scientificName": "Carcharodon carcharias",
+    "size": "Up to about 20 ft (6 m) — longer than a family car",
+    "home": "Cool-temperate and subtropical coastal and offshore waters worldwide.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/white-shark/"
+    ]
+  },
+  {
+    "name": "Tiger Shark",
+    "scientificName": "Galeocerdo cuvier",
+    "size": "Commonly 10–14 ft; very large sharks exceed 18 ft (5.5 m)",
+    "home": "Tropical and warm-temperate coasts, reefs, lagoons, and open water worldwide.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/tiger-shark/"
+    ]
+  },
+  {
+    "name": "Hammerhead",
+    "scientificName": "Sphyrnidae",
+    "size": "Roughly 3–20 ft (0.9–6 m), depending on species",
+    "home": "Warm coastal and offshore seas, including reefs, bays, and continental shelves.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/scalloped-hammerhead/",
+      "https://ocean.si.edu/ocean-life/sharks-rays/sharks"
+    ]
+  },
+  {
+    "name": "Bull Shark",
+    "scientificName": "Carcharhinus leucas",
+    "size": "Up to about 11.5 ft (3.5 m) — longer than two bicycles",
+    "home": "Warm coastal seas, estuaries, river mouths, and some freshwater rivers and lakes.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/bull-shark/"
+    ]
+  },
+  {
+    "name": "Bottlenose Dolphin",
+    "scientificName": "Tursiops truncatus",
+    "size": "Usually 6–13 ft (1.8–4 m), depending on population",
+    "home": "Temperate and tropical coasts, bays, estuaries, reefs, and offshore waters worldwide.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/common-bottlenose-dolphin",
+      "https://oceanservice.noaa.gov/facts/dolphin.html"
+    ]
+  },
+  {
+    "name": "Bristlemouth",
+    "scientificName": "Cyclothone spp.",
+    "size": "Usually under 3 in (8 cm)—shorter than a crayon",
+    "home": "It lives in deep midwater around the world, often hundreds of meters down.",
+    "sourceUrls": [
+      "https://repository.library.noaa.gov/view/noaa/15444/noaa_15444_DS1.pdf",
+      "https://repository.library.noaa.gov/view/noaa/16391/noaa_16391_DS1.pdf"
+    ]
+  },
+  {
+    "name": "Owlfish",
+    "scientificName": "Bathylagidae",
+    "size": "Around 6 in (15 cm)—about pencil-length",
+    "home": "They roam deep midwater in oceans worldwide, from about 550 to 6,600 meters down.",
+    "sourceUrls": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/owlfish",
+      "https://annualreport.mbari.org/2020/story/finding-resilience-and-relaxation-in-the-midnight-zone"
+    ]
+  },
+  {
+    "name": "Pacific Grenadier",
+    "scientificName": "Coryphaenoides acrolepis",
+    "size": "Usually 18–26 in (46–65 cm)—about baseball-bat length",
+    "home": "It lives along North Pacific continental slopes about 300 to 3,700 meters deep.",
+    "sourceUrls": [
+      "https://caseagrant.ucsd.edu/seafood-profiles/pacific-grenadier",
+      "https://apps-afsc.fisheries.noaa.gov/ichthyo/LHDataELH.php?GSID=Coryphaenoides%21acrolepis"
+    ]
+  },
+  {
+    "name": "Viperfish",
+    "scientificName": "Chauliodus sloani",
+    "size": "Up to about 12 in (30 cm)—one classroom ruler",
+    "home": "It ranges through tropical and temperate deep waters worldwide, often 500 to 2,500 meters down by day.",
+    "sourceUrls": [
+      "https://australian.museum/learn/animals/fishes/sloanes-viperfish-chauliodus-sloani/",
+      "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-ex2107-gallery-media-dive12-viperfish-2/"
+    ]
+  },
+  {
+    "name": "Barrel Eye Fish",
+    "scientificName": "Macropinna microstoma",
+    "size": "About 6 in (15 cm)—roughly pencil-length",
+    "home": "It hovers in North Pacific midwater, usually about 600 to 800 meters deep.",
+    "sourceUrls": [
+      "https://www.mbari.org/animal/barreleye-fish/",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/barreleye"
+    ]
+  },
+  {
+    "name": "Fangtooth Fish",
+    "scientificName": "Anoplogaster cornuta",
+    "size": "Up to about 6 in (16 cm)—banana-sized",
+    "home": "It lives in tropical and temperate oceans worldwide, from about 500 to nearly 5,000 meters deep.",
+    "sourceUrls": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/fangtooth",
+      "https://ocean.si.edu/ocean-life/fish/fangtooth-fish"
+    ]
+  },
+  {
+    "name": "Black Swallower",
+    "scientificName": "Chiasmodon niger",
+    "size": "Up to about 10 in (25 cm)—about dinner-plate length",
+    "home": "It swims in deep tropical and subtropical waters around the world.",
+    "sourceUrls": [
+      "https://ocean.si.edu/ocean-life/fish/black-swallower"
+    ]
+  },
+  {
+    "name": "Tripod Fish",
+    "scientificName": "Bathypterois grallator",
+    "size": "Body about 12 in (30 cm); stilts can approach 3 ft (1 m)",
+    "home": "It stands on soft deep seafloors worldwide, usually 900 to 4,700 meters down.",
+    "sourceUrls": [
+      "https://ocean.si.edu/ecosystems/deep-sea/tripod-fish",
+      "https://ocean.si.edu/ocean-life/fish/fish-fins-can-taste",
+      "https://australian.museum/learn/animals/fishes/spiderfish-bathypterois-sp/"
+    ]
+  },
+  {
+    "name": "Coelacanth",
+    "scientificName": "Latimeria chalumnae",
+    "size": "Up to about 6.5 ft (2 m)—taller than most adults",
+    "home": "The African coelacanth shelters in deep caves along rocky western Indian Ocean slopes.",
+    "sourceUrls": [
+      "https://ocean.si.edu/ocean-life/fish/coelacanth"
+    ]
+  },
+  {
+    "name": "Anglerfish",
+    "scientificName": "Melanocetus johnsonii",
+    "size": "Females up to about 8 in (20 cm)—about hand-length",
+    "home": "It roams deep tropical and temperate oceans worldwide, from about 100 to 4,500 meters down.",
+    "sourceUrls": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/black-seadevil-anglerfish",
+      "https://www.mbari.org/news/amazing-black-sea-devil-anglerfish-observed-in-monterey-bay/",
+      "https://ocean.si.edu/ocean-life/fish/blackdevil-fish"
+    ]
+  },
+  {
+    "name": "Chimera",
+    "scientificName": "Chimaeriformes",
+    "size": "Varies by species; some exceed 6 ft (1.8 m)",
+    "home": "Most species cruise cold continental slopes and deep seafloors around the world.",
+    "sourceUrls": [
+      "https://ocean.si.edu/ocean-life/sharks-rays/ghost-shark",
+      "https://www.mbari.org/animal/ghost-shark/",
+      "https://australian.museum/publications/sharks/what-is-a-shark/"
+    ]
+  },
+  {
+    "name": "Gulper Eel",
+    "scientificName": "Eurypharynx pelecanoides",
+    "size": "Up to about 3.3 ft (1 m)—golf-club length",
+    "home": "It drifts through tropical and temperate oceans worldwide, mostly 500 to 3,000 meters deep.",
+    "sourceUrls": [
+      "https://australian.museum/learn/animals/fishes/pelican-eel-eurypharynx-pelecanoides/",
+      "https://oceanexplorer.noaa.gov/multimedia/explorations-19biolum-logs-jun18-media-eel/",
+      "https://ocean.si.edu/ocean-life/fish/revealing-nature-eel-faces"
+    ]
+  },
+  {
+    "name": "Deep Sea Skate",
+    "scientificName": "Bathyraja abyssicola",
+    "size": "Up to about 5.2 ft (1.6 m)—adult arm-span length",
+    "home": "It lives on North Pacific seafloors about 360 to 2,900 meters deep.",
+    "sourceUrls": [
+      "https://repository.library.noaa.gov/view/noaa/16391/noaa_16391_DS1.pdf",
+      "https://oceanexplorer.noaa.gov/multimedia/explorations-20benthic-communities-logs-nov2-media-substrate/"
+    ]
+  },
+  {
+    "name": "Goblin Shark",
+    "scientificName": "Mitsukurina owstoni",
+    "size": "Up to about 12.5 ft (3.8 m)—small-car length",
+    "home": "It follows continental slopes and seamounts worldwide, usually about 270 to 1,300 meters deep.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/goblin-shark/"
+    ]
+  },
+  {
+    "name": "Frilled Shark",
+    "scientificName": "Chlamydoselachus anguineus",
+    "size": "Up to about 6.6 ft (2 m)—taller than a doorway",
+    "home": "It lives near continental slopes and canyons in scattered parts of the Atlantic and Pacific.",
+    "sourceUrls": [
+      "https://ocean.si.edu/ocean-life/sharks-rays/frilled-shark",
+      "https://australian.museum/learn/animals/fishes/frill-shark-chlamydoselachus-anguineus-garman-1884/"
+    ]
+  },
+  {
+    "name": "Cookie Cutter",
+    "scientificName": "Isistius brasiliensis",
+    "size": "Up to about 22 in (56 cm)—about skateboard length",
+    "home": "It spends days below 1,000 meters in warm oceans and rises toward the surface at night.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/cookiecutter-shark/",
+      "https://ocean.si.edu/ocean-life/sharks-rays/cookie-monster-sea"
+    ]
+  },
+  {
+    "name": "Megamouth Shark",
+    "scientificName": "Megachasma pelagios",
+    "size": "At least 17 ft (5.5 m) - about the length of a small car",
+    "home": "Open ocean in the Atlantic, Pacific, and Indian Oceans, moving between shallow nighttime water and deeper daytime water.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/megamouth-shark/"
+    ]
+  },
+  {
+    "name": "Giant Squid",
+    "scientificName": "Architeuthis dux",
+    "size": "Largest recorded nearly 43 ft (13 m)—school-bus length",
+    "home": "It lives in deep waters near continental and island slopes across the world's oceans.",
+    "sourceUrls": [
+      "https://ocean.si.edu/ocean-life/invertebrates/giant-squid",
+      "https://collections.tepapa.govt.nz/topic/1240"
+    ]
+  },
+  {
+    "name": "Colossal Squid",
+    "scientificName": "Mesonychoteuthis hamiltoni",
+    "size": "Known specimen 14 ft (4.2 m) and 1,091 lb (495 kg)—small-car heavy",
+    "home": "It inhabits the deep Southern Ocean around Antarctica, often more than 1,000 meters down.",
+    "sourceUrls": [
+      "https://collections.tepapa.govt.nz/topic/588",
+      "https://www.tepapa.govt.nz/te-papa-celebrates-colossal-squid-s-100th-birthday"
+    ]
+  },
+  {
+    "name": "Greenland Shark",
+    "scientificName": "Somniosus microcephalus",
+    "size": "Usually 8–14 ft (2.4–4.3 m); giants may reach 24 ft (7.3 m)",
+    "home": "It lives in cold Arctic and North Atlantic waters from the surface to great depths.",
+    "sourceUrls": [
+      "https://oceanservice.noaa.gov/facts/greenland-shark.html",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/greenland-shark/",
+      "https://pubmed.ncbi.nlm.nih.gov/27516602/"
+    ]
+  },
+  {
+    "name": "Giant Phantom Jelly",
+    "scientificName": "Stygiomedusa gigantea",
+    "size": "Bell over 3.3 ft (1 m); arms longer than 33 ft (10 m)",
+    "home": "It appears in deep oceans worldwide except the Arctic, usually in the midnight zone.",
+    "sourceUrls": [
+      "https://www.mbari.org/animal/giant-phantom-jelly/"
+    ]
+  },
+  {
+    "name": "Deep Cucumber",
+    "scientificName": "Holothuroidea",
+    "size": "Often around 8 in (20 cm), though species vary greatly",
+    "home": "Different species live on deep seafloors around the world.",
+    "sourceUrls": [
+      "https://annualreport.mbari.org/2019/story/swimming-sea-cucumbers",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/sea-pig"
+    ]
+  },
+  {
+    "name": "Giant Red Shrimp",
+    "scientificName": "Neognathophausia ingens",
+    "size": "Usually hand-sized; exceptional adults can reach 14 in (35 cm)",
+    "home": "It occupies deep tropical and subtropical midwater in the Atlantic, Pacific, and Indian oceans.",
+    "sourceUrls": [
+      "https://www.godac.jamstec.go.jp/bismal/e/view/9055610",
+      "https://dsg.mbari.org/dsg/view/concept/Gnathophausia%20ingens",
+      "https://www.journals.uchicago.edu/doi/10.2307/1541830"
+    ]
+  },
+  {
+    "name": "Dumbo Octopus",
+    "scientificName": "Grimpoteuthis spp.",
+    "size": "Many are 8–12 in (20–30 cm)—about dinner-plate width",
+    "home": "They live on very deep seafloors worldwide, with some found beyond 4,000 meters.",
+    "sourceUrls": [
+      "https://sanctuaries.noaa.gov/news/oct23/odd-ocean-critters.html",
+      "https://ocean.si.edu/ocean-life/invertebrates/grimpoteuthis-dumbo-octopus",
+      "https://oceantoday.noaa.gov/dumbooctopus/"
+    ]
+  },
+  {
+    "name": "Deep Sea Jelly",
+    "scientificName": "Atolla wyvillei",
+    "size": "Up to about 6 in (15 cm)—small-plate width",
+    "home": "It lives in deep waters worldwide, commonly about 500 to 5,000 meters down.",
+    "sourceUrls": [
+      "https://www.mbari.org/animal/deep-sea-crown-jelly/",
+      "https://oceanexplorer.noaa.gov/multimedia/edu-themes-bioluminescence-media-multimedia-atolla/",
+      "https://ocean.si.edu/ocean-life/invertebrates/atolla-jellyfish-waters-japan"
+    ]
+  },
+  {
+    "name": "Peacock Squid",
+    "scientificName": "Taonius spp.",
+    "size": "Mantle up to about 26 in (66 cm), with arms and tentacles beyond",
+    "home": "Species of Taonius drift through deep midwater in oceans around the world.",
+    "sourceUrls": [
+      "https://www.mbari.org/gallery/deep-sea-wallpapers/peacock-squid/",
+      "https://annualreport.mbari.org/2022/story/out-of-the-darkness-of-the-deep-inky-clouds-take-shape",
+      "https://repository.library.noaa.gov/view/noaa/56171/noaa_56171_DS1.pdf"
+    ]
+  },
+  {
+    "name": "Brittlestar",
+    "scientificName": "Ophiuroidea",
+    "size": "Often a coin-sized disk with arms five to eight times longer",
+    "home": "Brittlestars live on seafloors worldwide, including deep mud, coral, sponges, and rocks.",
+    "sourceUrls": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/deep-sea-brittle-star"
+    ]
+  },
+  {
+    "name": "Vampire Squid",
+    "scientificName": "Vampyroteuthis infernalis",
+    "size": "Mantle up to about 12 in (30 cm)—ruler-length",
+    "home": "It lives in low-oxygen deep water across tropical and temperate oceans.",
+    "sourceUrls": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/vampire-squid"
+    ]
+  },
+  {
+    "name": "Giant Isopod",
+    "scientificName": "Bathynomus giganteus",
+    "size": "Up to about 16 in (40 cm)—roughly football length",
+    "home": "It lives on deep Atlantic and Indo-West Pacific seafloors about 170 to 2,100 meters down.",
+    "sourceUrls": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/giant-isopod"
+    ]
+  },
+  {
+    "name": "Giant Tube Worm",
+    "scientificName": "Riftia pachyptila",
+    "size": "Up to about 6.6 ft (2 m)—taller than most adults",
+    "home": "It forms colonies at hydrothermal vents in the eastern Pacific, about 1,900 to 3,600 meters deep.",
+    "sourceUrls": [
+      "https://www.mbari.org/animal/giant-tubeworm/",
+      "https://oceanexplorer.noaa.gov/wp-content/uploads/2025/04/vent-food-web.pdf",
+      "https://oceantoday.noaa.gov/lifeonavent/"
+    ]
+  },
+  {
+    "name": "Oceanic Manta Ray",
+    "scientificName": "Mobula birostris",
+    "size": "Wingspan up to 26 ft (8 m), wider than two cars",
+    "home": "Tropical, subtropical, and temperate seas worldwide, including offshore waters and productive coasts.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/giant-manta-ray"
+    ]
+  },
+  {
+    "name": "Sardine Ball",
+    "scientificName": "Clupeidae",
+    "size": "Usually 6-12 in (15-30 cm)—about ruler length",
+    "home": "Sardines gather in plankton-rich coastal and open waters around the world.",
+    "sourceUrls": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/pacific-sardine",
+      "https://www.montereybayaquarium.org/animals-the-ocean/ecosystems/open-ocean"
+    ]
+  },
+  {
+    "name": "Anchovy Ball",
+    "scientificName": "Engraulidae",
+    "size": "Usually 2-9 in (5-23 cm)—pencil to banana length",
+    "home": "Anchovies school near the surface in coastal and open waters worldwide.",
+    "sourceUrls": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/northern-anchovy"
+    ]
+  },
+  {
+    "name": "Silverside Ball",
+    "scientificName": "Menidia menidia",
+    "size": "Up to 7 in (18 cm)—about a new pencil",
+    "home": "Atlantic silversides live near beaches, inlets, and estuaries of eastern North America.",
+    "sourceUrls": [
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3250"
+    ]
+  },
+  {
+    "name": "Herring Ball",
+    "scientificName": "Clupea harengus",
+    "size": "Up to 14 in (36 cm)—a little longer than a ruler",
+    "home": "They roam cool North Atlantic coastal and continental-shelf waters.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/atlantic-herring"
+    ]
+  },
+  {
+    "name": "Krill Bloom",
+    "scientificName": "Euphausiacea",
+    "size": "Most 0.4-2.4 in (1-6 cm)—paper-clip to finger length",
+    "home": "Different krill species swarm in oceans worldwide, from polar seas to the tropics.",
+    "sourceUrls": [
+      "https://ocean.si.edu/ocean-life/invertebrates/antarctic-krill",
+      "https://ocean.si.edu/ocean-life/fish/secret-life-plankton"
+    ]
+  },
+  {
+    "name": "Bluefin Tuna",
+    "scientificName": "Thunnus thynnus",
+    "size": "Up to about 10 ft (3 m) and 1,000 lb (450 kg)—motorcycle-heavy",
+    "home": "They migrate across the Atlantic between rich feeding waters and warm spawning areas.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/western-atlantic-bluefin-tuna"
+    ]
+  },
+  {
+    "name": "Swordfish",
+    "scientificName": "Xiphias gladius",
+    "size": "Up to 15 ft (4.6 m) and over 1,000 lb (450 kg)—small-car weight",
+    "home": "They range through tropical, temperate, and sometimes cold waters worldwide.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/north-atlantic-swordfish",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/swordfish/"
+    ]
+  },
+  {
+    "name": "Black Marlin",
+    "scientificName": "Istiompax indica",
+    "size": "Over 14 ft (4.4 m) and 1,500 lb (700 kg)—grand-piano weight",
+    "home": "They patrol tropical and subtropical Pacific and Indian Ocean waters.",
+    "sourceUrls": [
+      "https://australian.museum/learn/animals/fishes/black-marlin-makaira-indica-cuvier-1832/"
+    ]
+  },
+  {
+    "name": "Shortfin Mako Shark",
+    "scientificName": "Isurus oxyrinchus",
+    "size": "Up to about 13 ft (4 m)—longer than a small car",
+    "home": "Adults roam offshore waters worldwide while juveniles often use coastal areas.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/atlantic-shortfin-mako-shark"
+    ]
+  },
+  {
+    "name": "Sperm Whale",
+    "scientificName": "Physeter macrocephalus",
+    "size": "Females about 40 ft; males to 52 ft (12-16 m)—school-bus length",
+    "home": "They live in deep oceans worldwide, from the equator toward polar ice.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/sperm-whale"
+    ]
+  },
+  {
+    "name": "Pilot Whale",
+    "scientificName": "Globicephala spp.",
+    "size": "About 13-25 ft (4-7.6 m), depending on species and sex",
+    "home": "They favor deep temperate or tropical waters, often near continental slopes.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/short-finned-pilot-whale",
+      "https://www.fisheries.noaa.gov/species/long-finned-pilot-whale"
+    ]
+  },
+  {
+    "name": "Killer Whale",
+    "scientificName": "Orcinus orca",
+    "size": "About 20-32 ft (6-9.8 m)—up to bus length",
+    "home": "They live in every ocean, from polar seas to warm tropical water.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/killer-whale"
+    ]
+  },
+  {
+    "name": "Basking Shark",
+    "scientificName": "Cetorhinus maximus",
+    "size": "Often 20-26 ft; up to about 33 ft (6-10 m)—bus length",
+    "home": "They migrate through cool and temperate coastal and offshore waters worldwide.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/basking-shark/"
+    ]
+  },
+  {
+    "name": "Humpback Whale",
+    "scientificName": "Megaptera novaeangliae",
+    "size": "Up to about 60 ft (18 m) and 40 tons—city-bus length",
+    "home": "They live in every ocean and migrate between cold feeding grounds and warmer nurseries.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/humpback-whale"
+    ]
+  },
+  {
+    "name": "Blue Whale",
+    "scientificName": "Balaenoptera musculus",
+    "size": "Up to about 100 ft (30 m) and 200 tons—three buses long",
+    "home": "They roam oceans worldwide, often following seasonal patches of krill.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/blue-whale"
+    ]
+  },
+  {
+    "name": "Whale Shark",
+    "scientificName": "Rhincodon typus",
+    "size": "Commonly to 40 ft (12 m), with larger records—school-bus length",
+    "home": "They wander tropical and warm-temperate oceans, often gathering where food blooms.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/whale-shark/"
+    ]
+  },
+  {
+    "name": "Ocean Sunfish",
+    "scientificName": "Mola mola",
+    "size": "Up to about 10 ft (3 m) and over 2,000 lb (900 kg)—car-sized",
+    "home": "They live across tropical and temperate oceans around the globe.",
+    "sourceUrls": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/ocean-sunfish"
+    ]
+  },
+  {
+    "name": "Flying Fish",
+    "scientificName": "Exocoetidae",
+    "size": "Most under 12 in; some to 18 in (46 cm)—about a skateboard",
+    "home": "More than 40 species live near the surface of warm oceans worldwide.",
+    "sourceUrls": [
+      "https://www.nwf.org/Educational-Resources/Wildlife-Guide/Fish/Flying-Fish",
+      "https://australian.museum/learn/animals/fishes/find-a-fish/"
+    ]
+  },
+  {
+    "name": "Halfbeak",
+    "scientificName": "Hemiramphidae",
+    "size": "Most 7-18 in (18-46 cm)—forearm length",
+    "home": "Marine halfbeaks school near the surface of tropical and subtropical seas.",
+    "sourceUrls": [
+      "https://australian.museum/learn/animals/fishes/hemiramphidae-garfishes/"
+    ]
+  },
+  {
+    "name": "Needlefish",
+    "scientificName": "Belonidae",
+    "size": "Many 1-3 ft (30-90 cm); the largest approach 5 ft (1.5 m)",
+    "home": "The family lives in tropical and temperate seas worldwide, with some freshwater species.",
+    "sourceUrls": [
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/taxon/838"
+    ]
+  },
+  {
+    "name": "Barracuda",
+    "scientificName": "Sphyraena barracuda",
+    "size": "Commonly 2-4 ft; up to about 6.5 ft (2 m)—adult-height",
+    "home": "Great barracudas use tropical reefs, mangroves, seagrass beds, and nearby open water.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/great-barracuda/"
+    ]
+  },
+  {
+    "name": "Remora",
+    "scientificName": "Echeneidae",
+    "size": "About 1-3 ft (30-90 cm)—ruler to baseball-bat length",
+    "home": "Most remoras travel through warm open oceans wherever large hosts roam.",
+    "sourceUrls": [
+      "https://www.si.edu/newsdesk/releases/smithsonian-scientist-helps-confirm-centuries-old-theory-regarding-origins-sucking-disc-rem",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/1226"
+    ]
+  },
+  {
+    "name": "Mahi-Mahi",
+    "scientificName": "Coryphaena hippurus",
+    "size": "Up to about 6.8 ft (2.1 m), though most are smaller",
+    "home": "They roam tropical and subtropical waters in the Atlantic, Pacific, and Indian Oceans.",
+    "sourceUrls": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/dolphinfish",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/dolphinfish/"
+    ]
+  },
+  {
+    "name": "Bluefish",
+    "scientificName": "Pomatomus saltatrix",
+    "size": "Usually 1-2 ft; up to about 4 ft (1.2 m)—child-height",
+    "home": "They inhabit temperate and subtropical coastal and offshore waters in many oceans.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/bluefish"
+    ]
+  },
+  {
+    "name": "Bonito Tuna",
+    "scientificName": "Sarda sarda",
+    "size": "Up to about 3 ft (90 cm)—baseball-bat length",
+    "home": "Atlantic bonito use warm and temperate coastal waters of the Atlantic and nearby seas.",
+    "sourceUrls": [
+      "https://www.mass.gov/info-details/learn-about-atlantic-bonito"
+    ]
+  },
+  {
+    "name": "King Mackerel",
+    "scientificName": "Scomberomorus cavalla",
+    "size": "Often 20-35 in; up to 6 ft (1.8 m)—adult-height",
+    "home": "They range along the western Atlantic from the Americas into the Gulf and Caribbean.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/king-mackerel/"
+    ]
+  },
+  {
+    "name": "Crevalle Jack",
+    "scientificName": "Caranx hippos",
+    "size": "Usually about 2 ft; up to 3.3 ft (1 m)—yardstick length",
+    "home": "They live in western Atlantic coastal waters, estuaries, reefs, and offshore areas.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/crevalle-jack/"
+    ]
+  },
+  {
+    "name": "Yellowtail Amberjack",
+    "scientificName": "Seriola lalandi",
+    "size": "Often around 4 ft; exceptionally over 6 ft (1.8 m)—adult-height",
+    "home": "They occur in subtropical and temperate seas, especially in the Southern Hemisphere.",
+    "sourceUrls": [
+      "https://www.oki-geopark.jp/en/geopark-sites-features-list/2668/"
+    ]
+  },
+  {
+    "name": "African Pompano",
+    "scientificName": "Alectis ciliaris",
+    "size": "Usually under 3 ft; up to about 5 ft (1.5 m)—child-height",
+    "home": "Young fish drift offshore while adults patrol tropical coastal seas and reefs.",
+    "sourceUrls": [
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/1243"
+    ]
+  },
+  {
+    "name": "Frigate Tuna",
+    "scientificName": "Auxis thazard",
+    "size": "Usually 1-2 ft; up to about 2.1 ft (65 cm)—arm length",
+    "home": "They roam warm offshore and coastal waters around the world.",
+    "sourceUrls": [
+      "https://fisheries-refugia.org/resources/Species_Factsheets/FR-SpeicesFS_Frigate%20Tuna-Auxis%20thazard.pdf"
+    ]
+  },
+  {
+    "name": "Lookdown",
+    "scientificName": "Selene vomer",
+    "size": "Up to about 19 in (48 cm)—roughly skateboard length",
+    "home": "They school in warm western Atlantic coastal waters, bays, and estuaries.",
+    "sourceUrls": [
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3653"
+    ]
+  },
+  {
+    "name": "Pompano",
+    "scientificName": "Trachinotus carolinus",
+    "size": "Up to about 25 in (64 cm)—a little over two rulers",
+    "home": "Florida pompano live over sandy beaches, bays, and estuaries of the western Atlantic.",
+    "sourceUrls": [
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3657"
+    ]
+  },
+  {
+    "name": "Ocean Triggerfish",
+    "scientificName": "Canthidermis sufflamen",
+    "size": "Up to about 26 in (65 cm)—roughly two rulers long",
+    "home": "They occur across warm Atlantic open water, reefs, and floating Sargassum communities.",
+    "sourceUrls": [
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/4367"
+    ]
+  },
+  {
+    "name": "Tripletail",
+    "scientificName": "Lobotes surinamensis",
+    "size": "Up to about 3.6 ft (1.1 m)—baseball-bat length",
+    "home": "They use tropical and subtropical bays, estuaries, offshore water, and floating cover worldwide.",
+    "sourceUrls": [
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3700"
+    ]
+  },
+  {
+    "name": "Blue Sea Dragon",
+    "scientificName": "Glaucus atlanticus",
+    "size": "Usually under 2 in (5 cm)—about thumb length",
+    "home": "They drift at the surface of tropical and temperate oceans around the world.",
+    "sourceUrls": [
+      "https://australian.museum/learn/animals/plankton/holoplankton/",
+      "https://www.nationalgeographic.com/animals/article/dragons-real-komodo-flying-sea-slugs"
+    ]
+  },
+  {
+    "name": "Man O' War",
+    "scientificName": "Physalia physalis",
+    "size": "Float to about 12 in (30 cm); tentacles can trail over 30 ft (9 m)",
+    "home": "It drifts on the surface of warm Atlantic, Pacific, and Indian Ocean waters.",
+    "sourceUrls": [
+      "https://animaldiversity.org/accounts/Physalia_physalis/",
+      "https://ocean.si.edu/holding-tank/images-hide/siphonophores"
+    ]
+  },
+  {
+    "name": "Market Squid",
+    "scientificName": "Doryteuthis opalescens",
+    "size": "Up to about 11 in (28 cm)—roughly ruler length",
+    "home": "They range through eastern Pacific coastal water from Mexico toward southeastern Alaska.",
+    "sourceUrls": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/common-market-squid"
+    ]
+  },
+  {
+    "name": "Wahoo",
+    "scientificName": "Acanthocybium solandri",
+    "size": "Usually 3-5.5 ft; up to about 8 ft (2.5 m)—door-height or longer",
+    "home": "They roam tropical and subtropical oceans, often near islands or drifting objects.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/wahoo/"
+    ]
+  },
+  {
+    "name": "Yellowfin Tuna",
+    "scientificName": "Thunnus albacares",
+    "size": "Up to about 7 ft (2.1 m) and 400 lb (180 kg)—motorcycle-heavy",
+    "home": "They live throughout tropical and subtropical Atlantic, Pacific, and Indian Ocean waters.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/atlantic-yellowfin-tuna",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/yellowfin-tuna/"
+    ]
+  },
+  {
+    "name": "Sailfish",
+    "scientificName": "Istiophorus platypterus",
+    "size": "Up to about 11 ft (3.4 m), including the bill—small-car length",
+    "home": "They roam tropical and subtropical Atlantic, Pacific, and Indian Ocean waters.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/sailfish/"
+    ]
+  },
+  {
+    "name": "Blue Shark",
+    "scientificName": "Prionace glauca",
+    "size": "Commonly 6-9 ft; up to about 12 ft (3.8 m)—small-car length",
+    "home": "They cross temperate and tropical oceans, often following cooler water and prey.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/blue-shark/"
+    ]
+  },
+  {
+    "name": "Galapagos Shark",
+    "scientificName": "Carcharhinus galapagensis",
+    "size": "Up to about 11 ft (3.3 m)—small-car length",
+    "home": "They favor clear tropical water around islands, reefs, and continental shelves.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/galapagos-shark/"
+    ]
+  },
+  {
+    "name": "Oceanic Whitetip Shark",
+    "scientificName": "Carcharhinus longimanus",
+    "size": "Usually 6-10 ft; exceptionally near 13 ft (4 m)—small-car length",
+    "home": "They live near the surface of tropical and subtropical open oceans worldwide.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/oceanic-whitetip-shark/"
+    ]
+  },
+  {
+    "name": "Silky Shark",
+    "scientificName": "Carcharhinus falciformis",
+    "size": "Usually 6-8 ft; up to about 11 ft (3.3 m)—small-car length",
+    "home": "They inhabit tropical oceans, from offshore surface water to deeper continental slopes.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/silky-shark/"
+    ]
+  },
+  {
+    "name": "Loggerhead",
+    "scientificName": "Caretta caretta",
+    "size": "Adults are about 2.5-3.5 ft (0.8-1.1 m) long and 200-350 lb (90-159 kg) - roughly bathtub-long",
+    "home": "Young loggerheads spend years traveling through the open ocean; older juveniles and adults also forage in coastal bays, estuaries, and continental-shelf waters around the world.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/loggerhead-turtle"
+    ]
+  },
+  {
+    "name": "Thresher Shark",
+    "scientificName": "Alopias vulpinus",
+    "size": "Up to about 20 ft (6 m), with roughly half being tail—bus length",
+    "home": "Common threshers range through coastal and open temperate and tropical oceans worldwide.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/thresher-shark/"
+    ]
+  },
+  {
+    "name": "Winter Flounder",
+    "scientificName": "Pseudopleuronectes americanus",
+    "size": "Can grow longer than 2 ft (60 cm)",
+    "home": "Northwest Atlantic estuaries and continental shelf waters, from Canada to North Carolina.",
+    "sourceUrls": [
+      "https://www.fisheries.noaa.gov/species/winter-flounder"
+    ]
+  },
+  {
+    "name": "Spotfin Butterflyfish",
+    "scientificName": "Chaetodon ocellatus",
+    "size": "Up to 8 in (20 cm), though most are smaller",
+    "home": "Shallow western Atlantic reefs from North Carolina to Brazil; young fish also use seagrass beds.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/spotfin-butterflyfish/"
+    ]
+  },
+  {
+    "name": "Longhorn Cowfish",
+    "scientificName": "Lactoria cornuta",
+    "size": "Up to 20 in (50 cm)",
+    "home": "Tropical Indo-Pacific waters, including the Red Sea.",
+    "sourceUrls": [
+      "https://aqua.org/explore/animals/longhorn-cowfish"
+    ]
+  },
+  {
+    "name": "Nurse Shark",
+    "scientificName": "Ginglymostoma cirratum",
+    "size": "Adults commonly average about 7.5-8 ft (2.3-2.4 m)",
+    "home": "Warm coastal Atlantic waters, including Caribbean reefs and the Florida Keys.",
+    "sourceUrls": [
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/nurse-shark/"
+    ]
+  },
+  {
+    "name": "Yellow-Lipped Sea Krait",
+    "scientificName": "Laticauda colubrina",
+    "size": "Females average about 5 ft (1.5 m); males are usually smaller",
+    "home": "Tropical Indo-Pacific island shores, shallow reefs, and rocky coastal shelters.",
+    "sourceUrls": [
+      "https://animaldiversity.org/accounts/Laticauda_colubrina/"
+    ]
+  },
+  {
+    "name": "Box Jellyfish",
+    "scientificName": "Chironex fleckeri",
+    "size": "Bell up to 12 in (30 cm) across, with tentacles reaching 10 ft (3 m)",
+    "home": "Northern Australian coastal waters, including areas near mangrove creeks.",
+    "sourceUrls": [
+      "https://australian.museum/learn/animals/jellyfish/boxjellyfish/"
+    ]
+  }
+]

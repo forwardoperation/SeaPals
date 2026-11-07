@@ -125,6 +125,7 @@ export function describeCard(card) {
   const identity = [zone, subtype, creatureClass || category, kind === "Creature" ? "Creature" : ""].filter(Boolean).join(" ");
   const facts = [];
   facts.push(`${displayName} is ${/^([aeiou])/i.test(identity || kind) ? "an" : "a"} ${identity || category || kind} card.`);
+  if (card?.supportType) facts.push(`It is a Support ${titleCase(card.supportType)}. ${card.supportType === "aide" ? "You may play only one Aide per turn." : "You may play any number of Items per turn, including after an Aide."}`);
   if (cost !== null) facts.push(`It costs ${cost} RP to play.`);
   if (vp !== null) facts.push(`It is worth ${vp} VP while it remains in play.`);
   if (health !== null) facts.push(`It has ${health} HP.`);
@@ -145,6 +146,7 @@ export function describeCard(card) {
       defense,
       health,
       kind: card?.kind ?? "",
+      supportType: card?.supportType ?? null,
       printedRules: uniqueRules,
       schoolDensity: typeof card?.schoolDensity === "number" ? card.schoolDensity : null,
       schoolDensityRequirement: typeof card?.schoolDensityRequirement === "number" ? card.schoolDensityRequirement : null,

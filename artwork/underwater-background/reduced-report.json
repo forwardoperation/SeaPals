@@ -1,0 +1,48 @@
+[
+  {
+    "file": "underwater-background-light.svg",
+    "bytes": 1102892,
+    "paths": 10398,
+    "reduction_percent": 94.65,
+    "viewBox": "0 0 768 512",
+    "settings": {
+      "size": [
+        768,
+        512
+      ],
+      "filter_speckle": 3,
+      "color_precision": 7,
+      "layer_difference": 12,
+      "length_threshold": 5,
+      "path_precision": 1
+    },
+    "embedded_images": 0,
+    "before_optimization_bytes": 3414633,
+    "optimizer": "SVGO 4.1.0",
+    "rendered": true,
+    "optimization_mean_absolute_channel_error": 0.015
+  },
+  {
+    "file": "underwater-background-small.svg",
+    "bytes": 596450,
+    "paths": 5630,
+    "reduction_percent": 97.11,
+    "viewBox": "0 0 600 400",
+    "settings": {
+      "size": [
+        600,
+        400
+      ],
+      "filter_speckle": 3,
+      "color_precision": 6,
+      "layer_difference": 16,
+      "length_threshold": 5,
+      "path_precision": 1
+    },
+    "embedded_images": 0,
+    "before_optimization_bytes": 1839285,
+    "optimizer": "SVGO 4.1.0",
+    "rendered": true,
+    "optimization_mean_absolute_channel_error": 0.014
+  }
+]

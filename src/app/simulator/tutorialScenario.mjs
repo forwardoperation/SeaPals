@@ -24,7 +24,7 @@ export const SCRIPTED_TUTORIAL_FOUNDATION_OPENING_ORDER = Object.freeze([
 
 export const SCRIPTED_TUTORIAL_PALS_OPENING_ORDER = Object.freeze([
   "coral-gardener",
-  "arrow-crab",
+  "cleaner-shrimp",
   "nudibranch",
   "coral-reef",
 ]);
@@ -45,7 +45,7 @@ export const SCRIPTED_TUTORIAL_SEARCH_SEQUENCE = Object.freeze([
 ]);
 
 export const SCRIPTED_TUTORIAL_PLACEMENT_PLAN = Object.freeze({
-  "arrow-crab": Object.freeze({
+  "cleaner-shrimp": Object.freeze({
     foundationCardId: "mustard-hill-coral-base",
     slotClass: "invertebrate",
   }),
@@ -113,7 +113,7 @@ export const SCRIPTED_TUTORIAL_PALS_ORDER = Object.freeze([
 ]);
 
 export const SCRIPTED_TUTORIAL_FINISH_PLAN = Object.freeze({
-  curriculumVersion: 3,
+  curriculumVersion: 4,
   victoryTarget: 26,
   finishRound: 7,
   opponentTurnMode: "observe",
@@ -126,7 +126,7 @@ export const SCRIPTED_TUTORIAL_FINISH_PLAN = Object.freeze({
   reefBuilderStageOneCardId: "brain-coral-stage-1",
   reefBuilderStageTwoCardId: "brain-coral-stage-2",
 
-  bankBoostCardId: "arrow-crab",
+  bankBoostCardId: "cleaner-shrimp",
   utilityCardId: "nudibranch",
   secondInvertebrateCardId: "nudibranch",
   attackCardId: "porcupine-fish",

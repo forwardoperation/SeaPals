@@ -1,0 +1,1442 @@
+[
+  {
+    "cardId": "chimera",
+    "id": "1885:181563",
+    "pageId": "92:2",
+    "after": {
+      "family": "Chimaeridae",
+      "lengthLabel": "Length",
+      "length": "4’ 11”",
+      "weight": "5.5lbs",
+      "region": "NE Atlantic",
+      "description": "The rabbitfish is a chimaera with a cartilage skeleton, a long tapering tail, and permanent tooth plates for crushing shellfish."
+    },
+    "edits": [
+      {
+        "id": "I1885:181226;1994:41212",
+        "before": "LT: 2’",
+        "after": "LT: 4’ 11”"
+      },
+      {
+        "id": "I1885:181226;1994:41213",
+        "before": "Family varies",
+        "after": "Chimaeridae"
+      },
+      {
+        "id": "I1885:181226;1994:41214",
+        "before": "WT: 9lbs",
+        "after": "WT: 5.5lbs"
+      },
+      {
+        "id": "I1885:181226;1994:41215",
+        "before": "Worldwide",
+        "after": "NE Atlantic"
+      },
+      {
+        "id": "I1885:181226;1753:11339",
+        "before": "Often referred to as a \"ghost shark,\" this bizarre creature is famous for its shimmering, scaleless skin, large rabbit-like eyes.",
+        "after": "The rabbitfish is a chimaera with a cartilage skeleton, a long tapering tail, and permanent tooth plates for crushing shellfish."
+      }
+    ]
+  },
+  {
+    "cardId": "frilled-shark",
+    "id": "1885:182155",
+    "pageId": "92:2",
+    "after": {
+      "family": "Chlamydoselachidae",
+      "lengthLabel": "Length",
+      "length": "6’ 3”",
+      "weight": "28lbs",
+      "region": "Worldwide",
+      "description": "Six pairs of frilly gill slits give this deep-water shark its name. Its eel-like body and rows of three-pointed teeth help it capture prey."
+    },
+    "edits": [
+      {
+        "id": "I1885:181565;1994:41212",
+        "before": "LT: 6’",
+        "after": "LT: 6’ 3”"
+      },
+      {
+        "id": "I1885:181565;1994:41214",
+        "before": "WT: Unknown",
+        "after": "WT: 28lbs"
+      }
+    ]
+  },
+  {
+    "cardId": "silky-shark",
+    "id": "2261:223207",
+    "pageId": "92:2",
+    "after": {
+      "family": "Carcharhinidae",
+      "lengthLabel": "Length",
+      "length": "11’",
+      "weight": "760lbs",
+      "region": "Worldwide",
+      "description": "A swift, pelagic shark that gets its name from its exceptionally smooth, soft skin, which is covered in densely packed overlapping scales."
+    },
+    "edits": [
+      {
+        "id": "I2261:44889;1993:12655",
+        "before": "WT: Unknown",
+        "after": "WT: 760lbs"
+      }
+    ]
+  },
+  {
+    "cardId": "nurse-shark",
+    "id": "3387:42923",
+    "pageId": "92:2",
+    "after": {
+      "family": "Ginglymostomatidae",
+      "lengthLabel": "Length",
+      "length": "8’",
+      "weight": "240lbs",
+      "region": "Atlantic",
+      "description": "Nurse sharks can rest completely still on the ocean floor and pump water directly over their gills to breathe, unlike many other shark species."
+    },
+    "edits": [
+      {
+        "id": "I3387:43169;2082:7552",
+        "before": "WT: Varies",
+        "after": "WT: 240lbs"
+      }
+    ]
+  },
+  {
+    "cardId": "sea-urchin",
+    "id": "241:847",
+    "pageId": "92:340",
+    "after": {
+      "family": "Diadematidae",
+      "lengthLabel": "Test diameter",
+      "length": "3”",
+      "weight": "~160g",
+      "region": "W. Atlantic",
+      "description": "Long-spined sea urchins graze on algae and help keep reef surfaces clear. Their slender spines defend them while tube feet grip and move over rocks."
+    },
+    "edits": [
+      {
+        "id": "I2765:58993;2055:41785",
+        "before": "Spines: 12”",
+        "after": "Test: 3”"
+      },
+      {
+        "id": "I2765:58993;2055:41787",
+        "before": "WT: Unknown",
+        "after": "WT: ~160g"
+      }
+    ]
+  },
+  {
+    "cardId": "anemone",
+    "id": "241:848",
+    "pageId": "92:340",
+    "after": {
+      "family": "Stichodactylidae",
+      "lengthLabel": "Disc width",
+      "length": "16”",
+      "weight": "~350g",
+      "region": "Indo-Pacific",
+      "description": "The magnificent anemone anchors to reef rock with a sticky foot. Its stinging tentacles catch prey and shelter several species of anemonefish."
+    },
+    "edits": [
+      {
+        "id": "I2362:183066;2055:41785",
+        "before": "LT: Varies",
+        "after": "Disc: 16”"
+      },
+      {
+        "id": "I2362:183066;2055:41786",
+        "before": "Family varies",
+        "after": "Stichodactylidae"
+      },
+      {
+        "id": "I2362:183066;2055:41787",
+        "before": "WT: Varies",
+        "after": "WT: ~350g"
+      },
+      {
+        "id": "I2362:183066;2055:41788",
+        "before": "Worldwide",
+        "after": "Indo-Pacific"
+      },
+      {
+        "id": "I2362:183066;1449:46543",
+        "before": "Sea anemones anchor to rock and hunt with stinging tentacles packed with tiny harpoons. Some host clownfish, trading shelter for scraps.",
+        "after": "The magnificent anemone anchors to reef rock with a sticky foot. Its stinging tentacles catch prey and shelter several species of anemonefish."
+      }
+    ]
+  },
+  {
+    "cardId": "arrow-crab",
+    "id": "241:851",
+    "pageId": "92:340",
+    "after": {
+      "family": "Inachoididae",
+      "lengthLabel": "Span",
+      "length": "9.5”",
+      "weight": "~2g",
+      "region": "W. Atlantic",
+      "description": "Arrow crabs tiptoe on stilt-like legs, their long “arrow” snout probing crevices. At night they scavenge around for leftovers."
+    },
+    "edits": [
+      {
+        "id": "I3400:71586;2055:41787",
+        "before": "WT: Unknown",
+        "after": "WT: ~2g"
+      }
+    ]
+  },
+  {
+    "cardId": "mantis-shrimp",
+    "id": "241:852",
+    "pageId": "92:340",
+    "after": {
+      "family": "Odontodactylidae",
+      "lengthLabel": "Length",
+      "length": "7”",
+      "weight": "90g",
+      "region": "Indo-Pacific",
+      "description": "Peacock mantis shrimp smash hard-shelled prey with club-like limbs. Their rapid strikes create cavitation bubbles that collapse in a second impact."
+    },
+    "edits": [
+      {
+        "id": "I3017:15944;2055:41785",
+        "before": "LT: Varies",
+        "after": "LT: 7”"
+      },
+      {
+        "id": "I3017:15944;2055:41786",
+        "before": "Family varies",
+        "after": "Odontodactylidae"
+      },
+      {
+        "id": "I3017:15944;2055:41787",
+        "before": "WT: Varies",
+        "after": "WT: 90g"
+      },
+      {
+        "id": "I3017:15944;2055:41788",
+        "before": "Warm seas",
+        "after": "Indo-Pacific"
+      },
+      {
+        "id": "I3017:15944;1449:46543",
+        "before": "Mantis shrimp hunt with specialized clubs or spears. Club-bearing species strike so fast that collapsing cavitation bubbles add a second impact.",
+        "after": "Peacock mantis shrimp smash hard-shelled prey with club-like limbs. Their rapid strikes create cavitation bubbles that collapse in a second impact."
+      }
+    ]
+  },
+  {
+    "cardId": "leather-starfish",
+    "id": "241:855",
+    "pageId": "92:340",
+    "after": {
+      "family": "Asteropseidae",
+      "lengthLabel": "Span",
+      "length": "10”",
+      "weight": "~75g",
+      "region": "NE Pacific",
+      "description": "Leather stars have smooth, rubbery skin and a garlic-like odor. Tube feet carry them over rocky Pacific shores as they feed on anemones and other prey."
+    },
+    "edits": [
+      {
+        "id": "4008:452906",
+        "before": "WT: Unknown",
+        "after": "WT: ~75g"
+      }
+    ]
+  },
+  {
+    "cardId": "cleaner-shrimp",
+    "id": "241:854",
+    "pageId": "92:340",
+    "after": {
+      "family": "Lysmatidae",
+      "lengthLabel": "Length",
+      "length": "1.7”",
+      "weight": "~2.2g",
+      "region": "Indo-Pacific",
+      "description": "Scarlet cleaner shrimp wave long white antennae at cleaning stations. Fish visit to have parasites and dead tissue removed from their skin and mouths."
+    },
+    "edits": [
+      {
+        "id": "I2906:237313;2055:41785",
+        "before": "LT: 3”",
+        "after": "LT: 1.7”"
+      },
+      {
+        "id": "I2906:237313;2055:41787",
+        "before": "WT: Unknown",
+        "after": "WT: ~2.2g"
+      }
+    ]
+  },
+  {
+    "cardId": "giant-triton",
+    "id": "241:856",
+    "pageId": "92:340",
+    "after": {
+      "family": "Charoniidae",
+      "lengthLabel": "Shell length",
+      "length": "11.3”",
+      "weight": "~5.7lbs",
+      "region": "Indo-Pacific",
+      "description": "Giant tritons are large predatory sea snails that hunt crown-of-thorns starfish, subduing them with a paralyzing bite."
+    },
+    "edits": [
+      {
+        "id": "4008:452910",
+        "before": "Shell: 20”",
+        "after": "Shell: 11.3”"
+      },
+      {
+        "id": "4008:452911",
+        "before": "WT: Unknown",
+        "after": "WT: ~5.7lbs"
+      }
+    ]
+  },
+  {
+    "cardId": "octopus",
+    "id": "746:146691",
+    "pageId": "92:340",
+    "after": {
+      "family": "Octopodidae",
+      "lengthLabel": "Span",
+      "length": "8”",
+      "weight": "100g",
+      "region": "Indo-Pacific",
+      "description": "Greater blue-ringed octopuses flash vivid blue rings when threatened. These small reef hunters use potent venom to subdue crabs and other prey."
+    },
+    "edits": [
+      {
+        "id": "4008:452914",
+        "before": "Family varies",
+        "after": "Octopodidae"
+      },
+      {
+        "id": "4008:452915",
+        "before": "LT: Varies",
+        "after": "Span: 8”"
+      },
+      {
+        "id": "4008:452916",
+        "before": "WT: Varies",
+        "after": "WT: 100g"
+      },
+      {
+        "id": "4008:452917",
+        "before": "Worldwide",
+        "after": "Indo-Pacific"
+      },
+      {
+        "id": "I745:145216;213:3170",
+        "before": "Octopuses change color and texture in a blink, melting into reef or rock. With eight clever arms and hundreds of suckers, they solve puzzles—then vanish in a puff of ink.",
+        "after": "Greater blue-ringed octopuses flash vivid blue rings when threatened. These small reef hunters use potent venom to subdue crabs and other prey."
+      }
+    ]
+  },
+  {
+    "cardId": "oysters",
+    "id": "746:147861",
+    "pageId": "92:340",
+    "after": {
+      "family": "Ostreidae",
+      "lengthLabel": "Shell length",
+      "length": "2.4”",
+      "weight": "~48g",
+      "region": "W. Atlantic",
+      "description": "Eastern oysters filter plankton from coastal water. Their rough shells grow together into reefs that shelter fish, crabs, and other small animals."
+    },
+    "edits": [
+      {
+        "id": "4008:452920",
+        "before": "LT: Varies",
+        "after": "Shell: 2.4”"
+      },
+      {
+        "id": "4008:452921",
+        "before": "WT: Varies",
+        "after": "WT: ~48g"
+      },
+      {
+        "id": "4008:452922",
+        "before": "Worldwide",
+        "after": "W. Atlantic"
+      },
+      {
+        "id": "I746:147297;213:3170",
+        "before": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats.",
+        "after": "Eastern oysters filter plankton from coastal water. Their rough shells grow together into reefs that shelter fish, crabs, and other small animals."
+      }
+    ]
+  },
+  {
+    "cardId": "deep-cucumber",
+    "id": "1916:16624",
+    "pageId": "92:340",
+    "after": {
+      "family": "Pelagothuriidae",
+      "lengthLabel": "Length",
+      "length": "5.2”",
+      "weight": "~285g",
+      "region": "Worldwide",
+      "description": "The swimming sea cucumber feeds on seafloor sediment, then swims with a webbed veil. Its transparent body reveals the coiled gut inside."
+    },
+    "edits": [
+      {
+        "id": "I1901:12438;1994:41784",
+        "before": "LT: Varies",
+        "after": "LT: 5.2”"
+      },
+      {
+        "id": "I1901:12438;1994:41785",
+        "before": "Family varies",
+        "after": "Pelagothuriidae"
+      },
+      {
+        "id": "I1901:12438;1994:41786",
+        "before": "WT: Varies",
+        "after": "WT: ~285g"
+      },
+      {
+        "id": "I1901:12438;1867:66607",
+        "before": "Deep-sea sea cucumbers feed on organic particles on or near the seafloor. Their soft bodies and feeding tentacles come in many shapes across species.",
+        "after": "The swimming sea cucumber feeds on seafloor sediment, then swims with a webbed veil. Its transparent body reveals the coiled gut inside."
+      }
+    ]
+  },
+  {
+    "cardId": "brittlestar",
+    "id": "1916:16629",
+    "pageId": "92:340",
+    "after": {
+      "family": "Ophiotrichidae",
+      "lengthLabel": "Disc width",
+      "length": "0.6”",
+      "weight": "~3g",
+      "region": "E. Atlantic",
+      "description": "Common brittle stars raise their spiny arms to catch food particles from passing water. A lost arm can regrow after a narrow escape."
+    },
+    "edits": [
+      {
+        "id": "I1901:13561;1994:41784",
+        "before": "Span: Varies",
+        "after": "Disc: 0.6”"
+      },
+      {
+        "id": "I1901:13561;1994:41785",
+        "before": "Family varies",
+        "after": "Ophiotrichidae"
+      },
+      {
+        "id": "I1901:13561;1994:41786",
+        "before": "WT: Varies",
+        "after": "WT: ~3g"
+      },
+      {
+        "id": "I1901:13561;1994:41787",
+        "before": "Worldwide",
+        "after": "E. Atlantic"
+      },
+      {
+        "id": "I1901:13561;1867:66607",
+        "before": "Brittle stars move with slender, flexible arms joined to a central disc. Many can shed an arm to escape a predator and later regrow it.",
+        "after": "Common brittle stars raise their spiny arms to catch food particles from passing water. A lost arm can regrow after a narrow escape."
+      }
+    ]
+  },
+  {
+    "cardId": "vampire-squid",
+    "id": "1916:16630",
+    "pageId": "92:340",
+    "after": {
+      "family": "Vampyroteuthidae",
+      "lengthLabel": "Length",
+      "length": "12”",
+      "weight": "~250g",
+      "region": "Worldwide",
+      "description": "When threatened, it doesn't ink; instead, it cloaks itself by pulling its webbed arms over its head and releases glowing, bioluminescent clouds."
+    },
+    "edits": [
+      {
+        "id": "I1904:13999;1994:41786",
+        "before": "WT: Unknown",
+        "after": "WT: ~250g"
+      }
+    ]
+  },
+  {
+    "cardId": "giant-isopod",
+    "id": "1916:16631",
+    "pageId": "92:340",
+    "after": {
+      "family": "Cirolanidae",
+      "lengthLabel": "Length",
+      "length": "14”",
+      "weight": "2.4lbs",
+      "region": "W. Atlantic",
+      "description": "Giant isopods are deep-sea relatives of woodlice. Their armored bodies protect them as they scavenge, and a slow metabolism helps them endure long fasts."
+    },
+    "edits": [
+      {
+        "id": "I1904:14194;1994:41784",
+        "before": "LT: 16”",
+        "after": "LT: 14”"
+      },
+      {
+        "id": "I1904:14194;1994:41786",
+        "before": "WT: Varies",
+        "after": "WT: 2.4lbs"
+      },
+      {
+        "id": "I1904:14194;1994:41787",
+        "before": "Worldwide",
+        "after": "W. Atlantic"
+      }
+    ]
+  },
+  {
+    "cardId": "giant-tube-worm",
+    "id": "1916:16632",
+    "pageId": "92:340",
+    "after": {
+      "family": "Siboglinidae",
+      "lengthLabel": "Tube length",
+      "length": "8’",
+      "weight": "650g",
+      "region": "E. Pacific",
+      "description": "Giant tube worms live at hydrothermal vents. Without a mouth or gut, adults rely on internal bacteria that use chemicals from vent fluids to make food."
+    },
+    "edits": [
+      {
+        "id": "I1914:16424;1994:41784",
+        "before": "LT: 8’",
+        "after": "Tube: 8’"
+      },
+      {
+        "id": "I1914:16424;1994:41786",
+        "before": "WT: Unknown",
+        "after": "WT: 650g"
+      }
+    ]
+  },
+  {
+    "cardId": "peacock-squid",
+    "id": "1916:16628",
+    "pageId": "92:340",
+    "after": {
+      "family": "Cranchiidae",
+      "lengthLabel": "Mantle length",
+      "length": "15.3”",
+      "weight": "~170g",
+      "region": "N. Pacific",
+      "description": "Boreal glass squid have transparent bodies and large eyes. Light organs beneath the eyes help conceal their silhouettes in the dim ocean."
+    },
+    "edits": [
+      {
+        "id": "I1901:13365;1994:41784",
+        "before": "LT: Varies",
+        "after": "ML: 15.3”"
+      },
+      {
+        "id": "I1901:13365;1994:41786",
+        "before": "WT: Unknown",
+        "after": "WT: ~170g"
+      },
+      {
+        "id": "I1901:13365;1994:41787",
+        "before": "Worldwide",
+        "after": "N. Pacific"
+      },
+      {
+        "id": "I1901:13365;1867:66607",
+        "before": "Peacock squid have large eyes and nearly transparent bodies. Light organs beneath the eyes help hide their silhouettes from predators below.",
+        "after": "Boreal glass squid have transparent bodies and large eyes. Light organs beneath the eyes help conceal their silhouettes in the dim ocean."
+      }
+    ]
+  },
+  {
+    "cardId": "man-o-war",
+    "id": "2285:31376",
+    "pageId": "92:340",
+    "after": {
+      "family": "Physaliidae",
+      "lengthLabel": "Tentacle length",
+      "length": "65’",
+      "weight": "~3g",
+      "region": "Tropics",
+      "description": "A Portuguese man o' war is a colony of specialized zooids. Its gas-filled float rides at the surface while long, stinging tentacles capture prey below."
+    },
+    "edits": [
+      {
+        "id": "I2282:28199;1993:12848",
+        "before": "Tent.: 65’",
+        "after": "Tentacles: 65’"
+      },
+      {
+        "id": "I2282:28199;1993:12850",
+        "before": "WT: Unknown",
+        "after": "WT: ~3g"
+      }
+    ]
+  },
+  {
+    "cardId": "market-squid",
+    "id": "2294:52505",
+    "pageId": "92:340",
+    "after": {
+      "family": "Loliginidae",
+      "lengthLabel": "Length",
+      "length": "12”",
+      "weight": "148g",
+      "region": "NE Pacific",
+      "description": "Market squid live only about six to nine months. They gather to mate and lay egg capsules on the seafloor, then die after spawning."
+    },
+    "edits": [
+      {
+        "id": "I2293:52394;1993:12850",
+        "before": "WT: Unknown",
+        "after": "WT: 148g"
+      }
+    ]
+  },
+  {
+    "cardId": "box-jellyfish",
+    "id": "3492:178297",
+    "pageId": "92:340",
+    "after": {
+      "family": "Chirodropidae",
+      "lengthLabel": "Bell width",
+      "length": "12”",
+      "weight": "4.4lbs",
+      "region": "Indo-Pacific",
+      "description": "The Australian box jellyfish has a cube-shaped bell and clusters of eyes. Its long tentacles carry powerful venom for catching fish and shrimp."
+    },
+    "edits": [
+      {
+        "id": "I3492:164629;2055:41785",
+        "before": "Bell: 12”",
+        "after": "Bell width: 12”"
+      },
+      {
+        "id": "I3492:164629;2055:41787",
+        "before": "WT: Unknown",
+        "after": "WT: 4.4lbs"
+      }
+    ]
+  },
+  {
+    "cardId": "fairy-parrotfish",
+    "id": "241:1493",
+    "pageId": "24:4",
+    "after": {
+      "family": "Labridae",
+      "lengthLabel": "Length",
+      "length": "20”",
+      "weight": "~4.1lbs",
+      "region": "Indo-Pacific",
+      "description": "Singapore parrotfish graze reef surfaces with fused, beak-like teeth. Terminal-phase fish have a distinctive green throat and brightly edged scales."
+    },
+    "edits": [
+      {
+        "id": "I2445:113100;1999:13864",
+        "before": "LT: 2’ 2”",
+        "after": "LT: 20”"
+      },
+      {
+        "id": "I2445:113100;1999:13866",
+        "before": "WT: Varies",
+        "after": "WT: ~4.1lbs"
+      },
+      {
+        "id": "I2445:113100;1999:13867",
+        "before": "Tropical reefs",
+        "after": "Indo-Pacific"
+      },
+      {
+        "id": "I2445:113100;1314:88669",
+        "before": "Parrotfish scrape food from reef surfaces with beak-like teeth, helping produce sand. Some species sleep inside protective mucus cocoons.",
+        "after": "Singapore parrotfish graze reef surfaces with fused, beak-like teeth. Terminal-phase fish have a distinctive green throat and brightly edged scales."
+      }
+    ]
+  },
+  {
+    "cardId": "longhorn-cowfish",
+    "id": "241:1497",
+    "pageId": "24:4",
+    "after": {
+      "family": "Ostraciidae",
+      "lengthLabel": "Fork length",
+      "length": "10”",
+      "weight": "~180g",
+      "region": "Indo-Pacific",
+      "description": "Protected by a rigid, box-like body, longhorn cowfish graze on small bottom-dwelling prey. When severely stressed, they can release toxic mucus."
+    },
+    "edits": [
+      {
+        "id": "I3782:122265;1999:13864",
+        "before": "LT: 18”",
+        "after": "FL: 10”"
+      },
+      {
+        "id": "I3782:122265;1999:13866",
+        "before": "WT: Unknown",
+        "after": "WT: ~180g"
+      }
+    ]
+  },
+  {
+    "cardId": "frogfish",
+    "id": "241:1499",
+    "pageId": "24:4",
+    "after": {
+      "family": "Antennariidae",
+      "lengthLabel": "Length",
+      "length": "12”",
+      "weight": "~660g",
+      "region": "Indo-Pacific",
+      "description": "Giant frogfish blend into sponges and reef growth, then lure prey with a modified fin spine. An expanding mouth pulls the victim in with a sudden gulp."
+    },
+    "edits": [
+      {
+        "id": "I2582:577194;1999:13864",
+        "before": "LT: Varies",
+        "after": "LT: 12”"
+      },
+      {
+        "id": "I2582:577194;1999:13866",
+        "before": "WT: Varies",
+        "after": "WT: ~660g"
+      },
+      {
+        "id": "I2582:577194;1999:13867",
+        "before": "Worldwide",
+        "after": "Indo-Pacific"
+      },
+      {
+        "id": "I2582:577194;1314:88669",
+        "before": "Frogfish hide among reef growth and lure prey with a modified dorsal-fin spine. Their expanding mouths suck in unsuspecting animals in a rapid gulp.",
+        "after": "Giant frogfish blend into sponges and reef growth, then lure prey with a modified fin spine. An expanding mouth pulls the victim in with a sudden gulp."
+      }
+    ]
+  },
+  {
+    "cardId": "pacific-grenadier",
+    "id": "1901:9371",
+    "pageId": "24:4",
+    "after": {
+      "family": "Macrouridae",
+      "lengthLabel": "Length",
+      "length": "3’ 5”",
+      "weight": "6.6lbs",
+      "region": "N. Pacific",
+      "description": "Often called a \"rattail\" because of its slender, whip-like tail, this deep-sea fish can live for over 70 years in extreme pressures."
+    },
+    "edits": [
+      {
+        "id": "I1885:182868;1993:12218",
+        "before": "LT: 2’ 6”",
+        "after": "LT: 3’ 5”"
+      },
+      {
+        "id": "I1885:182868;1993:12220",
+        "before": "WT: Unknown",
+        "after": "WT: 6.6lbs"
+      }
+    ]
+  },
+  {
+    "cardId": "humpback-anglerfish",
+    "id": "1901:9373",
+    "pageId": "24:4",
+    "after": {
+      "family": "Melanocetidae",
+      "lengthLabel": "Length",
+      "length": "7”",
+      "weight": "~120g",
+      "region": "Worldwide",
+      "description": "Female humpback anglerfish carry a lure lit by symbiotic bacteria. It dangles above the mouth, drawing prey close in the darkness of the deep sea."
+    },
+    "edits": [
+      {
+        "id": "I1885:183600;1993:12220",
+        "before": "WT: Unknown",
+        "after": "WT: ~120g"
+      }
+    ]
+  },
+  {
+    "cardId": "fangtooth-fish",
+    "id": "1901:9375",
+    "pageId": "24:4",
+    "after": {
+      "family": "Anoplogastridae",
+      "lengthLabel": "Length",
+      "length": "7”",
+      "weight": "~120g",
+      "region": "Worldwide",
+      "description": "Fangtooth fish have enormous teeth for their small bodies. Special sockets in the roof of the mouth make room for the long lower fangs."
+    },
+    "edits": [
+      {
+        "id": "I1885:184326;1993:12220",
+        "before": "WT: Unknown",
+        "after": "WT: ~120g"
+      }
+    ]
+  },
+  {
+    "cardId": "black-swallower",
+    "id": "1901:9376",
+    "pageId": "24:4",
+    "after": {
+      "family": "Chiasmodontidae",
+      "lengthLabel": "Length",
+      "length": "9”",
+      "weight": "~70g",
+      "region": "Worldwide",
+      "description": "The black swallower has an elastic stomach that can hold prey larger than itself. This adaptation helps it take advantage of scarce deep-sea meals."
+    },
+    "edits": [
+      {
+        "id": "I1895:7228;1993:12220",
+        "before": "WT: Unknown",
+        "after": "WT: ~70g"
+      }
+    ]
+  },
+  {
+    "cardId": "tripod-fish",
+    "id": "1901:9377",
+    "pageId": "24:4",
+    "after": {
+      "family": "Ipnopidae",
+      "lengthLabel": "Length",
+      "length": "17”",
+      "weight": "~440g",
+      "region": "Worldwide",
+      "description": "Tripod fish stand above the seabed on three elongated fin rays. Facing into the current, they spread their pectoral fins to help detect drifting prey."
+    },
+    "edits": [
+      {
+        "id": "I1895:7734;1993:12220",
+        "before": "WT: Unknown",
+        "after": "WT: ~440g"
+      }
+    ]
+  },
+  {
+    "cardId": "halfbeak",
+    "id": "2285:31389",
+    "pageId": "24:4",
+    "after": {
+      "family": "Hemiramphidae",
+      "lengthLabel": "Length",
+      "length": "8.4”",
+      "weight": "~46g",
+      "region": "W. Atlantic",
+      "description": "Ballyhoo halfbeaks swim near the surface with a long lower jaw and a short upper jaw. They feed on drifting plants and small animals."
+    },
+    "edits": [
+      {
+        "id": "I2270:244153;1993:12121",
+        "before": "LT: Varies",
+        "after": "LT: 8.4”"
+      },
+      {
+        "id": "I2270:244153;1993:12123",
+        "before": "WT: Varies",
+        "after": "WT: ~46g"
+      },
+      {
+        "id": "I2270:244153;1993:12124",
+        "before": "Tropics",
+        "after": "W. Atlantic"
+      },
+      {
+        "id": "I2270:244153;1993:12078",
+        "before": "Halfbeaks have a long lower jaw and a much shorter upper jaw. These surface-dwelling fish may leap or skip across the water to escape predators.",
+        "after": "Ballyhoo halfbeaks swim near the surface with a long lower jaw and a short upper jaw. They feed on drifting plants and small animals."
+      }
+    ]
+  },
+  {
+    "cardId": "needlefish",
+    "id": "2285:31384",
+    "pageId": "24:4",
+    "after": {
+      "family": "Belonidae",
+      "lengthLabel": "Length",
+      "length": "4’ 11”",
+      "weight": "14lbs",
+      "region": "Tropics",
+      "description": "Hound needlefish hunt near the surface with long jaws lined with sharp teeth. They chase small fish and may leap clear of the water."
+    },
+    "edits": [
+      {
+        "id": "I2280:18845;1993:12121",
+        "before": "LT: Varies",
+        "after": "LT: 4’ 11”"
+      },
+      {
+        "id": "I2280:18845;1993:12123",
+        "before": "WT: Varies",
+        "after": "WT: 14lbs"
+      },
+      {
+        "id": "I2280:18845;1993:12078",
+        "before": "Needlefish hunt near the surface with long jaws lined with sharp teeth. When startled, they can leap clear of the water.",
+        "after": "Hound needlefish hunt near the surface with long jaws lined with sharp teeth. They chase small fish and may leap clear of the water."
+      }
+    ]
+  },
+  {
+    "cardId": "krill-bloom-base",
+    "id": "2279:17422",
+    "pageId": "24:4",
+    "after": {
+      "family": "Euphausiidae",
+      "lengthLabel": "Length",
+      "length": "2”",
+      "weight": "~1g",
+      "region": "Southern Ocean",
+      "description": "Antarctic krill gather in dense swarms that feed whales, seals, and penguins. Length and weight describe one krill."
+    },
+    "edits": [
+      {
+        "id": "I2271:247030;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 2”"
+      },
+      {
+        "id": "I2271:247030;2271:245652",
+        "before": "Family varies",
+        "after": "Euphausiidae"
+      },
+      {
+        "id": "I2271:247030;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~1g"
+      },
+      {
+        "id": "I2271:247030;2271:245654",
+        "before": "Worldwide",
+        "after": "Southern Ocean"
+      },
+      {
+        "id": "I2271:247030;2271:245667",
+        "before": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish.",
+        "after": "Antarctic krill gather in dense swarms that feed whales, seals, and penguins. Length and weight describe one krill."
+      }
+    ]
+  },
+  {
+    "cardId": "krill-bloom-stage1",
+    "id": "2279:17423",
+    "pageId": "24:4",
+    "after": {
+      "family": "Euphausiidae",
+      "lengthLabel": "Length",
+      "length": "2”",
+      "weight": "~1g",
+      "region": "Southern Ocean",
+      "description": "Antarctic krill gather in dense swarms that feed whales, seals, and penguins. Length and weight describe one krill."
+    },
+    "edits": [
+      {
+        "id": "I2271:247223;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 2”"
+      },
+      {
+        "id": "I2271:247223;2271:245652",
+        "before": "Family varies",
+        "after": "Euphausiidae"
+      },
+      {
+        "id": "I2271:247223;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~1g"
+      },
+      {
+        "id": "I2271:247223;2271:245654",
+        "before": "Worldwide",
+        "after": "Southern Ocean"
+      },
+      {
+        "id": "I2271:247223;2271:245667",
+        "before": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish.",
+        "after": "Antarctic krill gather in dense swarms that feed whales, seals, and penguins. Length and weight describe one krill."
+      }
+    ]
+  },
+  {
+    "cardId": "krill-bloom-stage2",
+    "id": "2279:17424",
+    "pageId": "24:4",
+    "after": {
+      "family": "Euphausiidae",
+      "lengthLabel": "Length",
+      "length": "2”",
+      "weight": "~1g",
+      "region": "Southern Ocean",
+      "description": "Antarctic krill gather in dense swarms that feed whales, seals, and penguins. Length and weight describe one krill."
+    },
+    "edits": [
+      {
+        "id": "I2271:247612;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 2”"
+      },
+      {
+        "id": "I2271:247612;2271:245652",
+        "before": "Family varies",
+        "after": "Euphausiidae"
+      },
+      {
+        "id": "I2271:247612;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~1g"
+      },
+      {
+        "id": "I2271:247612;2271:245654",
+        "before": "Worldwide",
+        "after": "Southern Ocean"
+      },
+      {
+        "id": "I2271:247612;2271:245667",
+        "before": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish.",
+        "after": "Antarctic krill gather in dense swarms that feed whales, seals, and penguins. Length and weight describe one krill."
+      }
+    ]
+  },
+  {
+    "cardId": "sardine-ball-base",
+    "id": "2279:17421",
+    "pageId": "24:4",
+    "after": {
+      "family": "Alosidae",
+      "lengthLabel": "Length",
+      "length": "10”",
+      "weight": "~180g",
+      "region": "NE Pacific",
+      "description": "Pacific sardines form dense schools and feed on plankton. Length and weight describe one fish, not the entire school."
+    },
+    "edits": [
+      {
+        "id": "I2271:248005;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 10”"
+      },
+      {
+        "id": "I2271:248005;2271:245652",
+        "before": "Clupeidae",
+        "after": "Alosidae"
+      },
+      {
+        "id": "I2271:248005;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~180g"
+      },
+      {
+        "id": "I2271:248005;2271:245654",
+        "before": "Worldwide",
+        "after": "NE Pacific"
+      },
+      {
+        "id": "I2271:248005;2271:245667",
+        "before": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together.",
+        "after": "Pacific sardines form dense schools and feed on plankton. Length and weight describe one fish, not the entire school."
+      }
+    ]
+  },
+  {
+    "cardId": "sardine-ball-stage1",
+    "id": "2279:17425",
+    "pageId": "24:4",
+    "after": {
+      "family": "Alosidae",
+      "lengthLabel": "Length",
+      "length": "10”",
+      "weight": "~180g",
+      "region": "NE Pacific",
+      "description": "Pacific sardines form dense schools and feed on plankton. Length and weight describe one fish, not the entire school."
+    },
+    "edits": [
+      {
+        "id": "I2271:248014;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 10”"
+      },
+      {
+        "id": "I2271:248014;2271:245652",
+        "before": "Clupeidae",
+        "after": "Alosidae"
+      },
+      {
+        "id": "I2271:248014;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~180g"
+      },
+      {
+        "id": "I2271:248014;2271:245654",
+        "before": "Worldwide",
+        "after": "NE Pacific"
+      },
+      {
+        "id": "I2271:248014;2271:245667",
+        "before": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together.",
+        "after": "Pacific sardines form dense schools and feed on plankton. Length and weight describe one fish, not the entire school."
+      }
+    ]
+  },
+  {
+    "cardId": "sardine-ball-stage2",
+    "id": "2279:17426",
+    "pageId": "24:4",
+    "after": {
+      "family": "Alosidae",
+      "lengthLabel": "Length",
+      "length": "10”",
+      "weight": "~180g",
+      "region": "NE Pacific",
+      "description": "Pacific sardines form dense schools and feed on plankton. Length and weight describe one fish, not the entire school."
+    },
+    "edits": [
+      {
+        "id": "I2271:248023;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 10”"
+      },
+      {
+        "id": "I2271:248023;2271:245652",
+        "before": "Clupeidae",
+        "after": "Alosidae"
+      },
+      {
+        "id": "I2271:248023;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~180g"
+      },
+      {
+        "id": "I2271:248023;2271:245654",
+        "before": "Worldwide",
+        "after": "NE Pacific"
+      },
+      {
+        "id": "I2271:248023;2271:245667",
+        "before": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together.",
+        "after": "Pacific sardines form dense schools and feed on plankton. Length and weight describe one fish, not the entire school."
+      }
+    ]
+  },
+  {
+    "cardId": "anchovy-ball-base",
+    "id": "2279:17427",
+    "pageId": "24:4",
+    "after": {
+      "family": "Engraulidae",
+      "lengthLabel": "Length",
+      "length": "6”",
+      "weight": "~24g",
+      "region": "NE Pacific",
+      "description": "Northern anchovies feed on plankton and school together near the coast. Length and weight describe one fish."
+    },
+    "edits": [
+      {
+        "id": "I2275:15413;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 6”"
+      },
+      {
+        "id": "I2275:15413;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~24g"
+      },
+      {
+        "id": "I2275:15413;2271:245654",
+        "before": "Worldwide",
+        "after": "NE Pacific"
+      },
+      {
+        "id": "I2275:15413;2271:245667",
+        "before": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish.",
+        "after": "Northern anchovies feed on plankton and school together near the coast. Length and weight describe one fish."
+      }
+    ]
+  },
+  {
+    "cardId": "anchovy-ball-stage1",
+    "id": "2279:17428",
+    "pageId": "24:4",
+    "after": {
+      "family": "Engraulidae",
+      "lengthLabel": "Length",
+      "length": "6”",
+      "weight": "~24g",
+      "region": "NE Pacific",
+      "description": "Northern anchovies feed on plankton and school together near the coast. Length and weight describe one fish."
+    },
+    "edits": [
+      {
+        "id": "I2275:15421;2231:106036",
+        "before": "LT: Varies",
+        "after": "LT: 6”"
+      },
+      {
+        "id": "I2275:15421;2231:106038",
+        "before": "WT: Varies",
+        "after": "WT: ~24g"
+      },
+      {
+        "id": "I2275:15421;2231:106039",
+        "before": "Worldwide",
+        "after": "NE Pacific"
+      },
+      {
+        "id": "I2275:15422;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 6”"
+      },
+      {
+        "id": "I2275:15422;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~24g"
+      },
+      {
+        "id": "I2275:15422;2271:245654",
+        "before": "Worldwide",
+        "after": "NE Pacific"
+      },
+      {
+        "id": "I2275:15421;2231:105592",
+        "before": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish.",
+        "after": "Northern anchovies feed on plankton and school together near the coast. Length and weight describe one fish."
+      },
+      {
+        "id": "I2275:15422;2271:245667",
+        "before": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish.",
+        "after": "Northern anchovies feed on plankton and school together near the coast. Length and weight describe one fish."
+      }
+    ]
+  },
+  {
+    "cardId": "anchovy-ball-stage2",
+    "id": "2279:17429",
+    "pageId": "24:4",
+    "after": {
+      "family": "Engraulidae",
+      "lengthLabel": "Length",
+      "length": "6”",
+      "weight": "~24g",
+      "region": "NE Pacific",
+      "description": "Northern anchovies feed on plankton and school together near the coast. Length and weight describe one fish."
+    },
+    "edits": [
+      {
+        "id": "I2275:15432;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 6”"
+      },
+      {
+        "id": "I2275:15432;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~24g"
+      },
+      {
+        "id": "I2275:15432;2271:245654",
+        "before": "Worldwide",
+        "after": "NE Pacific"
+      },
+      {
+        "id": "I2275:15432;2271:245667",
+        "before": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish.",
+        "after": "Northern anchovies feed on plankton and school together near the coast. Length and weight describe one fish."
+      }
+    ]
+  },
+  {
+    "cardId": "silverside-ball-base",
+    "id": "2279:17430",
+    "pageId": "24:4",
+    "after": {
+      "family": "Atherinopsidae",
+      "lengthLabel": "Length",
+      "length": "4”",
+      "weight": "~7g",
+      "region": "W. Atlantic",
+      "description": "Atlantic silversides form shimmering schools in shallow coastal water. Length and weight describe one fish."
+    },
+    "edits": [
+      {
+        "id": "I2275:17755;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 4”"
+      },
+      {
+        "id": "I2275:17755;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~7g"
+      },
+      {
+        "id": "I2275:17755;2271:245667",
+        "before": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together.",
+        "after": "Atlantic silversides form shimmering schools in shallow coastal water. Length and weight describe one fish."
+      }
+    ]
+  },
+  {
+    "cardId": "silverside-ball-stage1",
+    "id": "2279:17431",
+    "pageId": "24:4",
+    "after": {
+      "family": "Atherinopsidae",
+      "lengthLabel": "Length",
+      "length": "4”",
+      "weight": "~7g",
+      "region": "W. Atlantic",
+      "description": "Atlantic silversides form shimmering schools in shallow coastal water. Length and weight describe one fish."
+    },
+    "edits": [
+      {
+        "id": "I2275:17764;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 4”"
+      },
+      {
+        "id": "I2275:17764;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~7g"
+      },
+      {
+        "id": "I2275:17764;2271:245667",
+        "before": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together.",
+        "after": "Atlantic silversides form shimmering schools in shallow coastal water. Length and weight describe one fish."
+      }
+    ]
+  },
+  {
+    "cardId": "silverside-ball-stage2",
+    "id": "2279:17432",
+    "pageId": "24:4",
+    "after": {
+      "family": "Atherinopsidae",
+      "lengthLabel": "Length",
+      "length": "4”",
+      "weight": "~7g",
+      "region": "W. Atlantic",
+      "description": "Atlantic silversides form shimmering schools in shallow coastal water. Length and weight describe one fish."
+    },
+    "edits": [
+      {
+        "id": "I2275:17773;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 4”"
+      },
+      {
+        "id": "I2275:17773;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~7g"
+      },
+      {
+        "id": "I2275:17773;2271:245667",
+        "before": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together.",
+        "after": "Atlantic silversides form shimmering schools in shallow coastal water. Length and weight describe one fish."
+      }
+    ]
+  },
+  {
+    "cardId": "herring-ball-base",
+    "id": "2279:17433",
+    "pageId": "24:4",
+    "after": {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "14”",
+      "weight": "~350g",
+      "region": "N. Atlantic",
+      "description": "Atlantic herring travel in schools between feeding and spawning grounds. Length and weight describe one fish."
+    },
+    "edits": [
+      {
+        "id": "I2275:16587;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 14”"
+      },
+      {
+        "id": "I2275:16587;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~350g"
+      },
+      {
+        "id": "I2275:16587;2271:245667",
+        "before": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish.",
+        "after": "Atlantic herring travel in schools between feeding and spawning grounds. Length and weight describe one fish."
+      }
+    ]
+  },
+  {
+    "cardId": "herring-ball-stage1",
+    "id": "2279:17434",
+    "pageId": "24:4",
+    "after": {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "14”",
+      "weight": "~350g",
+      "region": "N. Atlantic",
+      "description": "Atlantic herring travel in schools between feeding and spawning grounds. Length and weight describe one fish."
+    },
+    "edits": [
+      {
+        "id": "I2275:16596;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 14”"
+      },
+      {
+        "id": "I2275:16596;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~350g"
+      },
+      {
+        "id": "I2275:16596;2271:245667",
+        "before": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish.",
+        "after": "Atlantic herring travel in schools between feeding and spawning grounds. Length and weight describe one fish."
+      }
+    ]
+  },
+  {
+    "cardId": "herring-ball-stage2",
+    "id": "2279:17435",
+    "pageId": "24:4",
+    "after": {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "14”",
+      "weight": "~350g",
+      "region": "N. Atlantic",
+      "description": "Atlantic herring travel in schools between feeding and spawning grounds. Length and weight describe one fish."
+    },
+    "edits": [
+      {
+        "id": "I2275:16605;2271:245651",
+        "before": "LT: Varies",
+        "after": "LT: 14”"
+      },
+      {
+        "id": "I2275:16605;2271:245653",
+        "before": "WT: Varies",
+        "after": "WT: ~350g"
+      },
+      {
+        "id": "I2275:16605;2271:245667",
+        "before": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish.",
+        "after": "Atlantic herring travel in schools between feeding and spawning grounds. Length and weight describe one fish."
+      }
+    ]
+  }
+]

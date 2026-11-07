@@ -11,7 +11,7 @@ const master = readJson("../../data/gallery-set-list.json");
 const contents = buildPhysicalDeckContents(physical, images, master);
 const byId = new Map(contents.map((deck) => [deck.id, deck]));
 
-test("physical contents match the saved live Figma evidence, including printed names and stages", () => {
+test("physical contents preserve saved Figma evidence and apply explicit current name overrides", () => {
   const evidence = readJson("../../../artifacts/deck-sync/physical-decks-2026-10-16.json");
   assert.equal(evidence.readAt, "2026-10-16");
   for (const deck of contents) {
@@ -27,7 +27,10 @@ test("physical contents match the saved live Figma evidence, including printed n
       const source = page.cards.find((source) => source.cardId === card.cardId);
       assert.equal(card.quantity, source.nodeIds.length);
       assert.equal(card.quantity, source.quantity);
-      assert.equal(card.name, source.title);
+      const savedCard = physical.decks.find((entry) => entry.id === deck.id)
+        .cards.find((entry) => entry.cardId === card.cardId);
+      assert.equal(savedCard.printedName, source.title);
+      assert.equal(card.name, master.nameOverrides?.[source.title] ?? source.title);
       assert.equal(card.stageLabel ?? "", source.stage);
     }
     assert.ok(page.excludedReferenceNodeIds.every((id) => !nodeIds.includes(id)));
@@ -66,7 +69,8 @@ test("all 119 physical card IDs resolve names, categories, stages and existing a
   for (const card of uniqueCards.values()) {
     const image = images.cards.find((entry) => entry.cardId === card.cardId);
     const publicCard = master.sets.flatMap((set) => set.cards).find((entry) => entry.cardId === card.cardId);
-    assert.equal(card.name, physicalEntries.get(card.cardId).printedName ?? (publicCard ?? image).name);
+    const printedName = physicalEntries.get(card.cardId).printedName ?? (publicCard ?? image).name;
+    assert.equal(card.name, master.nameOverrides?.[printedName] ?? printedName);
     assert.equal(card.category, (publicCard ?? image).category);
     assert.equal(card.image, getGalleryImageSrc(image));
     assert.ok(card.name && card.categoryLabel);
@@ -107,6 +111,22 @@ test("verified printed names override display copy while canonical categories an
     invalid.decks[0].cards[0].printedName = printedName;
     assert.throws(() => buildPhysicalDeckContents(invalid, images, master), /printed name/);
   }
+});
+
+test("Day Octopus keeps its physical card identity and historical printed-name evidence", () => {
+  const before = structuredClone(physical);
+  const deck = byId.get("blue-water");
+  const card = deck.cards.find((entry) => entry.cardId === "octopus");
+  const source = physical.decks.find((entry) => entry.id === deck.id)
+    .cards.find((entry) => entry.cardId === "octopus");
+  assert.equal(source.printedName, "Octopus");
+  assert.equal(card.name, "Day Octopus");
+  assert.equal(card.displayName, "Day Octopus");
+  assert.equal(card.quantity, source.quantity);
+  assert.equal(card.category, "invertebrate");
+  assert.equal(card.image, getGalleryImageSrc(images.cards.find((entry) => entry.cardId === "octopus")));
+  assert.equal(deck.totalCards, 60);
+  assert.deepEqual(physical, before);
 });
 
 test("physical contents retain prerelease artwork that is actually included in the deck", () => {

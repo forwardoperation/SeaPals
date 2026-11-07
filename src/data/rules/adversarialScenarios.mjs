@@ -122,7 +122,7 @@ export const ADVERSARIAL_SCENARIOS = [
   { id: "multi-117", question: "How do Recovery and Great White interact with discard rules?", expectedSourceIds: ["card:recovery", "card:great-white"], minSources: 2, tags: ["multi-rule", "support"] },
   { id: "multi-118", question: "How do Restocking and Fairy Parrotfish interact with hand limits?", expectedSourceIds: ["card:restocking", "card:fairy-parrotfish"], minSources: 2, tags: ["multi-rule", "support"] },
   { id: "multi-119", question: "How do Marine Sanctuary and Green Sea Turtle work together under placement rules?", expectedSourceIds: ["card:marine-sanctuary", "card:green-sea-turtle"], minSources: 2, tags: ["multi-rule", "placement"] },
-  { id: "multi-120", question: "How do Ship Wreck and Octopus interact with habitat rules?", expectedSourceIds: ["card:ship-wreck", "card:octopus"], minSources: 2, tags: ["multi-rule", "placement"] },
+  { id: "multi-120", question: "How do Ship Wreck and Day Octopus interact with habitat rules?", expectedSourceIds: ["card:ship-wreck", "card:octopus"], minSources: 2, tags: ["multi-rule", "placement"] },
 
   { id: "conversation-121", conversationId: "reef-pair", turn: 1, question: "What does Fairy Parrotfish do?", expectedSourceIds: ["card:fairy-parrotfish"], tags: ["conversation"] },
   { id: "conversation-122", conversationId: "reef-pair", turn: 2, question: "What does Spectacled Parrotfish do?", expectedSourceIds: ["card:spectacled-parrotfish"], tags: ["conversation"] },

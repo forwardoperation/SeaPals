@@ -50,29 +50,32 @@ export const deepEncyclopediaEntries = [
     ],
   },
   {
-    name: "Pacific Grenadier",
-    scientificName: "Coryphaenoides acrolepis",
-    aliases: ["Pacific rattail", "Pacific grenadier fish"],
-    zone: "Deep",
-    group: "Fish",
-    tagline: "A patient scavenger with a ribbon-like tail.",
-    intro:
-      "The Pacific grenadier patrols the seafloor like a deep-sea cleanup crew. Its big head narrows into a long tail instead of ending in a normal tail fin.",
-    home: "It lives along North Pacific continental slopes about 300 to 3,700 meters deep.",
-    diet: "It eats fishes, squid, crustaceans, worms, and carrion.",
-    size: "Usually 18–26 in (46–65 cm)—about baseball-bat length",
-    superpower: "A keen sense of smell helps it locate scattered meals in black water.",
-    funFacts: [
+    "name": "Pacific Grenadier",
+    "scientificName": "Coryphaenoides acrolepis",
+    "aliases": [
+      "Pacific rattail",
+      "Pacific grenadier fish"
+    ],
+    "zone": "Deep",
+    "group": "Fish",
+    "tagline": "A patient scavenger with a ribbon-like tail.",
+    "intro": "The Pacific grenadier patrols the seafloor like a deep-sea cleanup crew. Its big head narrows into a long tail instead of ending in a normal tail fin.",
+    "home": "It lives along North Pacific continental slopes about 300 to 3,700 meters deep.",
+    "diet": "It eats fishes, squid, crustaceans, worms, and carrion.",
+    "size": "Card reference: length 3’ 5”; weight 6.6 lb. Rounded published maximum length and weight.",
+    "superpower": "A keen sense of smell helps it locate scattered meals in black water.",
+    "funFacts": [
       "Grenadiers are relatives of cod.",
       "The skinny pointed tail earns them the nickname rattails.",
       "Pacific grenadiers can live for more than 70 years.",
-      "They are among the most common large fishes on parts of the Pacific slope.",
+      "They are among the most common large fishes on parts of the Pacific slope."
     ],
-    lookFor: "Spot the bulky head, large eyes, and tail that tapers to a thread.",
-    sourceUrls: [
+    "lookFor": "Spot the bulky head, large eyes, and tail that tapers to a thread.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/Coryphaenoides-acrolepis",
       "https://caseagrant.ucsd.edu/seafood-profiles/pacific-grenadier",
-      "https://apps-afsc.fisheries.noaa.gov/ichthyo/LHDataELH.php?GSID=Coryphaenoides%21acrolepis",
-    ],
+      "https://apps-afsc.fisheries.noaa.gov/ichthyo/LHDataELH.php?GSID=Coryphaenoides%21acrolepis"
+    ]
   },
   {
     name: "Viperfish",
@@ -125,77 +128,87 @@ export const deepEncyclopediaEntries = [
     ],
   },
   {
-    name: "Fangtooth Fish",
-    scientificName: "Anoplogaster cornuta",
-    aliases: ["Common fangtooth", "Ogre fish"],
-    zone: "Deep",
-    group: "Fish",
-    tagline: "The ocean's biggest grin fits in your hand.",
-    intro:
-      "The fangtooth packs an enormous set of teeth into a fish no longer than a banana. It cruises dark water with a tough body built for pressure and chilly temperatures.",
-    home: "It lives in tropical and temperate oceans worldwide, from about 500 to nearly 5,000 meters deep.",
-    diet: "Adults eat fishes and squid, while youngsters begin with tiny crustaceans.",
-    size: "Up to about 6 in (16 cm)—banana-sized",
-    superpower: "Oversized teeth lock into special head pockets so the mouth can close.",
-    funFacts: [
+    "name": "Fangtooth Fish",
+    "scientificName": "Anoplogaster cornuta",
+    "aliases": [
+      "Common fangtooth",
+      "Ogre fish"
+    ],
+    "zone": "Deep",
+    "group": "Fish",
+    "tagline": "The ocean's biggest grin fits in your hand.",
+    "intro": "The fangtooth packs an enormous set of teeth into a fish no longer than a banana. It cruises dark water with a tough body built for pressure and chilly temperatures.",
+    "home": "It lives in tropical and temperate oceans worldwide, from about 500 to nearly 5,000 meters deep.",
+    "diet": "Adults eat fishes and squid, while youngsters begin with tiny crustaceans.",
+    "size": "Card reference: length 7”; weight ~120g. Weight is an estimate from a published length–weight model at the listed length.",
+    "superpower": "Oversized teeth lock into special head pockets so the mouth can close.",
+    "funFacts": [
       "Its teeth are among the largest of any fish compared with body size.",
       "Pockets in the roof of its mouth keep the lower fangs from piercing its brain.",
       "Young fangtooths look so different that scientists once gave them another name.",
-      "Unlike many neighbors, it has no glowing photophores.",
+      "Unlike many neighbors, it has no glowing photophores."
     ],
-    lookFor: "The huge lower fangs, blocky head, and small dark body are unmistakable.",
-    sourceUrls: [
+    "lookFor": "The huge lower fangs, blocky head, and small dark body are unmistakable.",
+    "sourceUrls": [
+      "https://fishbase.org/summary/2308",
       "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/fangtooth",
-      "https://ocean.si.edu/ocean-life/fish/fangtooth-fish",
-    ],
+      "https://ocean.si.edu/ocean-life/fish/fangtooth-fish"
+    ]
   },
   {
-    name: "Black Swallower",
-    scientificName: "Chiasmodon niger",
-    aliases: ["Great swallower", "Black swallower fish"],
-    zone: "Deep",
-    group: "Fish",
-    tagline: "A stretchy belly makes every meal supersized.",
-    intro:
-      "The black swallower has a small body and a wildly expandable stomach. It can gulp down a fish larger than itself, then slowly digest the enormous meal.",
-    home: "It swims in deep tropical and subtropical waters around the world.",
-    diet: "It eats other bony fishes, including prey larger than its own body.",
-    size: "Up to about 10 in (25 cm)—about dinner-plate length",
-    superpower: "Hinged jaws and a balloon-like stomach let it swallow gigantic prey.",
-    funFacts: [
+    "name": "Black Swallower",
+    "scientificName": "Chiasmodon niger",
+    "aliases": [
+      "Great swallower",
+      "Black swallower fish"
+    ],
+    "zone": "Deep",
+    "group": "Fish",
+    "tagline": "A stretchy belly makes every meal supersized.",
+    "intro": "The black swallower has a small body and a wildly expandable stomach. It can gulp down a fish larger than itself, then slowly digest the enormous meal.",
+    "home": "It swims in deep tropical and subtropical waters around the world.",
+    "diet": "It eats other bony fishes, including prey larger than its own body.",
+    "size": "Card reference: length 9”; weight ~70g. Weight is an estimate from a published length–weight model at the listed length.",
+    "superpower": "Hinged jaws and a balloon-like stomach let it swallow gigantic prey.",
+    "funFacts": [
       "Backward-pointing teeth keep a captured fish from wriggling out.",
       "Its stomach wall becomes almost transparent when stretched around a meal.",
       "If oversized prey spoils before digestion, gas can float the swallower to the surface.",
-      "The dark body hides it in the midnight zone between meals.",
+      "The dark body hides it in the midnight zone between meals."
     ],
-    lookFor: "Look for a slender black fish with a huge sagging belly after feeding.",
-    sourceUrls: ["https://ocean.si.edu/ocean-life/fish/black-swallower"],
+    "lookFor": "Look for a slender black fish with a huge sagging belly after feeding.",
+    "sourceUrls": [
+      "https://fishbase.org/summary/10192",
+      "https://ocean.si.edu/ocean-life/fish/black-swallower"
+    ]
   },
   {
-    name: "Tripod Fish",
-    scientificName: "Bathypterois grallator",
-    aliases: ["Tripodfish", "Stilt fish"],
-    zone: "Deep",
-    group: "Fish",
-    tagline: "Living stilts turn the seafloor into a lookout.",
-    intro:
-      "The tripod fish balances above the mud on three incredibly long fin rays. Facing the current, it waits for food to drift into reach of its feeler-like fins.",
-    home: "It stands on soft deep seafloors worldwide, usually 900 to 4,700 meters down.",
-    diet: "It catches tiny crustaceans and small fishes carried past by the current.",
-    size: "Body about 12 in (30 cm); stilts can approach 3 ft (1 m)",
-    superpower: "It pumps fluid into flexible fin rays to stiffen them into stilts.",
-    funFacts: [
+    "name": "Tripod Fish",
+    "scientificName": "Bathypterois grallator",
+    "aliases": [
+      "Tripodfish",
+      "Stilt fish"
+    ],
+    "zone": "Deep",
+    "group": "Fish",
+    "tagline": "Living stilts turn the seafloor into a lookout.",
+    "intro": "The tripod fish balances above the mud on three incredibly long fin rays. Facing the current, it waits for food to drift into reach of its feeler-like fins.",
+    "home": "It stands on soft deep seafloors worldwide, usually 900 to 4,700 meters down.",
+    "diet": "It catches tiny crustaceans and small fishes carried past by the current.",
+    "size": "Card reference: length 17”; weight ~440g. Weight is an estimate from a published length–weight model at the listed length.",
+    "superpower": "It pumps fluid into flexible fin rays to stiffen them into stilts.",
+    "funFacts": [
       "Two pelvic-fin rays and one tail ray form the three-legged stand.",
       "Tiny eyes are less useful than touch in its pitch-black home.",
       "Long pectoral fins sense movement and guide food toward the mouth.",
-      "Young tripod fish drift near the surface before moving into the deep.",
+      "Young tripod fish drift near the surface before moving into the deep."
     ],
-    lookFor: "Find the fish perched above mud on three wire-thin legs.",
-    sourceUrls: [
+    "lookFor": "Find the fish perched above mud on three wire-thin legs.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/9136",
       "https://ocean.si.edu/ecosystems/deep-sea/tripod-fish",
-      "https://ocean.si.edu/ocean-life/fish/fish-fins-can-taste",
-      "https://australian.museum/learn/animals/fishes/spiderfish-bathypterois-sp/",
-    ],
+      "https://ocean.si.edu/ocean-life/fish/fish-fins-can-taste"
+    ]
   },
   {
     name: "Coelacanth",
@@ -220,56 +233,62 @@ export const deepEncyclopediaEntries = [
     sourceUrls: ["https://ocean.si.edu/ocean-life/fish/coelacanth"],
   },
   {
-    name: "Anglerfish",
-    scientificName: "Melanocetus johnsonii",
-    aliases: ["Humpback anglerfish", "Black seadevil"],
-    zone: "Deep",
-    group: "Fish",
-    tagline: "A glowing fishing rod hangs over a hungry mouth.",
-    intro:
-      "The female humpback anglerfish carries her own fishing pole on her forehead. A glowing lure draws curious prey close enough for one sudden gulp.",
-    home: "It roams deep tropical and temperate oceans worldwide, from about 100 to 4,500 meters down.",
-    diet: "It ambushes fishes and crustaceans that approach its lure.",
-    size: "Females up to about 8 in (20 cm)—about hand-length",
-    superpower: "Its bioluminescent lure turns total darkness into a hunting advantage.",
-    funFacts: [
+    "name": "Anglerfish",
+    "scientificName": "Melanocetus johnsonii",
+    "aliases": [
+      "Humpback anglerfish",
+      "Black seadevil"
+    ],
+    "zone": "Deep",
+    "group": "Fish",
+    "tagline": "A glowing fishing rod hangs over a hungry mouth.",
+    "intro": "The female humpback anglerfish carries her own fishing pole on her forehead. A glowing lure draws curious prey close enough for one sudden gulp.",
+    "home": "It roams deep tropical and temperate oceans worldwide, from about 100 to 4,500 meters down.",
+    "diet": "It ambushes fishes and crustaceans that approach its lure.",
+    "size": "Card reference: length 7”; weight ~120g. Weight is an estimate from a published length–weight model at the listed length.",
+    "superpower": "Its bioluminescent lure turns total darkness into a hunting advantage.",
+    "funFacts": [
       "The glowing lure is a modified spine called an illicium.",
       "Females can stretch their jaws and stomachs around surprisingly large meals.",
       "Males are tiny compared with females and use an excellent sense of smell to find them.",
-      "MBARI recorded the first video of this species in its deep habitat in 2014.",
+      "MBARI recorded the first video of this species in its deep habitat in 2014."
     ],
-    lookFor: "Look for a round black body, needle teeth, and one bright forehead lure.",
-    sourceUrls: [
+    "lookFor": "Look for a round black body, needle teeth, and one bright forehead lure.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/Melanocetus_johnsonii.html",
       "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/black-seadevil-anglerfish",
-      "https://www.mbari.org/news/amazing-black-sea-devil-anglerfish-observed-in-monterey-bay/",
-      "https://ocean.si.edu/ocean-life/fish/blackdevil-fish",
-    ],
+      "https://www.mbari.org/news/amazing-black-sea-devil-anglerfish-observed-in-monterey-bay/"
+    ]
   },
   {
-    name: "Chimera",
-    scientificName: "Chimaeriformes",
-    aliases: ["Chimaera", "Ghost shark", "Ratfish"],
-    zone: "Deep",
-    group: "Predator",
-    tagline: "A ghostly shark cousin with crushing tooth plates.",
-    intro:
-      "Chimeras are ancient relatives of sharks and rays with silvery, otherworldly bodies. Instead of rows of replaceable shark teeth, they carry sturdy plates for crushing food.",
-    home: "Most species cruise cold continental slopes and deep seafloors around the world.",
-    diet: "They crush crabs, clams, snails, worms, and other bottom animals.",
-    size: "Varies by species; some exceed 6 ft (1.8 m)",
-    superpower: "Permanent tooth plates work like nutcrackers on hard shells.",
-    funFacts: [
+    "name": "Chimera",
+    "scientificName": "Chimaera monstrosa",
+    "aliases": [
+      "Chimaera",
+      "Ghost shark",
+      "Ratfish",
+      "Rabbitfish"
+    ],
+    "zone": "Deep",
+    "group": "Predator",
+    "tagline": "A ghostly shark cousin with crushing tooth plates.",
+    "intro": "The rabbitfish is a chimaera with a cartilage skeleton, a long tapering tail, and permanent tooth plates for crushing shellfish. This card represents the rabbitfish.",
+    "home": "Northeastern Atlantic and Mediterranean continental shelves and slopes, over muddy and rocky seabeds.",
+    "diet": "They crush crabs, clams, snails, worms, and other bottom animals.",
+    "size": "Card reference: length 4’ 11”; weight 5.5 lb. Reference maximum size for the rabbitfish, a species of chimaera.",
+    "superpower": "Permanent tooth plates work like nutcrackers on hard shells.",
+    "funFacts": [
       "Their skeleton is made of cartilage rather than bone.",
       "Each side has one visible gill opening instead of a shark's several slits.",
       "The upper jaw is fused directly to the skull.",
-      "Many chimeras carry a venomous defensive spine in front of the dorsal fin.",
+      "Many chimeras carry a venomous defensive spine in front of the dorsal fin."
     ],
-    lookFor: "Spot the large wing-like fins, rabbitish face, and whip-thin tail.",
-    sourceUrls: [
+    "lookFor": "Spot the large wing-like fins, rabbitish face, and whip-thin tail.",
+    "sourceUrls": [
+      "https://www.fishbase.se/Summary/SpeciesSummary.php?id=2503&lang=english",
       "https://ocean.si.edu/ocean-life/sharks-rays/ghost-shark",
-      "https://www.mbari.org/animal/ghost-shark/",
-      "https://australian.museum/publications/sharks/what-is-a-shark/",
-    ],
+      "https://www.mbari.org/animal/ghost-shark/"
+    ]
   },
   {
     name: "Gulper Eel",
@@ -347,29 +366,32 @@ export const deepEncyclopediaEntries = [
     ],
   },
   {
-    name: "Frilled Shark",
-    scientificName: "Chlamydoselachus anguineus",
-    aliases: ["Frill shark", "Lizard shark"],
-    zone: "Deep",
-    group: "Predator",
-    tagline: "Frilly gills frame a snake-shaped shark.",
-    intro:
-      "The frilled shark winds through deep water with an eel-like body and a shark's toothy head. Its flexible jaws open wide to seize squid and other slippery prey.",
-    home: "It lives near continental slopes and canyons in scattered parts of the Atlantic and Pacific.",
-    diet: "It eats squid, bony fishes, and sometimes smaller sharks.",
-    size: "Up to about 6.6 ft (2 m)—taller than a doorway",
-    superpower: "A wide flexible gape may swallow prey about half the shark's length.",
-    funFacts: [
+    "name": "Frilled Shark",
+    "scientificName": "Chlamydoselachus anguineus",
+    "aliases": [
+      "Frill shark",
+      "Lizard shark"
+    ],
+    "zone": "Deep",
+    "group": "Predator",
+    "tagline": "Frilly gills frame a snake-shaped shark.",
+    "intro": "The frilled shark winds through deep water with an eel-like body and a shark's toothy head. Its flexible jaws open wide to seize squid and other slippery prey.",
+    "home": "It lives near continental slopes and canyons in scattered parts of the Atlantic and Pacific.",
+    "diet": "It eats squid, bony fishes, and sometimes smaller sharks.",
+    "size": "Card reference: length 6’ 3”; weight 28 lb. Upper length and weight from a study of female sharks; the two values were not measured on the same individual.",
+    "superpower": "A wide flexible gape may swallow prey about half the shark's length.",
+    "funFacts": [
       "Six pairs of feathery gill slits create the shark's frilled collar.",
       "The first gill pair connects across the underside of the throat.",
       "Rows of three-pronged teeth point backward to trap squid.",
-      "Its single small dorsal fin sits unusually far back near the tail.",
+      "Its single small dorsal fin sits unusually far back near the tail."
     ],
-    lookFor: "Find the long brown body, terminal mouth, and red-edged frilly gills.",
-    sourceUrls: [
+    "lookFor": "Find the long brown body, terminal mouth, and red-edged frilly gills.",
+    "sourceUrls": [
+      "https://www.sciencedirect.com/science/article/abs/pii/S096706372600097X",
       "https://ocean.si.edu/ocean-life/sharks-rays/frilled-shark",
-      "https://australian.museum/learn/animals/fishes/frill-shark-chlamydoselachus-anguineus-garman-1884/",
-    ],
+      "https://australian.museum/learn/animals/fishes/frill-shark-chlamydoselachus-anguineus-garman-1884/"
+    ]
   },
   {
     name: "Cookie Cutter",
@@ -518,29 +540,34 @@ export const deepEncyclopediaEntries = [
     sourceUrls: ["https://www.mbari.org/animal/giant-phantom-jelly/"],
   },
   {
-    name: "Deep Cucumber",
-    scientificName: "Holothuroidea",
-    aliases: ["Deep-sea cucumber", "Sea cucumber", "Holothurian"],
-    zone: "Deep",
-    group: "Invertebrate",
-    tagline: "A squishy recycler vacuums the ocean floor.",
-    intro:
-      "Deep cucumbers are soft-bodied relatives of sea stars that creep across the mud. They swallow or sift old organic bits, turning leftovers into cleaner seafloor sediment.",
-    home: "Different species live on deep seafloors around the world.",
-    diet: "Most feed on detritus and tiny food particles in or above the mud.",
-    size: "Often around 8 in (20 cm), though species vary greatly",
-    superpower: "It recycles sunken leftovers and returns nutrients to the deep-sea food web.",
-    funFacts: [
-      "Sea cucumbers are echinoderms, the same major group as sea stars and urchins.",
-      "The feeding tentacles around the mouth are modified tube feet.",
-      "Tiny calcium pieces called ossicles support the otherwise soft body.",
-      "Some deep-sea species flap or paddle above the bottom instead of only crawling.",
+    "name": "Deep Cucumber",
+    "scientificName": "Enypniastes eximia",
+    "aliases": [
+      "Deep-sea cucumber",
+      "Sea cucumber",
+      "Holothurian",
+      "Swimming sea cucumber"
     ],
-    lookFor: "Look for a soft cucumber-shaped body with feeding tentacles at one end.",
-    sourceUrls: [
+    "zone": "Deep",
+    "group": "Invertebrate",
+    "tagline": "A squishy recycler vacuums the ocean floor.",
+    "intro": "The swimming sea cucumber feeds on seafloor sediment, then swims with a webbed veil. Its transparent body reveals the coiled gut inside. This card represents the swimming sea cucumber.",
+    "home": "Deep ocean water and seafloors around the world; swimming sea cucumbers move between the bottom and nearby water.",
+    "diet": "Organic particles and small organisms gathered from seafloor sediment.",
+    "size": "Card reference: length 5.2”; weight ~285g. Rounded mean length and wet body weight of 58 swimming sea cucumbers.",
+    "superpower": "A webbed swimming veil lifts it above the seafloor.",
+    "funFacts": [
+      "Its transparent body reveals its internal organs.",
+      "It gathers food particles from seafloor sediment.",
+      "It can swim away from the bottom.",
+      "It belongs to the sea-cucumber family Pelagothuriidae."
+    ],
+    "lookFor": "Look for a transparent cucumber-shaped body and a broad swimming veil.",
+    "sourceUrls": [
+      "https://www.polarpelagic.com/wp-content/uploads/2016/05/Bailey-et-al-1994.pdf",
       "https://annualreport.mbari.org/2019/story/swimming-sea-cucumbers",
-      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/sea-pig",
-    ],
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/sea-pig"
+    ]
   },
   {
     name: "Giant Red Shrimp",
@@ -621,127 +648,141 @@ export const deepEncyclopediaEntries = [
     ],
   },
   {
-    name: "Peacock Squid",
-    scientificName: "Taonius spp.",
-    aliases: ["Glass squid", "Peacock cranch squid"],
-    zone: "Deep",
-    group: "Invertebrate",
-    tagline: "Glass skin, giant eyes, and lights underneath.",
-    intro:
-      "The peacock squid belongs to a family nicknamed glass squids for their nearly transparent bodies. Giant eyes and carefully placed light organs help it watch and hide at the same time.",
-    home: "Species of Taonius drift through deep midwater in oceans around the world.",
-    diet: "It hunts fishes, crustaceans, and other small midwater animals.",
-    size: "Mantle up to about 26 in (66 cm), with arms and tentacles beyond",
-    superpower: "It can hold ink inside its body cavity to darken itself like a curtain.",
-    funFacts: [
+    "name": "Peacock Squid",
+    "scientificName": "Taonius borealis",
+    "aliases": [
+      "Glass squid",
+      "Peacock cranch squid",
+      "Boreal glass squid"
+    ],
+    "zone": "Deep",
+    "group": "Invertebrate",
+    "tagline": "A transparent squid drifting through North Pacific darkness.",
+    "intro": "Boreal glass squid have transparent bodies and large eyes. Light organs beneath the eyes help conceal their silhouettes in the dim ocean. This card represents the boreal glass squid.",
+    "home": "Deep midwater of the North Pacific, including the Bering Sea.",
+    "diet": "It hunts fishes, crustaceans, and other small midwater animals.",
+    "size": "Card reference: mantle length 15.3”; weight ~170g. Rounded mean mantle length and whole weight of two boreal glass squid. Mantle length excludes arms and tentacles.",
+    "superpower": "It can hold ink inside its body cavity to darken itself like a curtain.",
+    "funFacts": [
       "Peacock squids belong to the transparent glass-squid family Cranchiidae.",
       "Their huge bulging eyes scan a wide area of dark water.",
       "Photophores beneath the eyes shine downward and help erase the animal's shadow.",
-      "A clear body reveals internal organs that are packed into a compact central bundle.",
+      "A clear body reveals internal organs that are packed into a compact central bundle."
     ],
-    lookFor: "Look for a clear tapered body, bulbous eyes, and light organs below them.",
-    sourceUrls: [
+    "lookFor": "Look for a transparent body, large eyes, and small fins near the rear of the mantle.",
+    "sourceUrls": [
+      "https://doi.org/10.3389/fmars.2018.00430.s005",
       "https://www.mbari.org/gallery/deep-sea-wallpapers/peacock-squid/",
-      "https://annualreport.mbari.org/2022/story/out-of-the-darkness-of-the-deep-inky-clouds-take-shape",
-      "https://repository.library.noaa.gov/view/noaa/56171/noaa_56171_DS1.pdf",
-    ],
+      "https://annualreport.mbari.org/2022/story/out-of-the-darkness-of-the-deep-inky-clouds-take-shape"
+    ]
   },
   {
-    name: "Brittlestar",
-    scientificName: "Ophiuroidea",
-    aliases: ["Brittle star", "Serpent star"],
-    zone: "Deep",
-    group: "Invertebrate",
-    tagline: "Five wriggly arms row across the seafloor.",
-    intro:
-      "A brittlestar looks like a tiny center disk wearing five long snaky arms. It rows those flexible arms to scoot, climb, gather food, or escape danger.",
-    home: "Brittlestars live on seafloors worldwide, including deep mud, coral, sponges, and rocks.",
-    diet: "Different species catch drifting particles, scavenge scraps, or hunt tiny animals.",
-    size: "Often a coin-sized disk with arms five to eight times longer",
-    superpower: "It can drop a trapped arm and grow a replacement later.",
-    funFacts: [
-      "Brittlestars are echinoderm cousins of sea stars, urchins, and sea cucumbers.",
-      "About 2,000 living species are known.",
-      "Their arms bend at many little joints like a chain of vertebrae.",
-      "They move mainly by rowing their arms rather than walking on tube feet.",
+    "name": "Brittlestar",
+    "scientificName": "Ophiothrix fragilis",
+    "aliases": [
+      "Brittle star",
+      "Serpent star",
+      "Common brittle star"
     ],
-    lookFor: "Find a sharp-edged center disk with five clearly separate, snake-like arms.",
-    sourceUrls: [
-      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/deep-sea-brittle-star",
+    "zone": "Deep",
+    "group": "Invertebrate",
+    "tagline": "Five wriggly arms row across the seafloor.",
+    "intro": "Common brittle stars raise their spiny arms to catch food particles from passing water. A lost arm can regrow after a narrow escape. This card represents the common brittle star.",
+    "home": "Eastern Atlantic and Mediterranean rocky, gravelly, and shelly seafloors, where common brittle stars can form dense beds.",
+    "diet": "Suspended organic particles and plankton caught on its raised arms.",
+    "size": "Card reference: disc width 0.6”; weight ~3g. Disc width excludes the arms. Weight is a rounded estimate from a published wet-weight graph.",
+    "superpower": "It can drop a trapped arm and grow a replacement later.",
+    "funFacts": [
+      "Brittle stars are echinoderm cousins of sea stars and sea urchins.",
+      "The common brittle star catches suspended food with its raised arms.",
+      "Its arms bend at many small joints.",
+      "It moves mainly by rowing its arms rather than walking on tube feet."
     ],
+    "lookFor": "Find a sharp-edged center disk with five clearly separate, snake-like arms.",
+    "sourceUrls": [
+      "https://doi.org/10.1016/j.jembe.2012.05.013",
+      "https://ars.els-cdn.com/content/image/1-s2.0-S0022098112001785-gr2.jpg",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/deep-sea-brittle-star"
+    ]
   },
   {
-    name: "Vampire Squid",
-    scientificName: "Vampyroteuthis infernalis",
-    aliases: ["Vampire squid from hell"],
-    zone: "Deep",
-    group: "Invertebrate",
-    tagline: "A velvet cloak hides a gentle snow-eater.",
-    intro:
-      "Despite its spooky name, the vampire squid does not suck blood or chase large prey. It gathers drifting marine snow with two long sticky feeding filaments.",
-    home: "It lives in low-oxygen deep water across tropical and temperate oceans.",
-    diet: "It eats marine snow made of tiny remains, mucus, molts, and waste.",
-    size: "Mantle up to about 12 in (30 cm)—ruler-length",
-    superpower: "It flips its webbed arms over its body to form a spiky defensive cloak.",
-    funFacts: [
-      "It is neither a true squid nor an octopus but the only living member of its family.",
+    "name": "Vampire Squid",
+    "scientificName": "Vampyroteuthis infernalis",
+    "aliases": [
+      "Vampire squid from hell"
+    ],
+    "zone": "Deep",
+    "group": "Invertebrate",
+    "tagline": "A velvet cloak hides a gentle snow-eater.",
+    "intro": "Despite its spooky name, the vampire squid does not suck blood or chase large prey. It gathers drifting marine snow with two long sticky feeding filaments.",
+    "home": "It lives in low-oxygen deep water across tropical and temperate oceans.",
+    "diet": "It eats marine snow made of tiny remains, mucus, molts, and waste.",
+    "size": "Card reference: length 12”; weight ~250g. A published estimate for experimental specimens; not a maximum weight.",
+    "superpower": "It flips its webbed arms over its body to form a spiky defensive cloak.",
+    "funFacts": [
+      "Vampire squid belong to a distinct cephalopod lineage, separate from true squid and octopuses.",
       "Its eyes are enormous compared with the size of its body.",
       "The sticky feeding filaments can stretch to about eight times its body length.",
-      "Instead of ordinary ink, it can release glowing sticky mucus from its arm tips.",
+      "Instead of ordinary ink, it can release glowing sticky mucus from its arm tips."
     ],
-    lookFor: "Look for blue eyes, ear-like fins, and a dark web joining all eight arms.",
-    sourceUrls: [
-      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/vampire-squid",
-    ],
+    "lookFor": "Look for blue eyes, ear-like fins, and a dark web joining all eight arms.",
+    "sourceUrls": [
+      "https://www.researchgate.net/publication/227277529_Vampire_blood_Respiratory_physiology_of_the_vampire_squid_Cephalopoda_Vampyromorpha_in_relation_to_the_oxygen_minimum_layer",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/vampire-squid"
+    ]
   },
   {
-    name: "Giant Isopod",
-    scientificName: "Bathynomus giganteus",
-    aliases: ["Giant deep-sea isopod"],
-    zone: "Deep",
-    group: "Invertebrate",
-    tagline: "A football-sized pillbug patrols the ocean floor.",
-    intro:
-      "The giant isopod resembles a backyard pillbug scaled up to science-fiction size. It trundles across the deep seafloor searching for rare meals and falling leftovers.",
-    home: "It lives on deep Atlantic and Indo-West Pacific seafloors about 170 to 2,100 meters down.",
-    diet: "It scavenges dead fish and other remains and may also catch slow animals.",
-    size: "Up to about 16 in (40 cm)—roughly football length",
-    superpower: "Overlapping armor plates protect it and curl around its softer underside.",
-    funFacts: [
+    "name": "Giant Isopod",
+    "scientificName": "Bathynomus giganteus",
+    "aliases": [
+      "Giant deep-sea isopod"
+    ],
+    "zone": "Deep",
+    "group": "Invertebrate",
+    "tagline": "A football-sized pillbug patrols the ocean floor.",
+    "intro": "The giant isopod resembles a backyard pillbug scaled up to science-fiction size. It trundles across the deep seafloor searching for rare meals and falling leftovers.",
+    "home": "Deep western Atlantic seafloors, including the Gulf of Mexico, Caribbean, and nearby continental slopes.",
+    "diet": "It scavenges dead fish and other remains and may also catch slow animals.",
+    "size": "Card reference: length 14”; weight 2.4 lb. Rounded upper length and weight from an Exuma Sound sample.",
+    "superpower": "Overlapping armor plates protect it and curl around its softer underside.",
+    "funFacts": [
       "Giant isopods are distant marine cousins of pillbugs and sowbugs.",
       "Fourteen walking legs carry the heavy armored body.",
       "Two pairs of antennae taste and feel through dark water.",
-      "Its extra-large size is an example of deep-sea gigantism.",
+      "Its extra-large size is an example of deep-sea gigantism."
     ],
-    lookFor: "Spot the wide segmented armor, many legs, and large reflective compound eyes.",
-    sourceUrls: [
-      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/giant-isopod",
-    ],
+    "lookFor": "Spot the wide segmented armor, many legs, and large reflective compound eyes.",
+    "sourceUrls": [
+      "https://www.sciencedirect.com/science/article/abs/pii/S0967063716303739",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/giant-isopod"
+    ]
   },
   {
-    name: "Giant Tube Worm",
-    scientificName: "Riftia pachyptila",
-    aliases: ["Giant hydrothermal-vent tube worm", "Rift tubeworm"],
-    zone: "Deep",
-    group: "Invertebrate",
-    tagline: "Friendly bacteria power a mouthless vent giant.",
-    intro:
-      "The giant tube worm grows beside volcanic seafloor vents where poisonous-looking chemicals pour out. It has no mouth or stomach because bacteria living inside make all its food.",
-    home: "It forms colonies at hydrothermal vents in the eastern Pacific, about 1,900 to 3,600 meters deep.",
-    diet: "It does not eat; symbiotic bacteria make food from vent chemicals.",
-    size: "Up to about 6.6 ft (2 m)—taller than most adults",
-    superpower: "Billions of inner bacteria use chemosynthesis to turn chemicals into food.",
-    funFacts: [
+    "name": "Giant Tube Worm",
+    "scientificName": "Riftia pachyptila",
+    "aliases": [
+      "Giant hydrothermal-vent tube worm",
+      "Rift tubeworm"
+    ],
+    "zone": "Deep",
+    "group": "Invertebrate",
+    "tagline": "Friendly bacteria power a mouthless vent giant.",
+    "intro": "The giant tube worm grows beside volcanic seafloor vents where poisonous-looking chemicals pour out. It has no mouth or stomach because bacteria living inside make all its food.",
+    "home": "It forms colonies at hydrothermal vents in the eastern Pacific, about 1,900 to 3,600 meters deep.",
+    "diet": "It does not eat; symbiotic bacteria make food from vent chemicals.",
+    "size": "Card reference: tube length 8’; weight 650g. Length describes the tube; weight describes the living worm without its tube.",
+    "superpower": "Billions of inner bacteria use chemosynthesis to turn chemicals into food.",
+    "funFacts": [
       "An adult has no mouth, gut, or anus.",
       "Its red plume absorbs oxygen and hydrogen sulfide for the internal bacteria.",
       "The worm snaps its soft plume inside the white tube when danger appears.",
-      "Free-swimming larvae help the species discover and settle newly formed vents.",
+      "Free-swimming larvae help the species discover and settle newly formed vents."
     ],
-    lookFor: "Look for a long white tube topped by a bright red feathery plume.",
-    sourceUrls: [
+    "lookFor": "Look for a long white tube topped by a bright red feathery plume.",
+    "sourceUrls": [
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC4304853/",
       "https://www.mbari.org/animal/giant-tubeworm/",
-      "https://oceanexplorer.noaa.gov/wp-content/uploads/2025/04/vent-food-web.pdf",
-      "https://oceantoday.noaa.gov/lifeonavent/",
-    ],
+      "https://oceanexplorer.noaa.gov/wp-content/uploads/2025/04/vent-food-web.pdf"
+    ]
   },
 ];

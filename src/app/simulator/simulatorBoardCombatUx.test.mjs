@@ -344,12 +344,12 @@ test("the V2 opponent turn enters the live combat pipeline without precomputing 
   );
   assert.match(
     opponentTurn,
-    /const playerStateBeforeCombat = stagedPlayerState;[\s\S]*?const opponentOnPlayAttack = previewExperience \|\|/,
+    /const playerStateBeforeCombat = stagedPlayerState;[\s\S]*?const opponentOnPlayAttack = liveReefCombat \|\|/,
     "V2 must preserve the exact state before combat and skip the legacy eager attack",
   );
   assert.match(
     opponentTurn,
-    /if \(previewExperience\) \{[\s\S]*?createLiveOpponentTurnCombatEvents\(\{[\s\S]*?playerState: playerStateBeforeCombat,[\s\S]*?onPlayAttack: opponentResult\.onPlayAttack,[\s\S]*?queueEvents\([\s\S]*?return;/,
+    /if \(liveReefCombat\) \{[\s\S]*?createLiveOpponentTurnCombatEvents\(\{[\s\S]*?playerState: playerStateBeforeCombat,[\s\S]*?onPlayAttack: opponentResult\.onPlayAttack,[\s\S]*?queueEvents\([\s\S]*?return;/,
     "V2 must queue live combat from its pre-combat snapshot and return before the legacy suffix",
   );
 });
@@ -413,7 +413,7 @@ test("repeated attacks and Regenerate continuations create fresh live checkpoint
   );
   assert.match(
     regenerateChoice,
-    /const liveCombatResume = previewExperience && typeof pending\.liveResume === "function";[\s\S]*?pending\.liveResume\(\{[\s\S]*?pendingEventsRef\.current = nextEvents;[\s\S]*?setPendingEvents\(nextEvents\);/,
+    /const liveCombatResume = typeof pending\.liveResume === "function";[\s\S]*?pending\.liveResume\(\{[\s\S]*?pendingEventsRef\.current = nextEvents;[\s\S]*?setPendingEvents\(nextEvents\);/,
     "Resolving Regenerate must replace both queue representations with the live continuation",
   );
   assert.doesNotMatch(

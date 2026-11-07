@@ -30,8 +30,7 @@ export const supportCards = [
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 500,
 
-    text: "Discard one fish or predator in play on your reef and collect its RP cost. You cannot play another Support card this turn.",
-    locksFurtherSupportsThisTurn: true,
+    text: "Discard one fish or predator in play on your reef and collect its RP cost.",
 
     effects: [
       {
@@ -61,8 +60,7 @@ export const supportCards = [
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 501,
 
-    text: "Search your deck for a coral and place it into your hand. You cannot play another Support card this turn.",
-    locksFurtherSupportsThisTurn: true,
+    text: "Search your deck for a coral and place it into your hand.",
 
     effects: [
       {
@@ -101,14 +99,13 @@ export const supportCards = [
 
   {
     id: "capt-dani",
-    name: "Capt. Dani",
+    name: "Whale Watcher Dani",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 503,
 
-    text: "Search your deck for a Filter Feeder creature and place it into your hand. Shuffle your deck afterwards. You cannot play another Support card this turn.",
-    locksFurtherSupportsThisTurn: true,
+    text: "Search your deck for a Filter Feeder creature and place it into your hand. Shuffle your deck afterwards.",
 
     effects: [
       {
@@ -130,8 +127,7 @@ export const supportCards = [
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 504,
 
-    text: "Discard your hand and draw 7 cards. You cannot play another Support card this turn.",
-    locksFurtherSupportsThisTurn: true,
+    text: "Discard your hand and draw 8 cards.",
 
     effects: [
       {
@@ -145,7 +141,7 @@ export const supportCards = [
       },
       {
         type: EffectType.DRAW_CARDS,
-        amount: 7,
+        amount: 8,
       },
     ],
   },
@@ -158,8 +154,7 @@ export const supportCards = [
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 505,
 
-    text: "Search your deck for a habitat card and place it into your hand, then shuffle. OR draw 2 cards. You cannot play another Support card this turn.",
-    locksFurtherSupportsThisTurn: true,
+    text: "Search your deck for a habitat card and place it into your hand, then shuffle. OR draw 2 cards.",
 
     effects: [
       {
@@ -208,8 +203,7 @@ export const supportCards = [
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 507,
 
-    text: "Spend 1 RP to play this card. Choose one of your opponent’s corals. That coral produces 2 RP less next round. You cannot play another Support card this turn.",
-    locksFurtherSupportsThisTurn: true,
+    text: "Spend 1 RP to play this card. Choose one of your opponent’s corals. That coral produces 2 RP less next round.",
 
     cost: { rp: 1 },
 
@@ -235,14 +229,12 @@ export const supportCards = [
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 508,
 
-    text: "Choose up to three fish in your discard pile and shuffle them into your deck. You cannot play another Support card this turn.",
-    locksFurtherSupportsThisTurn: true,
+    text: "Choose up to three creatures in your discard pile and shuffle them into your deck.",
 
     effects: [
       {
         type: EffectType.RECOVER_CARD_FROM_DISCARD,
         targetKind: CardKind.CREATURE,
-        targetCategories: [CardCategory.FISH],
         amount: 3,
         destination: Zone.DECK,
         routeByPersonalDeck: true,
@@ -259,8 +251,7 @@ export const supportCards = [
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 509,
 
-    text: "Look at the top 5 cards of your deck and rearrange them in any way you see fit. You cannot play another Support card this turn.",
-    locksFurtherSupportsThisTurn: true,
+    text: "Look at the top 5 cards of your deck and rearrange them in any way you see fit.",
 
     effects: [
       {
@@ -463,19 +454,9 @@ export const supportCards = [
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 518,
 
-    text: "Flip a coin. If heads, put a discarded card into your hand.",
-
-    effects: [
-      {
-        type: EffectType.FLIP_COIN,
-        successResult: "heads",
-        onSuccess: {
-          type: EffectType.RECOVER_CARD_FROM_DISCARD,
-          amount: 1,
-          destination: Zone.HAND,
-        },
-      },
-    ],
+    cost: { rp: 2 },
+    text: "Spend 2 RP to search your discard pile for a Support card and place it into your hand.",
+    effects: [{ type: EffectType.RECOVER_CARD_FROM_DISCARD, targetKind: CardKind.SUPPORT, amount: 1, destination: Zone.HAND }],
   },
 
   {
@@ -486,20 +467,8 @@ export const supportCards = [
     image: "/images/cards/support/Deep/rov-lights.png",
     sortOrder: 519,
 
-    text: "Your attacks get +2 when targeting Deep creatures this turn.",
-
-    effects: [
-      {
-        type: "modifyAttackRoll",
-        amount: 2,
-        duration: Duration.THIS_TURN,
-        target: {
-          controller: "opponent",
-          kind: CardKind.CREATURE,
-          zone: CreatureZone.DEEP,
-        },
-      },
-    ],
+    text: "Search your deck for two Deep fish and place them into your hand.",
+    effects: [{ type: EffectType.SEARCH_DECK, targetKind: CardKind.CREATURE, targetCategories: [CardCategory.FISH], targetZone: CreatureZone.DEEP, amount: 2, destination: Zone.HAND, shuffleAfterwards: true }],
   },
 
   {
@@ -523,4 +492,7 @@ export const supportCards = [
       },
     ],
   },
-];
+].map((card) => ({
+  ...card,
+  supportType: ["spearfishing", "coral-gardener", "capt-dani", "dr-evans", "scientist-jes", "restocking", "robotic-survey", "remote-search", "explorer-jordan", "ocean-jake"].includes(card.id) ? "aide" : "item",
+}));

@@ -1,0 +1,440 @@
+{
+  "pageId": "2296:82568",
+  "cards": [
+    {
+      "id": "2296:262001",
+      "name": "cast-net",
+      "mainId": "2296:251503",
+      "mainName": "cast-net"
+    },
+    {
+      "id": "2749:175980",
+      "name": "cast-net",
+      "mainId": "2296:251503",
+      "mainName": "cast-net"
+    },
+    {
+      "id": "2296:262527",
+      "name": "deep-sea-fishing-rod",
+      "mainId": "259:700",
+      "mainName": "deep-sea-fishing-rod"
+    },
+    {
+      "id": "2296:262331",
+      "name": "deep-sea-fishing-rod",
+      "mainId": "259:700",
+      "mainName": "deep-sea-fishing-rod"
+    },
+    {
+      "id": "2297:286038",
+      "name": "Fishing",
+      "mainId": "672:4831",
+      "mainName": "Fishing"
+    },
+    {
+      "id": "2297:286059",
+      "name": "Fishing",
+      "mainId": "672:4831",
+      "mainName": "Fishing"
+    },
+    {
+      "id": "2296:267415",
+      "name": "remote-search",
+      "mainId": "672:4829",
+      "mainName": "remote-search"
+    },
+    {
+      "id": "2296:265089",
+      "name": "remote-search",
+      "mainId": "672:4829",
+      "mainName": "remote-search"
+    },
+    {
+      "id": "2569:175373",
+      "name": "Spearfishing",
+      "mainId": "259:691",
+      "mainName": "Spearfishing"
+    },
+    {
+      "id": "3994:798918",
+      "name": "Spearfishing",
+      "mainId": "259:691",
+      "mainName": "Spearfishing"
+    },
+    {
+      "id": "2779:42137",
+      "name": "crab-trap",
+      "mainId": "672:4832",
+      "mainName": "crab-trap"
+    },
+    {
+      "id": "2296:262723",
+      "name": "remote-search",
+      "mainId": "672:4829",
+      "mainName": "remote-search"
+    },
+    {
+      "id": "2769:37930",
+      "name": "crab-trap",
+      "mainId": "672:4832",
+      "mainName": "crab-trap"
+    },
+    {
+      "id": "2296:254509",
+      "name": "Scientist Jes",
+      "mainId": "396:8478",
+      "mainName": "Scientist Jes"
+    },
+    {
+      "id": "3994:864555",
+      "name": "Dr Evans",
+      "mainId": "259:695",
+      "mainName": "Dr Evans"
+    },
+    {
+      "id": "2749:172154",
+      "name": "sardine-ball-base",
+      "mainId": "2279:17421",
+      "mainName": "sardine-ball-base"
+    },
+    {
+      "id": "2749:172360",
+      "name": "sardine-ball-base",
+      "mainId": "2279:17421",
+      "mainName": "sardine-ball-base"
+    },
+    {
+      "id": "2749:172565",
+      "name": "sardine-ball-base",
+      "mainId": "2279:17421",
+      "mainName": "sardine-ball-base"
+    },
+    {
+      "id": "2749:172770",
+      "name": "sardine-ball-base",
+      "mainId": "2279:17421",
+      "mainName": "sardine-ball-base"
+    },
+    {
+      "id": "2749:172975",
+      "name": "sardine-ball-stage-1",
+      "mainId": "2279:17425",
+      "mainName": "sardine-ball-stage-1"
+    },
+    {
+      "id": "2749:173282",
+      "name": "sardine-ball-stage-1",
+      "mainId": "2279:17425",
+      "mainName": "sardine-ball-stage-1"
+    },
+    {
+      "id": "2746:420473",
+      "name": "herring-ball-base",
+      "mainId": "2279:17433",
+      "mainName": "herring-ball-base"
+    },
+    {
+      "id": "2749:173588",
+      "name": "sardine-ball-stage-2",
+      "mainId": "2279:17426",
+      "mainName": "sardine-ball-stage-2"
+    },
+    {
+      "id": "3994:864963",
+      "name": "sardine-ball-stage-2",
+      "mainId": "2279:17426",
+      "mainName": "sardine-ball-stage-2"
+    },
+    {
+      "id": "3994:797866",
+      "name": "remora",
+      "mainId": "2285:31378",
+      "mainName": "remora"
+    },
+    {
+      "id": "2297:272078",
+      "name": "herring-ball-stage-2",
+      "mainId": "2279:17435",
+      "mainName": "herring-ball-stage-2"
+    },
+    {
+      "id": "2746:420679",
+      "name": "herring-ball-stage-2",
+      "mainId": "2279:17435",
+      "mainName": "herring-ball-stage-2"
+    },
+    {
+      "id": "2297:278319",
+      "name": "herring-ball-stage-1",
+      "mainId": "2279:17434",
+      "mainName": "herring-ball-stage-1"
+    },
+    {
+      "id": "2297:272077",
+      "name": "herring-ball-stage-1",
+      "mainId": "2279:17434",
+      "mainName": "herring-ball-stage-1"
+    },
+    {
+      "id": "2746:421309",
+      "name": "herring-ball-stage-1",
+      "mainId": "2279:17434",
+      "mainName": "herring-ball-stage-1"
+    },
+    {
+      "id": "2297:278114",
+      "name": "herring-ball-base",
+      "mainId": "2279:17433",
+      "mainName": "herring-ball-base"
+    },
+    {
+      "id": "2746:420267",
+      "name": "herring-ball-base",
+      "mainId": "2279:17433",
+      "mainName": "herring-ball-base"
+    },
+    {
+      "id": "3994:864647",
+      "name": "herring-ball-base",
+      "mainId": "2279:17433",
+      "mainName": "herring-ball-base"
+    },
+    {
+      "id": "2749:174008",
+      "name": "halfbeak",
+      "mainId": "2285:31389",
+      "mainName": "halfbeak"
+    },
+    {
+      "id": "2297:283572",
+      "name": "bluefin-tuna-juvenile",
+      "mainId": "2285:31385",
+      "mainName": "bluefin-tuna-juvenile"
+    },
+    {
+      "id": "3994:787477",
+      "name": "ocean-triggerfish",
+      "mainId": "2285:31393",
+      "mainName": "ocean-triggerfish"
+    },
+    {
+      "id": "2298:422149",
+      "name": "frigate-tuna",
+      "mainId": "2285:31390",
+      "mainName": "frigate-tuna"
+    },
+    {
+      "id": "2297:283574",
+      "name": "bonito-tuna",
+      "mainId": "2285:31387",
+      "mainName": "bonito-tuna"
+    },
+    {
+      "id": "3994:797632",
+      "name": "bonito-tuna",
+      "mainId": "2285:31387",
+      "mainName": "bonito-tuna"
+    },
+    {
+      "id": "2746:419647",
+      "name": "halfbeak",
+      "mainId": "2285:31389",
+      "mainName": "halfbeak"
+    },
+    {
+      "id": "2746:419855",
+      "name": "halfbeak",
+      "mainId": "2285:31389",
+      "mainName": "halfbeak"
+    },
+    {
+      "id": "3994:798362",
+      "name": "pompano",
+      "mainId": "2285:31392",
+      "mainName": "pompano"
+    },
+    {
+      "id": "2297:277288",
+      "name": "mahi-mahi",
+      "mainId": "2285:31380",
+      "mainName": "mahi-mahi"
+    },
+    {
+      "id": "3994:796681",
+      "name": "mahi-mahi",
+      "mainId": "2285:31380",
+      "mainName": "mahi-mahi"
+    },
+    {
+      "id": "3994:796454",
+      "name": "mahi-mahi",
+      "mainId": "2285:31380",
+      "mainName": "mahi-mahi"
+    },
+    {
+      "id": "2297:285294",
+      "name": "market-squid",
+      "mainId": "2294:52505",
+      "mainName": "market-squid"
+    },
+    {
+      "id": "2746:412340",
+      "name": "market-squid",
+      "mainId": "2294:52505",
+      "mainName": "market-squid"
+    },
+    {
+      "id": "3994:797388",
+      "name": "portugese-man-o-war",
+      "mainId": "2285:31376",
+      "mainName": "portugese-man-o-war"
+    },
+    {
+      "id": "3994:797144",
+      "name": "portugese-man-o-war",
+      "mainId": "2285:31376",
+      "mainName": "portugese-man-o-war"
+    },
+    {
+      "id": "3994:795223",
+      "name": "blue-sea-dragon",
+      "mainId": "2285:31377",
+      "mainName": "blue-sea-dragon"
+    },
+    {
+      "id": "3994:914416",
+      "name": "blue-sea-dragon",
+      "mainId": "2285:31377",
+      "mainName": "blue-sea-dragon"
+    },
+    {
+      "id": "3994:793638",
+      "name": "oceanic-manta-ray-holo",
+      "mainId": "241:1612",
+      "mainName": "oceanic-manta-ray"
+    },
+    {
+      "id": "2297:280388",
+      "name": "killer-whale",
+      "mainId": "745:139304",
+      "mainName": "killer-whale"
+    },
+    {
+      "id": "3994:793866",
+      "name": "yellowfin-tuna",
+      "mainId": "2265:227327",
+      "mainName": "yellowfin-tuna"
+    },
+    {
+      "id": "2297:283209",
+      "name": "open-ocean",
+      "mainId": "2297:283208",
+      "mainName": "open-ocean"
+    },
+    {
+      "id": "2297:278946",
+      "name": "silky-shark",
+      "mainId": "2261:223207",
+      "mainName": "silky-shark"
+    },
+    {
+      "id": "2297:278948",
+      "name": "Sailfish",
+      "mainId": "2265:227326",
+      "mainName": "Sailfish"
+    },
+    {
+      "id": "3994:794310",
+      "name": "loggerhead-sea-turtle",
+      "mainId": "2561:175116",
+      "mainName": "loggerhead-sea-turtle"
+    },
+    {
+      "id": "3994:794311",
+      "name": "loggerhead-sea-turtle",
+      "mainId": "2561:175116",
+      "mainName": "loggerhead-sea-turtle"
+    },
+    {
+      "id": "3994:798125",
+      "name": "market-squid",
+      "mainId": "2294:52505",
+      "mainName": "market-squid"
+    }
+  ],
+  "references": [
+    {
+      "id": "2296:184870",
+      "children": [
+        {
+          "id": "2296:184871",
+          "name": "OpenOceanBackdrop"
+        },
+        {
+          "id": "2296:184872",
+          "name": "Backdrop"
+        },
+        {
+          "id": "2296:184873",
+          "name": "LightShaft"
+        },
+        {
+          "id": "2296:184874",
+          "name": "LightShaft"
+        },
+        {
+          "id": "2296:184875",
+          "name": "LightShaft"
+        },
+        {
+          "id": "2296:184876",
+          "name": "LightShaft"
+        },
+        {
+          "id": "2296:184877",
+          "name": "LightShaft"
+        },
+        {
+          "id": "2296:184878",
+          "name": "Draw a card (you must do this at the beginning of every turn) Collect RP from Corals Spend Your RP Play Creatures Play/Upgrade Corals Purchase Structure Cards Play Any Support Cards Perform Any Creature Actions (As many as you want, but cannot play the same action twice in one turn from the same creature. Some actions cost RP) End Your Turn"
+        },
+        {
+          "id": "2296:184879",
+          "name": "What You Can Do On Your Turn"
+        },
+        {
+          "id": "2296:184880",
+          "name": "Group 4"
+        }
+      ],
+      "text": "Draw a card (you must do this at the beginning of every turn)\nCollect RP from Corals\nSpend Your RP\nPlay Creatures\nPlay/Upgrade Corals\nPurchase Structure Cards\nPlay Any Support Cards\nPerform Any Creature Actions (As many as you want, but cannot play the same action twice in one turn from the same creature. Some actions cost RP)\nEnd Your Turn | What You Can Do On Your Turn | TM | TRADING CARD GAME"
+    },
+    {
+      "id": "2779:45793",
+      "children": [],
+      "text": ""
+    },
+    {
+      "id": "2296:218512",
+      "children": [
+        {
+          "id": "2296:218513",
+          "name": "ChatGPT Image Dec 13, 2025, 04_03_21 PM 2"
+        },
+        {
+          "id": "2296:218514",
+          "name": "Open Ocean"
+        },
+        {
+          "id": "2296:218515",
+          "name": "A dynamic, fast paced deck which harnesses the power of massive schools of fish to unlock hard hitting open ocean creatures."
+        },
+        {
+          "id": "2296:218516",
+          "name": "Group 24"
+        }
+      ],
+      "text": "Open Ocean | A dynamic, fast paced deck which harnesses the power of massive schools of fish to unlock hard hitting open ocean creatures. | Offense | Defense | Economy | Consistency | Tempo | Filter Feeder | Apex | Predator | Fish | Invertebrate"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+SEA REALM STAPLING JIG — PRINTABLE COMPONENTS
+
+35 assembly pieces + 3 optional fit-test gauges. Each named STL is one physical
+piece: print ONE of every file in folders 01–07. Repeated parts already have
+separate numbered files; do not multiply their quantities again.
+
+Folder 00: three optional stapler-width gauges. Try these before the full kit.
+Folder 01: four paper-tray tiles.
+Folder 02: two complete stapler docks; each has two floors, two rails and a stop.
+Folder 03: two removable loading supports.
+Folder 04: four sections of the U-shaped glue-sheet alignment guide.
+Folder 05: three keyed connectors for that guide.
+Folder 06: two hold-down arms and two pressure pads.
+Folder 07: eight underside alignment keys (four for tray, four for dock floors).
+
+IMPORT / SCALE
+Import the individual STL files into Bambu Studio or your print service's slicer
+as SEPARATE OBJECTS, not as one multipart object.
+Units are MILLIMETERS. Keep scale at 100%. They are separate objects, already
+exported with their minimum Z at the build plate. Arrange only as many as fit
+your selected printer; this is not one combined print plate.
+The largest individual footprint dimension is 174 mm. The largest tray tile
+is 128.45 x 153.7 mm. Allow space for your printer's brim and exclusion zones.
+
+ORIENTATION / SUPPORTS
+- Tray, docks, rails, stops, pads, keys, and gauges: preserve exported orientation.
+- Guide sections: already inverted with thin finger surfaces down. Do not flip
+  them again based on the assembled Blender view.
+- Guide connectors: already flat face down with pegs up.
+- Clamp arms: already turned onto their sides and NEED SUPPORTS beneath the
+  elevated arms beyond their mounting feet. Inspect nut pockets/overhangs too.
+- Loading supports: exported upright and NEED SUPPORTS under the broad surface,
+  or deliberate reorientation by the person slicing them.
+- Review all slicer previews before printing, especially 0.6 mm guide fingers
+  and underside recesses. Initial layer height: 0.2 mm (three finger layers).
+PRINT_LIST.csv includes the size and notes for every file.
+
+PROTOTYPE FIT STILL TO CONFIRM
+Stapler width is approximately 38.1 mm. Toe-to-staple distance (18 mm default)
+and anvil height (12 mm default) are UNMEASURED. Physical media thickness and
+the printer's dimensional accuracy are also unverified. Print the small width
+gauges first; confirm the two missing measurements before printing the full kit.
+This package contains the existing prototype geometry without design changes.
+
+ASSEMBLY / EXTRA MATERIALS
+See ASSEMBLY_INSTRUCTIONS.txt for hardware, board attachment and calibration.
+You also need a flat backing board, M3 mounting hardware, two M4 nuts and two
+M4 thumbscrews, plus suitable adhesive. Hardware is not represented by the STLs.
+The backing-board CSV identifies underside hardware relief holes.
+The fixture is for room-temperature assembly; remove the stack before heating.
+
+GLUE COVERAGE
+The centered 8.25 x 10.75 inch glue sheet covers the nominal Figma card area.
+The Epson print route applies borderless enlargement, so verify that the
+outermost FINISHED CUT edges on actual paper remain at least 3.175 mm inside
+the page edges before assuming full adhesive coverage.
+
+PREVIEWS
+Preview_alignment.png shows the top sheet hidden so the glue guide is visible.
+Preview_stapling.png shows the guide/supports withdrawn and the stapler envelope.
+Paper, glue film, screws, and the illustrated stapler are reference objects only.

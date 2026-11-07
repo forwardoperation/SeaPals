@@ -1,3 +1,4 @@
+import * as reefAbilities from "./reefAbilityRules.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -17,6 +18,7 @@ const cards = {
   actor: { id: "actor", kind: "creature", name: "Actor", actions: [] },
 };
 const baseContext = {
+    ...reefAbilities,
   cardsById: cards,
   CardKind: { CORAL: "coral" },
   EffectType: { STUN_CORAL: "stunCoral", DAMAGE: "damage", FLIP_COIN: "flipCoin" },
@@ -30,6 +32,7 @@ const baseContext = {
   projectNormalizedPlayerState: (state) => ({ state }),
   getContinuousHealthCollapseMessage: () => "",
   activeCondition: null,
+  foundationDeck: [],
   turn: 2,
   round: 2,
   nextGameplayRandom: () => 0,

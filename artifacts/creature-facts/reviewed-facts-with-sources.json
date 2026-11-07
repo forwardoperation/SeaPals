@@ -1,0 +1,3315 @@
+[
+  {
+    "cardId": "humpback-whale",
+    "name": "Humpback Whale",
+    "family": "Balaenopteridae",
+    "scientificName": "Megaptera novaeangliae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=137092",
+      "https://www.fisheries.noaa.gov/species/humpback-whale"
+    ],
+    "before": [
+      "LT: 85’",
+      "Baleen Whale",
+      "WT: 40 Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Balaenopteridae",
+      "LT: 60’",
+      "WT: 40 Tons",
+      "Worldwide"
+    ],
+    "description": "Humpback whales sing long, evolving songs that can travel for miles. They team up to “bubble-net” feed, herding fish into a gulp with giant pleated throats.",
+    "changed": true
+  },
+  {
+    "cardId": "oceanic-manta-ray",
+    "name": "Oceanic Manta Ray",
+    "family": "Mobulidae",
+    "scientificName": "Mobula birostris",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=1026118",
+      "https://www.fisheries.noaa.gov/species/giant-manta-ray"
+    ],
+    "before": [
+      "LT: 22’",
+      "Mobula",
+      "WT: 1.5 Tons",
+      "Tropics"
+    ],
+    "after": [
+      "Mobulidae",
+      "WD: 22’",
+      "WT: 1.5 Tons",
+      "Tropics"
+    ],
+    "description": "Manta rays glide on giant wings, funneling plankton with their head fins. They also visit cleaning stations where small fish remove parasites.",
+    "changed": true
+  },
+  {
+    "cardId": "ocean-sunfish",
+    "name": "Ocean Sunfish",
+    "family": "Molidae",
+    "scientificName": "Mola mola",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127405",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/ocean-sunfish"
+    ],
+    "before": [
+      "LT: 8’ 6”",
+      "Bony Fish",
+      "WT: 1 Ton",
+      "Worldwide"
+    ],
+    "after": [
+      "Molidae",
+      "LT: 8’ 6”",
+      "WT: 1 Ton",
+      "Worldwide"
+    ],
+    "description": "Among the heaviest bony fish, ocean sunfish feed on jellyfish and other prey. They visit cleaning stations where fish pick off parasites.",
+    "changed": true
+  },
+  {
+    "cardId": "whale-shark",
+    "name": "Whale Shark",
+    "family": "Rhincodontidae",
+    "scientificName": "Rhincodon typus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105847",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/whale-shark/"
+    ],
+    "before": [
+      "LT: 40’",
+      "Rhincodontidae",
+      "WT: 12.5 Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Rhincodontidae",
+      "LT: 40’",
+      "WT: 12.5 Tons",
+      "Worldwide"
+    ],
+    "description": "Whale sharks are gentle giants—the largest fish on Earth—filtering plankton and tiny fish with a wide, sieve-like mouth.",
+    "changed": false
+  },
+  {
+    "cardId": "blue-whale",
+    "name": "Blue Whale",
+    "family": "Balaenopteridae",
+    "scientificName": "Balaenoptera musculus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=137090",
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=380449",
+      "https://www.fisheries.noaa.gov/species/blue-whale"
+    ],
+    "before": [
+      "LT: 100’",
+      "Baleen Whale",
+      "WT: 200 Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Balaenopteridae",
+      "LT: 100’",
+      "WT: 200 Tons",
+      "Worldwide"
+    ],
+    "description": "The blue whale is the largest animal ever known to live on Earth, a massive yet graceful marine mammal that glides through the open ocean.",
+    "changed": true
+  },
+  {
+    "cardId": "basking-shark",
+    "name": "Basking Shark",
+    "family": "Cetorhinidae",
+    "scientificName": "Cetorhinus maximus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105837",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/basking-shark/"
+    ],
+    "before": [
+      "LT: 35’",
+      "Cartilaginous Fish",
+      "WT: 5 Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Cetorhinidae",
+      "LT: 35’",
+      "WT: 5 Tons",
+      "Worldwide"
+    ],
+    "description": "Despite their colossal size, these gentle giants consume tiny zooplankton by simply swimming with their cavernous mouths wide open.",
+    "changed": true
+  },
+  {
+    "cardId": "megamouth-shark",
+    "name": "Megamouth Shark",
+    "family": "Megachasmidae",
+    "scientificName": "Megachasma pelagios",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=281542",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/megamouth-shark/"
+    ],
+    "before": [
+      "LT: 18’",
+      "Megachasmidae",
+      "WT: 1.5 Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Megachasmidae",
+      "LT: 18’",
+      "WT: 1.5 Tons",
+      "Worldwide"
+    ],
+    "description": "This rare shark filters tiny prey, including krill, through its enormous mouth. Its pale upper lip reflects light; it does not produce its own glow.",
+    "changed": true
+  },
+  {
+    "cardId": "manta-ray",
+    "name": "Reef Manta Ray",
+    "family": "Mobulidae",
+    "scientificName": "Mobula alfredi",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=1042871",
+      "https://www.fishbase.se/summary/Mobula-alfredi.html",
+      "https://australian.museum/learn/animals/fishes/alfred-manta-manta-alfredi/"
+    ],
+    "before": [
+      "LT: 10’",
+      "Mobula",
+      "WT: 1500lbs",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Mobulidae",
+      "WD: 10’",
+      "WT: 1500lbs",
+      "Indo-Pacific"
+    ],
+    "description": "Reef manta rays filter plankton with their head fins and visit cleaning stations. Unique patterns of belly spots help researchers identify individuals.",
+    "changed": true
+  },
+  {
+    "cardId": "hammerhead",
+    "name": "Hammerhead",
+    "family": "Sphyrnidae",
+    "scientificName": "Sphyrnidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105694",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/scalloped-hammerhead/",
+      "https://ocean.si.edu/ocean-life/sharks-rays/sharks"
+    ],
+    "before": [
+      "LT: 18’ 9”",
+      "Sphyrnidae",
+      "WT: 1000lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Sphyrnidae",
+      "LT: 18’ 9”",
+      "WT: 1000lbs",
+      "Worldwide"
+    ],
+    "description": "They use their wide heads to sweep the ocean floor like a metal detector. They use thousands of tiny electrical sensors to find buried creatures.",
+    "changed": false
+  },
+  {
+    "cardId": "great-white",
+    "name": "Great White",
+    "family": "Lamnidae",
+    "scientificName": "Carcharodon carcharias",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105838",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/white-shark/"
+    ],
+    "before": [
+      "LT: 15’ 8”",
+      "Mackerel Shark",
+      "WT: 3.25Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Lamnidae",
+      "LT: 20’",
+      "WT: 2 Tons",
+      "Worldwide"
+    ],
+    "description": "An apex hunter that shapes the whole food web. Built for ambush: countershaded body hides it in sunlit seas.",
+    "changed": true
+  },
+  {
+    "cardId": "bull-shark",
+    "name": "Bull Shark",
+    "family": "Carcharhinidae",
+    "scientificName": "Carcharhinus leucas",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105792",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/bull-shark/"
+    ],
+    "before": [
+      "LT: 10’ 8”",
+      "Requiem Shark",
+      "WT: 450lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Carcharhinidae",
+      "LT: 10’ 8”",
+      "WT: 450lbs",
+      "Worldwide"
+    ],
+    "description": "Bull sharks can live in both salt and freshwater, cruising far up rivers—even hundreds of miles inland.",
+    "changed": true
+  },
+  {
+    "cardId": "tiger-shark",
+    "name": "Tiger Shark",
+    "family": "Galeocerdonidae",
+    "scientificName": "Galeocerdo cuvier",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105799",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/tiger-shark/"
+    ],
+    "before": [
+      "LT: 14’ 2”",
+      "Ground Shark",
+      "WT: 1300lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Galeocerdonidae",
+      "LT: 14’ 2”",
+      "WT: 1300lbs",
+      "Worldwide"
+    ],
+    "description": "A large, powerful predator found in warm ocean waters around the world, it has a broad diet and a reputation as an opportunistic hunter.",
+    "changed": true
+  },
+  {
+    "cardId": "killer-whale-oceanic",
+    "name": "Killer Whale",
+    "family": "Delphinidae",
+    "scientificName": "Orcinus orca",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=137102",
+      "https://www.fisheries.noaa.gov/species/killer-whale"
+    ],
+    "before": [
+      "LT: 31’ 8”",
+      "Delphinidae",
+      "WT: 10 Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Delphinidae",
+      "LT: 31’ 8”",
+      "WT: 10 Tons",
+      "Worldwide"
+    ],
+    "description": "Orcas are the largest members of the dolphin family. Their close-knit groups use different hunting traditions to catch fish, seals, or other whales.",
+    "changed": true
+  },
+  {
+    "cardId": "pilot-whale-oceanic",
+    "name": "Pilot Whale",
+    "family": "Delphinidae",
+    "scientificName": "Globicephala spp.",
+    "sources": [
+      "https://www.fisheries.noaa.gov/species/short-finned-pilot-whale",
+      "https://www.fisheries.noaa.gov/species/long-finned-pilot-whale"
+    ],
+    "before": [
+      "LT: 18’",
+      "Delphinidae",
+      "WT: 2.5Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Delphinidae",
+      "LT: 18’",
+      "WT: 2.5Tons",
+      "Worldwide"
+    ],
+    "description": "Pilot whales live in close-knit pods led by experienced females. Deep divers, they chase squid in the dark and keep tight social bonds.",
+    "changed": false
+  },
+  {
+    "cardId": "bottlenose-dolphin",
+    "name": "Bottlenose Dolphin",
+    "family": "Delphinidae",
+    "scientificName": "Tursiops truncatus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=137111",
+      "https://www.fisheries.noaa.gov/species/common-bottlenose-dolphin",
+      "https://oceanservice.noaa.gov/facts/dolphin.html"
+    ],
+    "before": [
+      "LT: 11’ 6”",
+      "Delphinidae",
+      "WT: 1000lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Delphinidae",
+      "LT: 11’ 6”",
+      "WT: 1000lbs",
+      "Worldwide"
+    ],
+    "description": "Bottlenose dolphins are intelligent, social marine mammals with sleek gray bodies and short snouts. They use echolocation to find prey.",
+    "changed": true
+  },
+  {
+    "cardId": "giant-squid",
+    "name": "Giant Squid",
+    "family": "Architeuthidae",
+    "scientificName": "Architeuthis dux",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=342218",
+      "https://ocean.si.edu/ocean-life/invertebrates/giant-squid",
+      "https://collections.tepapa.govt.nz/topic/1240"
+    ],
+    "before": [
+      "LT: 43’",
+      "Architeuthidae",
+      "WT: 600lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Architeuthidae",
+      "LT: 43’",
+      "WT: 600lbs",
+      "Worldwide"
+    ],
+    "description": "With enormous eyes adapted to dim light, giant squid roam the ocean depths. Two long feeding tentacles reach out to snatch fish and other squid.",
+    "changed": true
+  },
+  {
+    "cardId": "colossal-squid",
+    "name": "Colossal Squid",
+    "family": "Cranchiidae",
+    "scientificName": "Mesonychoteuthis hamiltoni",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=325299",
+      "https://collections.tepapa.govt.nz/topic/588",
+      "https://www.tepapa.govt.nz/te-papa-celebrates-colossal-squid-s-100th-birthday"
+    ],
+    "before": [
+      "LT: 46’",
+      "Cranchiidae",
+      "WT: 1100lbs",
+      "Arctic"
+    ],
+    "after": [
+      "Cranchiidae",
+      "LT: 18’",
+      "WT: 1100lbs",
+      "Southern Ocean"
+    ],
+    "description": "The heaviest known squid lives in the cold Southern Ocean. Rotating hooks on its tentacle clubs help it hold slippery prey.",
+    "changed": true
+  },
+  {
+    "cardId": "greenland-shark",
+    "name": "Greenland Shark",
+    "family": "Somniosidae",
+    "scientificName": "Somniosus microcephalus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105919",
+      "https://oceanservice.noaa.gov/facts/greenland-shark.html",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/greenland-shark/",
+      "https://pubmed.ncbi.nlm.nih.gov/27516602/"
+    ],
+    "before": [
+      "LT: 15’",
+      "Somniosidae",
+      "WT: 1.1Tons",
+      "North Atlantic"
+    ],
+    "after": [
+      "Somniosidae",
+      "LT: 15’",
+      "WT: 1.1Tons",
+      "North Atlantic"
+    ],
+    "description": "A slow-moving deep-water apex predator famous for having the longest known lifespan of all vertebrate animals.",
+    "changed": false
+  },
+  {
+    "cardId": "giant-phantom-jelly",
+    "name": "Giant Phantom Jelly",
+    "family": "Ulmaridae",
+    "scientificName": "Stygiomedusa gigantea",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=135311",
+      "https://www.mbari.org/animal/giant-phantom-jelly/"
+    ],
+    "before": [
+      "LT: 33’",
+      "Ulmaridae",
+      "WT: 90lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Ulmaridae",
+      "Arms: 33’",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "Unlike most jellyfish, the giant phantom jelly lacks stinging tentacles. Instead, it uses its long arms to trap plankton and small fish.",
+    "changed": true
+  },
+  {
+    "cardId": "sperm-whale",
+    "name": "Sperm Whale",
+    "family": "Physeteridae",
+    "scientificName": "Physeter macrocephalus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=137119",
+      "https://www.fisheries.noaa.gov/species/sperm-whale"
+    ],
+    "before": [
+      "LT: 60’",
+      " Physeteridae",
+      "WT: 50Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Physeteridae",
+      "LT: 60’",
+      "WT: 50Tons",
+      "Worldwide"
+    ],
+    "description": "The largest toothed predators on Earth, sperm whales hunt for giant squid in the ocean deep using incredibly loud echolocation clicks.",
+    "changed": true
+  },
+  {
+    "cardId": "shortfin-mako-shark",
+    "name": "Shortfin Mako Shark",
+    "family": "Lamnidae",
+    "scientificName": "Isurus oxyrinchus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105839",
+      "https://www.fisheries.noaa.gov/species/atlantic-shortfin-mako-shark"
+    ],
+    "before": [
+      "LT: 13’",
+      "Mackerel Shark",
+      "WT: 1300lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Lamnidae",
+      "LT: 13’",
+      "WT: 1300lbs",
+      "Worldwide"
+    ],
+    "description": "A powerful, fast-swimming shark, the shortfin mako pursues fish and squid. It can retain heat in parts of its body to stay active in cool water.",
+    "changed": true
+  },
+  {
+    "cardId": "black-marlin",
+    "name": "Black Marlin",
+    "family": "Istiophoridae",
+    "scientificName": "Istiompax indica",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=712905",
+      "https://australian.museum/learn/animals/fishes/black-marlin-makaira-indica-cuvier-1832/"
+    ],
+    "before": [
+      "LT: 15’",
+      "Billfish",
+      "WT: 1650lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Istiophoridae",
+      "LT: 15’",
+      "WT: 1650lbs",
+      "Indo-Pacific"
+    ],
+    "description": "Black marlin hunt fish and squid with a long, spear-like bill. Their rigid pectoral fins cannot fold flat against the sides of the body.",
+    "changed": true
+  },
+  {
+    "cardId": "swordfish",
+    "name": "Swordfish",
+    "family": "Xiphiidae",
+    "scientificName": "Xiphias gladius",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127094",
+      "https://www.fisheries.noaa.gov/species/north-atlantic-swordfish",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/swordfish/"
+    ],
+    "before": [
+      "LT: 14’",
+      "Billfish",
+      "WT: 1000lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Xiphiidae",
+      "LT: 14’",
+      "WT: 1000lbs",
+      "Worldwide"
+    ],
+    "description": "Charging through the pitch-black twilight zone, the swordfish uses its razor-sharp bill to slash and stun fast-moving schools of squid and fish.",
+    "changed": true
+  },
+  {
+    "cardId": "bluefin-tuna",
+    "name": "Bluefin Tuna",
+    "family": "Scombridae",
+    "scientificName": "Thunnus thynnus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127029",
+      "https://www.fisheries.noaa.gov/species/western-atlantic-bluefin-tuna"
+    ],
+    "before": [
+      "LT: 13’",
+      "Scombridae",
+      "WT: 1000lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Scombridae",
+      "LT: 13’",
+      "WT: 1000lbs",
+      "Atlantic"
+    ],
+    "description": "Atlantic bluefin tuna retain heat in their muscles and other tissues. This helps them pursue prey across both cool and warm ocean waters.",
+    "changed": true
+  },
+  {
+    "cardId": "great-barracuda",
+    "name": "Great Barracuda",
+    "family": "Sphyraenidae",
+    "scientificName": "Sphyraena barracuda",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=345843",
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159812",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/great-barracuda/"
+    ],
+    "before": [
+      "LT: 4’",
+      "Sphyraenidae",
+      "WT: 40lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Sphyraenidae",
+      "LT: 4’",
+      "WT: 40lbs",
+      "Worldwide"
+    ],
+    "description": "Barracudas hover like steel spears, then explode forward in a silver blur to snatch prey with dagger teeth. They are drawn to flashes of light.",
+    "changed": false
+  },
+  {
+    "cardId": "green-moray-eel",
+    "name": "Green Moray Eel",
+    "family": "Muraenidae",
+    "scientificName": "Gymnothorax funebris",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=158583",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/green-moray/"
+    ],
+    "before": [
+      "LT: 8’ 6”",
+      "True Eel",
+      "WT: 65lbs",
+      "Caribbean"
+    ],
+    "after": [
+      "Muraenidae",
+      "LT: 8’ 6”",
+      "WT: 65lbs",
+      "Caribbean"
+    ],
+    "description": "Moray eels lurk in crevices. They snatch prey, then fire out a second set of jaws (pharyngeal jaws) to pull it down.",
+    "changed": true
+  },
+  {
+    "cardId": "reef-shark",
+    "name": "Reef Shark",
+    "family": "Carcharhinidae",
+    "scientificName": "Carcharhinus melanopterus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105795",
+      "https://www.fishbase.se/summary/Carcharhinus-melanopterus.html",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/blacktip-reef-shark/"
+    ],
+    "before": [
+      "LT: 5’",
+      "Requiem Shark",
+      "WT: 80lbs",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Carcharhinidae",
+      "LT: 5’",
+      "WT: 80lbs",
+      "Indo-Pacific"
+    ],
+    "description": "Blacktip reef sharks are shallow-reef sprinters with signature black-tipped fins. They dart through lagoons at dawn and dusk, snapping up small fish.",
+    "changed": true
+  },
+  {
+    "cardId": "goliath-grouper",
+    "name": "Goliath Grouper",
+    "family": "Epinephelidae",
+    "scientificName": "Epinephelus itajara",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159353",
+      "https://www.fisheries.noaa.gov/species/atlantic-goliath-grouper",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/goliath-grouper/"
+    ],
+    "before": [
+      "LT: 7’ 4”",
+      "Serranidae",
+      "WT: 800lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Epinephelidae",
+      "LT: 7’ 4”",
+      "WT: 800lbs",
+      "Atlantic"
+    ],
+    "description": "Groupers are ambush hunters that gulp prey with a sudden vacuum from their huge mouths. They lurk in shadows, waiting for prey.",
+    "changed": true
+  },
+  {
+    "cardId": "green-sea-turtle",
+    "name": "Green Sea Turtle",
+    "family": "Cheloniidae",
+    "scientificName": "Chelonia mydas",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=137206",
+      "https://www.fisheries.noaa.gov/species/green-turtle"
+    ],
+    "before": [
+      "Length: 4’ 8”",
+      "Weight: 425lbs",
+      "Caribbean"
+    ],
+    "after": [
+      "Cheloniidae",
+      "Shell: 4’",
+      "WT: 425lbs",
+      "Tropics"
+    ],
+    "description": "Adult green turtles graze mainly on seagrass and algae. After long ocean migrations, females return to their natal nesting regions to lay eggs.",
+    "changed": true
+  },
+  {
+    "cardId": "spinner-dolphins",
+    "name": "Spinner Dolphins",
+    "family": "Delphinidae",
+    "scientificName": "Stenella longirostris",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=137109",
+      "https://www.fisheries.noaa.gov/species/spinner-dolphin"
+    ],
+    "before": [
+      "LT: 5’ 9”",
+      "Delphinidae",
+      "WT: 180lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Delphinidae",
+      "LT: 5’ 9”",
+      "WT: 180lbs",
+      "Worldwide"
+    ],
+    "description": "Spinner dolphins leap in tight, corkscrew spins that can launch them high above the waves. They can spin up to 7 times in the air.",
+    "changed": false
+  },
+  {
+    "cardId": "thresher-shark",
+    "name": "Thresher Shark",
+    "family": "Alopiidae",
+    "scientificName": "Alopias vulpinus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105836",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/thresher-shark/"
+    ],
+    "before": [
+      "LT: 14’ 5”",
+      "Mackerel Shark",
+      "WT: 600lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Alopiidae",
+      "LT: 14’ 5”",
+      "WT: 600lbs",
+      "Worldwide"
+    ],
+    "description": "A thresher shark is a sleek, fast-swimming ocean predator famous for its extraordinarily long, whip-like tail that it uses to stun prey.",
+    "changed": true
+  },
+  {
+    "cardId": "goblin-shark",
+    "name": "Goblin Shark",
+    "family": "Mitsukurinidae",
+    "scientificName": "Mitsukurina owstoni",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105842",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/goblin-shark/"
+    ],
+    "before": [
+      "LT: 10’ 8”",
+      "Mackerel shark",
+      "WT: 750lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Mitsukurinidae",
+      "LT: 10’ 8”",
+      "WT: 750lbs",
+      "Worldwide"
+    ],
+    "description": "The goblin shark is a rare, deep-sea species recognized by its long snout and slingshot-like jaws that extend to capture prey",
+    "changed": true
+  },
+  {
+    "cardId": "gulper-eel",
+    "name": "Gulper Eel",
+    "family": "Eurypharyngidae",
+    "scientificName": "Eurypharynx pelecanoides",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127165",
+      "https://australian.museum/learn/animals/fishes/pelican-eel-eurypharynx-pelecanoides/",
+      "https://oceanexplorer.noaa.gov/multimedia/explorations-19biolum-logs-jun18-media-eel/",
+      "https://ocean.si.edu/ocean-life/fish/revealing-nature-eel-faces"
+    ],
+    "before": [
+      "LT: 3’ 6”",
+      "Ray-Finned Fish",
+      "WT: 1lb",
+      "Worldwide"
+    ],
+    "after": [
+      "Eurypharyngidae",
+      "LT: 3’ 6”",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "The gulper eel's enormous mouth and expandable throat can engulf prey. A tiny light-producing organ sits at the tip of its long, whip-like tail.",
+    "changed": true
+  },
+  {
+    "cardId": "deep-sea-skate",
+    "name": "Deep Sea Skate",
+    "family": "Arhynchobatidae",
+    "scientificName": "Bathyraja abyssicola",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=271503",
+      "https://repository.library.noaa.gov/view/noaa/16391/noaa_16391_DS1.pdf",
+      "https://oceanexplorer.noaa.gov/multimedia/explorations-20benthic-communities-logs-nov2-media-substrate/"
+    ],
+    "before": [
+      "LT: 5’",
+      "Soft Nose Skate",
+      "WT: 80lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Arhynchobatidae",
+      "LT: 5’",
+      "WT: 80lbs",
+      "N. Pacific"
+    ],
+    "description": "Found in extreme depths of up to 3km, these resilient marine creatures gracefully glide over the ocean floor to hunt for bottom dwellers.",
+    "changed": true
+  },
+  {
+    "cardId": "chimera",
+    "name": "Chimera",
+    "family": "Family varies",
+    "scientificName": "Chimaeriformes",
+    "sources": [
+      "https://ocean.si.edu/ocean-life/sharks-rays/ghost-shark",
+      "https://www.mbari.org/animal/ghost-shark/",
+      "https://australian.museum/publications/sharks/what-is-a-shark/"
+    ],
+    "before": [
+      "LT: 2’",
+      "Cartilaginous",
+      "WT: 9lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Family varies",
+      "LT: 2’",
+      "WT: 9lbs",
+      "Worldwide"
+    ],
+    "description": "Often referred to as a \"ghost shark,\" this bizarre creature is famous for its shimmering, scaleless skin, large rabbit-like eyes.",
+    "changed": true
+  },
+  {
+    "cardId": "frilled-shark",
+    "name": "Frilled Shark",
+    "family": "Chlamydoselachidae",
+    "scientificName": "Chlamydoselachus anguineus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105831",
+      "https://ocean.si.edu/ocean-life/sharks-rays/frilled-shark",
+      "https://australian.museum/learn/animals/fishes/frill-shark-chlamydoselachus-anguineus-garman-1884/"
+    ],
+    "before": [
+      "LT: 6’",
+      "Cartilaginous",
+      "WT: 150lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Chlamydoselachidae",
+      "LT: 6’",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "Six pairs of frilly gill slits give this deep-water shark its name. Its eel-like body and rows of three-pointed teeth help it capture prey.",
+    "changed": true
+  },
+  {
+    "cardId": "cookie-cutter-shark",
+    "name": "Cookie Cutter",
+    "family": "Dalatiidae",
+    "scientificName": "Isistius brasiliensis",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=215612",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/cookiecutter-shark/",
+      "https://ocean.si.edu/ocean-life/sharks-rays/cookie-monster-sea"
+    ],
+    "before": [
+      "LT: 22”",
+      "Dogfish Shark",
+      "WT: 2.2lbs",
+      "Tropics"
+    ],
+    "after": [
+      "Dalatiidae",
+      "LT: 22”",
+      "WT: 2.2lbs",
+      "Tropics"
+    ],
+    "description": "Cookiecutter sharks use thick lips to grip larger animals and sharp lower teeth to cut round plugs of flesh. Their undersides glow with bioluminescence.",
+    "changed": true
+  },
+  {
+    "cardId": "silky-shark",
+    "name": "Silky Shark",
+    "family": "Carcharhinidae",
+    "scientificName": "Carcharhinus falciformis",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105789",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/silky-shark/"
+    ],
+    "before": [
+      "LT: 14’ 5”",
+      "Ground Shark",
+      "WT: 600lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Carcharhinidae",
+      "LT: 11’",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "A swift, pelagic shark that gets its name from its exceptionally smooth, soft skin, which is covered in densely packed overlapping scales.",
+    "changed": true
+  },
+  {
+    "cardId": "oceanic-whitetip-shark",
+    "name": "Oceanic Whitetip Shark",
+    "family": "Carcharhinidae",
+    "scientificName": "Carcharhinus longimanus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105794",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/oceanic-whitetip-shark/"
+    ],
+    "before": [
+      "LT: 8’",
+      "Requiem Shark",
+      "WT: 150lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Carcharhinidae",
+      "LT: 8’",
+      "WT: 150lbs",
+      "Worldwide"
+    ],
+    "description": "Long, rounded pectoral fins and white-tipped fins distinguish this open-ocean shark. It searches warm seas for fish, squid, and other food.",
+    "changed": true
+  },
+  {
+    "cardId": "blue-shark-oceanic",
+    "name": "Blue Shark",
+    "family": "Carcharhinidae",
+    "scientificName": "Prionace glauca",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105801",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/blue-shark/"
+    ],
+    "before": [
+      "LT: 7’",
+      "Requiem Shark",
+      "WT: 300lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Carcharhinidae",
+      "LT: 7’",
+      "WT: 300lbs",
+      "Worldwide"
+    ],
+    "description": "Blue sharks make long migrations through temperate and tropical seas. Their slender bodies and long pectoral fins suit life in the open ocean.",
+    "changed": true
+  },
+  {
+    "cardId": "galapagos-shark",
+    "name": "Galápagos Shark",
+    "family": "Carcharhinidae",
+    "scientificName": "Carcharhinus galapagensis",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105790",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/galapagos-shark/"
+    ],
+    "before": [
+      "LT: 14’ 5”",
+      "Requiem Shark",
+      "WT: 600lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Carcharhinidae",
+      "LT: 12’",
+      "WT: 188lbs",
+      "Worldwide"
+    ],
+    "description": "Galapagos sharks favor clear, warm water around oceanic islands. These large requiem sharks patrol reef edges and feed mainly on fish.",
+    "changed": true
+  },
+  {
+    "cardId": "yellowfin-tuna",
+    "name": "Yellowfin Tuna",
+    "family": "Scombridae",
+    "scientificName": "Thunnus albacares",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127027",
+      "https://www.fisheries.noaa.gov/species/atlantic-yellowfin-tuna",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/yellowfin-tuna/"
+    ],
+    "before": [
+      "LT: 7’",
+      "Tuna",
+      "WT: 400lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Scombridae",
+      "LT: 7’",
+      "WT: 400lbs",
+      "Worldwide"
+    ],
+    "description": "They utilize a biological hydraulic system that pumps fluid into their fins, instantly stiffening them to execute razor-sharp, high-speed turns.",
+    "changed": true
+  },
+  {
+    "cardId": "sailfish",
+    "name": "Sailfish",
+    "family": "Istiophoridae",
+    "scientificName": "Istiophorus platypterus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=158812",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/sailfish/"
+    ],
+    "before": [
+      "LT: 8’",
+      "Billfish",
+      "WT: 200lbs",
+      "Tropics"
+    ],
+    "after": [
+      "Istiophoridae",
+      "LT: 8’",
+      "WT: 200lbs",
+      "Tropics"
+    ],
+    "description": "Sailfish use their long bills to slash or tap schooling prey. They raise their large dorsal fins while hunting and fold them down when swimming quickly.",
+    "changed": true
+  },
+  {
+    "cardId": "wahoo",
+    "name": "Wahoo",
+    "family": "Scombridae",
+    "scientificName": "Acanthocybium solandri",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127014",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/wahoo/"
+    ],
+    "before": [
+      "LT: 5’",
+      "Scombridae",
+      "WT: 80lbs",
+      "Tropics"
+    ],
+    "after": [
+      "Scombridae",
+      "LT: 5’",
+      "WT: 80lbs",
+      "Tropics"
+    ],
+    "description": "Wahoo are streamlined predators with sharp teeth and blue bars along their sides. They hunt fish and squid in warm ocean waters.",
+    "changed": true
+  },
+  {
+    "cardId": "loggerhead-sea-turtle",
+    "name": "Loggerhead",
+    "family": "Cheloniidae",
+    "scientificName": "Caretta caretta",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=137205",
+      "https://www.fisheries.noaa.gov/species/loggerhead-turtle"
+    ],
+    "before": [
+      "LT: 3’ 6”",
+      "Cheloniidae",
+      "WT: 300lbs",
+      "Subtropical"
+    ],
+    "after": [
+      "Cheloniidae",
+      "LT: 3’ 6”",
+      "WT: 300lbs",
+      "Subtropical"
+    ],
+    "description": "Loggerheads use large heads and powerful jaws to crush crabs, whelks, and other hard-shelled prey. Adults travel widely between feeding and nesting areas.",
+    "changed": true
+  },
+  {
+    "cardId": "nurse-shark",
+    "name": "Nurse Shark",
+    "family": "Ginglymostomatidae",
+    "scientificName": "Ginglymostoma cirratum",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=105846",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/nurse-shark/"
+    ],
+    "before": [
+      "LT: 4’",
+      "Elasmobranch",
+      "WT: 100lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Ginglymostomatidae",
+      "LT: 8’",
+      "WT: Varies",
+      "Atlantic"
+    ],
+    "description": "Nurse sharks can rest completely still on the ocean floor and pump water directly over their gills to breathe, unlike many other shark species.",
+    "changed": true
+  },
+  {
+    "cardId": "yellow-lipped-sea-krait",
+    "name": "Yellow-Lipped Sea Krait",
+    "family": "Elapidae",
+    "scientificName": "Laticauda colubrina",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=344083",
+      "https://animaldiversity.org/accounts/Laticauda_colubrina/"
+    ],
+    "before": [
+      "LT: 5’ 6”",
+      "Elapidae",
+      "WT: 4lbs",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Elapidae",
+      "LT: 5’ 6”",
+      "WT: 4lbs",
+      "Indo-Pacific"
+    ],
+    "description": "Yellow-lipped sea kraits hunt eels underwater with potent venom. Unlike fully aquatic sea snakes, they come ashore to rest, digest meals, and lay eggs.",
+    "changed": true
+  },
+  {
+    "cardId": "emerald-crab",
+    "name": "Emerald Crab",
+    "family": "Mithracidae",
+    "scientificName": "Mithraculus sculptus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=421990",
+      "https://www.si.edu/object/mithraculus-sculptus%3Anmnhinvertebratezoology_14594539",
+      "https://www.si.edu/Content/SE/Educator%20Guides/secret_ocean_educators_guide.pdf"
+    ],
+    "before": [
+      "LT: 1.8”",
+      "Marine Crab",
+      "WT: 1 oz",
+      "Caribbean"
+    ],
+    "after": [
+      "Mithracidae",
+      "LT: 1.8”",
+      "WT: 1 oz",
+      "Caribbean"
+    ],
+    "description": "Emerald crabs prowl at night, picking algae and leftovers with spoon-tipped claws. Their leafy green shell hides them among corals.",
+    "changed": true
+  },
+  {
+    "cardId": "sea-urchin",
+    "name": "Sea Urchin",
+    "family": "Diadematidae",
+    "scientificName": "Diadema antillarum",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=124332",
+      "https://www.aquariumofpacific.org/onlinelearningcenter/species/black_longspine_urchin",
+      "https://monitor.noaa.gov/science/creature-features.html"
+    ],
+    "before": [
+      "LT: 12”",
+      "Diadematidae",
+      "WT: 1.2lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Diadematidae",
+      "Spines: 12”",
+      "WT: Unknown",
+      "W. Atlantic"
+    ],
+    "description": "Long-spined sea urchins graze on algae and help keep reef surfaces clear. Their slender spines defend them while tube feet grip and move over rocks.",
+    "changed": true
+  },
+  {
+    "cardId": "anemone",
+    "name": "Anemone",
+    "family": "Family varies",
+    "scientificName": "Actiniaria",
+    "sources": [
+      "https://ocean.si.edu/holding-tank/images-hide/sea-anemones",
+      "https://nationalzoo.si.edu/animals/corals-and-sea-anemones-anthozoa"
+    ],
+    "before": [
+      "LT: 18”",
+      "Anenthemonae",
+      "WT: 8oz",
+      "Worldwide"
+    ],
+    "after": [
+      "Family varies",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Sea anemones anchor to rock and hunt with stinging tentacles packed with tiny harpoons. Some host clownfish, trading shelter for scraps.",
+    "changed": true
+  },
+  {
+    "cardId": "blue-crab",
+    "name": "Blue Crab",
+    "family": "Portunidae",
+    "scientificName": "Callinectes sapidus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=107379",
+      "https://www.chesapeakebay.net/discover/field-guide/entry/blue-crab"
+    ],
+    "before": [
+      "LT: 7”",
+      "Blue Crab",
+      "WT: 0.7lbs",
+      "Caribbean"
+    ],
+    "after": [
+      "Portunidae",
+      "WD: 7”",
+      "WT: 0.7lbs",
+      "W. Atlantic"
+    ],
+    "description": "Blue crabs swim with paddle-shaped rear legs. They shed their shells to grow, leaving them briefly soft until the new shell hardens.",
+    "changed": true
+  },
+  {
+    "cardId": "arrow-crab",
+    "name": "Arrow Crab",
+    "family": "Inachoididae",
+    "scientificName": "Stenorhynchus seticornis",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=421957",
+      "https://ocean.si.edu/ocean-life/invertebrates/spiders-mars",
+      "https://monitor.noaa.gov/science/creature-features.html"
+    ],
+    "before": [
+      "LT: 9.5”",
+      "Spider Crab",
+      "WT: 6oz",
+      "Atlantic"
+    ],
+    "after": [
+      "Inachoididae",
+      "Span: 9.5”",
+      "WT: Unknown",
+      "W. Atlantic"
+    ],
+    "description": "Arrow crabs tiptoe on stilt-like legs, their long “arrow” snout probing crevices. At night they scavenge around for leftovers.",
+    "changed": true
+  },
+  {
+    "cardId": "mantis-shrimp",
+    "name": "Mantis Shrimp",
+    "family": "Family varies",
+    "scientificName": "Stomatopoda",
+    "sources": [
+      "https://www.si.edu/collections/snapshot/behold-mantis-shrimp",
+      "https://www.nhm.ac.uk/discover/mantis-shrimps.html"
+    ],
+    "before": [
+      "LT: 2’ 6”",
+      "Stomatopoda",
+      "WT: 1.2lbs",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Family varies",
+      "LT: Varies",
+      "WT: Varies",
+      "Warm seas"
+    ],
+    "description": "Mantis shrimp hunt with specialized clubs or spears. Club-bearing species strike so fast that collapsing cavitation bubbles add a second impact.",
+    "changed": true
+  },
+  {
+    "cardId": "leather-starfish",
+    "name": "Leather Starfish",
+    "family": "Asteropseidae",
+    "scientificName": "Dermasterias imbricata",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=240771",
+      "https://www.aquariumofpacific.org/onlinelearningcenter/species/leather_sea_star"
+    ],
+    "before": [
+      "Length: 1’ 4”",
+      "Weight: 2lbs",
+      "Caribbean"
+    ],
+    "after": [
+      "Asteropseidae",
+      "Span: 10”",
+      "WT: Unknown",
+      "NE Pacific"
+    ],
+    "description": "Leather stars have smooth, rubbery skin and a garlic-like odor. Tube feet carry them over rocky Pacific shores as they feed on anemones and other prey.",
+    "changed": true
+  },
+  {
+    "cardId": "cleaner-shrimp",
+    "name": "Cleaner Shrimp",
+    "family": "Lysmatidae",
+    "scientificName": "Lysmata amboinensis",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=241289",
+      "https://www.aquariumofpacific.org/onlinelearningcenter/species/pacific_cleaner_shrimp"
+    ],
+    "before": [
+      "LT: 3”",
+      "Amboinensis",
+      "WT: 1 oz",
+      "Caribbean"
+    ],
+    "after": [
+      "Lysmatidae",
+      "LT: 3”",
+      "WT: Unknown",
+      "Indo-Pacific"
+    ],
+    "description": "Scarlet cleaner shrimp wave long white antennae at cleaning stations. Fish visit to have parasites and dead tissue removed from their skin and mouths.",
+    "changed": true
+  },
+  {
+    "cardId": "crown-of-thorns",
+    "name": "Crown of Thorns",
+    "family": "Acanthasteridae",
+    "scientificName": "Acanthaster cf. solaris",
+    "sources": [
+      "https://www2.gbrmpa.gov.au/news/star-wars-great-barrier-reef",
+      "https://www.aims.gov.au/research-topics/environmental-issues/crown-thorns-starfish"
+    ],
+    "before": [
+      "LT: 18”",
+      "Acanthaster planci",
+      "WT: 6lbs",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Acanthasteridae",
+      "Span: 18”",
+      "WT: 6lbs",
+      "Indo-Pacific"
+    ],
+    "description": "Crown-of-thorns sea stars spread their stomachs over corals to digest living tissue outside their bodies. Venomous spines help deter predators.",
+    "changed": true
+  },
+  {
+    "cardId": "nudibranch",
+    "name": "Nudibranch",
+    "family": "Chromodorididae",
+    "scientificName": "Chromodoris magnifica",
+    "sources": [
+      "https://seaslugforum.net/find/chrmag"
+    ],
+    "before": [
+      "LT: 3”",
+      "Chromodorididae",
+      "WT: 2 oz",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Chromodorididae",
+      "LT: 3”",
+      "WT: Unknown",
+      "Indo-Pacific"
+    ],
+    "description": "The magnificent chromodoris is a brightly patterned, sponge-eating sea slug. Chemicals obtained from its food help defend it against predators.",
+    "changed": true
+  },
+  {
+    "cardId": "giant-triton",
+    "name": "Giant Triton",
+    "family": "Charoniidae",
+    "scientificName": "Charonia tritonis",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=141102",
+      "https://reeflifesurvey.com/species/charonia-tritonis/",
+      "https://www.aims.gov.au/information-centre/news-and-stories/fish-help-control-crown-thorns-starfish-numbers-great-barrier-reef"
+    ],
+    "before": [
+      "Length: 1’ 10”",
+      "Weight: 10lbs",
+      "Australia"
+    ],
+    "after": [
+      "Charoniidae",
+      "Shell: 20”",
+      "WT: Unknown",
+      "Indo-Pacific"
+    ],
+    "description": "Giant tritons are large predatory sea snails that hunt crown-of-thorns starfish, subduing them with a paralyzing bite.",
+    "changed": true
+  },
+  {
+    "cardId": "octopus",
+    "name": "Octopus",
+    "family": "Family varies",
+    "scientificName": "Octopoda",
+    "sources": [
+      "https://www.smithsonianmag.com/science-nature/ten-wild-facts-about-octopuses-they-have-three-hearts-big-brains-and-blue-blood-7625828/",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/day-octopus"
+    ],
+    "before": [
+      "Length: 3’ 2”",
+      "Weight: 2lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Family varies",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Octopuses change color and texture in a blink, melting into reef or rock. With eight clever arms and hundreds of suckers, they solve puzzles—then vanish in a puff of ink.",
+    "changed": true
+  },
+  {
+    "cardId": "oysters",
+    "name": "Oysters",
+    "family": "Ostreidae",
+    "scientificName": "Ostreidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=215",
+      "https://www.fisheries.noaa.gov/national/habitat-conservation/oyster-reef-habitat",
+      "https://oceanservice.noaa.gov/facts/spat.html"
+    ],
+    "before": [
+      "Length: 10”",
+      "Weight: 1.3lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Ostreidae",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats.",
+    "changed": true
+  },
+  {
+    "cardId": "giant-clam",
+    "name": "Giant Clam",
+    "family": "Cardiidae",
+    "scientificName": "Tridacna gigas",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=207670",
+      "https://www.fisheries.noaa.gov/species/true-giant-clam",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/giant-clam"
+    ],
+    "before": [
+      "Length: 4’ 6”",
+      "Weight: 600lbs",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Cardiidae",
+      "Shell: 4’ 3”",
+      "WT: 500lbs",
+      "Indo-Pacific"
+    ],
+    "description": "Giant clams are the largest living bivalves. Living in warm, shallow coral reefs, they anchor themselves and rely on symbiotic algae for much of their energy.",
+    "changed": true
+  },
+  {
+    "cardId": "deep-cucumber",
+    "name": "Deep Cucumber",
+    "family": "Family varies",
+    "scientificName": "Holothuroidea",
+    "sources": [
+      "https://annualreport.mbari.org/2019/story/swimming-sea-cucumbers",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/sea-pig"
+    ],
+    "before": [
+      "LT: 8”",
+      "Holothuroidea",
+      "WT: 2lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Family varies",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Deep-sea sea cucumbers feed on organic particles on or near the seafloor. Their soft bodies and feeding tentacles come in many shapes across species.",
+    "changed": true
+  },
+  {
+    "cardId": "brittlestar",
+    "name": "Brittlestar",
+    "family": "Family varies",
+    "scientificName": "Ophiuroidea",
+    "sources": [
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/deep-sea-brittle-star"
+    ],
+    "before": [
+      "LT: 20”",
+      "Echinoderm",
+      "WT: 8lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Family varies",
+      "Span: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Brittle stars move with slender, flexible arms joined to a central disc. Many can shed an arm to escape a predator and later regrow it.",
+    "changed": true
+  },
+  {
+    "cardId": "vampire-squid",
+    "name": "Vampire Squid",
+    "family": "Vampyroteuthidae",
+    "scientificName": "Vampyroteuthis infernalis",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=141887",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/vampire-squid"
+    ],
+    "before": [
+      "LT: 12”",
+      "Deep Cephalopod",
+      "WT: 1lb",
+      "Worldwide"
+    ],
+    "after": [
+      "Vampyroteuthidae",
+      "LT: 12”",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "When threatened, it doesn't ink; instead, it cloaks itself by pulling its webbed arms over its head and releases glowing, bioluminescent clouds.",
+    "changed": true
+  },
+  {
+    "cardId": "giant-isopod",
+    "name": "Giant Isopod",
+    "family": "Cirolanidae",
+    "scientificName": "Bathynomus giganteus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=259252",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/giant-isopod"
+    ],
+    "before": [
+      "LT: 20”",
+      "Deep Crustacean",
+      "WT: 3.5lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Cirolanidae",
+      "LT: 16”",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Giant isopods are deep-sea relatives of woodlice. Their armored bodies protect them as they scavenge, and a slow metabolism helps them endure long fasts.",
+    "changed": true
+  },
+  {
+    "cardId": "giant-tube-worm",
+    "name": "Giant Tube Worm",
+    "family": "Siboglinidae",
+    "scientificName": "Riftia pachyptila",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=266010",
+      "https://www.mbari.org/animal/giant-tubeworm/",
+      "https://oceanexplorer.noaa.gov/wp-content/uploads/2025/04/vent-food-web.pdf",
+      "https://oceantoday.noaa.gov/lifeonavent/"
+    ],
+    "before": [
+      "LT: 8’",
+      "Annelid ",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "after": [
+      "Siboglinidae",
+      "LT: 8’",
+      "WT: Unknown",
+      "E. Pacific"
+    ],
+    "description": "Giant tube worms live at hydrothermal vents. Without a mouth or gut, adults rely on internal bacteria that use chemicals from vent fluids to make food.",
+    "changed": true
+  },
+  {
+    "cardId": "peacock-squid",
+    "name": "Peacock Squid",
+    "family": "Cranchiidae",
+    "scientificName": "Taonius spp.",
+    "sources": [
+      "https://www.mbari.org/gallery/deep-sea-wallpapers/peacock-squid/",
+      "https://annualreport.mbari.org/2022/story/out-of-the-darkness-of-the-deep-inky-clouds-take-shape",
+      "https://repository.library.noaa.gov/view/noaa/56171/noaa_56171_DS1.pdf"
+    ],
+    "before": [
+      "LT: 5’",
+      "Glass Squid",
+      "WT: 6lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Cranchiidae",
+      "LT: Varies",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "Peacock squid have large eyes and nearly transparent bodies. Light organs beneath the eyes help hide their silhouettes from predators below.",
+    "changed": true
+  },
+  {
+    "cardId": "deep-sea-jelly",
+    "name": "Deep Sea Jelly",
+    "family": "Atollidae",
+    "scientificName": "Atolla wyvillei",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=135282",
+      "https://www.mbari.org/animal/deep-sea-crown-jelly/",
+      "https://oceanexplorer.noaa.gov/multimedia/edu-themes-bioluminescence-media-multimedia-atolla/",
+      "https://ocean.si.edu/ocean-life/invertebrates/atolla-jellyfish-waters-japan"
+    ],
+    "before": [
+      "LT: 12’",
+      "Coronatae",
+      "WT: 0.5oz",
+      "Worldwide"
+    ],
+    "after": [
+      "Atollidae",
+      "Bell: 6”",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "Atolla jellyfish can flash rings of blue bioluminescence when disturbed. This burglar-alarm display may draw larger predators toward an attacker.",
+    "changed": true
+  },
+  {
+    "cardId": "dumbo-octopus",
+    "name": "Dumbo Octopus",
+    "family": "Grimpoteuthidae",
+    "scientificName": "Grimpoteuthis spp.",
+    "sources": [
+      "https://sanctuaries.noaa.gov/news/oct23/odd-ocean-critters.html",
+      "https://ocean.si.edu/ocean-life/invertebrates/grimpoteuthis-dumbo-octopus",
+      "https://oceantoday.noaa.gov/dumbooctopus/"
+    ],
+    "before": [
+      "LT: 10”",
+      "Umbrella Octopus",
+      "WT: 8lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Grimpoteuthidae",
+      "LT: 10”",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "To hunt they hover right above the seafloor and \"hoover\" up worms, snails, and crustaceans, swallowing their prey whole.",
+    "changed": true
+  },
+  {
+    "cardId": "giant-red-shrimp",
+    "name": "Giant Red Shrimp",
+    "family": "Gnathophausiidae",
+    "scientificName": "Neognathophausia ingens",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=220999",
+      "https://www.godac.jamstec.go.jp/bismal/e/view/9055610",
+      "https://dsg.mbari.org/dsg/view/concept/Gnathophausia%20ingens",
+      "https://www.journals.uchicago.edu/doi/10.2307/1541830"
+    ],
+    "before": [
+      "LT: 5”",
+      "Decapod",
+      "WT: 1oz",
+      "Worldwide"
+    ],
+    "after": [
+      "Gnathophausiidae",
+      "LT: 5”",
+      "WT: 1oz",
+      "Worldwide"
+    ],
+    "description": "Famous for its vivid, deep red coloration, extremely long antennae, and a prominent crest.",
+    "changed": true
+  },
+  {
+    "cardId": "man-o-war",
+    "name": "Portuguese Man O’ War",
+    "family": "Physaliidae",
+    "scientificName": "Physalia physalis",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=135479",
+      "https://animaldiversity.org/accounts/Physalia_physalis/",
+      "https://ocean.si.edu/holding-tank/images-hide/siphonophores"
+    ],
+    "before": [
+      "LT: 65’",
+      "Physaliidae",
+      "WT: 1lbs",
+      "Tropics"
+    ],
+    "after": [
+      "Physaliidae",
+      "Tent.: 65’",
+      "WT: Unknown",
+      "Tropics"
+    ],
+    "description": "A Portuguese man o' war is a colony of specialized zooids. Its gas-filled float rides at the surface while long, stinging tentacles capture prey below.",
+    "changed": true
+  },
+  {
+    "cardId": "blue-sea-dragon",
+    "name": "Blue Sea Dragon",
+    "family": "Glaucidae",
+    "scientificName": "Glaucus atlanticus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=140022",
+      "https://australian.museum/learn/animals/plankton/holoplankton/",
+      "https://www.nationalgeographic.com/animals/article/dragons-real-komodo-flying-sea-slugs"
+    ],
+    "before": [
+      "LT: 65’",
+      "Physaliidae",
+      "WT: 1lbs",
+      "Tropics"
+    ],
+    "after": [
+      "Glaucidae",
+      "LT: 1.2”",
+      "WT: Unknown",
+      "Warm seas"
+    ],
+    "description": "Blue sea dragons float upside down at the surface. They eat animals such as the Portuguese man o' war and store stolen stinging cells for defense.",
+    "changed": true
+  },
+  {
+    "cardId": "market-squid",
+    "name": "Market Squid",
+    "family": "Loliginidae",
+    "scientificName": "Doryteuthis opalescens",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=574540",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/common-market-squid"
+    ],
+    "before": [
+      "LT: 65’",
+      "Loliginidae",
+      "WT: 1lbs",
+      "Tropics"
+    ],
+    "after": [
+      "Loliginidae",
+      "LT: 12”",
+      "WT: Unknown",
+      "NE Pacific"
+    ],
+    "description": "Market squid live only about six to nine months. They gather to mate and lay egg capsules on the seafloor, then die after spawning.",
+    "changed": true
+  },
+  {
+    "cardId": "box-jellyfish",
+    "name": "Box Jellyfish",
+    "family": "Chirodropidae",
+    "scientificName": "Chironex fleckeri",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=289593",
+      "https://australian.museum/learn/animals/jellyfish/boxjellyfish/"
+    ],
+    "before": [
+      "LT: 2’",
+      "Chirodropidae",
+      "WT: 0.03oz",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Chirodropidae",
+      "Bell: 12”",
+      "WT: Unknown",
+      "Indo-Pacific"
+    ],
+    "description": "The Australian box jellyfish has a cube-shaped bell and clusters of eyes. Its long tentacles carry powerful venom for catching fish and shrimp.",
+    "changed": true
+  },
+  {
+    "cardId": "lionfish",
+    "name": "Lionfish",
+    "family": "Scorpaenidae",
+    "scientificName": "Pterois volitans",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159559",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/red-lionfish/",
+      "https://oceanservice.noaa.gov/facts/lionfish-facts.html"
+    ],
+    "before": [
+      "Scorpaenidae",
+      "LT: 1’ 3”",
+      "WT: 2.3lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Scorpaenidae",
+      "LT: 1’ 3”",
+      "WT: 2.3lbs",
+      "Worldwide"
+    ],
+    "description": "Lionfish spread their broad fins to corner small fish before striking. Their defensive spines are venomous; introduced populations threaten Atlantic reefs.",
+    "changed": true
+  },
+  {
+    "cardId": "winter-flounder",
+    "name": "Winter Flounder",
+    "family": "Pleuronectidae",
+    "scientificName": "Pseudopleuronectes americanus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=158885",
+      "https://www.fisheries.noaa.gov/species/winter-flounder"
+    ],
+    "before": [
+      "Pleuronectidae",
+      "LT: 2’ 2”",
+      "WT: 7lbs",
+      "Atlantic"
+    ],
+    "after": [
+      "Pleuronectidae",
+      "LT: 2’ 2”",
+      "WT: 7lbs",
+      "Atlantic"
+    ],
+    "description": "Flounders lie flat and camouflaged, burying in sand with both eyes on one side. They ambush prey with a sudden snap.",
+    "changed": false
+  },
+  {
+    "cardId": "cleaner-wrasse",
+    "name": "Wrasse - Cleaner",
+    "family": "Labridae",
+    "scientificName": "Labroides dimidiatus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=219014",
+      "https://www.fishbase.se/summary/Labroides-dimidiatus.html"
+    ],
+    "before": [
+      " Labridae",
+      "LT: 5.5”",
+      "WT: 1.1 oz",
+      "Caribbean"
+    ],
+    "after": [
+      "Labridae",
+      "LT: 5.5”",
+      "WT: 1.1 oz",
+      "Indo-Pacific"
+    ],
+    "description": "Cleaner wrasses run reef “stations” where big fish queue for a cleanup. They pick off parasites and dead skin—earning a safe meal and trust.",
+    "changed": true
+  },
+  {
+    "cardId": "fairy-parrotfish",
+    "name": "Parrotfish - Fairy",
+    "family": "Labridae",
+    "scientificName": "Labridae (subfamily Scarinae)",
+    "sources": [
+      "https://ocean.si.edu/ocean-life/fish/tough-teeth-and-parrotfish-poop",
+      "https://oceanservice.noaa.gov/facts/sand.html"
+    ],
+    "before": [
+      "Labridae",
+      "LT: 2’ 2”",
+      "WT: 32lbs",
+      "Caribbean"
+    ],
+    "after": [
+      "Labridae",
+      "LT: 2’ 2”",
+      "WT: Varies",
+      "Tropical reefs"
+    ],
+    "description": "Parrotfish scrape food from reef surfaces with beak-like teeth, helping produce sand. Some species sleep inside protective mucus cocoons.",
+    "changed": true
+  },
+  {
+    "cardId": "bluestriped-grunt",
+    "name": "Grunt - Bluestriped",
+    "family": "Haemulidae",
+    "scientificName": "Haemulon sciurus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=275733",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/bluestriped-grunt/",
+      "https://www.fishbase.se/summary/Haemulon-sciurus.html"
+    ],
+    "before": [
+      "Haemulidae",
+      "LT: 10”",
+      "WT: 2lbs",
+      "Caribbean"
+    ],
+    "after": [
+      "Haemulidae",
+      "LT: 18”",
+      "WT: 1.7lbs",
+      "Caribbean"
+    ],
+    "description": "Bluestriped grunts gather over reefs by day and feed over sand and seagrass at night. They make grunting sounds by rubbing their throat teeth.",
+    "changed": true
+  },
+  {
+    "cardId": "clownfish",
+    "name": "Clownfish",
+    "family": "Pomacentridae",
+    "scientificName": "Amphiprioninae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=714652",
+      "https://ocean.si.edu/ocean-life/fish/clownfish-their-host-anemone",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/clown-anemonefish/"
+    ],
+    "before": [
+      "Pomacentridae",
+      "LT: 3”",
+      "WT: 2.5oz",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Pomacentridae",
+      "LT: 3”",
+      "WT: 2.5oz",
+      "Indo-Pacific"
+    ],
+    "description": "Bearing bright orange and white markings, they are renowned for their unique ability to safely live inside venomous sea anemones without getting stung.",
+    "changed": false
+  },
+  {
+    "cardId": "spanish-hogfish",
+    "name": "Spanish Hogfish",
+    "family": "Labridae",
+    "scientificName": "Bodianus rufus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=273541",
+      "https://www.fishbase.se/summary/Bodianus-rufus.html"
+    ],
+    "before": [
+      "Labridae",
+      "LT: 30”",
+      "WT: 22lbs",
+      "Caribbean"
+    ],
+    "after": [
+      "Labridae",
+      "LT: 16”",
+      "WT: 2.2lbs",
+      "Caribbean"
+    ],
+    "description": "Young Spanish hogfish clean parasites from other fish. Adults feed on bottom-dwelling invertebrates, and some females later change into males.",
+    "changed": true
+  },
+  {
+    "cardId": "picasso-triggerfish",
+    "name": "Triggerfish - Picasso",
+    "family": "Balistidae",
+    "scientificName": "Rhinecanthus aculeatus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=219890",
+      "https://www.fishbase.se/summary/Rhinecanthus-aculeatus.html"
+    ],
+    "before": [
+      "Balistidae",
+      "LT: 11”",
+      "WT: 2lbs",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Balistidae",
+      "LT: 11”",
+      "WT: 2lbs",
+      "Indo-Pacific"
+    ],
+    "description": "Known for its striking colors and pugnacious attitude, this triggerfish can lock its dorsal spine into coral crevices for protection.",
+    "changed": false
+  },
+  {
+    "cardId": "porcupine-fish",
+    "name": "Porcupine Fish",
+    "family": "Diodontidae",
+    "scientificName": "Diodon hystrix",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127403",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/porcupinefish/"
+    ],
+    "before": [
+      "Diodontidae",
+      "LT: 2’ 6”",
+      "WT: 9bs",
+      "Caribbean"
+    ],
+    "after": [
+      "Diodontidae",
+      "LT: 2’ 6”",
+      "WT: 9lbs",
+      "Tropics"
+    ],
+    "description": "Porcupinefish puff into a spiky ball to scare off predators. Their beak crushes shells, and some species carry a powerful toxin.",
+    "changed": true
+  },
+  {
+    "cardId": "french-angelfish",
+    "name": "French Angelfish",
+    "family": "Pomacanthidae",
+    "scientificName": "Pomacanthus paru",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=276025",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/french-angelfish/"
+    ],
+    "before": [
+      " Pomacanthidae",
+      "LT: 1’ 5”",
+      "WT: 4.4lbs",
+      "Caribbean"
+    ],
+    "after": [
+      "Pomacanthidae",
+      "LT: 1’ 5”",
+      "WT: 4.4lbs",
+      "Caribbean"
+    ],
+    "description": "French angelfish cruise reefs in bonded pairs, flashing yellow-edged scales and a dark mask.",
+    "changed": true
+  },
+  {
+    "cardId": "sargeant-major",
+    "name": "Sargeant Major",
+    "family": "Pomacentridae",
+    "scientificName": "Abudefduf saxatilis",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159288",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/sergeant-major/"
+    ],
+    "before": [
+      "Pomacentridae",
+      "LT: 6”",
+      "WT: 3.5oz",
+      "Caribbean"
+    ],
+    "after": [
+      "Pomacentridae",
+      "LT: 6”",
+      "WT: 3.5oz",
+      "Caribbean"
+    ],
+    "description": "Sergeant major damselfish wear bold black-and-white bars with a splash of yellow on top. Males fiercely guard egg patches.",
+    "changed": false
+  },
+  {
+    "cardId": "longhorn-cowfish",
+    "name": "Longhorn Cowfish",
+    "family": "Ostraciidae",
+    "scientificName": "Lactoria cornuta",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=219904",
+      "https://aqua.org/explore/animals/longhorn-cowfish"
+    ],
+    "before": [
+      "Ostraciidae",
+      "LT: 18”",
+      "WT: 5.5oz",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Ostraciidae",
+      "LT: 18”",
+      "WT: Unknown",
+      "Indo-Pacific"
+    ],
+    "description": "Protected by a rigid, box-like body, longhorn cowfish graze on small bottom-dwelling prey. When severely stressed, they can release toxic mucus.",
+    "changed": true
+  },
+  {
+    "cardId": "spotfin-butterflyfish",
+    "name": "Spotfin Butterflyfish",
+    "family": "Chaetodontidae",
+    "scientificName": "Chaetodon ocellatus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159662",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/spotfin-butterflyfish/"
+    ],
+    "before": [
+      "Chaetodontidae",
+      "LT: 5”",
+      "WT: 2 oz",
+      "Red Sea"
+    ],
+    "after": [
+      "Chaetodontidae",
+      "LT: 5”",
+      "WT: 2 oz",
+      "W. Atlantic"
+    ],
+    "description": "A black spot near the rear of the dorsal fin gives the spotfin butterflyfish its name. A dark stripe crosses its eye as it forages around reefs.",
+    "changed": true
+  },
+  {
+    "cardId": "queen-angelfish",
+    "name": "Queen Angelfish",
+    "family": "Pomacanthidae",
+    "scientificName": "Holacanthus ciliaris",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=276012",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/queen-angelfish/"
+    ],
+    "before": [
+      "Pomacanthidae",
+      "LT: 14”",
+      "WT: 3lbs",
+      "Caribbean"
+    ],
+    "after": [
+      "Pomacanthidae",
+      "LT: 14”",
+      "WT: 3lbs",
+      "Caribbean"
+    ],
+    "description": "The Queen Angelfish is a brilliantly colored reef fish that glides through warm, clear Caribbean shallows, recognizable by its vivid colors.",
+    "changed": false
+  },
+  {
+    "cardId": "blue-tang",
+    "name": "Blue Tang",
+    "family": "Acanthuridae",
+    "scientificName": "Acanthurus coeruleus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159581",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/blue-tang/"
+    ],
+    "before": [
+      "Surgeonfish",
+      "LT: 10”",
+      "WT: 10oz",
+      "Caribbean"
+    ],
+    "after": [
+      "Acanthuridae",
+      "LT: 10”",
+      "WT: 10oz",
+      "Caribbean"
+    ],
+    "description": "An active herbivore that shifts between territorial, wandering, and schooling social phases. It grazes continuously on algae.",
+    "changed": true
+  },
+  {
+    "cardId": "frogfish",
+    "name": "Frogfish",
+    "family": "Antennariidae",
+    "scientificName": "Antennariidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125484",
+      "https://www.floridamuseum.ufl.edu/discover-fish/fish-families/antennariidae-frogfishes/"
+    ],
+    "before": [
+      "Antennariidae",
+      "LT: 8”",
+      "WT: 33g",
+      "Worldwide"
+    ],
+    "after": [
+      "Antennariidae",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Frogfish hide among reef growth and lure prey with a modified dorsal-fin spine. Their expanding mouths suck in unsuspecting animals in a rapid gulp.",
+    "changed": true
+  },
+  {
+    "cardId": "spectacled-parrotfish",
+    "name": "Parrotfish - Spectacled",
+    "family": "Labridae",
+    "scientificName": "Chlorurus perspicillatus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=277509",
+      "https://www.fishbase.se/summary/Chlorurus-perspicillatus.html"
+    ],
+    "before": [
+      "Labridae",
+      "LT: 24”",
+      "WT: 21lbs",
+      "Eastern Pacific"
+    ],
+    "after": [
+      "Labridae",
+      "LT: 24”",
+      "WT: 15.4lbs",
+      "Hawaiian Islands"
+    ],
+    "description": "Known for its distinctive “spectacle-like” markings around the eyes and beak, it contributes to sand production through its feeding.",
+    "changed": true
+  },
+  {
+    "cardId": "bristlemouth",
+    "name": "Bristlemouth",
+    "family": "Gonostomatidae",
+    "scientificName": "Cyclothone spp.",
+    "sources": [
+      "https://repository.library.noaa.gov/view/noaa/15444/noaa_15444_DS1.pdf",
+      "https://repository.library.noaa.gov/view/noaa/16391/noaa_16391_DS1.pdf"
+    ],
+    "before": [
+      "Gonostomatidae",
+      "LT: 3”",
+      "WT: 1oz",
+      "Worldwide"
+    ],
+    "after": [
+      "Gonostomatidae",
+      "LT: 3”",
+      "WT: 1oz",
+      "Worldwide"
+    ],
+    "description": "Bristlemouths are tiny deep-sea fish considered the most abundant vertebrates on Earth, with populations in the quadrillions.",
+    "changed": false
+  },
+  {
+    "cardId": "owlfish",
+    "name": "Owlfish",
+    "family": "Bathylagidae",
+    "scientificName": "Bathylagidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125509",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/owlfish",
+      "https://annualreport.mbari.org/2020/story/finding-resilience-and-relaxation-in-the-midnight-zone"
+    ],
+    "before": [
+      "Deep-Sea Smelt",
+      "LT: 6.5”",
+      "WT: 1oz",
+      "Worldwide"
+    ],
+    "after": [
+      "Bathylagidae",
+      "LT: 6.5”",
+      "WT: 1oz",
+      "N. Pacific"
+    ],
+    "description": "These stealthy predators drift through pitch-black environments using their massive eyes to spot the faintest glimmers of bioluminescent prey.",
+    "changed": true
+  },
+  {
+    "cardId": "pacific-grenadier",
+    "name": "Pacific Grenadier",
+    "family": "Macrouridae",
+    "scientificName": "Coryphaenoides acrolepis",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=272313",
+      "https://caseagrant.ucsd.edu/seafood-profiles/pacific-grenadier",
+      "https://apps-afsc.fisheries.noaa.gov/ichthyo/LHDataELH.php?GSID=Coryphaenoides%21acrolepis"
+    ],
+    "before": [
+      "Deep Groundfish",
+      "LT: 2’ 6”",
+      "WT: 8lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Macrouridae",
+      "LT: 2’ 6”",
+      "WT: Unknown",
+      "N. Pacific"
+    ],
+    "description": "Often called a \"rattail\" because of its slender, whip-like tail, this deep-sea fish can live for over 70 years in extreme pressures.",
+    "changed": true
+  },
+  {
+    "cardId": "viperfish",
+    "name": "Viperfish",
+    "family": "Stomiidae",
+    "scientificName": "Chauliodus sloani",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127338",
+      "https://australian.museum/learn/animals/fishes/sloanes-viperfish-chauliodus-sloani/",
+      "https://oceanexplorer.noaa.gov/multimedia/okeanos-explorations-ex2107-gallery-media-dive12-viperfish-2/"
+    ],
+    "before": [
+      "Dragonfish",
+      "LT: 14”",
+      "WT: 8oz",
+      "Tropics"
+    ],
+    "after": [
+      "Stomiidae",
+      "LT: 14”",
+      "WT: 8oz",
+      "Tropics"
+    ],
+    "description": "Long, needle-like teeth help viperfish hold slippery prey. Light-producing organs on their bodies and dorsal-fin lure shine in the deep sea.",
+    "changed": true
+  },
+  {
+    "cardId": "humpback-anglerfish",
+    "name": "Anglerfish - Humpback",
+    "family": "Melanocetidae",
+    "scientificName": "Melanocetus johnsonii",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=126556",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/black-seadevil-anglerfish",
+      "https://www.mbari.org/news/amazing-black-sea-devil-anglerfish-observed-in-monterey-bay/",
+      "https://ocean.si.edu/ocean-life/fish/blackdevil-fish"
+    ],
+    "before": [
+      "Deep-Sea Smelt",
+      "LT: 7”",
+      "WT: 0.5oz",
+      "Worldwide"
+    ],
+    "after": [
+      "Melanocetidae",
+      "LT: 7”",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "Female humpback anglerfish carry a lure lit by symbiotic bacteria. It dangles above the mouth, drawing prey close in the darkness of the deep sea.",
+    "changed": true
+  },
+  {
+    "cardId": "barrel-eye-fish",
+    "name": "Barrel Eye Fish",
+    "family": "Opisthoproctidae",
+    "scientificName": "Macropinna microstoma",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=281482",
+      "https://www.mbari.org/animal/barreleye-fish/",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/barreleye"
+    ],
+    "before": [
+      "Spookfish",
+      "LT: 6.5”",
+      "WT: 1oz",
+      "Worldwide"
+    ],
+    "after": [
+      "Opisthoproctidae",
+      "LT: 6.5”",
+      "WT: Unknown",
+      "N. Pacific"
+    ],
+    "description": "A transparent dome protects the barreleye's tubular green eyes. The eyes can rotate from looking upward to facing forward as the fish feeds.",
+    "changed": true
+  },
+  {
+    "cardId": "fangtooth-fish",
+    "name": "Fangtooth Fish",
+    "family": "Anoplogastridae",
+    "scientificName": "Anoplogaster cornuta",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=126393",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/fangtooth",
+      "https://ocean.si.edu/ocean-life/fish/fangtooth-fish"
+    ],
+    "before": [
+      "Ray-Finned Fish",
+      "LT: 7”",
+      "WT: 4oz",
+      "Worldwide"
+    ],
+    "after": [
+      "Anoplogastridae",
+      "LT: 7”",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "Fangtooth fish have enormous teeth for their small bodies. Special sockets in the roof of the mouth make room for the long lower fangs.",
+    "changed": true
+  },
+  {
+    "cardId": "black-swallower",
+    "name": "Black Swallower",
+    "family": "Chiasmodontidae",
+    "scientificName": "Chiasmodon niger",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=126840",
+      "https://ocean.si.edu/ocean-life/fish/black-swallower"
+    ],
+    "before": [
+      "Bony Fish",
+      "LT: 9”",
+      "WT: 8oz",
+      "Worldwide"
+    ],
+    "after": [
+      "Chiasmodontidae",
+      "LT: 9”",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "The black swallower has an elastic stomach that can hold prey larger than itself. This adaptation helps it take advantage of scarce deep-sea meals.",
+    "changed": true
+  },
+  {
+    "cardId": "tripod-fish",
+    "name": "Tripod Fish",
+    "family": "Ipnopidae",
+    "scientificName": "Bathypterois grallator",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=126343",
+      "https://ocean.si.edu/ecosystems/deep-sea/tripod-fish",
+      "https://ocean.si.edu/ocean-life/fish/fish-fins-can-taste",
+      "https://australian.museum/learn/animals/fishes/spiderfish-bathypterois-sp/"
+    ],
+    "before": [
+      "Bony Fish",
+      "LT: 17”",
+      "WT: 2lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Ipnopidae",
+      "LT: 17”",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "Tripod fish stand above the seabed on three elongated fin rays. Facing into the current, they spread their pectoral fins to help detect drifting prey.",
+    "changed": true
+  },
+  {
+    "cardId": "coelacanth",
+    "name": "Coelacanth",
+    "family": "Latimeriidae",
+    "scientificName": "Latimeria chalumnae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=217438",
+      "https://ocean.si.edu/ocean-life/fish/coelacanth"
+    ],
+    "before": [
+      "Lobe-Finned Fish",
+      "LT: 5’ 6”",
+      "WT: 100lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Latimeriidae",
+      "LT: 5’ 6”",
+      "WT: 100lbs",
+      "W. Indian Ocean"
+    ],
+    "description": "West Indian Ocean coelacanths have fleshy, lobed fins and a distinctive three-part tail. These deep-water fish belong to an ancient lineage.",
+    "changed": true
+  },
+  {
+    "cardId": "flying-fish",
+    "name": "Flying Fish",
+    "family": "Exocoetidae",
+    "scientificName": "Exocoetidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125452",
+      "https://www.nwf.org/Educational-Resources/Wildlife-Guide/Fish/Flying-Fish",
+      "https://australian.museum/learn/animals/fishes/find-a-fish/"
+    ],
+    "before": [
+      "Ray-Finned",
+      "LT: 12”",
+      "WT: 1.1lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Exocoetidae",
+      "LT: 12”",
+      "WT: 1.1lbs",
+      "Worldwide"
+    ],
+    "description": "It escapes underwater predators by rocketing to the surface and using its rigid, wing-like fins to glide gracefully through the air for hundreds of feet.",
+    "changed": true
+  },
+  {
+    "cardId": "barracuda-oceanic",
+    "name": "Barracuda",
+    "family": "Sphyraenidae",
+    "scientificName": "Sphyraena barracuda",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=345843",
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159812",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/great-barracuda/"
+    ],
+    "before": [
+      "Ray-Finned",
+      "LT: 3’",
+      "WT: 15lbs",
+      "Tropics"
+    ],
+    "after": [
+      "Sphyraenidae",
+      "LT: 3’",
+      "WT: 15lbs",
+      "Tropics"
+    ],
+    "description": "Barracudas wait near prey before lunging with bursts of speed. Their streamlined bodies and sharp teeth help them catch other fish.",
+    "changed": true
+  },
+  {
+    "cardId": "mahi-mahi",
+    "name": "Mahi-Mahi (Dolphinfish)",
+    "family": "Coryphaenidae",
+    "scientificName": "Coryphaena hippurus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=126846",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/dolphinfish",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/dolphinfish/"
+    ],
+    "before": [
+      "Dolphin Fish",
+      "LT: 3’",
+      "WT: 30lbs",
+      "Tropics"
+    ],
+    "after": [
+      "Coryphaenidae",
+      "LT: 3’",
+      "WT: 30lbs",
+      "Tropics"
+    ],
+    "description": "Mahi-mahi grow rapidly in warm ocean waters. They hunt fish and squid, often gathering near floating seaweed, logs, and other objects.",
+    "changed": true
+  },
+  {
+    "cardId": "king-mackerel",
+    "name": "King Mackerel",
+    "family": "Scombridae",
+    "scientificName": "Scomberomorus cavalla",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159340",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/king-mackerel/"
+    ],
+    "before": [
+      "Finfish",
+      "LT: 4’",
+      "WT: 65lbs",
+      "Atlantic"
+    ],
+    "after": [
+      "Scombridae",
+      "LT: 4’",
+      "WT: 65lbs",
+      "Atlantic"
+    ],
+    "description": "A highly sought-after, migratory coastal pelagic fish that is renowned for \"skyrocketing\" clear out of the water when aggressively attacking prey.",
+    "changed": true
+  },
+  {
+    "cardId": "tripletail",
+    "name": "Tripletail",
+    "family": "Lobotidae",
+    "scientificName": "Lobotes surinamensis",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=126973",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3700"
+    ],
+    "before": [
+      "Finfish",
+      "LT: 3’",
+      "WT: 15lbs",
+      "Atlantic"
+    ],
+    "after": [
+      "Lobotidae",
+      "LT: 3’",
+      "WT: 15lbs",
+      "Atlantic"
+    ],
+    "description": "The tripletail is a master of surface deception. It drifts sideways to mimic floating dead leaves and fool its prey.",
+    "changed": true
+  },
+  {
+    "cardId": "halfbeak",
+    "name": "Halfbeak",
+    "family": "Hemiramphidae",
+    "scientificName": "Hemiramphidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125453",
+      "https://australian.museum/learn/animals/fishes/hemiramphidae-garfishes/"
+    ],
+    "before": [
+      "Hemiramphidae",
+      "LT: 6”",
+      "WT: 0.7lbs",
+      "Tropics"
+    ],
+    "after": [
+      "Hemiramphidae",
+      "LT: Varies",
+      "WT: Varies",
+      "Tropics"
+    ],
+    "description": "Halfbeaks have a long lower jaw and a much shorter upper jaw. These surface-dwelling fish may leap or skip across the water to escape predators.",
+    "changed": true
+  },
+  {
+    "cardId": "needlefish",
+    "name": "Needlefish",
+    "family": "Belonidae",
+    "scientificName": "Belonidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125451",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/taxon/838"
+    ],
+    "before": [
+      "Belonidae",
+      "LT: 6”",
+      "WT: 0.7lbs",
+      "Tropics"
+    ],
+    "after": [
+      "Belonidae",
+      "LT: Varies",
+      "WT: Varies",
+      "Tropics"
+    ],
+    "description": "Needlefish hunt near the surface with long jaws lined with sharp teeth. When startled, they can leap clear of the water.",
+    "changed": true
+  },
+  {
+    "cardId": "bluefin-tuna-juvenile",
+    "name": "Bluefin Tuna (Juvenile)",
+    "family": "Scombridae",
+    "scientificName": "Thunnus thynnus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127029",
+      "https://www.fisheries.noaa.gov/species/western-atlantic-bluefin-tuna"
+    ],
+    "before": [
+      "Scombridae",
+      "LT: 2’",
+      "WT: 20lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Scombridae",
+      "LT: 2’",
+      "WT: 20lbs",
+      "Atlantic"
+    ],
+    "description": "Young Atlantic bluefin tuna grow quickly and gather in schools. They eat small fish, squid, and crustaceans as they develop into powerful ocean hunters.",
+    "changed": true
+  },
+  {
+    "cardId": "remora",
+    "name": "Remora",
+    "family": "Echeneidae",
+    "scientificName": "Echeneidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125533",
+      "https://www.si.edu/newsdesk/releases/smithsonian-scientist-helps-confirm-centuries-old-theory-regarding-origins-sucking-disc-rem",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/1226"
+    ],
+    "before": [
+      "Echeneidae",
+      "LT: 2’",
+      "WT: 4lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Echeneidae",
+      "LT: 2’",
+      "WT: 4lbs",
+      "Worldwide"
+    ],
+    "description": "A modified dorsal fin forms the remora's suction disc. It attaches to larger marine animals for transport and feeds on scraps or parasites.",
+    "changed": true
+  },
+  {
+    "cardId": "bluefish",
+    "name": "Bluefish",
+    "family": "Pomatomidae",
+    "scientificName": "Pomatomus saltatrix",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=151482",
+      "https://www.fisheries.noaa.gov/species/bluefish"
+    ],
+    "before": [
+      "Pomatomidae",
+      "LT: 2’",
+      "WT: 12lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Pomatomidae",
+      "LT: 2’",
+      "WT: 12lbs",
+      "Worldwide"
+    ],
+    "description": "Bluefish are the only living species in the family Pomatomidae. Schools of these sharp-toothed predators pursue smaller fish in coastal waters.",
+    "changed": true
+  },
+  {
+    "cardId": "bonito-tuna",
+    "name": "Bonito",
+    "family": "Scombridae",
+    "scientificName": "Sarda sarda",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127021",
+      "https://www.mass.gov/info-details/learn-about-atlantic-bonito"
+    ],
+    "before": [
+      "Scombridae",
+      "LT: 2.5’",
+      "WT: 18lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Scombridae",
+      "LT: 2.5’",
+      "WT: 18lbs",
+      "Worldwide"
+    ],
+    "description": "Bonitos are streamlined relatives of tunas and mackerels. They hunt small schooling fish, squid, and crustaceans in open coastal waters.",
+    "changed": true
+  },
+  {
+    "cardId": "crevalle-jack",
+    "name": "Crevalle Jack",
+    "family": "Carangidae",
+    "scientificName": "Caranx hippos",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=126803",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/crevalle-jack/"
+    ],
+    "before": [
+      " Carangidae",
+      "LT: 1.5’",
+      "WT: 10lbs",
+      "Atlantic"
+    ],
+    "after": [
+      "Carangidae",
+      "LT: 1.5’",
+      "WT: 10lbs",
+      "Atlantic"
+    ],
+    "description": "Crevalle jacks are powerful coastal predators that often hunt in schools. They can make grunting sounds using their teeth and swim bladder.",
+    "changed": true
+  },
+  {
+    "cardId": "yellowtail-amberjack",
+    "name": "Yellowtail Amberjack",
+    "family": "Carangidae",
+    "scientificName": "Seriola lalandi",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=218436",
+      "https://www.oki-geopark.jp/en/geopark-sites-features-list/2668/"
+    ],
+    "before": [
+      " Carangidae",
+      "LT: 4’",
+      "WT: 60lbs",
+      "Atlantic"
+    ],
+    "after": [
+      "Carangidae",
+      "LT: 4’",
+      "WT: 60lbs",
+      "Subtropics"
+    ],
+    "description": "Yellowtail amberjacks are strong-swimming predators with a yellow tail and side stripe. They school around rocky reefs and hunt fish and squid.",
+    "changed": true
+  },
+  {
+    "cardId": "frigate-tuna",
+    "name": "Frigate Tuna",
+    "family": "Scombridae",
+    "scientificName": "Auxis thazard",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127016",
+      "https://fisheries-refugia.org/resources/Species_Factsheets/FR-SpeicesFS_Frigate%20Tuna-Auxis%20thazard.pdf"
+    ],
+    "before": [
+      " Scombridae",
+      "LT: 1’",
+      "WT: 4lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Scombridae",
+      "LT: 1’",
+      "WT: 4lbs",
+      "Worldwide"
+    ],
+    "description": "Frigate tuna form large schools in warm seas. They pursue small fish, squid, and crustaceans and may also feed on members of their own species.",
+    "changed": true
+  },
+  {
+    "cardId": "lookdown",
+    "name": "Lookdown",
+    "family": "Carangidae",
+    "scientificName": "Selene vomer",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159649",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3653"
+    ],
+    "before": [
+      "Carangidae",
+      "LT: 10”",
+      "WT: 2lbs",
+      "Western Atlantic"
+    ],
+    "after": [
+      "Carangidae",
+      "LT: 10”",
+      "WT: 2lbs",
+      "Western Atlantic"
+    ],
+    "description": "The lookdown gets its name from its steep forehead and high-set eyes. Its thin, silvery body reflects light as it swims in coastal schools.",
+    "changed": true
+  },
+  {
+    "cardId": "pompano",
+    "name": "Pompano",
+    "family": "Carangidae",
+    "scientificName": "Trachinotus carolinus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159652",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3657"
+    ],
+    "before": [
+      "Carangidae",
+      "LT: 12”",
+      "WT: 2lbs",
+      "Atlantic"
+    ],
+    "after": [
+      "Carangidae",
+      "LT: 12”",
+      "WT: 2lbs",
+      "Atlantic"
+    ],
+    "description": "Florida pompano forage over sandy bottoms for small crustaceans and mollusks. These silvery fish often travel in schools along the surf zone.",
+    "changed": true
+  },
+  {
+    "cardId": "ocean-triggerfish",
+    "name": "Ocean Triggerfish",
+    "family": "Balistidae",
+    "scientificName": "Canthidermis sufflamen",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=127399",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/4367"
+    ],
+    "before": [
+      "Balistidae",
+      "LT: 20”",
+      "WT: 12lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Balistidae",
+      "LT: 20”",
+      "WT: 12lbs",
+      "Atlantic"
+    ],
+    "description": "Ocean triggerfish swim above reefs and drop-offs, feeding on plankton and small animals. They can lock their first dorsal spine upright for defense.",
+    "changed": true
+  },
+  {
+    "cardId": "african-pompano",
+    "name": "African Pompano",
+    "family": "Carangidae",
+    "scientificName": "Alectis ciliaris",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159629",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/1243"
+    ],
+    "before": [
+      "Carangidae",
+      "LT: 1.5’",
+      "WT: 25lbs",
+      "Tropics"
+    ],
+    "after": [
+      "Carangidae",
+      "LT: 3’",
+      "WT: 25lbs",
+      "Tropics"
+    ],
+    "description": "Young African pompano trail long, thread-like fin rays that resemble jellyfish tentacles. These streamers shorten as the fish grow into silvery adults.",
+    "changed": true
+  },
+  {
+    "cardId": "krill-bloom-base",
+    "name": "Krill Bloom",
+    "family": "Family varies",
+    "scientificName": "Euphausiacea",
+    "sources": [
+      "https://ocean.si.edu/ocean-life/invertebrates/antarctic-krill",
+      "https://ocean.si.edu/ocean-life/fish/secret-life-plankton"
+    ],
+    "before": [
+      "Crustaceans",
+      "LT: 2’",
+      "WT: 20lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Family varies",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish.",
+    "changed": true
+  },
+  {
+    "cardId": "krill-bloom-stage1",
+    "name": "Krill Bloom",
+    "family": "Family varies",
+    "scientificName": "Euphausiacea",
+    "sources": [
+      "https://ocean.si.edu/ocean-life/invertebrates/antarctic-krill",
+      "https://ocean.si.edu/ocean-life/fish/secret-life-plankton"
+    ],
+    "before": [
+      "Crustaceans",
+      "LT: 20’",
+      "WT: 600lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Family varies",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish.",
+    "changed": true
+  },
+  {
+    "cardId": "krill-bloom-stage2",
+    "name": "Krill Bloom",
+    "family": "Family varies",
+    "scientificName": "Euphausiacea",
+    "sources": [
+      "https://ocean.si.edu/ocean-life/invertebrates/antarctic-krill",
+      "https://ocean.si.edu/ocean-life/fish/secret-life-plankton"
+    ],
+    "before": [
+      "Crustaceans",
+      "LT: 30’",
+      "WT: 1 Ton",
+      "Worldwide"
+    ],
+    "after": [
+      "Family varies",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish.",
+    "changed": true
+  },
+  {
+    "cardId": "sardine-ball-base",
+    "name": "Sardine School",
+    "family": "Clupeidae",
+    "scientificName": "Clupeidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125464",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/pacific-sardine",
+      "https://www.montereybayaquarium.org/animals-the-ocean/ecosystems/open-ocean"
+    ],
+    "before": [
+      "Herring",
+      "LT: 3’",
+      "WT: 30lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Clupeidae",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together.",
+    "changed": true
+  },
+  {
+    "cardId": "anchovy-ball-base",
+    "name": "Anchovy Swarm",
+    "family": "Engraulidae",
+    "scientificName": "Engraulidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125465",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/northern-anchovy"
+    ],
+    "before": [
+      "Oily Fish",
+      "LT: 3’",
+      "WT: 30lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Engraulidae",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish.",
+    "changed": true
+  },
+  {
+    "cardId": "silverside-ball-base",
+    "name": "Silverside Flash",
+    "family": "Atherinopsidae",
+    "scientificName": "Menidia menidia",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159228",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3250"
+    ],
+    "before": [
+      "Atlantic Silverside",
+      "LT: 3’",
+      "WT: 30lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Atherinopsidae",
+      "LT: Varies",
+      "WT: Varies",
+      "W. Atlantic"
+    ],
+    "description": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together.",
+    "changed": true
+  },
+  {
+    "cardId": "sardine-ball-stage1",
+    "name": "Sardine School",
+    "family": "Clupeidae",
+    "scientificName": "Clupeidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125464",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/pacific-sardine",
+      "https://www.montereybayaquarium.org/animals-the-ocean/ecosystems/open-ocean"
+    ],
+    "before": [
+      "Herring",
+      "LT: 15’",
+      "WT: 400lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Clupeidae",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together.",
+    "changed": true
+  },
+  {
+    "cardId": "anchovy-ball-stage1",
+    "name": "Anchovy Swarm",
+    "family": "Engraulidae",
+    "scientificName": "Engraulidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125465",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/northern-anchovy"
+    ],
+    "before": [
+      "Crustaceans",
+      "Oily Fish",
+      "LT: 3’",
+      "LT: 12 ’",
+      "WT: 8lbs",
+      "WT: 600lbs",
+      "Worldwide",
+      "Worldwide"
+    ],
+    "after": [
+      "Engraulidae",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish.",
+    "changed": true
+  },
+  {
+    "cardId": "silverside-ball-stage1",
+    "name": "Silverside Flash",
+    "family": "Atherinopsidae",
+    "scientificName": "Menidia menidia",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159228",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3250"
+    ],
+    "before": [
+      "Atlantic Silverside",
+      "LT: 10’",
+      "WT: 400lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Atherinopsidae",
+      "LT: Varies",
+      "WT: Varies",
+      "W. Atlantic"
+    ],
+    "description": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together.",
+    "changed": true
+  },
+  {
+    "cardId": "sardine-ball-stage2",
+    "name": "Sardine School",
+    "family": "Clupeidae",
+    "scientificName": "Clupeidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125464",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/pacific-sardine",
+      "https://www.montereybayaquarium.org/animals-the-ocean/ecosystems/open-ocean"
+    ],
+    "before": [
+      "Herring",
+      "LT: 65’",
+      "WT: 4 Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Clupeidae",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together.",
+    "changed": true
+  },
+  {
+    "cardId": "anchovy-ball-stage2",
+    "name": "Anchovy Swarm",
+    "family": "Engraulidae",
+    "scientificName": "Engraulidae",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=125465",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/northern-anchovy"
+    ],
+    "before": [
+      "Oily Fish",
+      "LT: 65’",
+      "WT: 4 Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Engraulidae",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish.",
+    "changed": true
+  },
+  {
+    "cardId": "silverside-ball-stage2",
+    "name": "Silverside Flash",
+    "family": "Atherinopsidae",
+    "scientificName": "Menidia menidia",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=159228",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3250"
+    ],
+    "before": [
+      "Atlantic Silverside",
+      "LT: 45’",
+      "WT: 2 Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Atherinopsidae",
+      "LT: Varies",
+      "WT: Varies",
+      "W. Atlantic"
+    ],
+    "description": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together.",
+    "changed": true
+  },
+  {
+    "cardId": "herring-ball-base",
+    "name": "Herring Run",
+    "family": "Clupeidae",
+    "scientificName": "Clupea harengus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=126417",
+      "https://www.fisheries.noaa.gov/species/atlantic-herring"
+    ],
+    "before": [
+      "Herring",
+      "LT: 2.5’",
+      "WT: 25lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Clupeidae",
+      "LT: Varies",
+      "WT: Varies",
+      "N. Atlantic"
+    ],
+    "description": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish.",
+    "changed": true
+  },
+  {
+    "cardId": "herring-ball-stage1",
+    "name": "Herring Run",
+    "family": "Clupeidae",
+    "scientificName": "Clupea harengus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=126417",
+      "https://www.fisheries.noaa.gov/species/atlantic-herring"
+    ],
+    "before": [
+      "Herring",
+      "LT: 15’",
+      "WT: 900lbs",
+      "Worldwide"
+    ],
+    "after": [
+      "Clupeidae",
+      "LT: Varies",
+      "WT: Varies",
+      "N. Atlantic"
+    ],
+    "description": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish.",
+    "changed": true
+  },
+  {
+    "cardId": "herring-ball-stage2",
+    "name": "Herring Run",
+    "family": "Clupeidae",
+    "scientificName": "Clupea harengus",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=126417",
+      "https://www.fisheries.noaa.gov/species/atlantic-herring"
+    ],
+    "before": [
+      "Herring",
+      "LT: 140’",
+      "WT: 10 Tons",
+      "Worldwide"
+    ],
+    "after": [
+      "Clupeidae",
+      "LT: Varies",
+      "WT: Varies",
+      "N. Atlantic"
+    ],
+    "description": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish.",
+    "changed": true
+  },
+  {
+    "cardId": "white-grunt",
+    "name": "White Grunt",
+    "family": "Haemulidae",
+    "scientificName": "Haemulon plumierii",
+    "sources": [
+      "https://www.marinespecies.org/aphia.php?p=taxdetails&id=158808",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/white-grunt/"
+    ],
+    "before": [
+      "Grunt",
+      "LT: 12”",
+      "WT: 3lbs",
+      "Caribbean"
+    ],
+    "after": [
+      "Haemulidae",
+      "LT: 12”",
+      "WT: 3lbs",
+      "Caribbean"
+    ],
+    "description": "White grunts school around reefs by day and forage at night. They make low grunting sounds by rubbing teeth in their throats.",
+    "changed": true
+  },
+  {
+    "cardId": "emperor-angelfish",
+    "name": "Emperor Angelfish",
+    "family": "Pomacanthidae",
+    "scientificName": "Pomacanthus imperator",
+    "sources": [
+      "https://www.fishbase.se/summary/Pomacanthus-imperator.html"
+    ],
+    "before": [
+      "Pomacanthidae",
+      "LT: 15”",
+      "WT: 1.5lbs",
+      "Indo-Pacific"
+    ],
+    "after": [
+      "Pomacanthidae",
+      "LT: 15”",
+      "WT: 1.5lbs",
+      "Indo-Pacific"
+    ],
+    "description": "When startled, adult emperor angelfishes can produce a loud, audible thumping or knocking sound that resembles a drum roll.",
+    "changed": false
+  }
+]

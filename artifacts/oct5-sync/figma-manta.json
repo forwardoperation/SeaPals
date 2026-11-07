@@ -1,0 +1,117 @@
+{
+  "id": "241:1612",
+  "name": "oceanic-manta-ray",
+  "children": [
+    {
+      "id": "3414:16980",
+      "name": "manta-ray",
+      "type": "INSTANCE"
+    },
+    {
+      "id": "3133:246995",
+      "name": "full-art-standard",
+      "type": "INSTANCE"
+    },
+    {
+      "id": "2225:44942",
+      "name": "Group 3",
+      "type": "GROUP"
+    },
+    {
+      "id": "3133:253308",
+      "name": "150SD",
+      "type": "TEXT"
+    },
+    {
+      "id": "3133:253309",
+      "name": "8RP",
+      "type": "TEXT"
+    }
+  ],
+  "text": [
+    {
+      "id": "I3133:246995;3068:1062414",
+      "text": "Defense"
+    },
+    {
+      "id": "I3133:246995;3068:1062429",
+      "text": "Illus. J. Easterling"
+    },
+    {
+      "id": "I3133:246995;3068:1062430",
+      "text": "© 2026, Sea Realm, LLC"
+    },
+    {
+      "id": "I3133:246995;3068:1062433",
+      "text": "Genesis 1:21"
+    },
+    {
+      "id": "I3133:246995;3068:1062434",
+      "text": "Manta rays glide on giant “wings,” funneling plankton with unfurling head fins. They loop in graceful barrel rolls over cleaning stations."
+    },
+    {
+      "id": "I3133:246995;3068:1062435",
+      "text": "D10"
+    },
+    {
+      "id": "I3133:246995;3068:1062436",
+      "text": "10VP"
+    },
+    {
+      "id": "I3133:246995;3068:1062437",
+      "text": "Oceanic Manta Ray"
+    },
+    {
+      "id": "I3133:246995;3068:1062438;1314:109390",
+      "text": "8/64"
+    },
+    {
+      "id": "I3133:246995;3068:1062443",
+      "text": "No. 012"
+    },
+    {
+      "id": "I3133:246995;3068:1062444",
+      "text": "LT: 22’"
+    },
+    {
+      "id": "I3133:246995;3068:1062445",
+      "text": "Mobula"
+    },
+    {
+      "id": "I3133:246995;3068:1062446",
+      "text": "WT: 1.5 Tons"
+    },
+    {
+      "id": "I3133:246995;3068:1062447",
+      "text": "Tropics"
+    },
+    {
+      "id": "I2225:44257;1302:14123",
+      "text": "Can only be played if        Open Ocean is in your Ecosystem. If destroyed, place this card in your lost."
+    },
+    {
+      "id": "I2225:44257;1302:14126",
+      "text": "Special Rules"
+    },
+    {
+      "id": "3133:253308",
+      "text": "170SD"
+    },
+    {
+      "id": "3133:253309",
+      "text": "8RP"
+    }
+  ],
+  "exportSettings": [
+    {
+      "format": "PNG",
+      "suffix": "",
+      "contentsOnly": true,
+      "colorProfile": "DOCUMENT",
+      "constraint": {
+        "type": "SCALE",
+        "value": 0.5
+      }
+    }
+  ]
+}

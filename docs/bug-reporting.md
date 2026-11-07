@@ -19,6 +19,13 @@ On October 23, 2026, the production project's read-only queue check returned tha
 
 The report form bounds diagnostics before sending, times out stalled requests after 30 seconds, and keeps the player's text and report identifier for retry. A success message requires a saved report reference from the server.
 
+### Production release checkpoint — October 23, 2026
+
+- Commit `1d6f716` was released through the existing Cloudflare Workers build from a clean `f4d3279` baseline. It contains only the Lost Zone and bug-report fixes, tests, SQL grants, and this setup documentation.
+- Worker version `d140f5af-17e2-40e9-8957-a05a3f6140fb` receives 100% of production traffic. Both `/simulator` and `/simulator-v2` return 200 and serve the new Ocean Jake eligibility check and reporting timeout/receipt code.
+- All 1,129 simulator and reporting tests pass in the isolated release checkout; the production Cloudflare Worker build succeeded. The unrelated legacy Cloudflare Pages integration still fails as it did before this release.
+- Database setup and end-to-end report persistence verification are pending Supabase dashboard sign-in. The owner web-review token is also unconfigured; generating that separate private credential needs explicit owner approval. The existing read-only CLI remains an alternative for reviewing reports once storage is installed.
+
 ## Retention maintenance
 
 Bug reports are retained for up to 24 months. At least monthly, an owner should run this maintenance statement in the Supabase SQL editor (or schedule the equivalent with Supabase Cron):

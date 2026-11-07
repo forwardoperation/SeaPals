@@ -83,5 +83,5 @@ test("rarity updates do not promote prerelease or missing artwork to completed c
   assert.equal(artwork("frilled-shark"), "Prerelease");
   assert.equal(artwork("chum-bucket"), "Coming soon");
   assert.equal(artwork("bloody-belly-comb-jelly"), "Coming soon");
-  assert.equal(getGalleryArtProgress(gallery).completedCards, 74);
+  assert.equal(getGalleryArtProgress(gallery).completedCards, 78);
 });

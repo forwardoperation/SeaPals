@@ -1,6 +1,7 @@
 import { allCards } from "@/data/cards";
 import { CardKind } from "@/data/cards/types";
 import { reefEncyclopediaEntries } from "./reef";
+import { reefDeckEncyclopediaEntries } from "./reefDeckEntries";
 import { deepEncyclopediaEntries } from "./deep";
 import { oceanicEncyclopediaEntries } from "./oceanic";
 import { encyclopediaCardOwnerOverrides } from "./cardOwnership";
@@ -83,6 +84,7 @@ function preferredCardFor(entry, cards) {
 
 const rawEntries = [
   ...reefEncyclopediaEntries,
+  ...reefDeckEncyclopediaEntries,
   ...oceanicEncyclopediaEntries,
   ...deepEncyclopediaEntries,
 ];

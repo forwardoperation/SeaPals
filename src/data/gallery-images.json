@@ -1,7 +1,7 @@
 {
   "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
   "exportScale": 0.5,
-  "exportedAt": "2026-10-03T11:52:32.422Z",
+  "exportedAt": "2026-11-07T20:11:59.880Z",
   "cards": [
     {
       "cardId": "humpback-whale",
@@ -20,8 +20,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "2a033c047128",
-      "prerelease": true
+      "contentHash": "ccc1cd886f37",
+      "prerelease": false,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "oceanic-manta-ray",
@@ -29,7 +31,7 @@
       "src": "/images/cards/filter-feeders/Oceanic/oceanic-manta-ray.png",
       "category": "filter-feeder",
       "zone": "ocean",
-      "galleryOnly": true,
+      "galleryOnly": false,
       "hidden": false,
       "sourcePageId": "94:703",
       "sourcePage": "Filter Feeders",
@@ -40,8 +42,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "5a36c0996c79",
-      "prerelease": false
+      "contentHash": "95ddcbd59a1a",
+      "prerelease": false,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "ocean-sunfish",
@@ -60,10 +64,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "df27344bff61",
-      "prerelease": true,
-      "exportedAt": "2026-10-04T01:03:20.888Z",
-      "exportMethod": "figma-editor"
+      "contentHash": "853f05739229",
+      "prerelease": false,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "whale-shark",
@@ -82,8 +86,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "b595f57d06a6",
-      "prerelease": false
+      "contentHash": "a14c2da0e2c1",
+      "prerelease": false,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "blue-whale",
@@ -102,8 +108,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "e4ed0fb7e5b0",
-      "prerelease": false
+      "contentHash": "39a0a4916b6e",
+      "prerelease": false,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "basking-shark",
@@ -122,8 +130,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "ab30bbf34f68",
-      "prerelease": true
+      "contentHash": "9d605e874e14",
+      "prerelease": false,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "megamouth-shark",
@@ -142,8 +152,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "d2a9a40c81f9",
-      "prerelease": true
+      "contentHash": "ff388002b5e1",
+      "prerelease": true,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "manta-ray",
@@ -162,10 +174,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "ce3e4196c709",
+      "contentHash": "cd03d32f9774",
       "prerelease": false,
-      "exportedAt": "2026-10-03T13:08:30.506Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "hammerhead",
@@ -184,10 +196,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "41697bf09cbd",
+      "contentHash": "7d1931fcb455",
       "prerelease": false,
-      "exportedAt": "2026-10-03T13:03:21.532Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "great-white",
@@ -206,10 +218,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "bc433c863984",
+      "contentHash": "c46f3afb045c",
       "prerelease": false,
-      "exportedAt": "2026-10-03T13:03:21.532Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "bull-shark",
@@ -228,10 +240,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "80753b7e7719",
+      "contentHash": "c81739b746ef",
       "prerelease": false,
-      "exportedAt": "2026-10-03T13:03:21.532Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "tiger-shark",
@@ -250,10 +262,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "9f238c6b3c91",
+      "contentHash": "cc423fbe3c13",
       "prerelease": false,
-      "exportedAt": "2026-10-03T13:03:21.532Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "killer-whale-oceanic",
@@ -272,8 +284,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "41f737ea0e27",
-      "prerelease": false
+      "contentHash": "4145cb9fd10f",
+      "prerelease": false,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "pilot-whale-oceanic",
@@ -292,8 +306,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "42820bdbff21",
-      "prerelease": false
+      "contentHash": "ac3035ae9e51",
+      "prerelease": false,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "bottlenose-dolphin",
@@ -312,10 +328,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "901bab55c7c7",
+      "contentHash": "73a20abca914",
       "prerelease": false,
-      "exportedAt": "2026-10-03T13:03:21.532Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "giant-squid",
@@ -334,8 +350,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "686560ee84a4",
-      "prerelease": true
+      "contentHash": "226100cbc5bb",
+      "prerelease": true,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "colossal-squid",
@@ -354,8 +372,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "40a1fc77ebad",
-      "prerelease": false
+      "contentHash": "95dfecd8625d",
+      "prerelease": false,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "greenland-shark",
@@ -374,8 +394,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "0c4349be142a",
-      "prerelease": true
+      "contentHash": "bfa46a853b33",
+      "prerelease": true,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "giant-phantom-jelly",
@@ -394,8 +416,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "1188a9c57fa4",
-      "prerelease": true
+      "contentHash": "6a58a7955440",
+      "prerelease": true,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "sperm-whale",
@@ -414,8 +438,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "941f7ae72209",
-      "prerelease": true
+      "contentHash": "3807923734b5",
+      "prerelease": true,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "shortfin-mako-shark",
@@ -434,8 +460,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "7e2766455326",
-      "prerelease": true
+      "contentHash": "b146ce968797",
+      "prerelease": true,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "black-marlin",
@@ -454,8 +482,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "28396b6676ae",
-      "prerelease": true
+      "contentHash": "eb99a01fa567",
+      "prerelease": true,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "swordfish",
@@ -474,8 +504,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "6c4638d6b6ef",
-      "prerelease": true
+      "contentHash": "bd67c2542f50",
+      "prerelease": true,
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "bluefin-tuna",
@@ -494,10 +526,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "852ec7360e1b",
+      "contentHash": "825eb696ea03",
       "prerelease": true,
-      "exportedAt": "2026-10-04T01:03:20.888Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-11-01T12:23:15.519Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "lionfish",
@@ -516,7 +548,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "261f4951e026",
+      "contentHash": "0a19fbb14ceb",
       "prerelease": false
     },
     {
@@ -556,7 +588,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "32c697e7db5d",
+      "contentHash": "1708b02dd660",
       "prerelease": false
     },
     {
@@ -574,10 +606,12 @@
       "sourceWidth": 750,
       "sourceHeight": 1052,
       "width": 375,
-      "height": 526,
+      "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "958856646486",
-      "prerelease": false
+      "contentHash": "5b1b8f7c8d7a",
+      "prerelease": false,
+      "reviewedPreviewNodeId": "4091:287177",
+      "exportedAt": "2026-10-13T16:14:06.663Z"
     },
     {
       "cardId": "bluestriped-grunt",
@@ -596,7 +630,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "25f14ac81e46",
+      "contentHash": "d03fffb68a95",
       "prerelease": false
     },
     {
@@ -636,7 +670,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "5829795b91fe",
+      "contentHash": "1676993696cd",
       "prerelease": false
     },
     {
@@ -676,7 +710,7 @@
       "width": 376,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "f408ce5b3f5b",
+      "contentHash": "754fd8b97d0b",
       "prerelease": false
     },
     {
@@ -696,7 +730,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "f66db371e0b0",
+      "contentHash": "98920f1fdff8",
       "prerelease": false
     },
     {
@@ -736,8 +770,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "051d067f08cc",
-      "prerelease": false
+      "contentHash": "83561660428a",
+      "prerelease": false,
+      "reviewedPreviewNodeId": "4091:287185",
+      "exportedAt": "2026-10-13T16:14:06.664Z"
     },
     {
       "cardId": "spotfin-butterflyfish",
@@ -756,7 +792,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "b183d53c0227",
+      "contentHash": "87e0df52958e",
       "prerelease": false
     },
     {
@@ -796,7 +832,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "9b62e1d4ac1f",
+      "contentHash": "3c47c3c6f04e",
       "prerelease": false
     },
     {
@@ -816,8 +852,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "81ca0d6634c7",
-      "prerelease": false
+      "contentHash": "a91d1c2db886",
+      "prerelease": false,
+      "reviewedPreviewNodeId": "4093:24786",
+      "exportedAt": "2026-10-13T16:14:06.666Z"
     },
     {
       "cardId": "spectacled-parrotfish",
@@ -836,7 +874,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "0f72cf509046",
+      "contentHash": "d7d33b5b9225",
       "prerelease": false
     },
     {
@@ -876,7 +914,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "6d5bbbea6313",
+      "contentHash": "1c2843ba8da0",
       "prerelease": true
     },
     {
@@ -896,8 +934,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "e62b59ed1e73",
-      "prerelease": true
+      "contentHash": "53565be29240",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287193",
+      "exportedAt": "2026-10-13T16:14:06.667Z"
     },
     {
       "cardId": "viperfish",
@@ -916,7 +956,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "9f3070cb3024",
+      "contentHash": "6e74bfa7f20d",
       "prerelease": true
     },
     {
@@ -936,8 +976,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "294f0e8e15e4",
-      "prerelease": true
+      "contentHash": "918bbb3b5eaa",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287201",
+      "exportedAt": "2026-10-13T16:14:06.669Z"
     },
     {
       "cardId": "barrel-eye-fish",
@@ -956,7 +998,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "d914e911f954",
+      "contentHash": "fa44b564dd0c",
       "prerelease": true,
       "exportedAt": "2026-10-04T01:03:20.888Z",
       "exportMethod": "figma-editor"
@@ -978,8 +1020,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "adf9bc900f91",
-      "prerelease": true
+      "contentHash": "c7e632a1baf1",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287209",
+      "exportedAt": "2026-10-13T16:14:06.671Z"
     },
     {
       "cardId": "black-swallower",
@@ -998,8 +1042,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "37de1b32a22a",
-      "prerelease": true
+      "contentHash": "26c2a6f4dd15",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287217",
+      "exportedAt": "2026-10-13T16:14:06.672Z"
     },
     {
       "cardId": "tripod-fish",
@@ -1018,10 +1064,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "3cdffb85f1f3",
+      "contentHash": "31a8455f4203",
       "prerelease": true,
-      "exportedAt": "2026-10-04T01:03:20.888Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-10-13T16:14:06.674Z",
+      "exportMethod": "figma-editor",
+      "reviewedPreviewNodeId": "4091:287225"
     },
     {
       "cardId": "coelacanth",
@@ -1040,7 +1087,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "4432950cf7a8",
+      "contentHash": "f2039a2773f2",
       "prerelease": true
     },
     {
@@ -1060,7 +1107,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "9989e3d40d7a",
+      "contentHash": "039708566967",
       "prerelease": true
     },
     {
@@ -1080,7 +1127,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "c80b2a9b059a",
+      "contentHash": "9501f70e1a52",
       "prerelease": true,
       "exportedAt": "2026-10-04T01:03:20.888Z",
       "exportMethod": "figma-editor"
@@ -1102,7 +1149,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "a403965553af",
+      "contentHash": "eb2206c84317",
       "prerelease": true,
       "exportedAt": "2026-10-04T01:03:20.888Z",
       "exportMethod": "figma-editor"
@@ -1124,7 +1171,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "f593c73997bb",
+      "contentHash": "199b91f5137d",
       "prerelease": true,
       "exportedAt": "2026-10-04T01:03:20.888Z",
       "exportMethod": "figma-editor"
@@ -1146,7 +1193,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "798c8cc468a8",
+      "contentHash": "fb83a581485c",
       "prerelease": true,
       "exportedAt": "2026-10-04T01:03:20.888Z",
       "exportMethod": "figma-editor"
@@ -1168,8 +1215,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "f0a7db8984f0",
-      "prerelease": true
+      "contentHash": "df581b569e7e",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287233",
+      "exportedAt": "2026-10-13T16:14:06.676Z"
     },
     {
       "cardId": "needlefish",
@@ -1188,8 +1237,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "c1d88f960ed6",
-      "prerelease": true
+      "contentHash": "c179a8c642fe",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287241",
+      "exportedAt": "2026-10-13T16:14:06.677Z"
     },
     {
       "cardId": "bluefin-tuna-juvenile",
@@ -1208,7 +1259,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "da7dacc6aeb2",
+      "contentHash": "7fd3ad4aaf58",
       "prerelease": true
     },
     {
@@ -1228,7 +1279,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "eab91c644ba3",
+      "contentHash": "6f2b280a139e",
       "prerelease": true,
       "exportedAt": "2026-10-04T01:03:20.888Z",
       "exportMethod": "figma-editor"
@@ -1250,7 +1301,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "c4daaa22ba95",
+      "contentHash": "e53b865db5f9",
       "prerelease": true
     },
     {
@@ -1270,7 +1321,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "38e1b32ae39c",
+      "contentHash": "e184bd6e2f8a",
       "prerelease": true
     },
     {
@@ -1290,7 +1341,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "f5b0a6729cf9",
+      "contentHash": "11a8cac41957",
       "prerelease": true
     },
     {
@@ -1310,7 +1361,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "57075fad1477",
+      "contentHash": "91a57b15c47f",
       "prerelease": true,
       "exportedAt": "2026-10-04T01:03:20.888Z",
       "exportMethod": "figma-editor"
@@ -1332,7 +1383,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "84b92b86f89d",
+      "contentHash": "d3cdc46bfc97",
       "prerelease": true
     },
     {
@@ -1352,7 +1403,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "6318c775d419",
+      "contentHash": "f4a028b2dd67",
       "prerelease": true
     },
     {
@@ -1372,7 +1423,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "60fd8da0e447",
+      "contentHash": "9953d8d52b4c",
       "prerelease": true
     },
     {
@@ -1392,7 +1443,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "f4ad05364466",
+      "contentHash": "7a67d3227d42",
       "prerelease": true
     },
     {
@@ -1412,7 +1463,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "73cbda171379",
+      "contentHash": "89124ea3c823",
       "prerelease": true,
       "exportedAt": "2026-10-04T01:03:20.888Z",
       "exportMethod": "figma-editor"
@@ -1434,8 +1485,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "cf129e506bc2",
-      "prerelease": true
+      "contentHash": "4edac9defe1f",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287249",
+      "exportedAt": "2026-10-13T16:14:06.679Z"
     },
     {
       "cardId": "krill-bloom-stage1",
@@ -1454,8 +1507,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "15de1ca09027",
-      "prerelease": true
+      "contentHash": "28752a941d59",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287257",
+      "exportedAt": "2026-10-13T16:14:06.681Z"
     },
     {
       "cardId": "krill-bloom-stage2",
@@ -1474,8 +1529,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "348632480f94",
-      "prerelease": true
+      "contentHash": "e9182a3b03ec",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287265",
+      "exportedAt": "2026-10-13T16:14:06.683Z"
     },
     {
       "cardId": "sardine-ball-base",
@@ -1494,8 +1551,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "6bfc886f6bce",
-      "prerelease": true
+      "contentHash": "4db2e519c2df",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287273",
+      "exportedAt": "2026-10-13T16:14:06.684Z"
     },
     {
       "cardId": "anchovy-ball-base",
@@ -1514,8 +1573,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "ba6d6b655530",
-      "prerelease": true
+      "contentHash": "46af8604873d",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287297",
+      "exportedAt": "2026-10-13T16:14:06.689Z"
     },
     {
       "cardId": "silverside-ball-base",
@@ -1534,8 +1595,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "17128afe5ef1",
-      "prerelease": true
+      "contentHash": "6a310ca2ba90",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287321",
+      "exportedAt": "2026-10-13T16:14:06.694Z"
     },
     {
       "cardId": "sardine-ball-stage1",
@@ -1554,8 +1617,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "c254b02575fb",
-      "prerelease": true
+      "contentHash": "85944f947117",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287281",
+      "exportedAt": "2026-10-13T16:14:06.686Z"
     },
     {
       "cardId": "anchovy-ball-stage1",
@@ -1574,8 +1639,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "c69fef232470",
-      "prerelease": true
+      "contentHash": "b49da166162c",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287305",
+      "exportedAt": "2026-10-13T16:14:06.691Z"
     },
     {
       "cardId": "silverside-ball-stage1",
@@ -1594,8 +1661,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "e7ce36423e37",
-      "prerelease": true
+      "contentHash": "831f705e76ab",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287329",
+      "exportedAt": "2026-10-13T16:14:06.696Z"
     },
     {
       "cardId": "sardine-ball-stage2",
@@ -1614,8 +1683,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "303bd8d710dc",
-      "prerelease": true
+      "contentHash": "66ec18cd1e8a",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287289",
+      "exportedAt": "2026-10-13T16:14:06.688Z"
     },
     {
       "cardId": "anchovy-ball-stage2",
@@ -1634,8 +1705,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "971abd4d177e",
-      "prerelease": true
+      "contentHash": "66f5ed5ad398",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287313",
+      "exportedAt": "2026-10-13T16:14:06.692Z"
     },
     {
       "cardId": "silverside-ball-stage2",
@@ -1654,8 +1727,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "90c659c3858e",
-      "prerelease": true
+      "contentHash": "8d795d2d7228",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287337",
+      "exportedAt": "2026-10-13T16:14:06.698Z"
     },
     {
       "cardId": "herring-ball-base",
@@ -1674,8 +1749,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "a3911eae0f13",
-      "prerelease": true
+      "contentHash": "cf18e77d1c6f",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287345",
+      "exportedAt": "2026-10-13T16:14:06.701Z"
     },
     {
       "cardId": "herring-ball-stage1",
@@ -1694,8 +1771,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "5bde0b939aba",
-      "prerelease": true
+      "contentHash": "4da2f5b47031",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287353",
+      "exportedAt": "2026-10-13T16:14:06.703Z"
     },
     {
       "cardId": "herring-ball-stage2",
@@ -1714,8 +1793,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "5680d3f12469",
-      "prerelease": true
+      "contentHash": "4695e3add64f",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:287361",
+      "exportedAt": "2026-10-13T16:14:06.705Z"
     },
     {
       "cardId": "white-grunt",
@@ -1734,7 +1815,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "31748a5380ed",
+      "contentHash": "afe5d4a22ae6",
       "prerelease": true
     },
     {
@@ -1794,7 +1875,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "1da73668e8d5",
+      "contentHash": "ac79c52c7f93",
       "prerelease": false
     },
     {
@@ -1814,7 +1895,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "04b119c720c4",
+      "contentHash": "0d35ef91d877",
       "prerelease": false
     },
     {
@@ -1834,7 +1915,7 @@
       "width": 376,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "4f0390679a29",
+      "contentHash": "e27291caa095",
       "prerelease": false
     },
     {
@@ -1854,7 +1935,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "fde58bc6b7a8",
+      "contentHash": "4360b820d688",
       "prerelease": true,
       "exportedAt": "2026-10-03T16:20:40.350Z",
       "exportMethod": "figma-editor",
@@ -1897,7 +1978,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "0dc873161a7f",
+      "contentHash": "2c280b9159f8",
       "prerelease": false,
       "exportedAt": "2026-10-04T01:03:20.888Z",
       "exportMethod": "figma-editor"
@@ -1919,7 +2000,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "4ea618c3c1d1",
+      "contentHash": "d40954e876b3",
       "prerelease": true
     },
     {
@@ -1939,7 +2020,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "0f67c78f8b10",
+      "contentHash": "36342da9c61a",
       "prerelease": true
     },
     {
@@ -1959,7 +2040,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "26dbd5bee625",
+      "contentHash": "05095dc1b2f0",
       "prerelease": true,
       "exportedAt": "2026-10-04T01:03:20.888Z",
       "exportMethod": "figma-editor"
@@ -1981,8 +2062,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "3990777b6a99",
-      "prerelease": true
+      "contentHash": "b7697b477e40",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:11006",
+      "exportedAt": "2026-10-13T16:14:06.626Z"
     },
     {
       "cardId": "frilled-shark",
@@ -2001,10 +2084,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "e3daad5b8de9",
+      "contentHash": "0f804c829cda",
       "prerelease": true,
-      "exportedAt": "2026-10-04T01:03:20.888Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-10-13T16:14:06.628Z",
+      "exportMethod": "figma-editor",
+      "reviewedPreviewNodeId": "4091:11014"
     },
     {
       "cardId": "cookie-cutter-shark",
@@ -2023,7 +2107,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "c04a8d64b4f8",
+      "contentHash": "d0e9702a53e0",
       "prerelease": true
     },
     {
@@ -2043,8 +2127,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "f06a70d7cd57",
-      "prerelease": true
+      "contentHash": "3da8582430ca",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:11022",
+      "exportedAt": "2026-10-13T16:14:06.630Z"
     },
     {
       "cardId": "oceanic-whitetip-shark",
@@ -2063,7 +2149,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "9720d2718c70",
+      "contentHash": "bca0dcf148a5",
       "prerelease": true
     },
     {
@@ -2083,7 +2169,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "827a7cd3f6da",
+      "contentHash": "c1c53eb7da28",
       "prerelease": true
     },
     {
@@ -2103,7 +2189,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "2d8bd5ac59cc",
+      "contentHash": "fb6b338f46d2",
       "prerelease": true
     },
     {
@@ -2123,7 +2209,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "264129e44b07",
+      "contentHash": "06168ec40404",
       "prerelease": true
     },
     {
@@ -2143,7 +2229,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "3cbd646abb48",
+      "contentHash": "c0505727ba8f",
       "prerelease": true
     },
     {
@@ -2163,7 +2249,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "e92d092be780",
+      "contentHash": "8bd856a15160",
       "prerelease": true
     },
     {
@@ -2183,7 +2269,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "aca7b625845c",
+      "contentHash": "b56097db46af",
       "prerelease": true
     },
     {
@@ -2204,7 +2290,9 @@
       "height": 525,
       "sourceStatus": "figma-export",
       "prerelease": true,
-      "contentHash": "92d012747880"
+      "contentHash": "0fa36d92cd45",
+      "reviewedPreviewNodeId": "4091:11030",
+      "exportedAt": "2026-10-13T16:14:06.631Z"
     },
     {
       "cardId": "yellow-lipped-sea-krait",
@@ -2223,7 +2311,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "fe508301aea3",
+      "contentHash": "5f99c89210f8",
       "prerelease": false
     },
     {
@@ -2243,7 +2331,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "3f1b72e39da8",
+      "contentHash": "15833aeee588",
       "prerelease": false
     },
     {
@@ -2263,8 +2351,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "4231775c9241",
-      "prerelease": false
+      "contentHash": "e087988ed73e",
+      "prerelease": false,
+      "reviewedPreviewNodeId": "4093:24797",
+      "exportedAt": "2026-10-13T16:14:06.633Z"
     },
     {
       "cardId": "anemone",
@@ -2283,8 +2373,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "609f5ca170bd",
-      "prerelease": false
+      "contentHash": "70ab4ebfb581",
+      "prerelease": false,
+      "reviewedPreviewNodeId": "4091:277094",
+      "exportedAt": "2026-10-13T16:14:06.634Z"
     },
     {
       "cardId": "blue-crab",
@@ -2303,7 +2395,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "876bd19a5593",
+      "contentHash": "256d1f2e107a",
       "prerelease": false
     },
     {
@@ -2323,8 +2415,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "6629f11ba80a",
-      "prerelease": false
+      "contentHash": "20a0a104f08d",
+      "prerelease": false,
+      "reviewedPreviewNodeId": "4091:277102",
+      "exportedAt": "2026-10-13T16:14:06.636Z"
     },
     {
       "cardId": "mantis-shrimp",
@@ -2343,8 +2437,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "dfe99ce32c3b",
-      "prerelease": false
+      "contentHash": "eda01ad7e10e",
+      "prerelease": false,
+      "reviewedPreviewNodeId": "4091:277110",
+      "exportedAt": "2026-10-13T16:14:06.638Z"
     },
     {
       "cardId": "leather-starfish",
@@ -2363,11 +2459,12 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "0a39e588bec8",
+      "contentHash": "da0e4fcd7df6",
       "prerelease": true,
-      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportedAt": "2026-10-13T16:14:06.639Z",
       "exportMethod": "figma-editor",
-      "prereleaseSource": "figma-label"
+      "prereleaseSource": "figma-label",
+      "reviewedPreviewNodeId": "4091:277118"
     },
     {
       "cardId": "cleaner-shrimp",
@@ -2386,8 +2483,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "9ea69a4bb7f6",
-      "prerelease": false
+      "contentHash": "52fa84dba287",
+      "prerelease": false,
+      "reviewedPreviewNodeId": "4091:277126",
+      "exportedAt": "2026-10-13T16:14:06.641Z"
     },
     {
       "cardId": "crown-of-thorns",
@@ -2406,7 +2505,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "aa091b9b1a92",
+      "contentHash": "4d7c75733c35",
       "prerelease": false
     },
     {
@@ -2426,7 +2525,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "9bb335049d1f",
+      "contentHash": "6970077f5c06",
       "prerelease": false
     },
     {
@@ -2446,15 +2545,16 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "670c1848fa9b",
+      "contentHash": "0836ade82fff",
       "prerelease": true,
-      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "exportedAt": "2026-10-13T16:14:06.642Z",
       "exportMethod": "figma-editor",
-      "prereleaseSource": "figma-label"
+      "prereleaseSource": "figma-label",
+      "reviewedPreviewNodeId": "4091:277134"
     },
     {
       "cardId": "octopus",
-      "name": "Octopus",
+      "name": "Day Octopus",
       "src": "/images/cards/invertebrates/Reef/octopus.png",
       "category": "invertebrate",
       "zone": "reef",
@@ -2463,14 +2563,16 @@
       "sourcePageId": "92:340",
       "sourcePage": "Invertebrates",
       "nodeId": "746:146691",
-      "sourceName": "Octopus",
+      "sourceName": "Day Octopus",
       "sourceWidth": 750,
       "sourceHeight": 1050,
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "6b31d14dfd31",
-      "prerelease": false
+      "contentHash": "e6d951fe1a0a",
+      "prerelease": false,
+      "exportedAt": "2026-11-07T20:11:59.880Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "oysters",
@@ -2489,11 +2591,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "253d04373ebc",
-      "prerelease": true,
-      "exportedAt": "2026-10-03T16:20:40.350Z",
-      "exportMethod": "figma-editor",
-      "prereleaseSource": "figma-label"
+      "contentHash": "60c860fabe59",
+      "prerelease": false,
+      "exportedAt": "2026-11-07T20:11:59.880Z",
+      "exportMethod": "figma-mcp"
     },
     {
       "cardId": "giant-clam",
@@ -2512,7 +2613,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "dba6e3c07cd7",
+      "contentHash": "247f51886212",
       "prerelease": false
     },
     {
@@ -2532,8 +2633,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "a6433bca2470",
-      "prerelease": true
+      "contentHash": "1223f6fbf53d",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:277158",
+      "exportedAt": "2026-10-13T16:14:06.647Z"
     },
     {
       "cardId": "brittlestar",
@@ -2552,8 +2655,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "abc3f1b5ce7d",
-      "prerelease": true
+      "contentHash": "c8f6f974744f",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:277166",
+      "exportedAt": "2026-10-13T16:14:06.649Z"
     },
     {
       "cardId": "vampire-squid",
@@ -2572,10 +2677,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "edcebfb44e77",
+      "contentHash": "a034e683edb0",
       "prerelease": true,
-      "exportedAt": "2026-10-04T01:03:20.888Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-10-13T16:14:06.650Z",
+      "exportMethod": "figma-editor",
+      "reviewedPreviewNodeId": "4091:277174"
     },
     {
       "cardId": "giant-isopod",
@@ -2594,10 +2700,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "a96d391d37d7",
+      "contentHash": "4f7f15f94996",
       "prerelease": true,
-      "exportedAt": "2026-10-04T01:03:20.888Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-10-13T16:14:06.652Z",
+      "exportMethod": "figma-editor",
+      "reviewedPreviewNodeId": "4091:277182"
     },
     {
       "cardId": "giant-tube-worm",
@@ -2616,8 +2723,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "6f23bedea86f",
-      "prerelease": true
+      "contentHash": "0a9f2e93f0ea",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:277190",
+      "exportedAt": "2026-10-13T16:14:06.654Z"
     },
     {
       "cardId": "peacock-squid",
@@ -2636,10 +2745,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "94474b97480a",
+      "contentHash": "60542b30196f",
       "prerelease": true,
-      "exportedAt": "2026-10-04T01:03:20.888Z",
-      "exportMethod": "figma-editor"
+      "exportedAt": "2026-10-13T16:14:06.656Z",
+      "exportMethod": "figma-editor",
+      "reviewedPreviewNodeId": "4091:277198"
     },
     {
       "cardId": "deep-sea-jelly",
@@ -2658,7 +2768,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "a8ea006f60ac",
+      "contentHash": "f0c00342cd7b",
       "prerelease": true
     },
     {
@@ -2678,7 +2788,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "691cd7cb32ba",
+      "contentHash": "33581ed1b2f5",
       "prerelease": true
     },
     {
@@ -2698,7 +2808,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "b3b794a0c288",
+      "contentHash": "beee782fb91e",
       "prerelease": true
     },
     {
@@ -2718,8 +2828,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "e7893905b5bd",
-      "prerelease": true
+      "contentHash": "eb2030acf806",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:277206",
+      "exportedAt": "2026-10-13T16:14:06.658Z"
     },
     {
       "cardId": "blue-sea-dragon",
@@ -2738,7 +2850,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "ddbf37b2f4b3",
+      "contentHash": "f25b764e271c",
       "prerelease": true
     },
     {
@@ -2758,8 +2870,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "627c99866a35",
-      "prerelease": true
+      "contentHash": "3733ffaf5615",
+      "prerelease": true,
+      "reviewedPreviewNodeId": "4091:277214",
+      "exportedAt": "2026-10-13T16:14:06.659Z"
     },
     {
       "cardId": "box-jellyfish",
@@ -2778,8 +2892,10 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "dfdf53c57042",
-      "prerelease": false
+      "contentHash": "d36728fd0611",
+      "prerelease": false,
+      "reviewedPreviewNodeId": "4091:277222",
+      "exportedAt": "2026-10-13T16:14:06.661Z"
     },
     {
       "cardId": "brain-coral-stage-2",
@@ -3707,7 +3823,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "ae8dca9d4b0c",
+      "contentHash": "f10943b537b2",
       "prerelease": false
     },
     {
@@ -3727,7 +3843,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "e34891a2903d",
+      "contentHash": "c3cb524ebb45",
       "prerelease": true,
       "exportedAt": "2026-10-03T16:20:40.350Z",
       "exportMethod": "figma-editor",
@@ -3750,7 +3866,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "02e82ccf9e00",
+      "contentHash": "45c0c8f13e7e",
       "prerelease": true,
       "exportedAt": "2026-10-03T16:20:40.350Z",
       "exportMethod": "figma-editor",
@@ -3773,7 +3889,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "7f2001c20e06",
+      "contentHash": "b520a03ab4dc",
       "prerelease": false
     },
     {
@@ -3793,7 +3909,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "19d54c923577",
+      "contentHash": "bce3794077f1",
       "prerelease": true,
       "exportedAt": "2026-10-03T16:20:40.350Z",
       "exportMethod": "figma-editor",
@@ -3816,7 +3932,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "6edf196453db",
+      "contentHash": "c6da50fdcb9d",
       "prerelease": true,
       "exportedAt": "2026-10-03T16:20:40.350Z",
       "exportMethod": "figma-editor",
@@ -3839,7 +3955,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "fe7bde758126",
+      "contentHash": "cd3e2a659be5",
       "prerelease": true,
       "exportedAt": "2026-10-03T16:20:40.350Z",
       "exportMethod": "figma-editor",
@@ -3862,7 +3978,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "e6a64be8c5bb",
+      "contentHash": "d5eaf343f9b5",
       "prerelease": false
     },
     {
@@ -3882,7 +3998,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "99564d2dc2cc",
+      "contentHash": "3bcb5c7aaf59",
       "prerelease": true,
       "exportedAt": "2026-10-03T16:20:40.350Z",
       "exportMethod": "figma-editor",
@@ -3905,7 +4021,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "861968da49a9",
+      "contentHash": "e33aa5079563",
       "prerelease": true,
       "exportedAt": "2026-10-03T16:20:40.350Z",
       "exportMethod": "figma-editor",
@@ -3928,7 +4044,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "ae9c7a8a4ed4",
+      "contentHash": "ebfe3b86e7c3",
       "prerelease": false
     },
     {
@@ -3948,7 +4064,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "458f65321624",
+      "contentHash": "b277101ed049",
       "prerelease": false
     },
     {
@@ -3968,7 +4084,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "09df7857fe59",
+      "contentHash": "a8323967b561",
       "prerelease": false
     },
     {
@@ -3988,7 +4104,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "ba2cd4b1a5b5",
+      "contentHash": "1fcee0b47a39",
       "prerelease": false
     },
     {
@@ -4008,7 +4124,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "299b6785f249",
+      "contentHash": "054dbb84bff4",
       "prerelease": true,
       "exportedAt": "2026-10-03T16:20:40.350Z",
       "exportMethod": "figma-editor",
@@ -4031,7 +4147,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "396c80532b69",
+      "contentHash": "640d5361ce9c",
       "prerelease": false
     },
     {
@@ -4051,7 +4167,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "dbd32c29fa1c",
+      "contentHash": "aeadb61bc710",
       "prerelease": false
     },
     {
@@ -4071,7 +4187,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "063adc2092e7",
+      "contentHash": "e1ca3ba41d14",
       "prerelease": true,
       "exportedAt": "2026-10-03T16:20:40.350Z",
       "exportMethod": "figma-editor",
@@ -4094,7 +4210,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "715752e267bb",
+      "contentHash": "5b28b653a247",
       "prerelease": false
     },
     {
@@ -4114,7 +4230,7 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "020666c6adb4",
+      "contentHash": "f9c7db31481d",
       "prerelease": false
     },
     {
@@ -4126,9 +4242,15 @@
       "galleryOnly": false,
       "width": 375,
       "height": 525,
-      "sourceStatus": "existing-preview",
-      "contentHash": "09e115c69cdf",
-      "prerelease": false
+      "sourceStatus": "exported-legacy-fact-review",
+      "contentHash": "8e168a4c073b",
+      "prerelease": false,
+      "nodeId": "4011:79142",
+      "sourcePageId": "4025:79142",
+      "sourcePage": "Gallery — reviewed previews",
+      "sourceName": "Southern Flounder — legacy gallery",
+      "sourceWidth": 750,
+      "sourceHeight": 1050
     },
     {
       "cardId": "ocean-jake",

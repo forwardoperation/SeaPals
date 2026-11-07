@@ -1,0 +1,177 @@
+[
+  {
+    "cardId": "humpback-whale",
+    "previousHash": "2a0c6318cc5e",
+    "contentHash": "ccc1cd886f37",
+    "changedPercent": 87.71,
+    "artChangedPercent": 99.12
+  },
+  {
+    "cardId": "oceanic-manta-ray",
+    "previousHash": "278e30c5ce40",
+    "contentHash": "95ddcbd59a1a",
+    "changedPercent": 23.9,
+    "artChangedPercent": 29.63
+  },
+  {
+    "cardId": "ocean-sunfish",
+    "previousHash": "4f99daa90334",
+    "contentHash": "853f05739229",
+    "changedPercent": 86.37,
+    "artChangedPercent": 95.99
+  },
+  {
+    "cardId": "whale-shark",
+    "previousHash": "b595f57d06a6",
+    "contentHash": "a14c2da0e2c1",
+    "changedPercent": 20.25,
+    "artChangedPercent": 18.88
+  },
+  {
+    "cardId": "blue-whale",
+    "previousHash": "15503cdb4e1b",
+    "contentHash": "39a0a4916b6e",
+    "changedPercent": 28.91,
+    "artChangedPercent": 39.97
+  },
+  {
+    "cardId": "basking-shark",
+    "previousHash": "7b0aee35da30",
+    "contentHash": "9d605e874e14",
+    "changedPercent": 85.44,
+    "artChangedPercent": 94.37
+  },
+  {
+    "cardId": "megamouth-shark",
+    "previousHash": "de9013479c6f",
+    "contentHash": "ff388002b5e1",
+    "changedPercent": 1.52,
+    "artChangedPercent": 0.27
+  },
+  {
+    "cardId": "manta-ray",
+    "previousHash": "d3a305308988",
+    "contentHash": "cd03d32f9774",
+    "changedPercent": 41.19,
+    "artChangedPercent": 25
+  },
+  {
+    "cardId": "hammerhead",
+    "previousHash": "41697bf09cbd",
+    "contentHash": "7d1931fcb455",
+    "changedPercent": 77.8,
+    "artChangedPercent": 97.05
+  },
+  {
+    "cardId": "great-white",
+    "previousHash": "838771dc9ca4",
+    "contentHash": "c46f3afb045c",
+    "changedPercent": 45.62,
+    "artChangedPercent": 52.33
+  },
+  {
+    "cardId": "bull-shark",
+    "previousHash": "b2538a558e6b",
+    "contentHash": "c81739b746ef",
+    "changedPercent": 77.15,
+    "artChangedPercent": 95.34
+  },
+  {
+    "cardId": "tiger-shark",
+    "previousHash": "bd741fb59263",
+    "contentHash": "cc423fbe3c13",
+    "changedPercent": 77.07,
+    "artChangedPercent": 96.06
+  },
+  {
+    "cardId": "killer-whale-oceanic",
+    "previousHash": "429ec3870f40",
+    "contentHash": "4145cb9fd10f",
+    "changedPercent": 51.72,
+    "artChangedPercent": 26.08
+  },
+  {
+    "cardId": "pilot-whale-oceanic",
+    "previousHash": "b02a72ba1efc",
+    "contentHash": "ac3035ae9e51",
+    "changedPercent": 49.28,
+    "artChangedPercent": 22.03
+  },
+  {
+    "cardId": "bottlenose-dolphin",
+    "previousHash": "0ce884deea00",
+    "contentHash": "73a20abca914",
+    "changedPercent": 48.56,
+    "artChangedPercent": 16.57
+  },
+  {
+    "cardId": "giant-squid",
+    "previousHash": "135ecbd196a4",
+    "contentHash": "226100cbc5bb",
+    "changedPercent": 46.03,
+    "artChangedPercent": 13.76
+  },
+  {
+    "cardId": "colossal-squid",
+    "previousHash": "f08841ef8870",
+    "contentHash": "95dfecd8625d",
+    "changedPercent": 30.84,
+    "artChangedPercent": 26.99
+  },
+  {
+    "cardId": "greenland-shark",
+    "previousHash": "0c4349be142a",
+    "contentHash": "bfa46a853b33",
+    "changedPercent": 47.6,
+    "artChangedPercent": 13.77
+  },
+  {
+    "cardId": "giant-phantom-jelly",
+    "previousHash": "f04cdce0d2a3",
+    "contentHash": "6a58a7955440",
+    "changedPercent": 46.94,
+    "artChangedPercent": 13.76
+  },
+  {
+    "cardId": "sperm-whale",
+    "previousHash": "64367b27a25a",
+    "contentHash": "3807923734b5",
+    "changedPercent": 46.36,
+    "artChangedPercent": 13.83
+  },
+  {
+    "cardId": "shortfin-mako-shark",
+    "previousHash": "d498913423f9",
+    "contentHash": "b146ce968797",
+    "changedPercent": 46.24,
+    "artChangedPercent": 14.07
+  },
+  {
+    "cardId": "black-marlin",
+    "previousHash": "c194e96783ba",
+    "contentHash": "eb99a01fa567",
+    "changedPercent": 47.38,
+    "artChangedPercent": 14.51
+  },
+  {
+    "cardId": "swordfish",
+    "previousHash": "01980f11319b",
+    "contentHash": "bd67c2542f50",
+    "changedPercent": 46.47,
+    "artChangedPercent": 13.79
+  },
+  {
+    "cardId": "bluefin-tuna",
+    "previousHash": "93ebae711818",
+    "contentHash": "825eb696ea03",
+    "changedPercent": 46.48,
+    "artChangedPercent": 13.89
+  },
+  {
+    "cardId": "octopus",
+    "previousHash": "3bf58530cef8",
+    "contentHash": "585b4c72f9ea",
+    "changedPercent": 99.5,
+    "artChangedPercent": 99.49
+  }
+]

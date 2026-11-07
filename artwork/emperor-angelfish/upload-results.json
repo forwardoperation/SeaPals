@@ -1,0 +1,22 @@
+[
+  {
+    "filename": "emperor-angelfish-master.svg",
+    "result": {
+      "success": true,
+      "imageHash": "f9bd1ede2b36a4e195c8aa94b4608e22800bafc2",
+      "sizeBytes": 805605,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3688:272792"
+    }
+  },
+  {
+    "filename": "outline-study.svg",
+    "result": {
+      "success": true,
+      "imageHash": "e96259b320d976e7a221fee31d4e1be0f7f5ff9b",
+      "sizeBytes": 11451,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3688:7726"
+    }
+  }
+]

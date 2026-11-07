@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//NLM//DTD Journal Publishing DTD v3.0 20080202//EN" "http://dtd.nlm.nih.gov/publishing/3.0/journalpublishing3.dtd">
+<article article-type="research-article" dtd-version="3.0" xml:lang="en" xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink">
+<front>
+<journal-meta>
+<journal-id journal-id-type="nlm-ta">PLoS ONE</journal-id>
+<journal-id journal-id-type="publisher-id">plos</journal-id>
+<journal-id journal-id-type="pmc">plosone</journal-id>
+<journal-title-group>
+<journal-title>PLOS ONE</journal-title>
+</journal-title-group>
+<issn pub-type="epub">1932-6203</issn>
+<publisher>
+<publisher-name>Public Library of Science</publisher-name>
+<publisher-loc>San Francisco, CA USA</publisher-loc>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="doi">10.1371/journal.pone.0145134</article-id>
+<article-id pub-id-type="publisher-id">PONE-D-15-32846</article-id>
+<article-categories>
+<subj-group subj-group-type="heading">
+<subject>Research Article</subject>
+</subj-group>
+</article-categories>
+<title-group>
+<article-title>Choose Your Weaponry: Selective Storage of a Single Toxic Compound, Latrunculin A, by Closely Related Nudibranch Molluscs</article-title>
+<alt-title alt-title-type="running-head">Selective Sequestration of a Toxic Compound in Nudibranch Molluscs</alt-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author" corresp="yes" xlink:type="simple">
+<name name-style="western">
+<surname>Cheney</surname>
+<given-names>Karen L.</given-names>
+</name>
+<xref ref-type="aff" rid="aff001"><sup>1</sup></xref>
+<xref ref-type="corresp" rid="cor001">*</xref>
+</contrib>
+<contrib contrib-type="author" xlink:type="simple">
+<name name-style="western">
+<surname>White</surname>
+<given-names>Andrew</given-names>
+</name>
+<xref ref-type="aff" rid="aff001"><sup>1</sup></xref>
+<xref ref-type="aff" rid="aff002"><sup>2</sup></xref>
+</contrib>
+<contrib contrib-type="author" xlink:type="simple">
+<name name-style="western">
+<surname>Mudianta</surname>
+<given-names>I. Wayan</given-names>
+</name>
+<xref ref-type="aff" rid="aff002"><sup>2</sup></xref>
+<xref ref-type="fn" rid="currentaff001"><sup>¤</sup></xref>
+</contrib>
+<contrib contrib-type="author" xlink:type="simple">
+<name name-style="western">
+<surname>Winters</surname>
+<given-names>Anne E.</given-names>
+</name>
+<xref ref-type="aff" rid="aff001"><sup>1</sup></xref>
+</contrib>
+<contrib contrib-type="author" xlink:type="simple">
+<name name-style="western">
+<surname>Quezada</surname>
+<given-names>Michelle</given-names>
+</name>
+<xref ref-type="aff" rid="aff003"><sup>3</sup></xref>
+</contrib>
+<contrib contrib-type="author" xlink:type="simple">
+<name name-style="western">
+<surname>Capon</surname>
+<given-names>Robert J.</given-names>
+</name>
+<xref ref-type="aff" rid="aff003"><sup>3</sup></xref>
+</contrib>
+<contrib contrib-type="author" xlink:type="simple">
+<name name-style="western">
+<surname>Mollo</surname>
+<given-names>Ernesto</given-names>
+</name>
+<xref ref-type="aff" rid="aff004"><sup>4</sup></xref>
+</contrib>
+<contrib contrib-type="author" xlink:type="simple">
+<name name-style="western">
+<surname>Garson</surname>
+<given-names>Mary J.</given-names>
+</name>
+<xref ref-type="aff" rid="aff002"><sup>2</sup></xref>
+</contrib>
+</contrib-group>
+<aff id="aff001"><label>1</label> <addr-line>School of Biological Sciences, The University of Queensland, Brisbane QLD 4072, Australia</addr-line></aff>
+<aff id="aff002"><label>2</label> <addr-line>School of Chemistry and Molecular Biosciences, The University of Queensland, Brisbane QLD 4072, Australia</addr-line></aff>
+<aff id="aff003"><label>3</label> <addr-line>Institute for Molecular Bioscience, The University of Queensland, Brisbane QLD 4072, Australia</addr-line></aff>
+<aff id="aff004"><label>4</label> <addr-line>Istituto di Chimica Biomolecolare, Consiglio Nazionale delle Ricerche, Pozzuoli, Italy</addr-line></aff>
+<contrib-group>
+<contrib contrib-type="editor" xlink:type="simple">
+<name name-style="western">
+<surname>Neilan</surname>
+<given-names>Brett</given-names>
+</name>
+<role>Editor</role>
+<xref ref-type="aff" rid="edit1"/>
+</contrib>
+</contrib-group>
+<aff id="edit1"><addr-line>University of New South Wales, AUSTRALIA</addr-line></aff>
+<author-notes>
+<fn fn-type="conflict" id="coi001">
+<p>The authors have declared that no competing interests exist.</p>
+</fn>
+<fn fn-type="con" id="contrib001">
+<p>Conceived and designed the experiments: KLC IWM EM MJG. Performed the experiments: KLC AW IWM EM AEW MQ. Analyzed the data: KLC AW IWM MQ EM MJG. Contributed reagents/materials/analysis tools: KLC RJC MJG. Wrote the paper: KLC AW RJC EM MJG. Photographic contribution: AEW KLC.</p>
+</fn>
+<fn fn-type="current-aff" id="currentaff001">
+<label>¤</label><p>Current address: Ganesha University of Education, Jl. Udayana No. 11 Singaraja 81116, Bali, Indonesia</p>
+</fn>
+<corresp id="cor001">* E-mail: <email xlink:type="simple">k.cheney@uq.edu.au</email></corresp>
+</author-notes>
+<pub-date pub-type="epub">
+<day>20</day>
+<month>1</month>
+<year>2016</year>
+</pub-date>
+<pub-date pub-type="collection">
+<year>2016</year>
+</pub-date>
+<volume>11</volume>
+<issue>1</issue>
+<elocation-id>e0145134</elocation-id>
+<history>
+<date date-type="received">
+<day>27</day>
+<month>7</month>
+<year>2015</year>
+</date>
+<date date-type="accepted">
+<day>26</day>
+<month>11</month>
+<year>2015</year>
+</date>
+</history>
+<permissions>
+<copyright-year>2016</copyright-year>
+<copyright-holder>Cheney et al</copyright-holder>
+<license xlink:href="http://creativecommons.org/licenses/by/4.0/" xlink:type="simple">
+<license-p>This is an open access article distributed under the terms of the <ext-link ext-link-type="uri" xlink:href="http://creativecommons.org/licenses/by/4.0/" xlink:type="simple">Creative Commons Attribution License</ext-link>, which permits unrestricted use, distribution, and reproduction in any medium, provided the original author and source are credited</license-p>
+</license>
+</permissions>
+<self-uri content-type="pdf" xlink:href="info:doi/10.1371/journal.pone.0145134"/>
+<abstract>
+<p>Natural products play an invaluable role as a starting point in the drug discovery process, and plants and animals use many interesting biologically active natural products as a chemical defense mechanism against predators. Among marine organisms, many nudibranch gastropods are known to derive defensive metabolites from the sponges they eat. Here we investigated the putative sequestration of the toxic compound latrunculin A—a 16-membered macrolide that prevents actin polymerization within cellular processes—which has been identified from sponge sources, by five closely related nudibranch molluscs of the genus <italic>Chromodoris</italic>. Only latrunculin A was present in the rim of the mantle of these species, where storage reservoirs containing secondary metabolites are located, whilst a variety of secondary metabolites were found in their viscera. The species studied thus selectively accumulate latrunculin A in the part of the mantle that is more exposed to potential predators. This study also demonstrates that latrunculin-containing sponges are not their sole food source. Latrunculin A was found to be several times more potent than other compounds present in these species of nudibranchs when tested by <italic>in vitro</italic> and <italic>in vivo</italic> toxicity assays. Anti-feedant assays also indicated that latrunculin A was unpalatable to rock pool shrimps, in a dose-dependent manner. These findings led us to propose that this group of nudibranchs has evolved means both to protect themselves from the toxicity of latrunculin A, and to accumulate this compound in the mantle rim for defensive purposes. The precise mechanism by which the nudibranchs sequester such a potent compound from sponges without disrupting their own key physiological processes is unclear, but this work paves the way for future studies in this direction. Finally, the possible occurrence of both visual and chemosensory Müllerian mimicry in the studied species is discussed.</p>
+</abstract>
+<funding-group>
+<funding-statement>The authors thank the Australian and Pacific Science Foundation (APSF); the Australia Research Council (ARC); and The University of Queensland (Promoting Women Fellowship to K.L.C., a UQ International Postgraduate Award to I.W.M., and support from the Institute for Molecular Bioscience to R.J.C.). A.E.W. was supported by a Postgraduate Endeavour Award from the Australian Government. M.Q. acknowledges the Mexican Council for Science and Technology (CONACYT).</funding-statement>
+</funding-group>
+<counts>
+<fig-count count="5"/>
+<table-count count="2"/>
+<page-count count="16"/>
+</counts>
+<custom-meta-group>
+<custom-meta id="data-availability">
+<meta-name>Data Availability</meta-name>
+<meta-value>All relevant data are within the paper and its Supporting Information files.</meta-value>
+</custom-meta>
+</custom-meta-group>
+</article-meta>
+</front>
+<body>
+<sec id="sec001" sec-type="intro">
+<title>Introduction</title>
+<p>Many natural products used in drug discovery are molecules that are used to protect plants and animals from consumers, and investigations into their chemical structure and bioactivity are numerous [<xref ref-type="bibr" rid="pone.0145134.ref001">1</xref>, <xref ref-type="bibr" rid="pone.0145134.ref002">2</xref>]. Marine organisms, in particular molluscs, are an important source of diverse natural products, and the study of their chemical properties has led to the discovery of many biologically potent chemicals with analgesic, anti-inflammatory, antiviral and anticancer activity. For example, the antitumour depsipeptide kahalalide F was isolated from the opisthobranch mollusc <italic>Elysia rufescens</italic>, and is used by both the mollusc and its dietary alga <italic>Bryopsis</italic> spp. (the true source of kahalalide F) as a chemical defense from predation [<xref ref-type="bibr" rid="pone.0145134.ref003">3</xref>]. Kahalalide F induces cell death via oncosis, and in phase I and II clinical trials has been shown to benefit patients with advanced cancerous tumors [<xref ref-type="bibr" rid="pone.0145134.ref004">4</xref>, <xref ref-type="bibr" rid="pone.0145134.ref005">5</xref>].</p>
+<p>Bioactive compounds also occur in many species of nudibranch mollusc (Mollusca: Gastropoda: Nudibranchia). Among these compounds, latrunculin A, a 16-membered macrolide with an attached 2-thiazolidinone unit, which was originally isolated from the Red Sea sponge <italic>Negombata magnifica</italic> (= <italic>Latrunculia magnifica</italic>) [<xref ref-type="bibr" rid="pone.0145134.ref006">6</xref>], and other Pacific sponges: <italic>Cacospongia mycofijiensis</italic> (<italic>= Spongia mycofijiensis</italic>, <italic>= Petrosaspongia mycofijiensis</italic> [<xref ref-type="bibr" rid="pone.0145134.ref007">7</xref>–<xref ref-type="bibr" rid="pone.0145134.ref009">9</xref>]), and <italic>Hyattela</italic> sp. [<xref ref-type="bibr" rid="pone.0145134.ref010">10</xref>], has also been found in a group of sponge-feeding nudibranchs from the family Chromodorididae, including: <italic>Chromodoris elisabethina</italic> [<xref ref-type="bibr" rid="pone.0145134.ref011">11</xref>], <italic>Chromodoris lochi</italic> [<xref ref-type="bibr" rid="pone.0145134.ref007">7</xref>, <xref ref-type="bibr" rid="pone.0145134.ref010">10</xref>], <italic>C</italic>. <italic>hamiltoni</italic> [<xref ref-type="bibr" rid="pone.0145134.ref012">12</xref>], and <italic>C</italic>. <italic>quadricolor</italic> [<xref ref-type="bibr" rid="pone.0145134.ref013">13</xref>]. These nudibranchs have been observed apparently feeding on these sponges [<xref ref-type="bibr" rid="pone.0145134.ref014">14</xref>] and acanthorhab sponge spicules, typically found in latrunculid sponges, were found in the gut contents of <italic>C</italic>. <italic>hamiltoni</italic> [<xref ref-type="bibr" rid="pone.0145134.ref015">15</xref>], suggesting that the uptake of latrunculin A is derived from their diet. Latrunculin A exhibits interesting and potent biological properties, e.g. [<xref ref-type="bibr" rid="pone.0145134.ref016">16</xref>, <xref ref-type="bibr" rid="pone.0145134.ref017">17</xref>]. In particular, this compound inhibits the polymerization of actin monomers by binding in a 1:1 complex near the nucleotide-binding cleft [<xref ref-type="bibr" rid="pone.0145134.ref018">18</xref>], but it has also been shown to be highly ichthyotoxic [<xref ref-type="bibr" rid="pone.0145134.ref011">11</xref>, <xref ref-type="bibr" rid="pone.0145134.ref016">16</xref>], antifungal [<xref ref-type="bibr" rid="pone.0145134.ref011">11</xref>] and cytotoxic against cancer cell lines [<xref ref-type="bibr" rid="pone.0145134.ref017">17</xref>]. A previous study demonstrated that, in addition to latrunculin A, laulimides (laulimalide and isolaulimalide) were also found in <italic>Chromodoris lochi</italic> [<xref ref-type="bibr" rid="pone.0145134.ref010">10</xref>], while puupehenone was been isolated from <italic>C</italic>. <italic>elisabethina</italic> [<xref ref-type="bibr" rid="pone.0145134.ref019">19</xref>]. Therefore, it would appear that the main chemical composition of the different species can differ, except for the co-occurrence of latrunculin A. This compound may play a critical role in the nudibranchs’ chemical defence mechanism and may be actively sequestered from dietary sponges and stored, while other compounds may be eliminated as part of the digestive process. However, little is known about the distribution of both latrunculin A and the other mentioned compounds in the different body parts of the nudibranchs.</p>
+<p>Defensive compounds are often localized in peripheral body tissue of plants and animals, or at sites that are most frequently attacked by predators [<xref ref-type="bibr" rid="pone.0145134.ref020">20</xref>, <xref ref-type="bibr" rid="pone.0145134.ref021">21</xref>]. At these locations, animals may sequester a suite of compounds that enhance the animal’s defense mechanism, whilst other species selectively uptake one or two compounds, whilst eliminating the others through the gut [<xref ref-type="bibr" rid="pone.0145134.ref020">20</xref>]. Selective sequestration has been studied in detail in insects and amphibians, e.g. [<xref ref-type="bibr" rid="pone.0145134.ref020">20</xref>, <xref ref-type="bibr" rid="pone.0145134.ref022">22</xref>, <xref ref-type="bibr" rid="pone.0145134.ref023">23</xref>]. Some nudibranch species have been shown to selectively bioaccumulate secondary metabolites from prey species [<xref ref-type="bibr" rid="pone.0145134.ref024">24</xref>, <xref ref-type="bibr" rid="pone.0145134.ref025">25</xref>], and such storage of sequestered toxic metabolites for long periods is thought to be crucial to enable nudibranchs to compensate for prolonged separation from food [<xref ref-type="bibr" rid="pone.0145134.ref026">26</xref>]. Among the species that feed upon cnidarians, <italic>Phyllodesmium guamensis</italic> selectively sequesters the soft coral-derived cembranoid diterpene 11beta-acetoxypukalide within various tissue parts of its body, but actively excludes the related soft coral diterpene pukalide [<xref ref-type="bibr" rid="pone.0145134.ref027">27</xref>]. This may act as an alternative defensive strategy, based on the sequestration of bioactive chemicals from the prey rather than an accumulation of ‘cleptocnidae’ (cnidarians nematocysts), which is typical of aeolid nudibranchs [<xref ref-type="bibr" rid="pone.0145134.ref028">28</xref>, <xref ref-type="bibr" rid="pone.0145134.ref029">29</xref>]. It has been also proved that opisthobranchs belonging to the family Chromodorididae are able to transfer selected metabolites from the food to their mantle tissues, storing them in defensive mantle dermal formations (MDFs) [<xref ref-type="bibr" rid="pone.0145134.ref030">30</xref>]. Other studies provided further evidence that sponge metabolites are selectively accumulated in the MDFs of chromodorid nudibranchs [<xref ref-type="bibr" rid="pone.0145134.ref021">21</xref>, <xref ref-type="bibr" rid="pone.0145134.ref031">31</xref>], while other compounds, including lipids and steroids, were not detected in the MDFs, though they were found in different body parts of nudibranchs. Even in the absence of typical MDFs, defensive metabolites can be found accumulated in the exposed mantle rim of nudibranchs [<xref ref-type="bibr" rid="pone.0145134.ref032">32</xref>].</p>
+<p>In this study, we investigated the anatomical distribution of latrunculin A in a range of closely-related [<xref ref-type="bibr" rid="pone.0145134.ref033">33</xref>] nudibranch species: <italic>Chromodoris elisabethina</italic>, <italic>C</italic>. <italic>lochi</italic>, <italic>C</italic>. <italic>kuiteri</italic>, <italic>C</italic>. <italic>annae</italic>, <italic>C</italic>. <italic>magnifica</italic>. Given the diffused and ramified structure of the MDFs variously localized along the mantle edge of the studied species, the whole mantle rim was dissected, and compared for its chemical composition with the rest of the mantle and the viscera (internal organs). We also conducted comparative toxicity, cytotoxicity, and feeding-deterrency assays with purified nudibranch compounds to examine the ecological significance of compounds found in each species.</p>
+</sec>
+<sec id="sec002" sec-type="materials|methods">
+<title>Materials and Methods</title>
+<sec id="sec003">
+<title>Animal collection</title>
+<p>The following specimens were collected on SCUBA from reefs in Queensland (QLD), Australia: <italic>Chromodoris elisabethina</italic> (33 individuals, Mooloolaba, SE Queensland: 26°40’S; 153°07’E); <italic>Chromodoris magnifica</italic> (1 individual, Great Barrier Reef, exact location unknown, supplied by Cairns Marine Ltd, Stratford, QLD); <italic>Chromodoris lochi</italic> (2 individuals, Lizard Island, Great Barrier Reef: 14°40’S; 145°28’E; 1 individual from North Stradbroke Island, SE Queensland: 27°35’S; 153°27’E; 2 individuals from Mooloolaba); <italic>Chromodoris kuiteri</italic> (6 individuals, Mooloolaba); <italic>Chromodoris annae</italic> (3 individuals, Lizard Island) (<xref ref-type="fig" rid="pone.0145134.g001">Fig 1</xref>). Animals were collected under the following permits: Queensland General Fisheries Permit #161624; Great Barrier Reef Marine Park Authority G12/35688.1; Moreton Bay Marine Park Permit QS2012/MAN183. With the exception of <italic>C</italic>. <italic>magnifica</italic>, individuals were kept in aquaria for 24–48 hours after collection and then frozen and stored at −20°C. <italic>C</italic>. <italic>magnifica</italic> was kept for in aquaria for approx. 2 weeks.</p>
+<fig id="pone.0145134.g001" position="float">
+<object-id pub-id-type="doi">10.1371/journal.pone.0145134.g001</object-id>
+<label>Fig 1</label>
+<caption>
+<title>Photographs of study species displaying conspicuous colour patterns.</title>
+</caption>
+<graphic mimetype="image" position="float" xlink:href="info:doi/10.1371/journal.pone.0145134.g001" xlink:type="simple"/>
+</fig>
+</sec>
+<sec id="sec004">
+<title>Dissection and extraction</title>
+<p>Each nudibranch was carefully dissected into 2 or 3 parts: 1) viscera (internal organs); 2) mantle tissue; and in some individuals (<italic>C</italic>. <italic>elisabethina</italic>, <italic>C</italic>. <italic>kuiteri</italic> and <italic>C</italic>. <italic>magnifica</italic>), 3) the mantle rim, which incorporates MDFs [<xref ref-type="bibr" rid="pone.0145134.ref034">34</xref>], and is depicted by the yellow or orange border of nudibranchs in <xref ref-type="fig" rid="pone.0145134.g001">Fig 1a–1d</xref>, and the pink border of <italic>Chromodoris lochi</italic> in <xref ref-type="fig" rid="pone.0145134.g001">Fig 1e</xref>. The volume of each section was measured by the displacement of water in a graduated measuring cylinder or micro syringe, depending on size. The dissected tissues were separately chopped, extracted with acetone (3 ×10 mL) and sonicated (2 min). The extract was concentrated using a rotary evaporator before being partitioned between water (3 mL) and diethyl ether (4 × 4 mL) removing the organic layer. The extract was dried with anhydrous sodium sulfate, before concentration under nitrogen. Selected tissue extracts were subject to an anatomical quantification of compounds using methods adapted from [<xref ref-type="bibr" rid="pone.0145134.ref021">21</xref>]. The extracts were dissolved in deuterated chloroform for <sup>1</sup>H NMR analysis on a Bruker AV-500 spectrometer. A capillary tube containing a known amount of 1,4-dimethoxybenzene was inserted into the NMR tubes as an internal standard. Integration of the signals at δ<sub>H</sub> 6.84 resulting from the four aromatic protons of 1,4-dimethoxybenzene was used for quantification [<xref ref-type="bibr" rid="pone.0145134.ref021">21</xref>].</p>
+</sec>
+<sec id="sec005">
+<title>Chemical identification and purification</title>
+<p>Latrunculin A (<bold>1</bold>), puupehenone (<bold>2</bold>), pallescensone (<bold>5</bold>), dendrillolide A (<bold>6</bold>), and aplyviolene (<bold>7</bold>) (<xref ref-type="fig" rid="pone.0145134.g002">Fig 2</xref>) were identified from the <sup>1</sup>H NMR and LRESIMS data of the crude extracts by comparison with the respective literature [<xref ref-type="bibr" rid="pone.0145134.ref006">6</xref>, <xref ref-type="bibr" rid="pone.0145134.ref035">35</xref>–<xref ref-type="bibr" rid="pone.0145134.ref040">40</xref>]. Crude extracts containing deoxymanoalide (<bold>3</bold>) and deoxysecomanoalide (<bold>4</bold>) underwent normal phase flash column chromatography (Merck Silica gel 60) eluting from a gradient of hexanes/ethyl acetate to yield a semi-purified mixture. The mixture was further separated by normal phase high performance liquid chromatography (HPLC) using a Waters semi preparative column (μPorasil, 10 μm, 7.8×300 mm) eluting with 30:70 ethyl acetate/hexanes. Compounds <bold>3</bold>, <bold>4</bold> were then identified by a comparison of the <sup>1</sup>H NMR data to the literature [<xref ref-type="bibr" rid="pone.0145134.ref041">41</xref>] in combination with LRESIMS measurements performed on a Bruker Esquire HCT instrument. The major metabolite found in the viscera of <italic>C</italic>. <italic>annae</italic> was provisionally identified as a linear furan related to ambliofuran [<xref ref-type="bibr" rid="pone.0145134.ref042">42</xref>], however the sample decomposed before its structural investigation could be completed.</p>
+<fig id="pone.0145134.g002" position="float">
+<object-id pub-id-type="doi">10.1371/journal.pone.0145134.g002</object-id>
+<label>Fig 2</label>
+<caption>
+<title>Structures of compounds identified.</title>
+<p>latrunculin A (<bold>1</bold>), puupehenone (<bold>2</bold>), deoxymanoalide (<bold>3</bold>) and deoxysecomanoalide (<bold>4</bold>), pallescensone (<bold>5</bold>), dendrillolide A (<bold>6</bold>), aplyviolene (<bold>7</bold>) and aplysulphurin (<bold>8</bold>).</p>
+</caption>
+<graphic mimetype="image" position="float" xlink:href="info:doi/10.1371/journal.pone.0145134.g002" xlink:type="simple"/>
+</fig>
+<p>For toxicity and unpalatability assays, all extracts containing latrunculin A were combined (60 mg) and subject to normal phase flash column chromatography (Merck Silica gel 60). Purification of latrunculin A was obtained by gradient elution using hexanes/ethyl acetate to yield 15 mg. The meroterpenoid puupehenone was obtained from the <italic>Pseudoceratina</italic> sp. 4909 (Verongida, Pseudoceratina) (identified by Dr. Merrick Ekins; QM accessions numbers: G319578, G319573, G335175). Sponge tissue (approximately 80 g) was finely chopped, extracted with acetone (3 x 50 mL) and sonicated (2 min). After concentration using a rotary evaporator the aqueous layer was partitioned with diethyl ether (4 × 15 mL), dried with sodium sulfate and concentrated under nitrogen to give 400 mg of extract. For comparison with other nudibranchs from the family Chromodorididae, but not found in this genus, we also purified the compound aplysulphurin (<bold>8</bold>), a major compound found in <italic>Goniobranchus splendidus</italic> [<xref ref-type="bibr" rid="pone.0145134.ref043">43</xref>]. Aplysulphurin was obtained from previous studies of <italic>Goniobranchus reticulatus</italic> [<xref ref-type="bibr" rid="pone.0145134.ref044">44</xref>, <xref ref-type="bibr" rid="pone.0145134.ref045">45</xref>] and the sponge <italic>Darwinella tango</italic> [<xref ref-type="bibr" rid="pone.0145134.ref046">46</xref>]. All fractions containing aplysulphurin were combined (25 mg) to undergo HPLC (20:80 EtOAc/hexanes) resulting in 10 mg of the purified compound.</p>
+</sec>
+<sec id="sec006">
+<title>Brine shrimp toxicity assay</title>
+<p>We tested the relative toxic properties of purified compounds from each species of nudibranch with a brine shrimp toxicity assay, as per [<xref ref-type="bibr" rid="pone.0145134.ref047">47</xref>]. Brine shrimp eggs were hatched in a 500 mL beaker containing 400 mL artificial seawater (Tropic Marin), which was prepared using double distilled water, and kept under strong aeration and continuous illumination for approx. 30 hours. We prepared a stock concentration (approx. 12.0 mg/mL) of the compound with DCM. One glass microfiber filter paper (Whatman GF/C 47 mm diam.) was placed into individual glass petri dishes (55 mm diam.) then 0.005, 0.05, 0.5 mL of stock solution was transferred on to the filter papers with a glass pipette. The solvent was left to evaporate from the filter paper under a Nederman arm for 30 min. Twenty actively swimming instar I nauplii (&lt; 12 h after hatching) were collected with a glass pipette and added to each petri dish with 5 mL filtered sea water. Lids were placed on top of the petri dishes and kept under constant illumination for 24 hours. Surviving nauplii (instar II/III) were then counted; nauplii were considered dead if no movement was detected after several seconds of observation. Natural mortality was controlled for using control treatments in which 0.5 mL of DCM was added to the filter paper. In all cases control deaths occurred, therefore the data was corrected using Abott’s formula % deaths = (test—control)/100 –control) for analysis [<xref ref-type="bibr" rid="pone.0145134.ref048">48</xref>].</p>
+</sec>
+<sec id="sec007">
+<title>Cytotoxicity assay</title>
+<p>The MTT (3-(4,5-dimethylthiazol-2-yl)-2,5-diphenyltetrazolium bromide) assay was modified from that previously described [<xref ref-type="bibr" rid="pone.0145134.ref049">49</xref>] using adherent NCIH460 (human large cell lung carcinoma), SW620 (human colorectal adenocarcinoma) and KB3-1 (human cervical carcinoma) cell lines. Briefly, cells were harvested with trypsin and dispensed into 96-well microtitre assay plates at 2,000 cells/well and incubated for 18 h at 37°C with 5% CO<sub>2</sub> (to allow cells to attach). Compounds were dissolved in 5% DMSO in PBS (<italic>v</italic>/<italic>v</italic>) and aliquots (20 μL) were tested over a series of final concentrations ranging from 10 nM to 30 μM. Vinblastine was used as positive control and blank control wells were treated with 5% aqueous DMSO. After 68 h incubation at 37°C with 5% CO<sub>2</sub>, an aliquot (20 μL) of MTT in PBS (4 mg/mL) was added to each well (final concentration of 0.4 mg/mL), and the microtitre plates incubated for a further 4 h at 37°C with 5% CO<sub>2</sub>. After this final incubation the medium was aspirated and precipitated formazan crystals dissolved in DMSO (100 μL/well). The absorbance of each well was measured at OD<sub>580 nm</sub> at r.t. on a POLARstar Omega microtitre plate reader. IC<sub>50</sub> values were calculated using Prism 5.0 (GraphPad Software Inc., La Jolla, CA), as the concentration of analyte required for 50% inhibition of cancer cell growth (compared to negative controls). All experiments were performed in duplicate.</p>
+</sec>
+<sec id="sec008">
+<title>Anti-feedant assay</title>
+<p>Purified compounds found in the mantle and viscera of each nudibranch species were tested for their feeding deterrent activity against a common generalist shrimp species (<italic>Palaemon serenus</italic>). Shrimp were collected from intertidal zones in SE Queensland and housed communally in large aquaria until needed. Assays were conducted based on methods described in [<xref ref-type="bibr" rid="pone.0145134.ref021">21</xref>, <xref ref-type="bibr" rid="pone.0145134.ref050">50</xref>, <xref ref-type="bibr" rid="pone.0145134.ref051">51</xref>] using artificially dyed (red) food pellets treated with purified compounds of different concentrations. The pellets were made using mixture of ground freeze-dried squid mantle (50 mg), alginic acid (30 mg) and purified sea sand (30 mg). The pure compounds, dissolved in 0.5 mL of DCM, were added to the dry mixture and left for 30 min for the solvent to evaporate. One drop of red food colouring was added and 0.5 mL of distilled water. Food colouring was added for easy detection of the food in the digestive tract of the shrimp. The pellet ingredients were mixed carefully with a spatula, and then placed in to a 1mL syringe. The contents were extruded into a 0.25 M calcium chloride solution to create spaghetti-like strands and left for 2 min to harden. The pellets were then rinsed with distilled water and cut into pellets that were approx. 5 mm in length. Control foods were made in the same manner, with the addition of 0.5 mL of DCM, but without the purified metabolites.</p>
+<p>Randomly selected shrimps (20–35 mm, total length) were individually placed in a section of an 8 compartment polypropylene translucent partitioned container (270 × 98 × 325 mm; each partition: 135 × 98 × 90 mm). Small holes were drilled in to the side of each container to allow water flow through the container to allow the shrimp to be housed for 1–2 weeks. Two partitioned boxes were placed in larger aquaria (650 × 350 × 350 mm) with 15 cm depth of seawater and air stones to create water circulation. Shrimp were left for 3 days to acclimatize and fed green fish flakes (Ocean Nutrition, Formula 2) once per day. Shrimp were then starved for 3 days before assays began. Ten randomly selected shrimp were given a coloured pellet of a particular concentration with a pair of tweezers. Most shrimp readily accepted the pellet with it their clawed appendages (chelipeds). The shrimps were then monitored at 5, 10, 30, 60 min after being given the pellet, and we recorded whether the shrimp appeared to be eating the pellet, or not eating. After 60 min, the presence of a red spot in the transparent gastric mill was considered acceptance of the pellet by the shrimp, while the absence of a red spot was considered a rejection. If a shrimp had rejected the pellet, it was then given a control pellet and again observed for 30 min. If the shrimp rejected the control pellet (&lt; 1%), then that shrimp was removed from the final analysis, as these shrimp were often in the process of molting or about to expire. Shrimp were not reused. Tanks were cleaned and water replaced before the next assay commenced. The assay was repeated for each compound 3–4 times, and the mean % acceptance rate was calculated. Again, we calculated the effective dose response curve and calculated the concentration at which 50% of the pellets were rejected by the shrimp (ED<sub>50</sub>).</p>
+</sec>
+</sec>
+<sec id="sec009" sec-type="results">
+<title>Results</title>
+<sec id="sec010">
+<title>Anatomical distribution of compounds</title>
+<p>The only metabolite found within both the mantle and mantle rim of every nudibranch species in this study was the macrolide latrunculin A (<bold>1</bold>) (<xref ref-type="table" rid="pone.0145134.t001">Table 1</xref>). Compared to concentrations in the viscera, latrunculin A was more concentrated in the mantle, and reached its highest concentration in the mantle rim (<xref ref-type="table" rid="pone.0145134.t002">Table 2</xref>). In the viscera, <italic>C</italic>. <italic>elisabethina</italic> specimens contained only the metabolite puupehenone (<bold>2</bold>), while <italic>C</italic>. <italic>magnifica</italic> contained both <bold>2</bold> and minor amounts of <bold>1</bold>. <italic>C</italic>. <italic>lochi</italic> specimens contained manoalide compounds with deoxymanoalide (<bold>3</bold>) and deoxysecomanoalide (<bold>4</bold>) in the viscera. <italic>C</italic>. <italic>kuiteri</italic> contained the sesquiterpene pallescensone (<bold>5</bold>) and the diterpenes dendrillolide A (<bold>6</bold>) and aplyviolene (<bold>7</bold>) (<xref ref-type="table" rid="pone.0145134.t001">Table 1</xref>; <xref ref-type="fig" rid="pone.0145134.g002">Fig 2</xref>). <italic>C</italic>. <italic>annae</italic> contained an unidentified linear furan as the main metabolite (<xref ref-type="table" rid="pone.0145134.t001">Table 1</xref>). <sup>1</sup>H NMR spectra for crude extracts of each species (except <italic>C</italic>. <italic>annae</italic>) are shown in <xref ref-type="supplementary-material" rid="pone.0145134.s001">S1</xref>–<xref ref-type="supplementary-material" rid="pone.0145134.s004">S4</xref> Figs, which contain 1,4-dimethoxybenzene (DMB) as an internal standard.</p>
+<table-wrap id="pone.0145134.t001" position="float">
+<object-id pub-id-type="doi">10.1371/journal.pone.0145134.t001</object-id>
+<label>Table 1</label> <caption><title>Anatomical distribution of compounds from <italic>Chromodorididae</italic> nudibranchs.</title></caption>
+<alternatives>
+<graphic id="pone.0145134.t001g" mimetype="image" position="float" xlink:href="info:doi/10.1371/journal.pone.0145134.t001" xlink:type="simple"/>
+<table>
+<colgroup>
+<col align="left" valign="middle"/>
+<col align="left" valign="middle"/>
+<col align="left" valign="middle"/>
+<col align="left" valign="middle"/>
+</colgroup>
+<thead>
+<tr>
+<th align="justify" rowspan="2">Species</th>
+<th align="justify" colspan="3">Compound</th>
+</tr>
+<tr>
+<th align="justify">Mantle rim</th>
+<th align="justify">Mantle</th>
+<th align="left">Viscera (including digestive system)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="justify"><bold><italic>C</italic>. <italic>elisabethina</italic></bold></td>
+<td align="justify"><bold>1</bold></td>
+<td align="justify"><bold>1</bold></td>
+<td align="justify"><bold>1, 2</bold></td>
+</tr>
+<tr>
+<td align="justify"><bold><italic>C</italic>. <italic>magnifica</italic></bold></td>
+<td align="justify"><bold>1</bold></td>
+<td align="justify"><bold>1</bold></td>
+<td align="justify"><bold>1, 2</bold></td>
+</tr>
+<tr>
+<td align="justify"><bold><italic>C</italic>. <italic>lochi</italic></bold></td>
+<td align="justify"><xref ref-type="table-fn" rid="t001fn001"><sup>‡</sup></xref></td>
+<td align="justify"><bold>1</bold></td>
+<td align="justify"><bold>3, 4</bold></td>
+</tr>
+<tr>
+<td align="justify"><bold><italic>C</italic>. <italic>kuiteri</italic></bold></td>
+<td align="justify"><bold>1</bold></td>
+<td align="justify"><bold>1</bold></td>
+<td align="justify"><bold>5, 6, 7</bold></td>
+</tr>
+<tr>
+<td align="justify"><bold><italic>C</italic>. <italic>annae</italic></bold></td>
+<td align="justify"><xref ref-type="table-fn" rid="t001fn001"><sup>‡</sup></xref></td>
+<td align="justify"><bold>1</bold></td>
+<td align="justify"><xref ref-type="table-fn" rid="t001fn002">*</xref></td>
+</tr>
+</tbody>
+</table>
+</alternatives>
+<table-wrap-foot>
+<fn id="t001fn001"><p><sup>‡</sup>Rim was not dissected from mantle in these species</p></fn>
+<fn id="t001fn002"><p>*unidentified metabolites</p></fn>
+</table-wrap-foot>
+</table-wrap>
+<table-wrap id="pone.0145134.t002" position="float">
+<object-id pub-id-type="doi">10.1371/journal.pone.0145134.t002</object-id>
+<label>Table 2</label> <caption><title>Quantification of the metabolites within the each tissue. Values shown are mean ± s.e.; number of individuals in parentheses.</title></caption>
+<alternatives>
+<graphic id="pone.0145134.t002g" mimetype="image" position="float" xlink:href="info:doi/10.1371/journal.pone.0145134.t002" xlink:type="simple"/>
+<table>
+<colgroup>
+<col align="left" valign="middle"/>
+<col align="left" valign="middle"/>
+<col align="left" valign="middle"/>
+<col align="left" valign="middle"/>
+<col align="left" valign="middle"/>
+</colgroup>
+<thead>
+<tr>
+<th align="justify">Species</th>
+<th align="justify">Compound</th>
+<th align="left">Mantle rim (mg/mL)</th>
+<th align="justify">Mantle (mg/mL)</th>
+<th align="justify">Viscera (mg/mL)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="justify"><bold><italic>C</italic>. <italic>elisabethina</italic> (n = 3)</bold></td>
+<td align="justify">1</td>
+<td align="justify">8.7 ± 2.7</td>
+<td align="justify">2.1 ± 1.1</td>
+<td align="justify">0.2 ± 0.2</td>
+</tr>
+<tr>
+<td align="justify"/>
+<td align="justify">2</td>
+<td align="justify">-</td>
+<td align="justify">-</td>
+<td align="justify">1.2 ± 0.4</td>
+</tr>
+<tr>
+<td align="justify"><bold><italic>C</italic>. <italic>magnifica</italic> (n = 1)</bold></td>
+<td align="justify">1</td>
+<td align="justify">45.1</td>
+<td align="justify">7.8</td>
+<td align="justify">0.2</td>
+</tr>
+<tr>
+<td align="justify"/>
+<td align="justify">2</td>
+<td align="justify">-</td>
+<td align="justify">-</td>
+<td align="justify">0.2</td>
+</tr>
+<tr>
+<td align="justify"><bold><italic>C</italic>. <italic>lochi</italic> (n = 2)</bold></td>
+<td align="justify">1</td>
+<td align="justify">1.7 ± 1.0</td>
+<td align="justify">1.2 ± 0.8</td>
+<td align="justify">-</td>
+</tr>
+<tr>
+<td align="justify"/>
+<td align="justify">3</td>
+<td align="justify">-</td>
+<td align="justify">-</td>
+<td align="justify">90.5 ± 22.7</td>
+</tr>
+<tr>
+<td align="justify"/>
+<td align="justify">4</td>
+<td align="justify">-</td>
+<td align="justify">-</td>
+<td align="justify">7.0 ± 2.3</td>
+</tr>
+<tr>
+<td align="justify"><bold><italic>C</italic>. <italic>kuiteri</italic> (n = 1)</bold></td>
+<td align="justify">1</td>
+<td align="justify">26.2</td>
+<td align="justify">12.2</td>
+<td align="justify">-</td>
+</tr>
+<tr>
+<td align="justify"/>
+<td align="justify">5</td>
+<td align="justify">-</td>
+<td align="justify">-</td>
+<td align="justify">2.7</td>
+</tr>
+<tr>
+<td align="justify"/>
+<td align="justify">6</td>
+<td align="justify">-</td>
+<td align="justify">-</td>
+<td align="justify">1.7</td>
+</tr>
+<tr>
+<td align="justify"/>
+<td align="justify">7</td>
+<td align="justify">-</td>
+<td align="justify">-</td>
+<td align="justify">0.7</td>
+</tr>
+</tbody>
+</table>
+</alternatives>
+</table-wrap>
+</sec>
+<sec id="sec011">
+<title>Brine shrimp toxicity assay</title>
+<p>Latrunculin A was significantly more toxic to brine shrimp than puupehenone and aplysulphurin (<xref ref-type="fig" rid="pone.0145134.g003">Fig 3</xref>). Even relatively small amounts of latrunculin A (0.06 mg per treatment) caused 100% mortality of brine shrimp, which were much lower concentrations than that found in the rim of the nudibranchs (<xref ref-type="table" rid="pone.0145134.t002">Table 2</xref>). There was no significant response in mortality of brine shrimp from puupehenone or aplysulphurin, even at concentrations of up to 9.0 mg per treatment (puupehenone) or 1.6 mg (aplysulphurin).</p>
+<fig id="pone.0145134.g003" position="float">
+<object-id pub-id-type="doi">10.1371/journal.pone.0145134.g003</object-id>
+<label>Fig 3</label>
+<caption>
+<title>Brine shrimp toxicity assay.</title>
+<p>mortality of brine shrimp (%) with increasing concentrations of compound.</p>
+</caption>
+<graphic mimetype="image" position="float" xlink:href="info:doi/10.1371/journal.pone.0145134.g003" xlink:type="simple"/>
+</fig>
+</sec>
+<sec id="sec012">
+<title>Cytotoxicity assay</title>
+<p>Latrunculin A was the most potent of the isolated nudibranch compounds used against all cell lines, with IC<sub>50</sub> values of 1.9, 2.7, and 0.9 μM for cell lines SW620, NCIH460 and KB3-1, respectively. Aplysulphurin was the second most potent, with IC<sub>50</sub> values of 10.5, 13.7, 9.8 μM. Although puupehenone has previously shown significant cytotoxic activity against A-549 and HT-29 neoplastic cell lines [<xref ref-type="bibr" rid="pone.0145134.ref052">52</xref>], in this study there was little effect with IC<sub>50</sub> values of &gt; 16.5 μM. Deoxymanoalide also had high IC<sub>50</sub> values of &gt; 15.7 μM (<xref ref-type="fig" rid="pone.0145134.g004">Fig 4</xref>).</p>
+<fig id="pone.0145134.g004" position="float">
+<object-id pub-id-type="doi">10.1371/journal.pone.0145134.g004</object-id>
+<label>Fig 4</label>
+<caption>
+<title>Cytotoxic activities.</title>
+<p>against SW620, NCHI420 and KN3-1 cancer cell lines.</p>
+</caption>
+<graphic mimetype="image" position="float" xlink:href="info:doi/10.1371/journal.pone.0145134.g004" xlink:type="simple"/>
+</fig>
+</sec>
+<sec id="sec013">
+<title>Anti-feedant assays</title>
+<p>Latrunculin A and puupehenone produced a similar feeding deterrent response against the shrimp, <italic>Palaemon serenus</italic>. ED<sub>50</sub> values for latrunculin A were 4.2 mg/ml and 4.0 mg/ml for puupehenone within food pellets (<xref ref-type="fig" rid="pone.0145134.g005">Fig 5</xref>). The deterrent response against latrunculin A occurred at concentrations much lower than what was found in the mantle rim of <italic>C</italic>. <italic>elisabethina</italic>, <italic>C</italic>. <italic>kuiteri</italic> and <italic>C</italic>. <italic>lochi</italic> (<xref ref-type="table" rid="pone.0145134.t002">Table 2</xref>).</p>
+<fig id="pone.0145134.g005" position="float">
+<object-id pub-id-type="doi">10.1371/journal.pone.0145134.g005</object-id>
+<label>Fig 5</label>
+<caption>
+<title>Anti-feedant assay.</title>
+<p>rejection of pellets (%) by palaemon shrimp, <italic>Palaemon serenus</italic>.</p>
+</caption>
+<graphic mimetype="image" position="float" xlink:href="info:doi/10.1371/journal.pone.0145134.g005" xlink:type="simple"/>
+</fig>
+</sec>
+</sec>
+<sec id="sec014" sec-type="conclusions">
+<title>Discussion</title>
+<p>In this study, we show that a group of closely related nudibranch species, belonging to the genus <italic>Chromodoris</italic>, sequester and store the unpalatable and toxic compound latrunculin A. This compound was found at high concentrations in the rim of the mantle, where MDFs are situated [<xref ref-type="bibr" rid="pone.0145134.ref034">34</xref>], and is therefore at the first line of attack by potential predators [<xref ref-type="bibr" rid="pone.0145134.ref021">21</xref>]. Surprisingly, latrunculin A was only found in very small amounts in the viscera, and only in a few individuals. Instead, a variety of other compounds were found in the viscera of these species, including: puupehenone in <italic>C</italic>. <italic>elisabethina</italic> and <italic>C</italic>. <italic>magnifica</italic>; manoalides in <italic>C</italic>. <italic>lochi</italic>; a linear furan in <italic>C</italic>. <italic>annae</italic>; pallescensone and dehydroherbadysidolide in <italic>C</italic>. <italic>kuiteri</italic>. This suggests that sponges containing latrunculin A are not the main dietary food source of this group of nudibranchs (at least at our collection sites), and implies less specialized alimentary habits than previously thought [<xref ref-type="bibr" rid="pone.0145134.ref014">14</xref>]. Indeed, a previous study indicated that <italic>C</italic>. <italic>elisabethina</italic> fed on a brown encrusting sponge, <italic>Heteronema</italic> sp., which contained puupehenone [<xref ref-type="bibr" rid="pone.0145134.ref011">11</xref>] but did not show any traces of latrunculin A. <italic>C</italic>. <italic>elisabethina</italic> was also shown to feed on <italic>Dysidea</italic> sp. in the Marshall Islands [<xref ref-type="bibr" rid="pone.0145134.ref053">53</xref>], which also do not contain latrunculin A to the best of our knowledge. Such a selective sequestration mechanism seems to allow these nudibranchs to feed on multiple prey sponges, whilst still obtaining an optimal and stable chemical profile for defensive purposes.</p>
+<p>How such a selective sequestration mechanism evolves is intriguing. These animals obtain their food and means of defending themselves by eating organisms that are toxic. Although it has been hypothesized that dietary toxic compounds were primarily compartmentalized by mollusks to circumvent autotoxicity (i.e. self-intoxication) [<xref ref-type="bibr" rid="pone.0145134.ref034">34</xref>, <xref ref-type="bibr" rid="pone.0145134.ref054">54</xref>], Faulkner &amp; Ghiselin proposed that at first the harmful sponge metabolites were probably excreted [<xref ref-type="bibr" rid="pone.0145134.ref055">55</xref>], while a variety of dorsal glands evolved later with the development of mechanisms for storage and effective delivery of harmful sponge metabolites. We propose that, in order for animals to feed on toxic sponges, these animals may have developed specific detoxification mechanisms that enable them to transport toxic compounds in the hemolymph to be excreted. Some reversible mechanism, possibly by conjugation with polar ligands, could have facilitated the transport of the compounds by increasing their solubility, as proposed for the elimination of xenobiotics in fish species [<xref ref-type="bibr" rid="pone.0145134.ref056">56</xref>]. The more ancestral species might have then become capable of reactivating the chemical weapon upon its secretion outside the body, and this may have preceded the bioaccumulation phenomena in mantle dermal formations seen in more derived species [<xref ref-type="bibr" rid="pone.0145134.ref034">34</xref>]. The storage of chemical weapons in confined parts of the body may have therefore evolved later as a defensive function, allowing the evolutionary optimization of resource allocation, with the accumulation of progressively increasing concentrations of distasteful metabolites in exposed sacrificial body parts [<xref ref-type="bibr" rid="pone.0145134.ref031">31</xref>]. This hypothesis is supported by the fact that the nudibranchs are able to handle toxic compounds without suffering adverse effects and distribute them in their secretions, sacrificial parts of the body, and in egg masses masses [<xref ref-type="bibr" rid="pone.0145134.ref025">25</xref>, <xref ref-type="bibr" rid="pone.0145134.ref057">57</xref>].</p>
+<p>Latrunculin A was more toxic both <italic>in vitro</italic> and <italic>in vivo</italic> than other compounds isolated from nudibranchs in this study and from a compound (aplysulphurin) isolated from other Chromorodoridiae nudibranchs such as <italic>Goniobranchus splendidus</italic> [<xref ref-type="bibr" rid="pone.0145134.ref043">43</xref>] and <italic>Goniobranchus reticulatus</italic> [<xref ref-type="bibr" rid="pone.0145134.ref044">44</xref>, <xref ref-type="bibr" rid="pone.0145134.ref045">45</xref>]. It would therefore be a prime target for ‘deactivation’ before damage to the animal occurs. The mechanism for both detoxification and transport of this foreign compound is, however, unknown and deserves further investigation. The toxicity of latrunculin A to both brine shrimps and cancer cell lines is consistent with the compound affecting cellular metabolism, being most effective at killing cells that are rapidly dividing, as a result of disruption of actin polymerization [<xref ref-type="bibr" rid="pone.0145134.ref018">18</xref>, <xref ref-type="bibr" rid="pone.0145134.ref058">58</xref>]. However, in addition to the toxicological and pharmacological interest, our findings suggest that the digestive system of the studied nudibranchs is especially adapted to detoxify this compound. One reason why certain nudibranchs can eat only a few types of sponges could depend, in fact, on their ability to cope with different toxins.</p>
+<p>In feeding assays, latrunculin A was equally as unpalatable as the compound puupehenone, which was found in the viscera of two of the studied species. During anti-feedant assays, shrimps appeared to test the artificial food with their chemosensory organs (antennules) before deciding whether to accept or reject it. This suggests that latrunculin A can, through taste or olfaction, act as reliable chemosensory aposematic signal as it associated with toxicity. In 1980, Eisner and Grant suggested that odors could act as warning signals and this was termed olfactory aposematism [<xref ref-type="bibr" rid="pone.0145134.ref059">59</xref>]; however, at that time they did not find evidence that odours themselves were intrinsically repellent to predators or played a direct role in chemical defense. However, it has been recently proposed that chemical secretions can act both as a signal, and as a secondary defence component [<xref ref-type="bibr" rid="pone.0145134.ref060">60</xref>, <xref ref-type="bibr" rid="pone.0145134.ref061">61</xref>]. Although the term olfaction becomes ambiguous when referred to aquatic life, chemosensory perceptions of lipophilic compounds, some of which are naturally odorant, are known to occur among marine organisms [<xref ref-type="bibr" rid="pone.0145134.ref062">62</xref>]. The low-solubility of these compounds in water however enhances efficacy of short-range communication in water by limiting the dilution of the signal in the medium. Chemosensory cues may be more important than visual signals when protecting prey individuals from predators with poor visual systems that are unlikely to detect conspicuous colour patterns.</p>
+<p>Each of our study species display highly conspicuous colour patterns (<xref ref-type="fig" rid="pone.0145134.g001">Fig 1</xref>) [<xref ref-type="bibr" rid="pone.0145134.ref063">63</xref>], which are thought to act as visual warning signals to potential predators. These species could be part of a visual Müllerian mimetic ring of closely related individuals, in which similar colour patterns strengthens predator avoidance learning. Analogously, the existence of visual Müllerian mimicry has already been proposed for a group of several blue, white, and yellow Mediterranean and northeastern Atlantic species of chromodorids, and supported by chemoecological studies which revealed the involvement of a variety of defensive compounds, often characterizing individual species [<xref ref-type="bibr" rid="pone.0145134.ref032">32</xref>]. However, here we also show that the occurrence of the same defensive chemosensory warning signal could describe, for the first time, a case of chemosensory Müllerian mimicry within marine organisms. In contrast to the Mediterranean and northeastern Atlantic group of nudibranchs, the presence of latrunculin A seems to be a common feature of the species examined in the current study, strongly suggestive of the occurrence of both a visual and chemosensory Müllerian mimicry.</p>
+<p>Although this study demonstrates that conspicuous displays indicate a strong level of chemical defence, the evolutionary question as to whether different aposematic signals within groups are ‘quantitatively honest’, in the sense that conspicuousness correlates positively with levels of toxicity and thus conveys reliable information [<xref ref-type="bibr" rid="pone.0145134.ref064">64</xref>] requires further investigation. A more extensive comparative study would be needed to examine the shape of the relationship between signal strength and toxicity to assess the implications for ecological processes and evolution.</p>
+</sec>
+<sec id="sec015" sec-type="conclusions">
+<title>Conclusion</title>
+<p>A group of conspicuously colored spongivorous nudibranchs belonging to the genus <italic>Chromodoris</italic> accumulate the dietary 16-membered macrolide latrunculin A for defensive purposes, a combination of biological assays showing that the compound act both as a feeding deterrent and as a toxic chemical weapon. This implies that a group of chromodorid nudibranchs form a putative Müllerian mimetic circle, based on both a common chemosensory signal, latrunculin A, and similar conspicuous visual signals. Although it is widely accepted that Müllerian mimicry need not to encompass visual mimicry only, but may employ any of the senses, our work, for the first time, highlights the existence of a group of aquatic organisms that use the same aposematic chemosensory signal. Latrunculin A evidently represents at the same time an aposematic signal and, given its high toxicity, it determines the unprofitability of the studied nudibranch species. This signal could be detected by a wide variety of potential predators, including those devoid of well-developed visual systems, therefore unable to detect the color patterns of the nudibranchs.</p>
+</sec>
+<sec id="sec016">
+<title>Supporting Information</title>
+<supplementary-material id="pone.0145134.s001" mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document" position="float" xlink:href="info:doi/10.1371/journal.pone.0145134.s001" xlink:type="simple">
+<label>S1 Fig</label>
+<caption>
+<title><sup>1</sup>H NMR spectra (500 MHz, CDCl<sub>3</sub>) of <italic>C</italic>. <italic>kuiteri</italic> (#1280) crude extract.</title>
+<p>(DOCX)</p>
+</caption>
+</supplementary-material>
+<supplementary-material id="pone.0145134.s002" mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document" position="float" xlink:href="info:doi/10.1371/journal.pone.0145134.s002" xlink:type="simple">
+<label>S2 Fig</label>
+<caption>
+<title><sup>1</sup>H NMR spectra (500 MHz, CDCl<sub>3</sub>) of <italic>C</italic>. <italic>lochi</italic> (#1272) crude extract.</title>
+<p>(DOCX)</p>
+</caption>
+</supplementary-material>
+<supplementary-material id="pone.0145134.s003" mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document" position="float" xlink:href="info:doi/10.1371/journal.pone.0145134.s003" xlink:type="simple">
+<label>S3 Fig</label>
+<caption>
+<title><sup>1</sup>H NMR spectra (500 MHz, CDCl<sub>3</sub>) of <italic>C</italic>. <italic>magnifica</italic> (#432) crude extract.</title>
+<p>(DOCX)</p>
+</caption>
+</supplementary-material>
+<supplementary-material id="pone.0145134.s004" mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document" position="float" xlink:href="info:doi/10.1371/journal.pone.0145134.s004" xlink:type="simple">
+<label>S4 Fig</label>
+<caption>
+<title><sup>1</sup>H NMR spectra (500 MHz, CDCl<sub>3</sub>) of <italic>C</italic>. <italic>elisabethina</italic> (#552) crude extract.</title>
+<p>(DOCX)</p>
+</caption>
+</supplementary-material>
+</sec>
+</body>
+<back>
+<ack>
+<p>We would like to thank Johanna Werminghausen, Genevieve Phillips, Fabio Cortesi, Simon Gingins, Scott Atkinson, Angela Dean, Derek Sun, Martin How and Cedric van den Berg for help in collecting specimens, and Talia Pettigrew, Gloria Miller, and Jasmine Loh for help with preparation of extracts. We thank Susan E. Bates and Robert W. Robey (NCE, NIH, Bethesda, MD, USA) for providing SW620 and NCI-H460 cell lines. We deeply appreciate a critical reading of the manuscript by Michael T. Ghiselin and the identification of the puupehenone-containing sponge by Merrick Ekins (Queensland Museum).</p>
+</ack>
+<ref-list>
+<title>References</title>
+<ref id="pone.0145134.ref001"><label>1</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Gerwick</surname> <given-names>WH</given-names></name>, <name name-style="western"><surname>Moore</surname> <given-names>BS</given-names></name>. <article-title>Lessons from the past and charting the future of marine natural products drug discovery and chemical biology</article-title>. <source>Chem Biol</source>. <year>2012</year>;<volume>19</volume>(<issue>1</issue>):<fpage>85</fpage>–<lpage>98</lpage>. <comment>doi: <ext-link ext-link-type="uri" xlink:href="http://dx.doi.org/10.1016/j.chembiol.2011.12.014" xlink:type="simple">10.1016/j.chembiol.2011.12.014</ext-link></comment> <object-id pub-id-type="pmid">22284357</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref002"><label>2</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Benkendorff</surname> <given-names>K</given-names></name>. <article-title>Molluscan biological and chemical diversity: secondary metabolites and medicinal resources produced by marine molluscs</article-title>. <source>Biol Rev</source>. <year>2010</year>;<volume>85</volume>(<issue>4</issue>):<fpage>757</fpage>–<lpage>75</lpage>. <comment>doi: <ext-link ext-link-type="uri" xlink:href="http://dx.doi.org/10.1111/j.1469-185X.2010.00124.x" xlink:type="simple">10.1111/j.1469-185X.2010.00124.x</ext-link></comment> <object-id pub-id-type="pmid">20105155</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref003"><label>3</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Hamann</surname> <given-names>MT</given-names></name>, <name name-style="western"><surname>Otto</surname> <given-names>CS</given-names></name>, <name name-style="western"><surname>Scheuer</surname> <given-names>PJ</given-names></name>. <article-title>Kahalalides: Bioactive peptides from a marine mollusk <italic>Elysia rufescens</italic> and its algal diet <italic>Bryopsis</italic> sp</article-title>. <source>J Org Chem</source>. <year>1996</year>;<volume>61</volume>(<issue>14</issue>):<fpage>6594</fpage>–<lpage>600</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref004"><label>4</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Salazar</surname> <given-names>R</given-names></name>, <name name-style="western"><surname>Cortes-Funes</surname> <given-names>H</given-names></name>, <name name-style="western"><surname>Casado</surname> <given-names>E</given-names></name>, <name name-style="western"><surname>Pardo</surname> <given-names>B</given-names></name>, <name name-style="western"><surname>Lopez-Martin</surname> <given-names>A</given-names></name>, <name name-style="western"><surname>Cuadra</surname> <given-names>C</given-names></name>, <etal>et al</etal>. <article-title>Phase I study of weekly kahalalide F as prolonged infusion in patients with advanced solid tumors</article-title>. <source>Cancer Chemother Pharmacol</source>. <year>2013</year>;<volume>72</volume>(<issue>1</issue>):<fpage>75</fpage>–<lpage>83</lpage>. <comment>doi: <ext-link ext-link-type="uri" xlink:href="http://dx.doi.org/10.1007/s00280-013-2170-5" xlink:type="simple">10.1007/s00280-013-2170-5</ext-link></comment> <object-id pub-id-type="pmid">23645288</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref005"><label>5</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Martin-Algarra</surname> <given-names>S</given-names></name>, <name name-style="western"><surname>Espinosa</surname> <given-names>E</given-names></name>, <name name-style="western"><surname>Rubió</surname> <given-names>J</given-names></name>, <name name-style="western"><surname>López</surname> <given-names>JJ</given-names></name>, <name name-style="western"><surname>Manzono</surname> <given-names>JL</given-names></name>, <name name-style="western"><surname>Plazaola</surname> <given-names>A</given-names></name>, <etal>et al</etal>. <article-title>Phase II study of weekly kahalalide F in patients with advanced malignant melanoma</article-title>. <source>Eur J Cancer</source>. <year>2009</year>;<volume>45</volume>(<issue>5</issue>):<fpage>732</fpage>–<lpage>5</lpage>. <comment>doi: <ext-link ext-link-type="uri" xlink:href="http://dx.doi.org/10.1016/j.ejca.2008.12.005" xlink:type="simple">10.1016/j.ejca.2008.12.005</ext-link></comment> <object-id pub-id-type="pmid">19186051</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref006"><label>6</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Kashman</surname> <given-names>Y</given-names></name>, <name name-style="western"><surname>Groweiss</surname> <given-names>A</given-names></name>, <name name-style="western"><surname>Shmueli</surname> <given-names>J</given-names></name>. <article-title>Latrunculin, a new 2-thiazolidinone macrolide from the marine sponge <italic>Latrunculia magnifica</italic></article-title>. <source>Tetrahedron Lett</source>. <year>1980</year>;<volume>21</volume>(<issue>37</issue>):<fpage>3629</fpage>–<lpage>32</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref007"><label>7</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Kakou</surname> <given-names>Y</given-names></name>, <name name-style="western"><surname>Crews</surname> <given-names>P</given-names></name>, <name name-style="western"><surname>Bakus</surname> <given-names>GJ</given-names></name>. <article-title>Dendrolasin and latrunculin A from the Fijian sponge <italic>Spongia mycofijiensis</italic> and an associated nudibranch <italic>Chromodoris lochi</italic></article-title>. <source>J Nat Prod</source>. <year>1987</year>;<volume>50</volume>(<issue>3</issue>):<fpage>482</fpage>–<lpage>4</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref008"><label>8</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Sanders</surname> <given-names>ML</given-names></name>, <name name-style="western"><surname>van Soest</surname> <given-names>RWM</given-names></name>. <article-title>A revised classification of <italic>Spongia mycofijiensis</italic></article-title>. <source>Bull Inst R Sci Nat</source>; <year>1996</year>. p. <fpage>117</fpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref009"><label>9</label><mixed-citation publication-type="book" xlink:type="simple"><name name-style="western"><surname>Cook</surname> <given-names>SDC</given-names></name>, <name name-style="western"><surname>Bergquist</surname> <given-names>PR</given-names></name>. <chapter-title>Family Thorectidae Bergquist, 1978</chapter-title>. In: <name name-style="western"><surname>Hooper</surname> <given-names>JNA</given-names></name>, <name name-style="western"><surname>van Soest</surname> <given-names>RWM</given-names></name>, editors. <source>Systema Porifera A guide to the classification of sponges</source>. <publisher-loc>New York, Boston, Dordrecht, London, Moscow</publisher-loc>: <publisher-name>Kluwer Academic/ Plenum Publishers</publisher-name>; <year>2002</year>. p. <fpage>1028</fpage>–<lpage>50</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref010"><label>10</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Corley</surname> <given-names>DG</given-names></name>, <name name-style="western"><surname>Herb</surname> <given-names>R</given-names></name>, <name name-style="western"><surname>Moore</surname> <given-names>RE</given-names></name>, <name name-style="western"><surname>Scheuer</surname> <given-names>PJ</given-names></name>, <name name-style="western"><surname>Paul</surname> <given-names>VJ</given-names></name>. <article-title>Laulimalides—new potent cytotoxic macrolides from a marine sponge and a nudibranch predator</article-title>. <source>J Org Chem</source>. <year>1988</year>;<volume>53</volume>(<issue>15</issue>):<fpage>3644</fpage>–<lpage>6</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref011"><label>11</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Okuda</surname> <given-names>RK</given-names></name>, <name name-style="western"><surname>Scheuer</surname> <given-names>PJ</given-names></name>. <article-title>Latrunculin a, ichthyotoxic constituent of the nudibranch <italic>Chromodoris elisabethina</italic></article-title>. <source>Experientia</source>. <year>1985</year>;<volume>41</volume>(<issue>10</issue>):<fpage>1355</fpage>–<lpage>6</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref012"><label>12</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Pika</surname> <given-names>J</given-names></name>, <name name-style="western"><surname>Faulkner</surname> <given-names>DJ</given-names></name>. <article-title>Unusual chlorinated homo-diterpenes from the South African nudibranch <italic>Chromodoris hamiltoni</italic></article-title>. <source>Tetrahedron</source>. <year>1995</year>;<volume>51</volume>(<issue>30</issue>):<fpage>8189</fpage>–<lpage>98</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref013"><label>13</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Mebs</surname> <given-names>D</given-names></name>. <article-title>Chemical defense of a dorid nudibranch, <italic>Glossodoris quadricolor</italic>, from the Red Sea</article-title>. <source>J Chem Ecol</source>. <year>1985</year>;<volume>11</volume>(<issue>6</issue>):<fpage>713</fpage>–<lpage>6</lpage>. <comment>doi: <ext-link ext-link-type="uri" xlink:href="http://dx.doi.org/10.1007/BF00988300" xlink:type="simple">10.1007/BF00988300</ext-link></comment> <object-id pub-id-type="pmid">24310217</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref014"><label>14</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Rudman</surname> <given-names>WB</given-names></name>, <name name-style="western"><surname>Bergquist</surname> <given-names>PR</given-names></name>. <article-title>A review of feeding specificity in the sponge-feeding Chromodorididae (Nudibranchia: Mollusca)</article-title>. <source>Molluscan Res</source>. <year>2007</year>;<volume>27</volume>(<issue>2</issue>):<fpage>60</fpage>–<lpage>88</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref015"><label>15</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>McPhail</surname> <given-names>K</given-names></name>, <name name-style="western"><surname>Davies-Coleman</surname> <given-names>MT</given-names></name>. <article-title>New spongiane diterpenes from the East African nudibranch <italic>Chromodoris hamiltoni</italic></article-title>. <source>Tetrahedron</source>. <year>1997</year>;<volume>53</volume>(<issue>13</issue>):<fpage>4655</fpage>–<lpage>4660</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref016"><label>16</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Neeman</surname> <given-names>I</given-names></name>, <name name-style="western"><surname>Fishelson</surname> <given-names>L</given-names></name>, <name name-style="western"><surname>Kashman</surname> <given-names>Y</given-names></name>. <article-title>Isolation of a new toxin from sponge <italic>Latrunculia magnifica</italic> in Gulf of Aquaba (Red Sea)</article-title>. <source>Mar Biol</source>. <year>1975</year>;<volume>30</volume>(<issue>4</issue>):<fpage>293</fpage>–<lpage>6</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref017"><label>17</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Hayot</surname> <given-names>C</given-names></name>, <name name-style="western"><surname>Debeir</surname> <given-names>O</given-names></name>, <name name-style="western"><surname>Van Ham</surname> <given-names>P</given-names></name>, <name name-style="western"><surname>Van Damme</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Kiss</surname> <given-names>R</given-names></name>, <name name-style="western"><surname>Decaestecker</surname> <given-names>C</given-names></name>. <article-title>Characterization of the activities of actin-affecting drugs on tumor cell migration</article-title>. <source>Toxicol Appl Pharm</source>. <year>2006</year>;<volume>211</volume>(<issue>1</issue>):<fpage>30</fpage>–<lpage>40</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref018"><label>18</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Spector</surname> <given-names>I</given-names></name>, <name name-style="western"><surname>Shochet</surname> <given-names>NR</given-names></name>, <name name-style="western"><surname>Kashman</surname> <given-names>Y</given-names></name>, <name name-style="western"><surname>Groweiss</surname> <given-names>A</given-names></name>. <article-title>Latrunculins—novel marine toxins that disrupt microfilament organization in cultured cells</article-title>. <source>Science</source>. <year>1983</year>;<volume>219</volume>(<issue>4584</issue>):<fpage>493</fpage>–<lpage>5</lpage>. <object-id pub-id-type="pmid">6681676</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref019"><label>19</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Garson</surname> <given-names>MJ</given-names></name>. <article-title>Chemical associations between Australian nudibranchs and their dietary sponges</article-title>. <source>Chemistry in Australia</source>. <year>2004</year>;<volume>71</volume>:<fpage>16</fpage>–<lpage>8</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref020"><label>20</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Nishida</surname> <given-names>R</given-names></name>. <article-title>Sequestration of defensive substances from plants by Lepidoptera</article-title>. <source>Annu Rev Entomol</source>. <year>2002</year>;<volume>47</volume>:<fpage>57</fpage>–<lpage>92</lpage>. <object-id pub-id-type="pmid">11729069</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref021"><label>21</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Carbone</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Gavagnin</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Haber</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Guo</surname> <given-names>YW</given-names></name>, <name name-style="western"><surname>Fontana</surname> <given-names>A</given-names></name>, <name name-style="western"><surname>Manzo</surname> <given-names>E</given-names></name>, <etal>et al</etal>. <article-title>Packaging and delivery of chemical weapons: a defensive trojan horse stratagem in chromodorid nudibranchs</article-title>. <source>Plos One</source>. <year>2013</year>;<volume>8</volume>(<issue>4</issue>):<fpage>e62075</fpage>. <comment>doi: <ext-link ext-link-type="uri" xlink:href="http://dx.doi.org/10.1371/journal.pone.0062075" xlink:type="simple">10.1371/journal.pone.0062075</ext-link></comment> <object-id pub-id-type="pmid">23620804</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref022"><label>22</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Hartmann</surname> <given-names>T</given-names></name>, <name name-style="western"><surname>Witte</surname> <given-names>L</given-names></name>, <name name-style="western"><surname>Ehmke</surname> <given-names>A</given-names></name>, <name name-style="western"><surname>Theuring</surname> <given-names>C</given-names></name>, <name name-style="western"><surname>Rowell-Rahier</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Pasteels</surname> <given-names>JM</given-names></name>. <article-title>Selective sequestration and metabolism of plant derived pyrrolizidine alkaloids by chrysomelid leaf beetles</article-title>. <source>Phytochemistry</source>. <year>1997</year>;<volume>45</volume>(<issue>3</issue>):<fpage>489</fpage>–<lpage>97</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref023"><label>23</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Saporito</surname> <given-names>RA</given-names></name>, <name name-style="western"><surname>Donnelly</surname> <given-names>MA</given-names></name>, <name name-style="western"><surname>Spande</surname> <given-names>TF</given-names></name>, <name name-style="western"><surname>Garraffo</surname> <given-names>HM</given-names></name>. <article-title>A review of chemical ecology in poison frogs</article-title>. <source>Chemoecology</source>. <year>2012</year>;<volume>22</volume>(<issue>3</issue>):<fpage>159</fpage>–<lpage>68</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref024"><label>24</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Avila</surname> <given-names>C</given-names></name>. <article-title>Natural products of opisthobranch molluscs: A biological review</article-title>. <source>Oceanogr Mar Biol</source>. <year>1995</year>;<volume>33</volume>:<fpage>487</fpage>–<lpage>559</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref025"><label>25</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Cimino</surname> <given-names>G</given-names></name>, <name name-style="western"><surname>Ghiselin</surname> <given-names>MT</given-names></name>. <article-title>Chemical defense and evolution of opisthobranch gastropods</article-title>. <source>Proc Calif Acad Sci</source>. <year>2009</year>;<volume>60</volume>:<fpage>175</fpage>–<lpage>422</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref026"><label>26</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Marin</surname> <given-names>A</given-names></name>, <name name-style="western"><surname>Belluga</surname> <given-names>MDL</given-names></name>, <name name-style="western"><surname>Scognamiglio</surname> <given-names>G</given-names></name>, <name name-style="western"><surname>Cimino</surname> <given-names>G</given-names></name>. <article-title>Morphological and chemical camouflage of the Mediterranean nudibranch <italic>Discodoris indecora</italic> on the sponges <italic>Ircinia variabilis</italic> and <italic>Ircinia fasciculata</italic></article-title>. <source>J Molluscan Stud</source>. <year>1997</year>;<volume>63</volume>:<fpage>431</fpage>–<lpage>9</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref027"><label>27</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Slattery</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Avila</surname> <given-names>C</given-names></name>, <name name-style="western"><surname>Starmer</surname> <given-names>J</given-names></name>, <name name-style="western"><surname>Paul</surname> <given-names>VJ</given-names></name>. <article-title>A sequestered soft coral diterpene in the aeolid nudibranch <italic>Phyllodesmium guamensis</italic> Avila, Ballesteros, Slattery, Starmer and Paul</article-title>. <source>J Exp Mar Biol Ecol</source>. <year>1998</year>;<volume>226</volume>(<issue>1</issue>):<fpage>33</fpage>–<lpage>49</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref028"><label>28</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Rudman</surname> <given-names>WB</given-names></name>. <article-title>The anatomy and biology of alcyonarian-feeding aeolid opisthobranch mollusks and their development of symbiosis with zooxanthellae</article-title>. <source>Zool J Linn Soc-Lond</source>. <year>1981</year>;<volume>72</volume>(<issue>3</issue>):<fpage>219</fpage>–<lpage>62</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref029"><label>29</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Rudman</surname> <given-names>WB</given-names></name>. <article-title>Further studies on the taxonomy and biology of the octocoral-feeding genus <italic>Phyllodesmium</italic> Ehrenberg, 1831 (Nudibranchia, Aeolidoidea)</article-title>. <source>J Molluscan Stud</source>. <year>1991</year>;<volume>57</volume>:<fpage>167</fpage>–<lpage>203</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref030"><label>30</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Fontana</surname> <given-names>A</given-names></name>, <name name-style="western"><surname>Gimenez</surname> <given-names>F</given-names></name>, <name name-style="western"><surname>Marin</surname> <given-names>A</given-names></name>, <name name-style="western"><surname>Mollo</surname> <given-names>E</given-names></name>, <name name-style="western"><surname>Cimino</surname> <given-names>G</given-names></name>. <article-title>Transfer of secondary metabolites from the sponges <italic>Dysidea fragilis</italic> and <italic>Pleraplysilla spinifera</italic> to the mantle dermal formations (MDFs) of the nudibranch <italic>Hypselodoris webbi</italic></article-title>. <source>Experientia</source>. <year>1994</year>;<volume>50</volume>(<issue>5</issue>):<fpage>510</fpage>–<lpage>6</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref031"><label>31</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Mollo</surname> <given-names>E</given-names></name>, <name name-style="western"><surname>Gavagnin</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Carbone</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Guo</surname> <given-names>YW</given-names></name>, <name name-style="western"><surname>Cimino</surname> <given-names>G</given-names></name>. <article-title>Chemical studies on Indopacific Ceratosoma nudibranchs illuminate the protective role of their dorsal horn</article-title>. <source>Chemoecology</source>. <year>2005</year>;<volume>15</volume>(<issue>1</issue>):<fpage>31</fpage>–<lpage>6</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref032"><label>32</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Haber</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Cerfeda</surname> <given-names>S</given-names></name>, <name name-style="western"><surname>Carbone</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Calado</surname> <given-names>G</given-names></name>, <name name-style="western"><surname>Gaspar</surname> <given-names>H</given-names></name>, <name name-style="western"><surname>Neves</surname> <given-names>R</given-names></name>, <etal>et al</etal>. <article-title>Coloration and defense in the nudibranch gastropod <italic>Hypselodoris fontandraui</italic></article-title>. <source>Biol Bull</source>. <year>2010</year>;<volume>218</volume>(<issue>2</issue>):<fpage>181</fpage>–<lpage>8</lpage>. <object-id pub-id-type="pmid">20413794</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref033"><label>33</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Johnson</surname> <given-names>RF</given-names></name>, <name name-style="western"><surname>Gosliner</surname> <given-names>TM</given-names></name>. <article-title>Traditional taxonomic groupings mask evolutionary history: A molecular phylogeny and new classification of the Chromodorid nudibranchs</article-title>. <source>Plos One</source>. <year>2012</year>;<volume>7</volume>(<issue>4</issue>).</mixed-citation></ref>
+<ref id="pone.0145134.ref034"><label>34</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Wagele</surname> <given-names>H</given-names></name>, <name name-style="western"><surname>Ballesteros</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Avila</surname> <given-names>C</given-names></name>. <article-title>Defensive glandular structures in opisthobranch molluscs—From histology to ecology</article-title>. <source>Oceanogr Mar Biol</source>. <year>2006</year>;<volume>44</volume>:<fpage>197</fpage>–<lpage>276</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref035"><label>35</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Hamann</surname> <given-names>MT</given-names></name>, <name name-style="western"><surname>Scheuer</surname> <given-names>PJ</given-names></name>, <name name-style="western"><surname>Kellyborges</surname> <given-names>M</given-names></name>. <article-title>Biogenetically diverse, bioactive constituents of a sponge, Order Verongida—bromotyramines and sesquiterpene-shikimate derived metabolites</article-title>. <source>J Org Chem</source>. <year>1993</year>;<volume>58</volume>(<issue>24</issue>):<fpage>6565</fpage>–<lpage>9</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref036"><label>36</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Karuso</surname> <given-names>P</given-names></name>, <name name-style="western"><surname>Taylor</surname> <given-names>WC</given-names></name>. <article-title>The constituents of marine sponges. II. The isolation from <italic>Aplysilla rosea</italic> (Dendroceratida) of (5<italic>R</italic>*,7<italic>S</italic>*,8<italic>R</italic>*,9<italic>S</italic>*,10<italic>R</italic>*,13<italic>S</italic>*,14<italic>S</italic>*,15<italic>S</italic>*)-15,17-epoxy-17-hydroxy-16-oxospongian-7-yl butyrate (aplyroseol-1) and related diterpenes (aplyroseol-2 to -6)</article-title>. <source>Aust J Chem</source>. <year>1986</year>;<volume>39</volume>(<issue>10</issue>):<fpage>1629</fpage>–<lpage>41</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref037"><label>37</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Cambie</surname> <given-names>RC</given-names></name>, <name name-style="western"><surname>Craw</surname> <given-names>PA</given-names></name>, <name name-style="western"><surname>Bergquist</surname> <given-names>PR</given-names></name>, <name name-style="western"><surname>Karuso</surname> <given-names>P</given-names></name>. <article-title>Chemistry of sponges. II. Pallescensone, a furanosesquiterpenoid from <italic>Dictyodendrilla cavernosa</italic></article-title>. <source>J Nat Prod</source>. <year>1987</year>;<volume>50</volume>(<issue>5</issue>):<fpage>948</fpage>–<lpage>9</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref038"><label>38</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Bobzin</surname> <given-names>SC</given-names></name>, <name name-style="western"><surname>Faulkner</surname> <given-names>DJ</given-names></name>. <article-title>Novel rearranged spongian diterpenes from the Palauan Sponge <italic>Dendrilla sp</italic>.—Reassessment of the structures of dendrillolide A and dendrillolide A</article-title>. <source>J Org Chem</source>. <year>1989</year>;<volume>54</volume>(<issue>24</issue>):<fpage>5727</fpage>–<lpage>31</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref039"><label>39</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Hambley</surname> <given-names>TW</given-names></name>, <name name-style="western"><surname>Poiner</surname> <given-names>A</given-names></name>, <name name-style="western"><surname>Taylor</surname> <given-names>WC</given-names></name>. <article-title>Diterpene metabolites of the marine sponge <italic>Chelonaplysilla violacea</italic>—aplyviolene and aplyviolacene</article-title>. <source>Tetrahedron Lett</source>. <year>1986</year>;<volume>27</volume>(<issue>28</issue>):<fpage>3281</fpage>–<lpage>2</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref040"><label>40</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Bobzin</surname> <given-names>SC</given-names></name>, <name name-style="western"><surname>Faulkner</surname> <given-names>DJ</given-names></name>. <article-title>Diterpenes from the marine sponge <italic>Aplysilla polyrhaphis</italic> and the dorid nudibranch <italic>Chromodoris norrisi</italic></article-title>. <source>J Org Chem</source>. <year>1989</year>;<volume>54</volume>(<issue>16</issue>):<fpage>3902</fpage>–<lpage>7</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref041"><label>41</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Uddin</surname> <given-names>MH</given-names></name>, <name name-style="western"><surname>Otsuka</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Muroi</surname> <given-names>T</given-names></name>, <name name-style="western"><surname>Ono</surname> <given-names>A</given-names></name>, <name name-style="western"><surname>Hanif</surname> <given-names>N</given-names></name>, <name name-style="western"><surname>Matsuda</surname> <given-names>S</given-names></name>, <etal>et al</etal>. <article-title>Deoxymanoalides from the nudibranch <italic>Chromodoris willani</italic></article-title>. <source>Chem Pharm Bull</source>. <year>2009</year>;<volume>57</volume>(<issue>8</issue>):<fpage>885</fpage>–<lpage>7</lpage>. <object-id pub-id-type="pmid">19652420</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref042"><label>42</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Walker</surname> <given-names>RP</given-names></name>, <name name-style="western"><surname>Faulkner</surname> <given-names>DJ</given-names></name>. <article-title>Diterpenes from the sponge <italic>Dysidea amblia</italic></article-title>. <source>J Org Chem</source>. <year>1981</year>;<volume>46</volume>(<issue>6</issue>):<fpage>1098</fpage>–<lpage>102</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref043"><label>43</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Mudianta</surname> <given-names>IW</given-names></name>, <name name-style="western"><surname>White</surname> <given-names>AM</given-names></name>, <name name-style="western"><surname>Suciati</surname></name>, <name name-style="western"><surname>Katavic</surname> <given-names>PL</given-names></name>, <name name-style="western"><surname>Krishnaraj</surname> <given-names>RR</given-names></name>, <name name-style="western"><surname>Winters</surname> <given-names>AE</given-names></name>, <etal>et al</etal>. <article-title>Chemoecological studies on marine natural products: terpene chemistry from marine mollusks</article-title>. <source>Pure Appl Chem</source>. <year>2014</year>;<volume>86</volume>(<issue>6</issue>):<fpage>995</fpage>–<lpage>1002</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref044"><label>44</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Suciati</surname></name>, <name name-style="western"><surname>Lambert</surname> <given-names>LK</given-names></name>, <name name-style="western"><surname>Garson</surname> <given-names>MJ</given-names></name>. <article-title>Structures and anatomical distribution of oxygenated diterpenes in the Australian nudibranch <italic>Chromodoris reticulata</italic></article-title>. <source>Aust J Chem</source>. <year>2011</year>;<volume>64</volume>(<issue>6</issue>):<fpage>757</fpage>–<lpage>65</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref045"><label>45</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Hirayama</surname> <given-names>Y</given-names></name>, <name name-style="western"><surname>Katavic</surname> <given-names>PL</given-names></name>, <name name-style="western"><surname>White</surname> <given-names>AM</given-names></name>, <name name-style="western"><surname>Pierens</surname> <given-names>GK</given-names></name>, <name name-style="western"><surname>Lambert</surname> <given-names>LK</given-names></name>, <name name-style="western"><surname>Winters</surname> <given-names>AE</given-names></name>, <etal>et al</etal>. <article-title>New cytotoxic norditerpenes from the Australian nudibranchs <italic>Goniobranchus splendidus</italic> and <italic>Goniobranchus daphne</italic></article-title>. <source>Aust J Chem</source>. <year>2015</year>; <comment>doi: <ext-link ext-link-type="uri" xlink:href="http://dx.doi.org/10.1071/CH15203" xlink:type="simple">10.1071/CH15203</ext-link></comment></mixed-citation></ref>
+<ref id="pone.0145134.ref046"><label>46</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Graham</surname> <given-names>SK</given-names></name>, <name name-style="western"><surname>Garson</surname> <given-names>MJ</given-names></name>, <name name-style="western"><surname>Bernhardt</surname> <given-names>PV</given-names></name>. <article-title>The absolute structure of (+)-aplysulfurin</article-title>. <source>J Chem Crystallogr</source>. <year>2010</year>;<volume>40</volume>(<issue>5</issue>):<fpage>468</fpage>–<lpage>71</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref047"><label>47</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Cortesi</surname> <given-names>F</given-names></name>, <name name-style="western"><surname>Cheney</surname> <given-names>KL</given-names></name>. <article-title>Conspicuousness is correlated with toxicity in marine opisthobranchs</article-title>. <source>J Evolution Biol</source>. <year>2010</year>;<volume>23</volume>(<issue>7</issue>):<fpage>1509</fpage>–<lpage>18</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref048"><label>48</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Abbott</surname> <given-names>WS</given-names></name>. <article-title>A method of computing the effectiveness of an insecticide</article-title>. <source>J Econ Entomol</source>. <year>1925</year>;<volume>18</volume>:<fpage>265</fpage>–<lpage>7</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref049"><label>49</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Carmichael</surname> <given-names>J</given-names></name>, <name name-style="western"><surname>DeGraff</surname> <given-names>WG</given-names></name>, <name name-style="western"><surname>Gazdar</surname> <given-names>AF</given-names></name>, <name name-style="western"><surname>Minna</surname> <given-names>JD</given-names></name>, <name name-style="western"><surname>Mitchell</surname> <given-names>JB</given-names></name>. <article-title>Evaluation of a tetrazolium-based semiautomated colorimetric assay: assessment of chemosensitivity testing</article-title>. <source>Cancer Res</source>. <year>1987</year>;<volume>47</volume>(<issue>4</issue>):<fpage>936</fpage>–<lpage>42</lpage>. <object-id pub-id-type="pmid">3802100</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref050"><label>50</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Mollo</surname> <given-names>E</given-names></name>, <name name-style="western"><surname>Gavagnin</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Carbone</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Castelluccio</surname> <given-names>F</given-names></name>, <name name-style="western"><surname>Pozone</surname> <given-names>F</given-names></name>, <name name-style="western"><surname>Roussis</surname> <given-names>V</given-names></name>, <etal>et al</etal>. <article-title>Factors promoting marine invasions: A chemoecological approach</article-title>. <source>P Natl Acad Sci USA</source>. <year>2008</year>;<volume>105</volume>(<issue>12</issue>):<fpage>4582</fpage>–<lpage>6</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref051"><label>51</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Pawlik</surname> <given-names>JR</given-names></name>, <name name-style="western"><surname>Chanas</surname> <given-names>B</given-names></name>, <name name-style="western"><surname>Toonen</surname> <given-names>RJ</given-names></name>, <name name-style="western"><surname>Fenical</surname> <given-names>W</given-names></name>. <article-title>Defenses of Caribbean sponges against predatory reef fish. 1. Chemical deterrency</article-title>. <source>Mar Ecol Prog Ser</source>. <year>1995</year>;<volume>127</volume>(<issue>1–3</issue>):<fpage>183</fpage>–<lpage>94</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref052"><label>52</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Gordaliza</surname> <given-names>M</given-names></name>. <article-title>Cytotoxic terpene quinones from marine sponges</article-title>. <source>Mar Drugs</source>. <year>2010</year>;<volume>8</volume>(<issue>12</issue>):<fpage>2849</fpage>–<lpage>70</lpage>. <comment>doi: <ext-link ext-link-type="uri" xlink:href="http://dx.doi.org/10.3390/md8122849" xlink:type="simple">10.3390/md8122849</ext-link></comment> <object-id pub-id-type="pmid">21339953</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref053"><label>53</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Johnson</surname> <given-names>S</given-names></name>, <name name-style="western"><surname>Boucher</surname> <given-names>LM</given-names></name>. <article-title>Notes on some Opisthobranchia (Mollusca, Gastropoda) from the Marshall Islands, including 57 new records</article-title>. <source>Pac Sci</source>. <year>1983</year>;<volume>37</volume>(<issue>3</issue>):<fpage>251</fpage>–<lpage>91</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref054"><label>54</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Avila</surname> <given-names>C</given-names></name>, <name name-style="western"><surname>Paul</surname> <given-names>VJ</given-names></name>. <article-title>Chemical ecology of the nudibranch Glossodoris pallida: Is the location of diet-derived metabolites important for defense?</article-title> <source>Mar Ecol Prog Ser</source>. <year>1997</year>;<volume>150</volume>(<issue>1–3</issue>):<fpage>171</fpage>–<lpage>80</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref055"><label>55</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Faulkner</surname> <given-names>DJ</given-names></name>, <name name-style="western"><surname>Ghiselin</surname> <given-names>MT</given-names></name>. <article-title>Chemical defense and evolutionary ecology of Dorid nudibranchs and some other opisthobranch gastropods</article-title>. <source>Mar Ecol Prog Ser</source>. <year>1983</year>;<volume>13</volume>(<issue>2–3</issue>):<fpage>295</fpage>–<lpage>301</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref056"><label>56</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Ferreira</surname> <given-names>M</given-names></name>, <name name-style="western"><surname>Costa</surname> <given-names>J</given-names></name>, <name name-style="western"><surname>Reis-Henriques</surname> <given-names>MA</given-names></name>. <article-title>ABC transporters in fish species: a review</article-title>. <source>Front Physiol</source>. <year>2014</year>;<volume>5</volume>.</mixed-citation></ref>
+<ref id="pone.0145134.ref057"><label>57</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Pawlik</surname> <given-names>JR</given-names></name>, <name name-style="western"><surname>Kernan</surname> <given-names>MR</given-names></name>, <name name-style="western"><surname>Molinski</surname> <given-names>TF</given-names></name>, <name name-style="western"><surname>Harper</surname> <given-names>MK</given-names></name>, <name name-style="western"><surname>Faulkner</surname> <given-names>DJ</given-names></name>. <article-title>Defensive chemicals of the Spanish Dancer nudibranch, <italic>Hexabranchus sanguineus</italic>, and its egg ribbons: Macrolides derived from a sponge diet</article-title>. <source>J Exp Mar Biol Ecol</source>. <year>1988</year>;<volume>119</volume>:<fpage>99</fpage>–<lpage>109</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref058"><label>58</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Konishi</surname> <given-names>H</given-names></name>, <name name-style="western"><surname>Kikuchi</surname> <given-names>S</given-names></name>, <name name-style="western"><surname>Ochiai</surname> <given-names>T</given-names></name>, <name name-style="western"><surname>Ikoma</surname> <given-names>H</given-names></name>, <name name-style="western"><surname>Kubota</surname> <given-names>T</given-names></name>, <name name-style="western"><surname>Ichikawa</surname> <given-names>D</given-names></name>, <etal>et al</etal>. <article-title>Latrunculin A has a strong anticancer effect in a peritoneal dissemination model of human gastric cancer in mice</article-title>. <source>Anticancer Res</source>. <year>2009</year>;<volume>29</volume>(<issue>6</issue>):<fpage>2091</fpage>–<lpage>7</lpage>. <object-id pub-id-type="pmid">19528469</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref059"><label>59</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Eisner</surname> <given-names>T</given-names></name>, <name name-style="western"><surname>Grant</surname> <given-names>RP</given-names></name>. <article-title>Toxicity, odor aversion, and "olfactory aposematism'</article-title>. <source>Science</source>. <year>1980</year>;<volume>213</volume>:<fpage>476</fpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref060"><label>60</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Gohli</surname> <given-names>J</given-names></name>, <name name-style="western"><surname>Hogstedt</surname> <given-names>G</given-names></name>. <article-title>Explaining the evolution of warning coloration: secreted secondary defence chemicals may facilitate the evolution of visual aposematic signals</article-title>. <source>Plos One</source>. <year>2009</year>;<volume>4</volume>(<issue>6</issue>).</mixed-citation></ref>
+<ref id="pone.0145134.ref061"><label>61</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Weldon</surname> <given-names>PJ</given-names></name>. <article-title>Chemical aposematism</article-title>. <source>Chemoecology</source>. <year>2013</year>;<volume>23</volume>(<issue>4</issue>):<fpage>201</fpage>–<lpage>2</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref062"><label>62</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Mollo</surname> <given-names>E</given-names></name>, <name name-style="western"><surname>Fontana</surname> <given-names>A</given-names></name>, <name name-style="western"><surname>Roussis</surname> <given-names>V</given-names></name>, <name name-style="western"><surname>Polese</surname> <given-names>G</given-names></name>, <name name-style="western"><surname>Amodeo</surname> <given-names>P</given-names></name>, <name name-style="western"><surname>Ghiselin</surname> <given-names>MT</given-names></name>. <article-title>Sensing marine biomolecules: smell, taste, and the evolutionary transition from aquatic to terrestrial life</article-title>. <source>Front Chem</source>. <year>2014</year>;<volume>2</volume>:<fpage>92</fpage>. <comment>doi: <ext-link ext-link-type="uri" xlink:href="http://dx.doi.org/10.3389/fchem.2014.00092" xlink:type="simple">10.3389/fchem.2014.00092</ext-link></comment> <object-id pub-id-type="pmid">25360437</object-id></mixed-citation></ref>
+<ref id="pone.0145134.ref063"><label>63</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Cheney</surname> <given-names>KL</given-names></name>, <name name-style="western"><surname>Cortesi</surname> <given-names>F</given-names></name>, <name name-style="western"><surname>How</surname> <given-names>MJ</given-names></name>, <name name-style="western"><surname>Wilson</surname> <given-names>NG</given-names></name>, <name name-style="western"><surname>Blomberg</surname> <given-names>SP</given-names></name>, <name name-style="western"><surname>Winters</surname> <given-names>AE</given-names></name>, <etal>et al</etal>. <article-title>Conspicuous visual signals do not coevolve with increased body size in marine sea slugs</article-title>. <source>J Evolution Biol</source>. <year>2014</year>;<volume>27</volume>(<issue>4</issue>):<fpage>676</fpage>–<lpage>87</lpage>.</mixed-citation></ref>
+<ref id="pone.0145134.ref064"><label>64</label><mixed-citation publication-type="journal" xlink:type="simple"><name name-style="western"><surname>Blount</surname> <given-names>JD</given-names></name>, <name name-style="western"><surname>Speed</surname> <given-names>MP</given-names></name>, <name name-style="western"><surname>Ruxton</surname> <given-names>GD</given-names></name>, <name name-style="western"><surname>Stephens</surname> <given-names>PA</given-names></name>. <article-title>Warning displays may function as honest signals of toxicity</article-title>. <source>Proc R Soc B, Lond</source>. <year>2009</year>;<volume>276</volume>(<issue>1658</issue>):<fpage>871</fpage>–<lpage>7</lpage>.</mixed-citation></ref>
+</ref-list>
+</back>
+</article>

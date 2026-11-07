@@ -1,0 +1,284 @@
+[
+  {
+    "cardId": "chimera",
+    "src": "/images/cards/predator/Deep/chimera.png",
+    "before": "6a40e17e3467",
+    "contentHash": "b7697b477e40"
+  },
+  {
+    "cardId": "frilled-shark",
+    "src": "/images/cards/predator/Deep/frilled-shark.png",
+    "before": "f3950a68290a",
+    "contentHash": "0f804c829cda"
+  },
+  {
+    "cardId": "silky-shark",
+    "src": "/images/cards/predator/oceanic/silky-shark.png",
+    "before": "5a9e3d67d3de",
+    "contentHash": "3da8582430ca"
+  },
+  {
+    "cardId": "nurse-shark",
+    "src": "/images/cards/predator/reef/nurse-shark.png",
+    "before": "8b21deeca94c",
+    "contentHash": "0fa36d92cd45"
+  },
+  {
+    "cardId": "sea-urchin",
+    "src": "/images/cards/invertebrates/Reef/Sea Urchin.png",
+    "before": "8ed64997e570",
+    "contentHash": "e087988ed73e"
+  },
+  {
+    "cardId": "anemone",
+    "src": "/images/cards/invertebrates/Reef/anemone.png",
+    "before": "42e377f95405",
+    "contentHash": "70ab4ebfb581"
+  },
+  {
+    "cardId": "arrow-crab",
+    "src": "/images/cards/invertebrates/Reef/arrow-crab.png",
+    "before": "5a9b739eb076",
+    "contentHash": "20a0a104f08d"
+  },
+  {
+    "cardId": "mantis-shrimp",
+    "src": "/images/cards/invertebrates/Reef/mantis-shrimp.png",
+    "before": "f099f03a8899",
+    "contentHash": "eda01ad7e10e"
+  },
+  {
+    "cardId": "leather-starfish",
+    "src": "/images/cards/invertebrates/Reef/leather-starfish.png",
+    "before": "f10790612af3",
+    "contentHash": "da0e4fcd7df6"
+  },
+  {
+    "cardId": "cleaner-shrimp",
+    "src": "/images/cards/invertebrates/Reef/Cleaner Shrimp.png",
+    "before": "85dc36ad2373",
+    "contentHash": "52fa84dba287"
+  },
+  {
+    "cardId": "giant-triton",
+    "src": "/images/cards/invertebrates/Reef/giant-triton.png",
+    "before": "2112969163a6",
+    "contentHash": "0836ade82fff"
+  },
+  {
+    "cardId": "octopus",
+    "src": "/images/cards/invertebrates/Reef/octopus.png",
+    "before": "f567180d3cad",
+    "contentHash": "3bf58530cef8"
+  },
+  {
+    "cardId": "oysters",
+    "src": "/images/cards/invertebrates/Reef/oysters.png",
+    "before": "95781e3349af",
+    "contentHash": "6cb9a8ab9877"
+  },
+  {
+    "cardId": "deep-cucumber",
+    "src": "/images/cards/invertebrates/Deep/deep-cucumber.png",
+    "before": "2112e457701e",
+    "contentHash": "1223f6fbf53d"
+  },
+  {
+    "cardId": "brittlestar",
+    "src": "/images/cards/invertebrates/Deep/brittlestar.png",
+    "before": "07b320173d39",
+    "contentHash": "c8f6f974744f"
+  },
+  {
+    "cardId": "vampire-squid",
+    "src": "/images/cards/invertebrates/Deep/vampire-squid.png",
+    "before": "53c8df84bee7",
+    "contentHash": "a034e683edb0"
+  },
+  {
+    "cardId": "giant-isopod",
+    "src": "/images/cards/invertebrates/Deep/giant-isopod.png",
+    "before": "dd0287fe46aa",
+    "contentHash": "4f7f15f94996"
+  },
+  {
+    "cardId": "giant-tube-worm",
+    "src": "/images/cards/invertebrates/Deep/giant-tube-worm.png",
+    "before": "5a816a7b14e9",
+    "contentHash": "0a9f2e93f0ea"
+  },
+  {
+    "cardId": "peacock-squid",
+    "src": "/images/cards/invertebrates/Deep/peacock-squid.png",
+    "before": "637a9f94daba",
+    "contentHash": "60542b30196f"
+  },
+  {
+    "cardId": "man-o-war",
+    "src": "/images/cards/invertebrates/Oceanic/portugese-man-o-war.png",
+    "before": "f6b4bd6038c0",
+    "contentHash": "eb2030acf806"
+  },
+  {
+    "cardId": "market-squid",
+    "src": "/images/cards/invertebrates/Oceanic/market-squid.png",
+    "before": "ab36506f52c7",
+    "contentHash": "3733ffaf5615"
+  },
+  {
+    "cardId": "box-jellyfish",
+    "src": "/images/cards/invertebrates/Reef/box-jellyfish.png",
+    "before": "00df1791f088",
+    "contentHash": "d36728fd0611"
+  },
+  {
+    "cardId": "fairy-parrotfish",
+    "src": "/images/cards/fish/Reef/fairy-parrotfish.png",
+    "before": "9947e4a4f027",
+    "contentHash": "5b1b8f7c8d7a"
+  },
+  {
+    "cardId": "longhorn-cowfish",
+    "src": "/images/cards/fish/Reef/longhorn-cowfish.png",
+    "before": "4303d5977c40",
+    "contentHash": "83561660428a"
+  },
+  {
+    "cardId": "frogfish",
+    "src": "/images/cards/fish/Reef/Frogfish.png",
+    "before": "12a123693e93",
+    "contentHash": "a91d1c2db886"
+  },
+  {
+    "cardId": "pacific-grenadier",
+    "src": "/images/cards/fish/Deep/pacific-grenadier.png",
+    "before": "56080386d078",
+    "contentHash": "53565be29240"
+  },
+  {
+    "cardId": "humpback-anglerfish",
+    "src": "/images/cards/fish/Deep/humpback-anglerfish.png",
+    "before": "a4dde16c3ac6",
+    "contentHash": "918bbb3b5eaa"
+  },
+  {
+    "cardId": "fangtooth-fish",
+    "src": "/images/cards/fish/Deep/fangtooth-fish.png",
+    "before": "57bf24e77179",
+    "contentHash": "c7e632a1baf1"
+  },
+  {
+    "cardId": "black-swallower",
+    "src": "/images/cards/fish/Deep/black-swallower.png",
+    "before": "88ca7ba0a5cb",
+    "contentHash": "26c2a6f4dd15"
+  },
+  {
+    "cardId": "tripod-fish",
+    "src": "/images/cards/fish/Deep/tripod-fish.png",
+    "before": "9851b530d3a8",
+    "contentHash": "31a8455f4203"
+  },
+  {
+    "cardId": "halfbeak",
+    "src": "/images/cards/fish/Oceanic/halfbeak.png",
+    "before": "a43fe69854b6",
+    "contentHash": "df581b569e7e"
+  },
+  {
+    "cardId": "needlefish",
+    "src": "/images/cards/fish/Oceanic/needlefish.png",
+    "before": "5ad073533981",
+    "contentHash": "c179a8c642fe"
+  },
+  {
+    "cardId": "krill-bloom-base",
+    "src": "/images/cards/fish/Oceanic/krill-bloom-base.png",
+    "before": "e96069f9a7d7",
+    "contentHash": "4edac9defe1f"
+  },
+  {
+    "cardId": "krill-bloom-stage1",
+    "src": "/images/cards/fish/Oceanic/krill-bloom-stage-1.png",
+    "before": "a9898cdb355d",
+    "contentHash": "28752a941d59"
+  },
+  {
+    "cardId": "krill-bloom-stage2",
+    "src": "/images/cards/fish/Oceanic/krill-bloom-stage-2.png",
+    "before": "b44fa36f4fb2",
+    "contentHash": "e9182a3b03ec"
+  },
+  {
+    "cardId": "sardine-ball-base",
+    "src": "/images/cards/fish/Oceanic/sardine-ball-base.png",
+    "before": "52996a2eae45",
+    "contentHash": "4db2e519c2df"
+  },
+  {
+    "cardId": "sardine-ball-stage1",
+    "src": "/images/cards/fish/Oceanic/sardine-ball-stage-1.png",
+    "before": "0e8d20ab6468",
+    "contentHash": "85944f947117"
+  },
+  {
+    "cardId": "sardine-ball-stage2",
+    "src": "/images/cards/fish/Oceanic/sardine-ball-stage-2.png",
+    "before": "aac39a0843f1",
+    "contentHash": "66ec18cd1e8a"
+  },
+  {
+    "cardId": "anchovy-ball-base",
+    "src": "/images/cards/fish/Oceanic/anchovy-ball-base.png",
+    "before": "e0506c8b9e1b",
+    "contentHash": "46af8604873d"
+  },
+  {
+    "cardId": "anchovy-ball-stage1",
+    "src": "/images/cards/fish/Oceanic/anchovy-ball-stage-1.png",
+    "before": "929fb904d201",
+    "contentHash": "b49da166162c"
+  },
+  {
+    "cardId": "anchovy-ball-stage2",
+    "src": "/images/cards/fish/Oceanic/anchovy-ball-stage-2.png",
+    "before": "ede1a4af6389",
+    "contentHash": "66f5ed5ad398"
+  },
+  {
+    "cardId": "silverside-ball-base",
+    "src": "/images/cards/fish/Oceanic/silverside-ball-base.png",
+    "before": "c853e70264ad",
+    "contentHash": "6a310ca2ba90"
+  },
+  {
+    "cardId": "silverside-ball-stage1",
+    "src": "/images/cards/fish/Oceanic/silverside-ball-stage-1.png",
+    "before": "e629e7213711",
+    "contentHash": "831f705e76ab"
+  },
+  {
+    "cardId": "silverside-ball-stage2",
+    "src": "/images/cards/fish/Oceanic/silverside-ball-stage-2.png",
+    "before": "ca05bba8607d",
+    "contentHash": "8d795d2d7228"
+  },
+  {
+    "cardId": "herring-ball-base",
+    "src": "/images/cards/fish/Oceanic/herring-ball-base.png",
+    "before": "6041f965ed42",
+    "contentHash": "cf18e77d1c6f"
+  },
+  {
+    "cardId": "herring-ball-stage1",
+    "src": "/images/cards/fish/Oceanic/herring-ball-stage-1.png",
+    "before": "711a9d08bdad",
+    "contentHash": "4da2f5b47031"
+  },
+  {
+    "cardId": "herring-ball-stage2",
+    "src": "/images/cards/fish/Oceanic/herring-ball-stage-2.png",
+    "before": "f94204b28e97",
+    "contentHash": "4695e3add64f"
+  }
+]

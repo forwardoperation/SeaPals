@@ -1,0 +1,7 @@
+Use case: precise-object-edit / background replacement.
+Image 1 is the existing finished SeaRealm social thumbnail, the edit target.
+Image 2 is the user's exact replacement background, rasterized from their supplied background SVG. Use it as the actual background.
+Change ONLY the background behind the logo and three cards in Image 1 to the background from Image 2: smooth blue/teal ocean gradient, soft pale blurred surface highlights across the top, gentle blurred underwater light. Preserve the appearance, colors, softness, and simple flat composition of the provided background. Fill the whole rectangular output edge to edge with the interior blue portion of Image 2; crop off any transparent outer margins. Do not preserve the old sea floor, sand, rocks, bubbles or textured backdrop. Do not invent a different ocean background.
+Keep the SeaRealm logo, wave, TRADING CARD GAME subtitle, their white/blue colors, size, positioning and lettering exactly unchanged.
+Keep all three cards exactly unchanged, including their shape, positions, scale, angle, overlaps, border, text, printed details, and creature art. Left Reef Manta Ray sunset card, centered Humpback Whale, right Great White. All three are released designs without PRERELEASE stamps. Do not add or remove anything on the cards. Preserve the restrained card shadows to sit over the new background.
+No slogan or new text. Same wide 1200:630 aspect ratio and same composition as Image 1. Opaque finished image, no transparency, no frame.

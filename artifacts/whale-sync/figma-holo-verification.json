@@ -1,0 +1,553 @@
+{
+  "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
+  "pageId": "3961:6979",
+  "verifiedAt": "2026-10-04T23:07:48.847Z",
+  "sets": [
+    {
+      "id": "3961:6980",
+      "name": "Reef Set — Holo Rare",
+      "cards": [
+        {
+          "id": "3961:7866",
+          "name": "holo-reef-001-manta-ray",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:7868;3277:49136;2042:42427",
+              "text": "1/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:11858",
+          "name": "holo-reef-002-great-white",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:11860;3277:49136;2042:42427",
+              "text": "2/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:16232",
+          "name": "holo-reef-003-tiger-shark",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:16244;2058:34045;2042:42427",
+              "text": "3/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:18357",
+          "name": "holo-reef-004-bull-shark",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:18368;2058:34045;2042:42427",
+              "text": "4/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:20579",
+          "name": "holo-reef-005-hammerhead",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:20596;2058:34045;2042:42427",
+              "text": "5/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:23802",
+          "name": "holo-reef-006-bottlenose-dolphin",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:23804;2058:34045;2042:42427",
+              "text": "6/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:27664",
+          "name": "holo-reef-007-goliath-grouper",
+          "width": 751,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:27666;2115:64304;2042:42427",
+              "text": "7/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:30364",
+          "name": "holo-reef-008-spinner-dolphins",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:30366;2115:64304;2042:42427",
+              "text": "8/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:33382",
+          "name": "holo-reef-009-emperor-angelfish",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:33384;2115:64355;2042:42427",
+              "text": "9/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:39224",
+          "name": "holo-reef-010-queen-angelfish",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:39227;2115:64355;2042:42427",
+              "text": "10/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:42158",
+          "name": "holo-reef-011-giant-triton",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:42160;213:3172;311:3878",
+              "text": "11/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:42254",
+          "name": "holo-reef-012-oysters",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:42257;213:3172;311:3878",
+              "text": "12/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:45647",
+          "name": "holo-reef-013-boulder-star-coral-stage-2",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:45649;2243:90561;2042:42427",
+              "text": "13/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:49365",
+          "name": "holo-reef-014-brain-coral-stage-2",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:49367;2243:90561;2042:42427",
+              "text": "14/102"
+            }
+          ]
+        },
+        {
+          "id": "3961:51822",
+          "name": "holo-reef-015-elkhorn-coral-stage-2",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3961:51824;2243:90561;2042:42427",
+              "text": "15/102"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3962:26155",
+      "name": "Oceanic Set — Holo Rare",
+      "cards": [
+        {
+          "id": "3962:26162",
+          "name": "holo-ocean-001-blue-whale",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:26164;2108:268853;1314:109390",
+              "text": "1/64"
+            }
+          ]
+        },
+        {
+          "id": "3962:27263",
+          "name": "holo-ocean-002-oceanic-manta-ray",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:27265;3068:1062438;1314:109390",
+              "text": "2/64"
+            }
+          ]
+        },
+        {
+          "id": "3962:27992",
+          "name": "holo-ocean-003-humpback-whale",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:27994;2108:268853;1314:109390",
+              "text": "3/64"
+            }
+          ]
+        },
+        {
+          "id": "3962:30546",
+          "name": "holo-ocean-004-killer-whale-oceanic",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:30548;1993:12720;1314:109390",
+              "text": "4/64"
+            }
+          ]
+        },
+        {
+          "id": "3962:32799",
+          "name": "holo-ocean-005-shortfin-mako-shark",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:32801;1993:12720;1314:109390",
+              "text": "5/64"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3962:33782",
+      "name": "Deep Set — Holo Rare",
+      "cards": [
+        {
+          "id": "3962:33790",
+          "name": "holo-deep-001-megamouth-shark",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:33792;2115:56929;1314:109390",
+              "text": "1/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:35714",
+          "name": "holo-deep-002-colossal-squid",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:35716;3068:1062438;1314:109390",
+              "text": "2/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:37999",
+          "name": "holo-deep-003-sperm-whale",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3981:40116;2265:227333;2042:55508",
+              "text": "3/62"
+            }
+          ],
+          "children": [
+            {
+              "id": "3981:40115",
+              "name": "image 5",
+              "x": -35,
+              "y": 84
+            },
+            {
+              "id": "3981:40116",
+              "name": "deep-apex-predator-standard",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "id": "3981:40489",
+              "name": "Passive",
+              "x": 53.9927978515625,
+              "y": 655.5068359375
+            },
+            {
+              "id": "3981:40495",
+              "name": "On Play",
+              "x": 53.9927978515625,
+              "y": 772.085693359375
+            },
+            {
+              "id": "3981:40501",
+              "name": "attack-icon",
+              "x": 53.9927978515625,
+              "y": 817.919921875
+            },
+            {
+              "id": "3981:40708",
+              "name": "SpecialRules",
+              "x": 51,
+              "y": 533
+            },
+            {
+              "id": "3981:40713",
+              "name": "environment_icon",
+              "x": 322,
+              "y": 568
+            }
+          ],
+          "text": [
+            "Deep Apex Predator",
+            "D20",
+            "9RP",
+            "9VP",
+            "Can only be played if       Abyss Habitat is in your Ecosystem. If destroyed, place in lost zone."
+          ]
+        },
+        {
+          "id": "3962:40373",
+          "name": "holo-deep-004-giant-phantom-jelly",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:40375;2265:227333;2042:55508",
+              "text": "4/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:42053",
+          "name": "holo-deep-005-giant-squid",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:42055;2265:227333;2042:55508",
+              "text": "5/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:43966",
+          "name": "holo-deep-006-greenland-shark",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:43969;2265:227333;2042:55508",
+              "text": "6/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:45957",
+          "name": "holo-deep-007-pilot-whale-oceanic",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3981:40758;2265:227333;2042:55508",
+              "text": "7/62"
+            }
+          ],
+          "children": [
+            {
+              "id": "3981:40721",
+              "name": "PilotWhale",
+              "x": -156,
+              "y": -216
+            },
+            {
+              "id": "3981:40758",
+              "name": "deep-apex-predator-standard",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "id": "3981:41131",
+              "name": "On Play",
+              "x": 52,
+              "y": 652.244873046875
+            },
+            {
+              "id": "3981:41137",
+              "name": "On Play",
+              "x": 52,
+              "y": 762.8450927734375
+            },
+            {
+              "id": "3981:41143",
+              "name": "Your opponent cannot play support cards on their next turn.",
+              "x": 61.97119140625,
+              "y": 699.07568359375
+            },
+            {
+              "id": "3981:41144",
+              "name": "attack-icon",
+              "x": 55.9927978515625,
+              "y": 812.6650390625
+            },
+            {
+              "id": "3981:41351",
+              "name": "SpecialRules",
+              "x": 51,
+              "y": 533
+            },
+            {
+              "id": "3981:41356",
+              "name": "environment_icon",
+              "x": 322,
+              "y": 568
+            }
+          ],
+          "text": [
+            "Deep Apex Predator",
+            "D20",
+            "9RP",
+            "9VP",
+            "Can only be played if       Abyss Habitat is in your Ecosystem. If destroyed, place in lost zone."
+          ]
+        },
+        {
+          "id": "3962:48661",
+          "name": "holo-deep-008-goblin-shark",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:48663;2266:229155;2042:55508",
+              "text": "8/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:51002",
+          "name": "holo-deep-009-giant-isopod",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:51004;2266:229616;2042:55508",
+              "text": "9/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:52434",
+          "name": "holo-deep-010-vampire-squid",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:52437;2266:229616;2042:55508",
+              "text": "10/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:54556",
+          "name": "holo-deep-011-barrel-eye-fish",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:54558;2266:228981;2042:55508",
+              "text": "11/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:55990",
+          "name": "holo-deep-012-coelacanth",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:55992;2266:228981;2042:55508",
+              "text": "12/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:57784",
+          "name": "holo-deep-013-bamboo_coral_stage2",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:57786;2266:230935;2042:55508",
+              "text": "13/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:59370",
+          "name": "holo-deep-014-black_coral_stage2",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:59372;2266:230935;2042:55508",
+              "text": "14/62"
+            }
+          ]
+        },
+        {
+          "id": "3962:60977",
+          "name": "holo-deep-015-deep_mushroom_stage2",
+          "width": 750,
+          "height": 1050,
+          "numbers": [
+            {
+              "id": "I3962:60979;2266:230935;2042:55508",
+              "text": "15/62"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

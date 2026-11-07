@@ -1,0 +1,319 @@
+{
+  "pages": [
+    {
+      "route": "/gallery",
+      "status": 200,
+      "expected": null
+    },
+    {
+      "route": "/encyclopedia/octopus",
+      "status": 200,
+      "expected": "Hapalochlaena lunulata"
+    },
+    {
+      "route": "/encyclopedia/mantis-shrimp",
+      "status": 200,
+      "expected": "Odontodactylus scyllarus"
+    },
+    {
+      "route": "/encyclopedia/cleaner-shrimp",
+      "status": 200,
+      "expected": "~2.2g"
+    },
+    {
+      "route": "/encyclopedia/krill-bloom",
+      "status": 200,
+      "expected": "Euphausia superba"
+    },
+    {
+      "route": "/encyclopedia/brittlestar",
+      "status": 200,
+      "expected": "~3g"
+    }
+  ],
+  "images": [
+    {
+      "cardId": "chimera",
+      "status": 200,
+      "contentHash": "b7697b477e40"
+    },
+    {
+      "cardId": "anemone",
+      "status": 200,
+      "contentHash": "70ab4ebfb581"
+    },
+    {
+      "cardId": "sea-urchin",
+      "status": 200,
+      "contentHash": "e087988ed73e"
+    },
+    {
+      "cardId": "nurse-shark",
+      "status": 200,
+      "contentHash": "0fa36d92cd45"
+    },
+    {
+      "cardId": "silky-shark",
+      "status": 200,
+      "contentHash": "3da8582430ca"
+    },
+    {
+      "cardId": "frilled-shark",
+      "status": 200,
+      "contentHash": "0f804c829cda"
+    },
+    {
+      "cardId": "giant-triton",
+      "status": 200,
+      "contentHash": "0836ade82fff"
+    },
+    {
+      "cardId": "cleaner-shrimp",
+      "status": 200,
+      "contentHash": "52fa84dba287"
+    },
+    {
+      "cardId": "leather-starfish",
+      "status": 200,
+      "contentHash": "da0e4fcd7df6"
+    },
+    {
+      "cardId": "arrow-crab",
+      "status": 200,
+      "contentHash": "20a0a104f08d"
+    },
+    {
+      "cardId": "mantis-shrimp",
+      "status": 200,
+      "contentHash": "eda01ad7e10e"
+    },
+    {
+      "cardId": "octopus",
+      "status": 200,
+      "contentHash": "3bf58530cef8"
+    },
+    {
+      "cardId": "vampire-squid",
+      "status": 200,
+      "contentHash": "a034e683edb0"
+    },
+    {
+      "cardId": "oysters",
+      "status": 200,
+      "contentHash": "6cb9a8ab9877"
+    },
+    {
+      "cardId": "brittlestar",
+      "status": 200,
+      "contentHash": "c8f6f974744f"
+    },
+    {
+      "cardId": "deep-cucumber",
+      "status": 200,
+      "contentHash": "1223f6fbf53d"
+    },
+    {
+      "cardId": "giant-isopod",
+      "status": 200,
+      "contentHash": "4f7f15f94996"
+    },
+    {
+      "cardId": "giant-tube-worm",
+      "status": 200,
+      "contentHash": "0a9f2e93f0ea"
+    },
+    {
+      "cardId": "peacock-squid",
+      "status": 200,
+      "contentHash": "60542b30196f"
+    },
+    {
+      "cardId": "market-squid",
+      "status": 200,
+      "contentHash": "3733ffaf5615"
+    },
+    {
+      "cardId": "man-o-war",
+      "status": 200,
+      "contentHash": "eb2030acf806"
+    },
+    {
+      "cardId": "fairy-parrotfish",
+      "status": 200,
+      "contentHash": "5b1b8f7c8d7a"
+    },
+    {
+      "cardId": "longhorn-cowfish",
+      "status": 200,
+      "contentHash": "83561660428a"
+    },
+    {
+      "cardId": "box-jellyfish",
+      "status": 200,
+      "contentHash": "d36728fd0611"
+    },
+    {
+      "cardId": "fangtooth-fish",
+      "status": 200,
+      "contentHash": "c7e632a1baf1"
+    },
+    {
+      "cardId": "black-swallower",
+      "status": 200,
+      "contentHash": "26c2a6f4dd15"
+    },
+    {
+      "cardId": "tripod-fish",
+      "status": 200,
+      "contentHash": "31a8455f4203"
+    },
+    {
+      "cardId": "pacific-grenadier",
+      "status": 200,
+      "contentHash": "53565be29240"
+    },
+    {
+      "cardId": "frogfish",
+      "status": 200,
+      "contentHash": "a91d1c2db886"
+    },
+    {
+      "cardId": "humpback-anglerfish",
+      "status": 200,
+      "contentHash": "918bbb3b5eaa"
+    },
+    {
+      "cardId": "krill-bloom-stage1",
+      "status": 200,
+      "contentHash": "28752a941d59"
+    },
+    {
+      "cardId": "krill-bloom-base",
+      "status": 200,
+      "contentHash": "4edac9defe1f"
+    },
+    {
+      "cardId": "krill-bloom-stage2",
+      "status": 200,
+      "contentHash": "e9182a3b03ec"
+    },
+    {
+      "cardId": "halfbeak",
+      "status": 200,
+      "contentHash": "df581b569e7e"
+    },
+    {
+      "cardId": "sardine-ball-base",
+      "status": 200,
+      "contentHash": "4db2e519c2df"
+    },
+    {
+      "cardId": "needlefish",
+      "status": 200,
+      "contentHash": "c179a8c642fe"
+    },
+    {
+      "cardId": "anchovy-ball-stage2",
+      "status": 200,
+      "contentHash": "66f5ed5ad398"
+    },
+    {
+      "cardId": "silverside-ball-base",
+      "status": 200,
+      "contentHash": "6a310ca2ba90"
+    },
+    {
+      "cardId": "anchovy-ball-stage1",
+      "status": 200,
+      "contentHash": "b49da166162c"
+    },
+    {
+      "cardId": "anchovy-ball-base",
+      "status": 200,
+      "contentHash": "46af8604873d"
+    },
+    {
+      "cardId": "sardine-ball-stage1",
+      "status": 200,
+      "contentHash": "85944f947117"
+    },
+    {
+      "cardId": "sardine-ball-stage2",
+      "status": 200,
+      "contentHash": "66ec18cd1e8a"
+    },
+    {
+      "cardId": "herring-ball-base",
+      "status": 200,
+      "contentHash": "cf18e77d1c6f"
+    },
+    {
+      "cardId": "herring-ball-stage2",
+      "status": 200,
+      "contentHash": "4695e3add64f"
+    },
+    {
+      "cardId": "silverside-ball-stage2",
+      "status": 200,
+      "contentHash": "8d795d2d7228"
+    },
+    {
+      "cardId": "herring-ball-stage1",
+      "status": 200,
+      "contentHash": "4da2f5b47031"
+    },
+    {
+      "cardId": "silverside-ball-stage1",
+      "status": 200,
+      "contentHash": "831f705e76ab"
+    }
+  ],
+  "scripts": [
+    {
+      "src": "/_next/static/chunks/4bd1b696-c2f6e0877b6c10aa.js",
+      "status": 200
+    },
+    {
+      "src": "/_next/static/chunks/3794-9e54f1de291f2323.js",
+      "status": 200
+    },
+    {
+      "src": "/_next/static/chunks/main-app-51c8aa5b78bb8bd4.js",
+      "status": 200
+    },
+    {
+      "src": "/_next/static/chunks/8500-3953cc33eeceb44e.js",
+      "status": 200
+    },
+    {
+      "src": "/_next/static/chunks/8437-e74155deec521a50.js",
+      "status": 200
+    },
+    {
+      "src": "/_next/static/chunks/6180-3fe5a891d6f2b9a4.js",
+      "status": 200
+    },
+    {
+      "src": "/_next/static/chunks/9914-f1e0fadcad0e021a.js",
+      "status": 200
+    },
+    {
+      "src": "/_next/static/chunks/app/layout-794fc1f75818d8ba.js",
+      "status": 200
+    },
+    {
+      "src": "/_next/static/chunks/app/gallery/page-9c9f5cc80e1e847e.js",
+      "status": 200
+    },
+    {
+      "src": "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "status": 200
+    },
+    {
+      "src": "/_next/static/chunks/webpack-6dde49a7f40a4bac.js",
+      "status": 200
+    }
+  ],
+  "verifiedAt": "2026-10-13T16:21:52.568Z",
+  "galleryHashReferences": 47
+}

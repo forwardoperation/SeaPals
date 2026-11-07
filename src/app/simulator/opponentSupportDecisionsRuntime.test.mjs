@@ -11,7 +11,7 @@ import {
 } from "./opponentPlayRules.mjs";
 
 const source = await readFile(new URL("./Simulator.jsx", import.meta.url), "utf8");
-const start = source.indexOf("function runOpponentSupports(opponentState)");
+const start = source.indexOf("function runOpponentSupports(");
 const end = source.indexOf("function runOpponentTurn(", start);
 assert.ok(start >= 0 && end > start);
 const supportSource = source.slice(start, end);
@@ -22,7 +22,7 @@ const cards = {
   "poison-heal": support("poison-heal"),
   "rov-lights": support("rov-lights"),
   "spearfishing": support("spearfishing"),
-  "dr-evans": support("dr-evans", [{ type: "draw", amount: 7 }]),
+  "dr-evans": support("dr-evans", [{ type: "draw", amount: 8 }]),
   "scientist-jes": support("scientist-jes", [{ type: "search", targetKind: "habitat", amount: 1 }, { type: "draw", amount: 3 }]),
   "explorer-jordan": support("explorer-jordan", [{ type: "search", amount: 1 }]),
   "robotic-survey": support("robotic-survey", [{ type: "chooseFromTopDeck", amount: 5, targetKind: "creature" }]),
@@ -45,6 +45,34 @@ function state(overrides = {}) {
   };
 }
 
+test("an opponent that has played an Aide can still play an Item but cannot play another Aide", () => {
+  const typedCards = {
+    ...cards,
+    "aide-search": { ...support("aide-search", [{ type: "search", targetKind: "creature", amount: 1 }]), supportType: "aide" },
+    "item-search": { ...support("item-search", [{ type: "search", targetKind: "creature", amount: 1 }]), supportType: "item" },
+  };
+  const result = createRuntime("hard", { cardsById: typedCards })(state({
+    hand: ["aide-search", "item-search"], palsDeck: ["useful-fish", "fish"], aidePlayedThisTurn: true,
+  }));
+  assert.deepEqual(result.events.map((event) => event.sourceCardId), ["item-search"]);
+  assert.ok(result.state.hand.includes("aide-search"));
+  assert.ok(result.state.hand.includes("useful-fish"));
+  assert.equal(result.state.aidePlayedThisTurn, true);
+});
+
+test("Deadly Sighting blocks AI Aides for one turn while allowing Items", () => {
+  const typedCards = {
+    ...cards,
+    "aide-search": { ...support("aide-search", [{ type: "search", targetKind: "creature", amount: 1 }]), supportType: "aide" },
+    "item-search": { ...support("item-search", [{ type: "search", targetKind: "creature", amount: 1 }]), supportType: "item" },
+  };
+  const play = createRuntime("hard", { cardsById: typedCards });
+  const blocked = play(state({ hand: ["aide-search", "item-search"], palsDeck: ["useful-fish", "fish"], aideBlockedUntilRound: 3 }));
+  assert.deepEqual(blocked.events.map((event) => event.sourceCardId), ["item-search"]);
+  const expired = play(state({ hand: ["aide-search"], palsDeck: ["useful-fish"], aideBlockedUntilRound: 2 }));
+  assert.deepEqual(expired.events.map((event) => event.sourceCardId), ["aide-search"]);
+});
+
 function createRuntime(difficulty, extraDependencies = {}) {
   const removeOneCard = (items, id) => {
     const copy = [...items];
@@ -56,6 +84,7 @@ function createRuntime(difficulty, extraDependencies = {}) {
     opponentDifficulty: difficulty, OpponentDifficulty, round: 3, turn: 6,
     opponentVp: 0, victoryTarget: 30, activeCondition: null, schoolDensityConditionIds: [],
     playerCorals: [], playerCoralCards: [], playerReefCreatures: [], playerReefCreatureInstances: [], playerOrphanCreatures: [], playerOrphanCreatureInstances: [],
+    creatureStatuses: {}, playerHabitats: [],
     cardsById: cards,
     CardKind: { SUPPORT: "support", CREATURE: "creature", CORAL: "coral", HABITAT: "habitat" },
     CardCategory: { FISH: "fish", PREDATOR: "predator" }, CreatureZone: { OCEAN: "ocean" },
@@ -123,10 +152,11 @@ for (const difficulty of Object.values(OpponentDifficulty)) {
     assert.deepEqual(result.state.hand, ["useful-fish"]);
   });
 
-  test(`${difficulty} recovers a useful play instead of a redundant support`, () => {
-    const result = createRuntime(difficulty)(state({ hand: ["recovery"], discardPile: ["poison-heal", "expensive-fish", "useful-fish"], poisonImmunityNextPredatorAttack: true }));
-    assert.deepEqual(result.state.hand, ["useful-fish"]);
-    assert.equal(result.events[0].opponentCoinFlip.result, "heads");
+  test(`${difficulty} recovers only a useful Support and leaves creatures in discard`, () => {
+    const result = createRuntime(difficulty)(state({ hand: ["recovery"], discardPile: ["explorer-jordan", "expensive-fish", "useful-fish"], palsDeck: ["useful-fish"] }));
+    assert.deepEqual(result.state.hand, [difficulty === "easy" ? "explorer-jordan" : "useful-fish"]);
+    assert.equal(result.events[0].opponentCoinFlip, null);
+    assert.ok(result.state.discardPile.includes("expensive-fish"));
   });
 
   test(`${difficulty} protects the RP needed for an immediate winning creature before searching`, () => {

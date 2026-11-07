@@ -1,0 +1,23 @@
+{
+  "source": {
+    "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
+    "pageId": "4473:42011",
+    "imageNodeId": "4473:42013",
+    "reference": "reference.png"
+  },
+  "result": {
+    "nodeId": "4477:56743",
+    "name": "Oyster background — water and rocks (vector)",
+    "svg": "oyster-background.svg",
+    "bounds": {
+      "x": 801,
+      "y": -426,
+      "width": 1288,
+      "height": 766
+    },
+    "paths": 6287,
+    "embeddedImages": 0
+  },
+  "scope": "Visible water and rocks only, including the green outlined foreground rock. Four oyster contours remain transparent; no hidden background was reconstructed. Original photo, oyster vectors and card template preserved.",
+  "validation": "Figma structure reports 6287 VECTOR descendants and zero image fills; rendered SVG and Figma screenshot visually checked."
+}

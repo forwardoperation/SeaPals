@@ -1,0 +1,40 @@
+{
+  "source_blend": "C:\\Users\\jacob\\Documents\\Blender\\paper-stapling-rig\\paper-stapling-rig.blend",
+  "paper_mm": [
+    215.9,
+    279.4
+  ],
+  "usable_paper_pocket_mm": [
+    216.4,
+    279.9
+  ],
+  "total_paper_clearance_mm": 0.5,
+  "paper_registration": "Seat against TOP and RIGHT corner-stop faces; paper origin (0.5,0.5) mm.",
+  "paper_support_height_mm": 12.7,
+  "corner_stop_height_above_bed_mm": 3.0,
+  "overall_height_mm": 15.7,
+  "overall_footprint_mm": [
+    222.8,
+    286.29999999999995
+  ],
+  "stapler_base_width_mm_user_approximate": 38.1,
+  "stapler_groove_clear_width_mm": 38.7,
+  "toe_to_staple_mm_user": 15.875,
+  "groove_depth_past_nominal_left_paper_edge_mm": 21.293666666666667,
+  "groove_depth_past_nominal_right_paper_edge_mm": 22.140333333333334,
+  "left_staple_inset_mm": 5.418666666666667,
+  "right_staple_inset_mm": 6.265333333333333,
+  "groove_centers_from_nominal_paper_top_mm": [
+    49.403,
+    233.807
+  ],
+  "stapler_reference_plane": "Tabletop Z=0; no floor inside notches",
+  "non_manifold_edges": 0,
+  "connected_components": 1,
+  "volume_mm3": 762879.6944825299,
+  "caveats": [
+    "0.5mm paper-pocket freedom means exact staple location requires consistent top/right seating and scrap calibration.",
+    "Figma positions assume nominal print size; Epson borderless enlargement remains a physical-print calibration issue.",
+    "One-piece length is286.3mm. Confirm build plate or split in slicer; no extra components are introduced."
+  ]
+}

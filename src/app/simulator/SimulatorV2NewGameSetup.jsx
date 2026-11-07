@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { cardsById } from "@/data/cards";
+import { getDeckSimulationWarnings } from "@/lib/decks/deckSimulationWarnings.mjs";
 import styles from "./SimulatorV2NewGameSetup.module.css";
 import { SIMULATOR_V2_LESSONS } from "./simulatorV2Lessons.mjs";
 
@@ -27,6 +29,12 @@ export default function SimulatorV2NewGameSetup({
   onCancelRef.current = onCancel;
   const [playerDeckId, setPlayerDeckId] = useState(initialPlayerDeckId);
   const [opponentDeckId, setOpponentDeckId] = useState(initialOpponentDeckId);
+  const playerDeck = decks.find((deck) => deck.id === playerDeckId);
+  const opponentDeck = decks.find((deck) => deck.id === opponentDeckId);
+  const simulationWarnings = [...new Set([
+    ...getDeckSimulationWarnings(playerDeck, cardsById),
+    ...getDeckSimulationWarnings(opponentDeck, cardsById),
+  ])];
   const [difficultyIndex, setDifficultyIndex] = useState(() => (
     getDifficultyIndex(difficultyOptions, initialDifficulty)
   ));
@@ -134,13 +142,15 @@ export default function SimulatorV2NewGameSetup({
           <form className={styles.form} onSubmit={startMatch}>
             <div className={styles.deckGrid}>
               <label className={`${styles.deckField} ${styles.playerField}`}>
-                <span className={styles.fieldLabel}>Your deck</span>
+                <span id="seapals-player-deck-label" className={styles.fieldLabel}>Your deck</span>
                 <span className={styles.selectWrap}>
                   <select
                     value={playerDeckId}
                     onChange={(event) => setPlayerDeckId(event.currentTarget.value)}
                     className={styles.select}
                     data-v2-player-deck
+                    aria-labelledby="seapals-player-deck-label"
+                    aria-describedby="seapals-player-deck-description"
                   >
                     {decks.map((deck) => (
                       <option key={deck.id} value={deck.id}>{deck.name}</option>
@@ -148,16 +158,21 @@ export default function SimulatorV2NewGameSetup({
                   </select>
                   <span className={styles.selectChevron} aria-hidden="true" />
                 </span>
+                <span id="seapals-player-deck-description" className={styles.deckDescription}>
+                  {playerDeck?.description}
+                </span>
               </label>
 
               <label className={`${styles.deckField} ${styles.opponentField}`}>
-                <span className={styles.fieldLabel}>Opponent deck</span>
+                <span id="seapals-opponent-deck-label" className={styles.fieldLabel}>Opponent deck</span>
                 <span className={styles.selectWrap}>
                   <select
                     value={opponentDeckId}
                     onChange={(event) => setOpponentDeckId(event.currentTarget.value)}
                     className={styles.select}
                     data-v2-opponent-deck
+                    aria-labelledby="seapals-opponent-deck-label"
+                    aria-describedby="seapals-opponent-deck-description"
                   >
                     {decks.map((deck) => (
                       <option key={deck.id} value={deck.id}>{deck.name}</option>
@@ -165,8 +180,18 @@ export default function SimulatorV2NewGameSetup({
                   </select>
                   <span className={styles.selectChevron} aria-hidden="true" />
                 </span>
+                <span id="seapals-opponent-deck-description" className={styles.deckDescription}>
+                  {opponentDeck?.description}
+                </span>
               </label>
             </div>
+
+            {simulationWarnings.length ? (
+              <aside className={styles.simulationNote} aria-live="polite">
+                <strong>Some card effects are still being added</strong>
+                <ul>{simulationWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+              </aside>
+            ) : null}
 
             <fieldset className={styles.difficultyField}>
               <legend id="seapals-v2-difficulty-label" className={styles.fieldLabel}>

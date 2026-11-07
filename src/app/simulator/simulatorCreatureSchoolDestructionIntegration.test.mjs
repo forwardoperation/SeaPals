@@ -67,12 +67,15 @@ function loadOpponentProjection() {
   return Function(
     "reconcileFoundationHealthToFixedPoint",
     "activeCondition",
+    "playerHabitats",
     "getEcosystemRpCap",
     "resolveFoundationDestructionTriggers",
+    "nextGameplayRandom",
     `"use strict"; ${projectionSource}; return projectNormalizedOpponentState;`,
   )(
     reconcileFoundationHealthToFixedPoint,
     null,
+    [],
     () => 8,
     (destructionWaves, hand, discardPile, handLimit) => resolveDestructionRecoveryWaves(
       destructionWaves,
@@ -81,6 +84,7 @@ function loadOpponentProjection() {
       handLimit,
       () => null,
     ),
+    () => 0.5,
   );
 }
 

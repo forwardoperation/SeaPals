@@ -34,8 +34,9 @@ function requiredText(value, label) {
 
 // Display metadata never registers a playable card or changes simulator rules.
 // The public master supplies canonical metadata; verified printed names can
-// override display copy. A physical card outside that master (currently Winter
-// Flounder) uses its image-manifest entry for canonical metadata.
+// override display copy, with explicit master renames applied to older names.
+// Saved print-sheet provenance stays unchanged. A physical card outside that
+// master (currently Winter Flounder) uses its image-manifest entry for metadata.
 export function buildPhysicalDeckContents(physicalManifest, imageManifest, masterSetList) {
   const definitions = physicalManifest?.decks;
   if (!Array.isArray(definitions) || definitions.length !== PHYSICAL_DECK_IDS.length ||
@@ -83,9 +84,12 @@ export function buildPhysicalDeckContents(physicalManifest, imageManifest, maste
       }
       const metadata = masterById.get(cardId) ?? image;
       const canonicalName = requiredText(metadata.name, `card name for ${cardId}`);
-      const name = Object.hasOwn(entry, "printedName")
+      const printedName = Object.hasOwn(entry, "printedName")
         ? requiredText(entry.printedName, `printed name for ${cardId}`)
         : canonicalName;
+      const name = Object.hasOwn(masterSetList?.nameOverrides ?? {}, printedName)
+        ? requiredText(masterSetList.nameOverrides[printedName], `name override for ${cardId}`)
+        : printedName;
       const category = metadata.category;
       if (!Object.hasOwn(CATEGORY_LABELS, category)) {
         throw new Error(`Missing physical deck category metadata for ${cardId}.`);

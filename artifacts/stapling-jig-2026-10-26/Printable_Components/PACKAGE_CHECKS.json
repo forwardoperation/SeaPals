@@ -1,0 +1,540 @@
+{
+  "status": "PROTOTYPE - physical fit and print scaling unverified",
+  "assembly_pieces": 35,
+  "optional_gauges": 3,
+  "validation": "Copied STLs match original SHA-256, binary triangle counts, manifest dimensions, and Z=0 placement.",
+  "parts": [
+    {
+      "folder": "01_Paper_Tray_4_Pieces",
+      "file": "tray_11.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        128.45,
+        153.7,
+        16
+      ],
+      "notes": "Print upright. Butt seams; align with underside keys on a flat board. Glue keys after a dry fit.",
+      "sha256": "782b644c3f85a3f7eca543fcc698057a87235ab95a6a2c58510f562cdb719291",
+      "triangles": 134
+    },
+    {
+      "folder": "01_Paper_Tray_4_Pieces",
+      "file": "tray_12.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        128.45,
+        153.7,
+        19
+      ],
+      "notes": "Print upright. Butt seams; align with underside keys on a flat board. Glue keys after a dry fit.",
+      "sha256": "9a151095b83cd7a3ddba19bfb06a1829a64e3f0ec4d86022cebeb33d6b0c33c1",
+      "triangles": 486
+    },
+    {
+      "folder": "01_Paper_Tray_4_Pieces",
+      "file": "tray_21.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        128.45,
+        153.7,
+        16
+      ],
+      "notes": "Print upright. Butt seams; align with underside keys on a flat board. Glue keys after a dry fit.",
+      "sha256": "e824493e779c37454c32c9d106e347a10f801ef5b670e250f14452701aa310b1",
+      "triangles": 134
+    },
+    {
+      "folder": "01_Paper_Tray_4_Pieces",
+      "file": "tray_22.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        128.45,
+        153.7,
+        19
+      ],
+      "notes": "Print upright. Butt seams; align with underside keys on a flat board. Glue keys after a dry fit.",
+      "sha256": "ca1923831db4318871018c854b9b0ef49e52653a25e6882c4751ef1e3655babb",
+      "triangles": 490
+    },
+    {
+      "folder": "02_Stapler_Docks_10_Pieces",
+      "file": "dock_1_floor_1.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        108,
+        88,
+        4
+      ],
+      "notes": "Print flat. Align with underside keys. Attach to the same flat board as the tray; hardware setup before seating paper.",
+      "sha256": "d7910bb26ca1f998122e8015c6c5fa2bd35c2b412f7d4b24778c538aff6615b3",
+      "triangles": 846
+    },
+    {
+      "folder": "02_Stapler_Docks_10_Pieces",
+      "file": "dock_1_floor_2.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        108,
+        88,
+        4
+      ],
+      "notes": "Print flat. Align with underside keys. Attach to the same flat board as the tray; hardware setup before seating paper.",
+      "sha256": "4a6d39b1fe0a0a3041c325b80d33db024a0d295fd4d9da2f635f3a5a6275b1b3",
+      "triangles": 1234
+    },
+    {
+      "folder": "02_Stapler_Docks_10_Pieces",
+      "file": "dock_1_rail_lower.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        174,
+        16.65,
+        7
+      ],
+      "notes": "M3 bolts, washers, nuts. Set gap to actual rigid base width plus sliding clearance. Do not guide the moving upper arm.",
+      "sha256": "1f009b91ea39f5e69c1b25ff3f3bfbbbc24d7f507b1e48143d813df6196ee0ec",
+      "triangles": 100
+    },
+    {
+      "folder": "02_Stapler_Docks_10_Pieces",
+      "file": "dock_1_rail_upper.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        174,
+        16.65,
+        7
+      ],
+      "notes": "M3 bolts, washers, nuts. Set gap to actual rigid base width plus sliding clearance. Do not guide the moving upper arm.",
+      "sha256": "ee39010491e7d9ed1afc54d5160923876a0a45faea50b1509c5911acf6102734",
+      "triangles": 106
+    },
+    {
+      "folder": "02_Stapler_Docks_10_Pieces",
+      "file": "dock_1_toe_stop.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        21,
+        70,
+        6
+      ],
+      "notes": "Calibrate by actual staples on scrap. Nominal toe offset is an unmeasured placeholder; tune or regenerate.",
+      "sha256": "a43a67015a3d73ecd8796ccb1e1dd4f6bf49b588c1c1204965a55019d75554f0",
+      "triangles": 116
+    },
+    {
+      "folder": "03_Loading_Supports_2_Pieces",
+      "file": "loading_bridge_1.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        74.8,
+        87.6,
+        5.2
+      ],
+      "notes": "Remove left after clamping the stack, before inserting stapler. Use supports under the loading surface or print on its long side.",
+      "sha256": "82f7dd13590fa047e8dd7f4654a90b6b56ca4f207c8d1c4ffa4c95da7c1ba357",
+      "triangles": 98
+    },
+    {
+      "folder": "02_Stapler_Docks_10_Pieces",
+      "file": "dock_2_floor_1.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        108,
+        88,
+        4
+      ],
+      "notes": "Print flat. Align with underside keys. Attach to the same flat board as the tray; hardware setup before seating paper.",
+      "sha256": "85d279888812d0da8a45bcb8a08feb836a59e5d57ad5d9efeec03aa2ac09608a",
+      "triangles": 846
+    },
+    {
+      "folder": "02_Stapler_Docks_10_Pieces",
+      "file": "dock_2_floor_2.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        108,
+        88,
+        4
+      ],
+      "notes": "Print flat. Align with underside keys. Attach to the same flat board as the tray; hardware setup before seating paper.",
+      "sha256": "719e36bea50f2de8be7d99d3c21a0f365dae6fafb97c40a6044cdeec12b097eb",
+      "triangles": 1234
+    },
+    {
+      "folder": "02_Stapler_Docks_10_Pieces",
+      "file": "dock_2_rail_lower.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        174,
+        16.65,
+        7
+      ],
+      "notes": "M3 bolts, washers, nuts. Set gap to actual rigid base width plus sliding clearance. Do not guide the moving upper arm.",
+      "sha256": "e95d857aca48fb8ccc259d2805a18bf27cdf302d401958c61ae0d0f592aadaab",
+      "triangles": 100
+    },
+    {
+      "folder": "02_Stapler_Docks_10_Pieces",
+      "file": "dock_2_rail_upper.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        174,
+        16.65,
+        7
+      ],
+      "notes": "M3 bolts, washers, nuts. Set gap to actual rigid base width plus sliding clearance. Do not guide the moving upper arm.",
+      "sha256": "8a4d3670b961334cd0eae7b89af363d7d9a0e44ef8c92e858120aae457e6fdcf",
+      "triangles": 106
+    },
+    {
+      "folder": "02_Stapler_Docks_10_Pieces",
+      "file": "dock_2_toe_stop.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        21,
+        70,
+        6
+      ],
+      "notes": "Calibrate by actual staples on scrap. Nominal toe offset is an unmeasured placeholder; tune or regenerate.",
+      "sha256": "e199e53021972481f598fefaf554e09ef0d9e453ae9f5505db4106859da16857",
+      "triangles": 116
+    },
+    {
+      "folder": "03_Loading_Supports_2_Pieces",
+      "file": "loading_bridge_2.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        74.8,
+        87.6,
+        5.2
+      ],
+      "notes": "Remove left after clamping the stack, before inserting stapler. Use supports under the loading surface or print on its long side.",
+      "sha256": "49a4a1969c0a4667e5fd0f30baae920f2a2be2f6e6ac944b3cc476bb82c5ffb9",
+      "triangles": 98
+    },
+    {
+      "folder": "04_Glue_Alignment_Guide_4_Pieces",
+      "file": "glue_guide_11.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        135,
+        149.7,
+        4
+      ],
+      "notes": "Print inverted with finger top surfaces on plate. Glue keyed splice plates outside paper. Insert to right track ends, bias toward top track wall. Deburr paper-contact edges.",
+      "sha256": "76ca85efeb4ff380cf53cd68af0f7afaa3623dfe4d396b6aec200adc12e3facf",
+      "triangles": 534
+    },
+    {
+      "folder": "04_Glue_Alignment_Guide_4_Pieces",
+      "file": "glue_guide_12.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        90,
+        12.975,
+        4
+      ],
+      "notes": "Print inverted with finger top surfaces on plate. Glue keyed splice plates outside paper. Insert to right track ends, bias toward top track wall. Deburr paper-contact edges.",
+      "sha256": "eabfd158f49700fb37d8b977d272d2c1ecf2ea60a681147511dc9511c69c894e",
+      "triangles": 264
+    },
+    {
+      "folder": "04_Glue_Alignment_Guide_4_Pieces",
+      "file": "glue_guide_21.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        135,
+        149.7,
+        4
+      ],
+      "notes": "Print inverted with finger top surfaces on plate. Glue keyed splice plates outside paper. Insert to right track ends, bias toward top track wall. Deburr paper-contact edges.",
+      "sha256": "a93a90a51ba68e404bb47b7585aa9cbb4d267eca8e254d4e9781a09a8dc220e7",
+      "triangles": 542
+    },
+    {
+      "folder": "04_Glue_Alignment_Guide_4_Pieces",
+      "file": "glue_guide_22.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        90,
+        13.175,
+        4
+      ],
+      "notes": "Print inverted with finger top surfaces on plate. Glue keyed splice plates outside paper. Insert to right track ends, bias toward top track wall. Deburr paper-contact edges.",
+      "sha256": "02223663d529528158e403b91c1bdbcddce846e9dcad6d70e374407e5fd5b7cb",
+      "triangles": 260
+    },
+    {
+      "folder": "05_Guide_Connectors_3_Pieces",
+      "file": "guide_splice_1.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        24,
+        10,
+        6.8
+      ],
+      "notes": "Glue keyed plate across guide joint. Pegs stop 0.2 mm above track floor. Print flat plate face down, pegs upward; no installed guide screws.",
+      "sha256": "fd9b20bc2eae23f5064d42a95fe53b739727515879975e50e02af62c29662db9",
+      "triangles": 396
+    },
+    {
+      "folder": "05_Guide_Connectors_3_Pieces",
+      "file": "guide_splice_2.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        24,
+        10,
+        6.8
+      ],
+      "notes": "Glue keyed plate across guide joint. Pegs stop 0.2 mm above track floor. Print flat plate face down, pegs upward; no installed guide screws.",
+      "sha256": "34cc34aa0d921b1e0d7333a9f4d3e0ced0f5a212a813ce7183921bc1281b4d4d",
+      "triangles": 396
+    },
+    {
+      "folder": "05_Guide_Connectors_3_Pieces",
+      "file": "guide_splice_3.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        10,
+        24,
+        6.8
+      ],
+      "notes": "Glue keyed plate across guide joint. Pegs stop 0.2 mm above track floor. Print flat plate face down, pegs upward; no installed guide screws.",
+      "sha256": "2b028838089100379e834085b7ccebadc4a5bb2f86d84594f355c3bd0c27a925",
+      "triangles": 396
+    },
+    {
+      "folder": "06_Clamps_and_Pads_4_Pieces",
+      "file": "hold_down_arm_1.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        58.9,
+        20,
+        38
+      ],
+      "notes": "SUPPORTS REQUIRED as exported: the side-oriented arm extends above the build plate beyond its mounting foot. Print on side (export oriented). M4 nut in UNDERSIDE pocket and M4x30 thumbscrew. M3x25 foot bolts; backing board needs hardware relief holes.",
+      "sha256": "54fe7b87dd7cb21b786c6d5c4f11825c227674aee3ceaf5722556677d617d0c0",
+      "triangles": 666
+    },
+    {
+      "folder": "06_Clamps_and_Pads_4_Pieces",
+      "file": "pressure_pad_1.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        24,
+        20,
+        2
+      ],
+      "notes": "Loose pad under screw; add smooth protective tape. Tighten only enough to stop sheet movement.",
+      "sha256": "848f1ffb72697b6153b7a741a29aebd614c4feec6b111034de75040d33425197",
+      "triangles": 204
+    },
+    {
+      "folder": "06_Clamps_and_Pads_4_Pieces",
+      "file": "hold_down_arm_2.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        58.9,
+        20,
+        38
+      ],
+      "notes": "SUPPORTS REQUIRED as exported: the side-oriented arm extends above the build plate beyond its mounting foot. Print on side (export oriented). M4 nut in UNDERSIDE pocket and M4x30 thumbscrew. M3x25 foot bolts; backing board needs hardware relief holes.",
+      "sha256": "2b79b7f38e7bd2e8c2ba0903b4db37b5b02edbabb1281a16c54e9ff6cf3162e2",
+      "triangles": 666
+    },
+    {
+      "folder": "06_Clamps_and_Pads_4_Pieces",
+      "file": "pressure_pad_2.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        24,
+        20,
+        2
+      ],
+      "notes": "Loose pad under screw; add smooth protective tape. Tighten only enough to stop sheet movement.",
+      "sha256": "3ec8d2ea6adbd9189c57de5de40a334810f09122979aabbccc9ac767f2b52016",
+      "triangles": 204
+    },
+    {
+      "folder": "07_Base_Alignment_Keys_8_Pieces",
+      "file": "alignment_key_1.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board.",
+      "sha256": "313814585d3309bb2a908b7753cda69596bdadd64b66a92d361440fc5ba8d96d",
+      "triangles": 12
+    },
+    {
+      "folder": "07_Base_Alignment_Keys_8_Pieces",
+      "file": "alignment_key_2.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board.",
+      "sha256": "313814585d3309bb2a908b7753cda69596bdadd64b66a92d361440fc5ba8d96d",
+      "triangles": 12
+    },
+    {
+      "folder": "07_Base_Alignment_Keys_8_Pieces",
+      "file": "alignment_key_3.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board.",
+      "sha256": "313814585d3309bb2a908b7753cda69596bdadd64b66a92d361440fc5ba8d96d",
+      "triangles": 12
+    },
+    {
+      "folder": "07_Base_Alignment_Keys_8_Pieces",
+      "file": "alignment_key_4.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board.",
+      "sha256": "313814585d3309bb2a908b7753cda69596bdadd64b66a92d361440fc5ba8d96d",
+      "triangles": 12
+    },
+    {
+      "folder": "07_Base_Alignment_Keys_8_Pieces",
+      "file": "alignment_key_5.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board.",
+      "sha256": "313814585d3309bb2a908b7753cda69596bdadd64b66a92d361440fc5ba8d96d",
+      "triangles": 12
+    },
+    {
+      "folder": "07_Base_Alignment_Keys_8_Pieces",
+      "file": "alignment_key_6.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board.",
+      "sha256": "313814585d3309bb2a908b7753cda69596bdadd64b66a92d361440fc5ba8d96d",
+      "triangles": 12
+    },
+    {
+      "folder": "07_Base_Alignment_Keys_8_Pieces",
+      "file": "alignment_key_7.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board.",
+      "sha256": "313814585d3309bb2a908b7753cda69596bdadd64b66a92d361440fc5ba8d96d",
+      "triangles": 12
+    },
+    {
+      "folder": "07_Base_Alignment_Keys_8_Pieces",
+      "file": "alignment_key_8.stl",
+      "quantity": 1,
+      "purpose": "Assembly part",
+      "size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board.",
+      "sha256": "313814585d3309bb2a908b7753cda69596bdadd64b66a92d361440fc5ba8d96d",
+      "triangles": 12
+    },
+    {
+      "folder": "00_Print_First_Fit_Gauges",
+      "file": "fit_coupon_gap_38.4mm.stl",
+      "quantity": 1,
+      "purpose": "Optional fit test",
+      "size_mm": [
+        46.4,
+        22,
+        8
+      ],
+      "notes": "Try on rigid stapler base; choose clearance before printing large components. Channel is across STL X.",
+      "sha256": "aeb2397e05e9c77d6b79bf51b28c4a28441ee30a398d330d4167808786756f6c",
+      "triangles": 70
+    },
+    {
+      "folder": "00_Print_First_Fit_Gauges",
+      "file": "fit_coupon_gap_38.7mm.stl",
+      "quantity": 1,
+      "purpose": "Optional fit test",
+      "size_mm": [
+        46.7,
+        22,
+        8
+      ],
+      "notes": "Try on rigid stapler base; choose clearance before printing large components. Channel is across STL X.",
+      "sha256": "1035c5556bd9f9cba0dbced7cc2ebd126d70b3a3f814912b4f22a4e23aa545b3",
+      "triangles": 62
+    },
+    {
+      "folder": "00_Print_First_Fit_Gauges",
+      "file": "fit_coupon_gap_39.1mm.stl",
+      "quantity": 1,
+      "purpose": "Optional fit test",
+      "size_mm": [
+        47.1,
+        22,
+        8
+      ],
+      "notes": "Try on rigid stapler base; choose clearance before printing large components. Channel is across STL X.",
+      "sha256": "7413682364d02a39743569f43c6b0ab97b1ddd84be07c49b50445c7aed28091b",
+      "triangles": 70
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { answerRulesQuestion } from "./rulesEngine.mjs";
+import { CORE_RULES } from "./rulesAssistant.mjs";
 import { buildRulesKnowledgeBank } from "./rulesKnowledgeBank.mjs";
 import { SIMULATOR_RULES } from "./seapalsRulesKnowledge.mjs";
 
@@ -111,6 +112,135 @@ test("both brand names resolve to the same cited player-count answer", () => {
     assert.match(answer.text, /2 to 4 players/);
     assert.ok(answer.sources.some(({ id }) => id === "knowledge:how-many-players-can-play-and-recommended-vp-targets"));
   }
+});
+
+test("answers Aide and Item turn limits without confusing the two Support types", () => {
+  const supportRules = buildRulesKnowledgeBank({ cards, simulatorRules: SIMULATOR_RULES });
+  for (const question of [
+    "How many Aides can I play per turn?",
+    "Can I play two Aide cards in the same turn?",
+    "What's the maximum number of Aides allowed each turn?",
+    "Can I use another Aide after my first one?",
+    "How many Items can I play in a turn?",
+    "Can I play an Item after an Aide?",
+    "Do Items count toward the Aide limit?",
+    "Can I use several Items if I already played an Aide?",
+  ]) {
+    const answer = answerRulesQuestion(question, supportRules);
+    assert.equal(answer.kind, "answer", question);
+    assert.match(answer.text, /(?:only (?:one|1)|(?:one|1)) Aide per turn/i, question);
+    assert.match(answer.text, /any number of Items/i, question);
+    assert.match(answer.text, /after an Aide/i, question);
+    assert.match(answer.text, /costs.*restrictions/i, question);
+    assert.ok(answer.sources.some(({ id }) => id === "knowledge:support-cards"), question);
+  }
+});
+
+test("routes cross-habitat attack questions to targeting with all restrictions intact", () => {
+  const targetRules = buildRulesKnowledgeBank({ cards, simulatorRules: SIMULATOR_RULES });
+  for (const question of [
+    "Can a Deep creature attack Reef Fish?",
+    "Can my Reef Fish attack an Oceanic Fish?",
+    "Can a Deep Fish target a Reef Fish?",
+    "Can creatures attack across habitats?",
+    "Does an attacker need to share the target's habitat?",
+    "Can an attack hit creatures in a different zone?",
+    "If an attack is Deep-only, can it target Reef Fish?",
+    "Does a Predator-only target icon let my Deep creature attack Reef Fish?",
+  ]) {
+    const answer = answerRulesQuestion(question, targetRules);
+    assert.equal(answer.kind, "answer", question);
+    assert.equal(answer.title, "Attacking across habitats", question);
+    assert.match(answer.text, /attacker's habitat does not by itself/i, question);
+    assert.match(answer.text, /only if.*Fish.*target/i, question);
+    assert.match(answer.text, /Deep-only.*excludes Reef and Oceanic/i, question);
+    assert.match(answer.text, /Predator-only.*does not include Fish/i, question);
+    assert.match(answer.text, /controller.*visibility.*card.text restrictions/i, question);
+    assert.ok(answer.sources.some(({ id }) => id === "knowledge:reading-targets-on-attacks-and-abilities"), question);
+  }
+});
+
+test("general habitat attack matching preserves named-card targeting restrictions and class comparisons", () => {
+  const targetRules = buildRulesKnowledgeBank({
+    cards: [...cards, {
+      id: "black-swallower",
+      name: "Black Swallower",
+      kind: "creature",
+      category: "fish",
+      class: "fish",
+      zone: "deep",
+      attackDice: "D4-1",
+      onPlay: ["Eyes Bigger Than Stomach: D4-1 attack targeting Predator, Apex, or Filter Feeder. If you successfully consume an Apex or Predator, discard this card."],
+    }],
+    simulatorRules: SIMULATOR_RULES,
+  });
+  const named = answerRulesQuestion("Can Black Swallower attack Reef Fish?", targetRules);
+  assert.equal(named.kind, "answer");
+  assert.match(named.text, /targeting Predator, Apex, or Filter Feeder/i);
+  assert.ok(named.sources.some(({ id }) => id === "card:black-swallower"));
+  assert.notEqual(named.title, "Attacking across habitats");
+
+  const comparison = answerRulesQuestion("How is a Deep Fish different from a Reef Fish?", targetRules);
+  assert.equal(comparison.title, "Deep Fish vs. Reef Fish");
+  assert.match(comparison.text, /share the Fish class but have different habitats/i);
+  const slotsAndTargets = answerRulesQuestion("Do a Deep Invertebrate, a Reef Fish, and an Oceanic Apex Predator use the same slots and targets?", targetRules);
+  assert.notEqual(slotsAndTargets.title, "Attacking across habitats");
+  assert.match(slotsAndTargets.text, /Deep Invertebrate.*Reef Fish.*Oceanic Apex/i);
+});
+
+test("routes first-player, empty Conditions Deck, and simultaneous VP questions to maintained procedures", () => {
+  const procedureRules = buildRulesKnowledgeBank({ cards, simulatorRules: SIMULATOR_RULES });
+  const cases = [
+    {
+      title: "Choosing the first player",
+      source: "tabletop:first-player",
+      questions: ["Who goes first?", "Who takes the first turn?", "How do we choose the starting player?", "How does the opening coin toss work?", "Does the starting player change each round?"],
+      includes: [/2 players.*coin/i, /3 or 4 players.*D20/i, /only those tied players roll again/i, /clockwise/i],
+    },
+    {
+      title: "When the Conditions Deck runs out",
+      source: "tabletop:conditions-exhaustion",
+      questions: ["What happens when the Conditions Deck runs out?", "Can we reshuffle the empty shared Conditions deck?", "What if the weather deck is exhausted?", "Are persistent Conditions recycled when the deck is empty?"],
+      includes: [/shuffle the discarded Conditions/i, /do not shuffle them back or reset benefits/i, /no eligible discarded Conditions/i],
+    },
+    {
+      title: "Simultaneous VP finishes",
+      source: "tabletop:simultaneous-victory",
+      questions: ["What if we both reach 30 VP?", "What happens if our VP totals are tied?", "Can both players win at the same time?", "What happens if we reach the goal simultaneously?"],
+      includes: [/highest total wins/i, /sole lead at or above the target/i, /losing VP can also break the tie/i],
+    },
+  ];
+  for (const entry of cases) {
+    for (const question of entry.questions) {
+      const answer = answerRulesQuestion(question, procedureRules);
+      assert.equal(answer.kind, "answer", question);
+      assert.equal(answer.title, entry.title, question);
+      for (const pattern of entry.includes) assert.match(answer.text, pattern, question);
+      assert.ok(answer.sources.some(({ id }) => id === entry.source), question);
+    }
+  }
+});
+
+test("procedure matching keeps shared Conditions separate from personal decks and combat ties", () => {
+  const procedureRules = buildRulesKnowledgeBank({ cards, coreRules: CORE_RULES, simulatorRules: SIMULATOR_RULES });
+  const scope = answerRulesQuestion("Does the revealed Condition apply to just the first player?", procedureRules);
+  assert.notEqual(scope.title, "Choosing the first player");
+  assert.match(scope.text, /all players|everyone|shared/i);
+  for (const question of ["What happens if my Pals Deck runs out?", "Can I reshuffle an empty Foundation Deck?"]) {
+    const answer = answerRulesQuestion(question, procedureRules);
+    assert.notEqual(answer.title, "When the Conditions Deck runs out", question);
+    assert.doesNotMatch(answer.text, /shuffle the discarded Conditions/i, question);
+  }
+  const depletion = answerRulesQuestion("How can deck depletion make a player lose?", procedureRules);
+  assert.ok(depletion.sources.some(({ id }) => id === "knowledge:how-you-can-lose"));
+  const requiredDraw = answerRulesQuestion("A required draw finds both of my personal decks empty. Is that an immediate loss?", procedureRules);
+  assert.equal(requiredDraw.kind, "answer");
+  assert.match(requiredDraw.text, /must draw.*both.*depleted.*lose/i);
+  assert.ok(requiredDraw.sources.some(({ id }) => id === "knowledge:choose-and-draw"));
+  assert.ok(requiredDraw.sources.some(({ id }) => id === "knowledge:how-you-can-lose"));
+  const combat = answerRulesQuestion("If attack and defense tie, who will win?", procedureRules);
+  assert.notEqual(combat.title, "Simultaneous VP finishes");
+  assert.match(combat.text, /ties go to the defender|tie goes to the defender|tied total is defended successfully/i);
 });
 
 function buildWeakPointRules() {

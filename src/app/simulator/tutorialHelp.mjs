@@ -782,7 +782,7 @@ function getAcademyCurriculumHelp(uiState) {
     if (!cards.coralSupport?.inDiscard) {
       return play(cards.coralSupport, {
         title: `Use your first Support: ${cards.coralSupport?.cardName ?? "Coral Gardener"}`,
-        message: `Support cards are one-shot tactical effects. They do not occupy a reef slot or add VP; after resolving, they go to the discard pile. ${cards.coralSupport?.cardName ?? "Coral Gardener"} searches for the exact Coral our long-term plan needs, and its text prevents another Support this turn.`,
+        message: `Support cards are one-shot tactical effects. They do not occupy a reef slot or add VP; after resolving, they go to the discard pile. ${cards.coralSupport?.cardName ?? "Coral Gardener"} searches for the exact Coral our long-term plan needs, and uses your one Aide for this turn. Items remain playable afterward.`,
         action: `Choose ${cards.coralSupport?.cardName ?? "Coral Gardener"}, press Play Card, then select the highlighted Coral in the search results.`,
       });
     }
@@ -1533,7 +1533,7 @@ export function getSimulatorTutorialHelp(checkpoint, uiState = {}) {
         const supportCost = Math.max(0, Number(uiState.selectedCardCost ?? 0));
         const supportLimit = uiState.selectedSupportLocksFurtherSupports
           ? " Its text also makes it your last Support card this turn."
-          : "";
+          : " You may play one Aide per turn; Items are still allowed after it.";
         title = "A useful detour, not a build";
         message = `Support cards resolve a one-time effect and then go to the discard pile. ${supportName} costs ${supportCost} RP and does not stay in your ecosystem, so playing it will not complete this build step.${supportLimit}`;
         action = uiState.recommendedBuildCard

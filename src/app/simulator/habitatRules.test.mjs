@@ -86,7 +86,6 @@ test("alternative Habitat requirements accept either printed option without beco
   const openOceanOrCoralReef = [
     "Manta Ray",
     "Whale Shark",
-    "Ocean Sunfish",
   ].map((name) => ({
     name,
     playRequirements: ["Requires Open Ocean or Coral Reef Habitat in your ecosystem."],
@@ -98,7 +97,7 @@ test("alternative Habitat requirements accept either printed option without beco
     assert.match(getHabitatRequirementError(card, ["abyss"]), /requires Open Ocean or Coral Reef/i, `${card.name} with Abyss`);
   });
 
-  const openOceanOrAbyss = ["Bluefin Tuna", "Swordfish"].map((name) => ({
+  const openOceanOrAbyss = ["Swordfish"].map((name) => ({
     name,
     playRequirements: ["Requires Open Ocean or Abyss Habitat in your ecosystem."],
   }));
@@ -111,7 +110,7 @@ test("alternative Habitat requirements accept either printed option without beco
 });
 
 test("strict Open Ocean requirements still reject other Habitats", () => {
-  for (const name of ["Basking Shark", "Blue Whale"]) {
+  for (const name of ["Basking Shark", "Blue Whale", "Ocean Sunfish", "Bluefin Tuna"]) {
     const card = {
       name,
       playRequirements: ["Requires Open Ocean Habitat in your ecosystem."],

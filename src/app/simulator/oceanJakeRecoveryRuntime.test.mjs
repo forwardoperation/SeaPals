@@ -91,7 +91,7 @@ test("Ocean Jake opens Lost Zone recovery, allows inspection, and recovers exact
   assert.deepEqual(plain(r.lostZone), ["ocean-jake", "whale-shark", "lionfish"]);
   assert.deepEqual(plain(r.discardPile), []);
   assert.equal(r.rp, 5);
-  assert.equal(r.supportLockSourceId, null);
+  assert.equal(r.supportLockSourceId, "ocean-jake");
   assert.deepEqual(plain(r.cardsBlockedFromPlayThisTurn), ["whale-shark"]);
   assert.match(r.getPlayError(cardsById["whale-shark"]), /cannot be played until your next turn/);
   assert.equal(r.modal, null);
@@ -125,11 +125,12 @@ for (const previewExperience of [true, false]) {
   });
 }
 
-test("Ocean Jake still respects turn timing, Support restrictions, and RP costs", () => {
+test("Ocean Jake still respects turn timing, Aide restrictions, and Support RP costs", () => {
   for (const [overrides, reason] of [
     [{ gamePhase: "draw" }, /action phase/],
     [{ supportBlockedUntilRound: 3 }, /Echo Disruption/],
-    [{ supportLockSourceId: "dr-evans" }, /cannot play another Support/],
+    [{ aideBlockedUntilRound: 3 }, /Deadly Sighting/],
+    [{ supportLockSourceId: "dr-evans" }, /only one Aide/],
     [{ rp: 0, getPlayerCardPlayCost: () => 1 }, /Not enough RP/],
   ]) {
     const r = runtime(overrides);

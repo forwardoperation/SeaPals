@@ -1,12 +1,5 @@
+import { ecoBoost, venomous } from "../abilities";
 import { CardKind, CardCategory, EffectType, Timing, Zone } from "../types";
-
-const requiresAnyhabitat = {
-  id: "requires-habitat",
-  type: "kindInPlay",
-  requiredKind: CardKind.HABITAT,
-  zone: Zone.YOUR_REEF,
-  text: "Can only be played if a habitat card is in play on your reef.",
-};
 
 const requiresCoralReef = {
   id: "requires-coral-reef",
@@ -32,19 +25,6 @@ const toxicPassive = {
     },
   },
 };
-
-const ecoBoost = (amount) => ({
-  id: "eco-boost",
-  name: "Eco Boost",
-  text: `Add +${amount} to your max resource bank while this card is in play.`,
-  timing: Timing.PASSIVE,
-  effect: {
-    type: EffectType.MODIFY_RP_BANK_CAP,
-    controller: "you",
-    amount,
-    duration: "whileInPlay",
-  },
-});
 
 const attackEffect = ({ dice, categories, repeat = 1 }) => ({
   type: EffectType.ATTACK,
@@ -197,7 +177,7 @@ export const invertebrateCards = [
     },
 
     playRequirements: [],
-    passives: [ecoBoost(1)],
+    passives: [],
 
     onPlay: [],
 
@@ -229,7 +209,7 @@ export const invertebrateCards = [
     image: "/images/cards/invertebrates/Reef/blue-crab.png",
     sortOrder: 303,
 
-    cost: { rp: 2 },
+    cost: { rp: 1 },
     victoryPoints: 1,
     tags: ["creature", "invertebrate", "crab"],
 
@@ -244,7 +224,6 @@ export const invertebrateCards = [
     playRequirements: [],
 
     passives: [
-      ecoBoost(1),
       {
         id: "recycle",
         name: "Recycle",
@@ -309,7 +288,7 @@ export const invertebrateCards = [
 
     playRequirements: [],
 
-    passives: [ecoBoost(1)],
+    passives: [],
 
     onPlay: [],
 
@@ -510,14 +489,14 @@ export const invertebrateCards = [
 
     playRequirements: [],
 
-    passives: [toxicPassive],
+    passives: [venomous],
 
     onPlay: [],
 
     actions: [
       {
-        id: "stun",
-        name: "Stun",
+        id: "coral-shock",
+        name: "Coral Shock",
         text: "Flip a coin. If heads, choose one of your opponent’s corals and it is now stunned.",
         cost: { rp: 1 },
         timing: Timing.ACTION_PHASE,
@@ -582,7 +561,7 @@ export const invertebrateCards = [
     },
 
     playRequirements: [],
-    passives: [],
+    passives: [toxicPassive],
 
     onPlay: [],
 
@@ -590,7 +569,7 @@ export const invertebrateCards = [
       {
         id: "munch",
         name: "Munch",
-        text: "Flip a coin. If heads, choose one of your opponent’s corals. That coral produces 1 less RP on your opponent’s next turn.",
+        text: "Flip a coin. If heads, choose one of your opponent’s corals. That coral produces 2 less RP on your opponent’s next turn.",
         cost: { rp: 0 },
         timing: Timing.ACTION_PHASE,
         effect: {
@@ -603,7 +582,7 @@ export const invertebrateCards = [
               kind: CardKind.CORAL,
               zone: Zone.OPPONENT_REEF,
             },
-            amount: -1,
+            amount: -2,
             duration: "opponentNextTurn",
           },
         },
@@ -623,8 +602,8 @@ export const invertebrateCards = [
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 310,
 
-    cost: { rp: 2 },
-    victoryPoints: 1,
+    cost: { rp: 3 },
+    victoryPoints: 3,
     tags: ["creature", "invertebrate", "triton"],
 
     bio: {
@@ -637,19 +616,7 @@ export const invertebrateCards = [
 
     playRequirements: [],
 
-    passives: [
-      {
-        id: "toxic-immunity",
-        name: "Toxic Immunity",
-        text: "Immune to Crown of Thorns toxic effect.",
-        timing: Timing.PASSIVE,
-        effect: {
-          type: "ignoreEffect",
-          sourceCardId: "crown-of-thorns",
-          ignoredEffectType: "toxicWhenEaten",
-        },
-      },
-    ],
+    passives: [],
 
     onPlay: [],
 
@@ -657,14 +624,14 @@ export const invertebrateCards = [
       {
         id: "starfish-hunt",
         name: "Starfish Hunt",
-        text: "Perform a 1D6 attack targeting an opponent’s starfish.",
+        text: "Perform a D6 attack targeting an opponent’s invertebrate. Has advantage against Crown of Thorns. This action cannot be used on your next turn.",
         cost: { rp: 1 },
         timing: Timing.ACTION_PHASE,
-        effect: attackEffect({
-          dice: "D6",
-          categories: [CardCategory.INVERTEBRATE],
-        }),
-        targetTags: ["starfish"],
+        effect: {
+          ...attackEffect({ dice: "D6", categories: [CardCategory.INVERTEBRATE] }),
+          advantageAgainstCardId: "crown-of-thorns",
+        },
+        cooldown: { duration: "yourNextTurn" },
       },
     ],
 
@@ -675,57 +642,56 @@ export const invertebrateCards = [
 
   {
     id: "octopus",
-    name: "Octopus",
+    name: "Day Octopus",
     kind: CardKind.CREATURE,
     category: CardCategory.INVERTEBRATE,
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 311,
 
-    cost: { rp: 6 },
-    victoryPoints: 6,
+    cost: { rp: 4 },
+    victoryPoints: 4,
     tags: ["creature", "invertebrate", "octopus"],
 
     bio: {
-      commonName: "Octopus",
+      commonName: "Day Octopus",
       role: "Invertebrate",
-      region: "Worldwide",
-      length: "3’ 2”",
-      weight: "2 lbs",
+      region: "Indo-Pacific",
+      length: "31”",
+      weight: "10lb",
     },
 
-    playRequirements: [requiresCoralReef],
+    playRequirements: [],
 
-    passives: [],
-
-    onPlay: [
+    passives: [
       {
-        id: "cunning-hunter",
-        name: "Cunning Hunter",
-        text: "1 Bite.",
-        effects: [
-          {
-            type: EffectType.ATTACK,
-            attackName: "Bite",
-            attackDice: "D8",
-            repeat: 1,
-            target: {
-              controller: "opponent",
-              kind: CardKind.CREATURE,
-              categories: [CardCategory.FISH, CardCategory.INVERTEBRATE],
-              zone: Zone.OPPONENT_REEF,
-            },
-          },
-        ],
-        icons: {
-          attack: "d8_attack",
-          targetable: [CardCategory.FISH, CardCategory.INVERTEBRATE],
+        id: "king-of-camouflage",
+        name: "King of Camouflage",
+        text: "If Coral Reef Habitat is in play, add +4 Defense to this Day Octopus.",
+        timing: Timing.PASSIVE,
+        effect: {
+          type: "modifyDefenseRoll",
+          amount: 4,
+          requires: { cardId: "coral-reef", controller: "any" },
         },
       },
     ],
 
-    actions: [],
-    defense: { dice: "D8" },
-    flavorText: "Octopuses change color and texture in a blink.",
+    onPlay: [],
+    actions: [
+      {
+        id: "mimic",
+        name: "Mimic",
+        timing: Timing.ACTION_PHASE,
+        cost: { rp: 3 },
+        text: "Choose a creature in your opponent’s ecosystem with an action ability and perform it as if it were your own. Cost: 3 RP.",
+        effect: {
+          type: "mimicAction",
+          target: { controller: "opponent", kind: CardKind.CREATURE },
+        },
+      },
+    ],
+    defense: { dice: "D6" },
+    flavorText: "Day octopuses hunt on reefs in daylight, changing color and skin texture to blend into their surroundings.",
     set: { id: "genesis", name: "Genesis", collectorNumber: null, totalInSet: null },
   },
 
@@ -749,9 +715,21 @@ export const invertebrateCards = [
       weight: "1.5 lbs",
     },
 
-    playRequirements: [requiresAnyhabitat],
+    playRequirements: [],
 
-    passives: [ecoBoost(4)],
+    passives: [
+      {
+        ...ecoBoost(2),
+        text: "Add +2 to your max resource bank while this card is in play. If Coral Reef Habitat is in play, add an additional +2 to your max resource bank.",
+        effect: {
+          ...ecoBoost(2).effect,
+          conditionalBonus: {
+            amount: 2,
+            requires: { cardId: "coral-reef", controller: "any" },
+          },
+        },
+      },
+    ],
 
     onPlay: [],
     actions: [],
@@ -807,7 +785,7 @@ export const invertebrateCards = [
       },
     ],
 
-    defense: { dice: "D4" },
+    defense: { dice: "D6" },
     flavorText: "Giant clams are the biggest living bivalves.",
     set: { id: "genesis", name: "Genesis", collectorNumber: null, totalInSet: null },
   },

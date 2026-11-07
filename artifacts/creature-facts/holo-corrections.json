@@ -1,0 +1,1350 @@
+[
+  {
+    "cardId": "manta-ray",
+    "id": "3961:7866",
+    "page": "filter",
+    "pageId": "94:703",
+    "name": "Reef Manta Ray",
+    "legacy": false,
+    "family": "Mobulidae",
+    "row": [
+      "Mobulidae",
+      "WD: 10’",
+      "WT: 1500lbs",
+      "Indo-Pacific"
+    ],
+    "description": "Reef manta rays filter plankton with their head fins and visit cleaning stations. Unique patterns of belly spots help researchers identify individuals.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:7868;3068:1062444",
+          "text": "LT: 10’",
+          "x": 233
+        },
+        {
+          "id": "I3961:7868;3068:1062445",
+          "text": "Mobula",
+          "x": 57
+        },
+        {
+          "id": "I3961:7868;3068:1062446",
+          "text": "WT: 1500lbs",
+          "x": 385
+        },
+        {
+          "id": "I3961:7868;3068:1062447",
+          "text": "Indo-Pacific",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:7868;3068:1062434",
+          "text": "The reef manta ray boasts the largest brain-to-body mass ratio of any cold-blooded fish species. They can launch themselves up to 10 feet out of the water."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "great-white",
+    "id": "3961:11858",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Great White",
+    "legacy": false,
+    "family": "Lamnidae",
+    "row": [
+      "Lamnidae",
+      "LT: 20’",
+      "WT: 2 Tons",
+      "Worldwide"
+    ],
+    "description": "An apex hunter that shapes the whole food web. Built for ambush: countershaded body hides it in sunlit seas.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:11860;3068:1062444",
+          "text": "LT: 15’ 8”",
+          "x": 233
+        },
+        {
+          "id": "I3961:11860;3068:1062445",
+          "text": "Mackerel Shark",
+          "x": 57
+        },
+        {
+          "id": "I3961:11860;3068:1062446",
+          "text": "WT: 3.25Tons",
+          "x": 385
+        },
+        {
+          "id": "I3961:11860;3068:1062447",
+          "text": "Worldwide",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:11860;3068:1062434",
+          "text": "An apex hunter that shapes the whole food web. Built for ambush: countershaded body hides it in sunlit seas."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "tiger-shark",
+    "id": "3961:16232",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Tiger Shark",
+    "legacy": false,
+    "family": "Galeocerdonidae",
+    "row": [
+      "Galeocerdonidae",
+      "LT: 14’ 2”",
+      "WT: 1300lbs",
+      "Worldwide"
+    ],
+    "description": "A large, powerful predator found in warm ocean waters around the world, it has a broad diet and a reputation as an opportunistic hunter.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:16244;2055:41894",
+          "text": "LT: 14’ 2”",
+          "x": 244
+        },
+        {
+          "id": "I3961:16244;2055:41895",
+          "text": "Ground Shark",
+          "x": 68
+        },
+        {
+          "id": "I3961:16244;2055:41896",
+          "text": "WT: 1300lbs",
+          "x": 384
+        },
+        {
+          "id": "I3961:16244;2055:41897",
+          "text": "Worldwide",
+          "x": 528
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:16244;1302:14160",
+          "text": "A large, powerful predator found in warm ocean waters around the world, it has a broad diet and a reputation as an opportunistic hunter."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "bull-shark",
+    "id": "3961:18357",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Bull Shark",
+    "legacy": false,
+    "family": "Carcharhinidae",
+    "row": [
+      "Carcharhinidae",
+      "LT: 10’ 8”",
+      "WT: 450lbs",
+      "Worldwide"
+    ],
+    "description": "Bull sharks can live in both salt and freshwater, cruising far up rivers—even hundreds of miles inland.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:18368;2055:41894",
+          "text": "LT: 10’ 8”",
+          "x": 244
+        },
+        {
+          "id": "I3961:18368;2055:41895",
+          "text": "Requiem Shark",
+          "x": 68
+        },
+        {
+          "id": "I3961:18368;2055:41896",
+          "text": "WT: 450lbs",
+          "x": 384
+        },
+        {
+          "id": "I3961:18368;2055:41897",
+          "text": "Worldwide",
+          "x": 528
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:18368;1302:14160",
+          "text": "Bull sharks can live in both salt and freshwater, cruising far up rivers—even hundreds of miles inland."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "hammerhead",
+    "id": "3961:20579",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Hammerhead",
+    "legacy": false,
+    "family": "Sphyrnidae",
+    "row": [
+      "Sphyrnidae",
+      "LT: 18’ 9”",
+      "WT: 1000lbs",
+      "Worldwide"
+    ],
+    "description": "They use their wide heads to sweep the ocean floor like a metal detector. They use thousands of tiny electrical sensors to find buried creatures.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:20596;2055:41894",
+          "text": "LT: 18’ 9”",
+          "x": 244
+        },
+        {
+          "id": "I3961:20596;2055:41895",
+          "text": "Sphyrnidae",
+          "x": 68
+        },
+        {
+          "id": "I3961:20596;2055:41896",
+          "text": "WT: 1000lbs",
+          "x": 384
+        },
+        {
+          "id": "I3961:20596;2055:41897",
+          "text": "Worldwide",
+          "x": 528
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:20596;1302:14160",
+          "text": "They use their wide heads to sweep the ocean floor like a metal detector. They use thousands of tiny electrical sensors to find buried creatures."
+        }
+      ]
+    },
+    "changed": false
+  },
+  {
+    "cardId": "bottlenose-dolphin",
+    "id": "3961:23802",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Bottlenose Dolphin",
+    "legacy": false,
+    "family": "Delphinidae",
+    "row": [
+      "Delphinidae",
+      "LT: 11’ 6”",
+      "WT: 1000lbs",
+      "Worldwide"
+    ],
+    "description": "Bottlenose dolphins are intelligent, social marine mammals with sleek gray bodies and short snouts. They use echolocation to find prey.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:23804;2055:41894",
+          "text": "LT: 11’ 6”",
+          "x": 244
+        },
+        {
+          "id": "I3961:23804;2055:41895",
+          "text": "Delphinidae",
+          "x": 68
+        },
+        {
+          "id": "I3961:23804;2055:41896",
+          "text": "WT: 1000lbs",
+          "x": 384
+        },
+        {
+          "id": "I3961:23804;2055:41897",
+          "text": "Worldwide",
+          "x": 528
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:23804;1302:14160",
+          "text": "Bottlenose dolphins are highly intelligent and social marine mammals recognized by their sleek grey bodies, short snouts, and playful, acrobatics."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "goliath-grouper",
+    "id": "3961:27664",
+    "page": "predators",
+    "pageId": "92:2",
+    "name": "Goliath Grouper",
+    "legacy": false,
+    "family": "Epinephelidae",
+    "row": [
+      "Epinephelidae",
+      "LT: 7’ 4”",
+      "WT: 800lbs",
+      "Atlantic"
+    ],
+    "description": "Groupers are ambush hunters that gulp prey with a sudden vacuum from their huge mouths. They lurk in shadows, waiting for prey.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:27666;2082:7550",
+          "text": "LT: 7’ 4”",
+          "x": 229
+        },
+        {
+          "id": "I3961:27666;2082:7551",
+          "text": "Serranidae",
+          "x": 53
+        },
+        {
+          "id": "I3961:27666;2082:7552",
+          "text": "WT: 800lbs",
+          "x": 384
+        },
+        {
+          "id": "I3961:27666;2082:7553",
+          "text": "Worldwide",
+          "x": 513
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:27666;1321:111970",
+          "text": "Groupers are ambush hunters that gulp prey with a sudden vacuum from their huge mouths. They lurk in shadows, waiting for prey."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "spinner-dolphins",
+    "id": "3961:30364",
+    "page": "predators",
+    "pageId": "92:2",
+    "name": "Spinner Dolphins",
+    "legacy": false,
+    "family": "Delphinidae",
+    "row": [
+      "Delphinidae",
+      "LT: 5’ 9”",
+      "WT: 180lbs",
+      "Worldwide"
+    ],
+    "description": "Spinner dolphins leap in tight, corkscrew spins that can launch them high above the waves. They can spin up to 7 times in the air.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:30366;2082:7550",
+          "text": "LT: 5’ 9”",
+          "x": 229
+        },
+        {
+          "id": "I3961:30366;2082:7551",
+          "text": "Delphinidae",
+          "x": 53
+        },
+        {
+          "id": "I3961:30366;2082:7552",
+          "text": "WT: 180lbs",
+          "x": 384
+        },
+        {
+          "id": "I3961:30366;2082:7553",
+          "text": "Worldwide",
+          "x": 513
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:30366;1321:111970",
+          "text": "Spinner dolphins leap in tight, corkscrew spins that can launch them high above the waves. They can spin up to 7 times in the air."
+        }
+      ]
+    },
+    "changed": false
+  },
+  {
+    "cardId": "emperor-angelfish",
+    "id": "3961:33382",
+    "page": "fish",
+    "pageId": "24:4",
+    "name": "Emperor Angelfish",
+    "legacy": false,
+    "family": "Pomacanthidae",
+    "row": [
+      "Pomacanthidae",
+      "LT: 15”",
+      "WT: 1.5lbs",
+      "Indo-Pacific"
+    ],
+    "description": "When startled, adult emperor angelfishes can produce a loud, audible thumping or knocking sound that resembles a drum roll.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:33384;1999:13864",
+          "text": "LT: 15”",
+          "x": 229
+        },
+        {
+          "id": "I3961:33384;1999:13865",
+          "text": "Pomacanthidae",
+          "x": 53
+        },
+        {
+          "id": "I3961:33384;1999:13866",
+          "text": "WT: 1.5lbs",
+          "x": 384
+        },
+        {
+          "id": "I3961:33384;1999:13867",
+          "text": "Indo-Pacific",
+          "x": 513
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:33384;1314:88669",
+          "text": "When startled, adult emperor angelfishes can produce a loud, audible thumping or knocking sound that resembles a drum roll."
+        }
+      ]
+    },
+    "changed": false
+  },
+  {
+    "cardId": "queen-angelfish",
+    "id": "3961:39224",
+    "page": "fish",
+    "pageId": "24:4",
+    "name": "Queen Angelfish",
+    "legacy": false,
+    "family": "Pomacanthidae",
+    "row": [
+      "Pomacanthidae",
+      "LT: 14”",
+      "WT: 3lbs",
+      "Caribbean"
+    ],
+    "description": "The Queen Angelfish is a brilliantly colored reef fish that glides through warm, clear Caribbean shallows, recognizable by its vivid colors.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:39227;1999:13864",
+          "text": "LT: 14”",
+          "x": 229
+        },
+        {
+          "id": "I3961:39227;1999:13865",
+          "text": "Pomacanthidae",
+          "x": 53
+        },
+        {
+          "id": "I3961:39227;1999:13866",
+          "text": "WT: 3lbs",
+          "x": 384
+        },
+        {
+          "id": "I3961:39227;1999:13867",
+          "text": "Caribbean",
+          "x": 513
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:39227;1314:88669",
+          "text": "The Queen Angelfish is a brilliantly colored reef fish that glides through warm, clear Caribbean shallows, recognizable by its vivid colors."
+        }
+      ]
+    },
+    "changed": false
+  },
+  {
+    "cardId": "giant-triton",
+    "id": "3961:42158",
+    "page": "invertebrates",
+    "pageId": "92:340",
+    "name": "Giant Triton",
+    "legacy": true,
+    "family": "Charoniidae",
+    "row": [
+      "Charoniidae",
+      "Shell: 20”",
+      "WT: Unknown",
+      "Indo-Pacific"
+    ],
+    "description": "Giant tritons are large predatory sea snails that hunt crown-of-thorns starfish, subduing them with a paralyzing bite.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:42160;261:2989",
+          "text": "Length: 1’ 10”",
+          "x": 175
+        },
+        {
+          "id": "I3961:42160;261:2990",
+          "text": "Weight: 10lbs",
+          "x": 373
+        },
+        {
+          "id": "I3961:42160;261:2991",
+          "text": "Australia",
+          "x": 575
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:42160;213:3170",
+          "text": "Giant tritons are large predatory sea snails that hunt crown-of-thorns starfish, subduing them with a paralyzing bite."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "oysters",
+    "id": "3961:42254",
+    "page": "invertebrates",
+    "pageId": "92:340",
+    "name": "Oysters",
+    "legacy": true,
+    "family": "Ostreidae",
+    "row": [
+      "Ostreidae",
+      "LT: Varies",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3961:42257;261:2989",
+          "text": "Length: 10”",
+          "x": 175
+        },
+        {
+          "id": "I3961:42257;261:2990",
+          "text": "Weight: 1.3lbs",
+          "x": 373
+        },
+        {
+          "id": "I3961:42257;261:2991",
+          "text": "Worldwide",
+          "x": 575
+        }
+      ],
+      "description": [
+        {
+          "id": "I3961:42257;213:3170",
+          "text": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "blue-whale",
+    "id": "3962:26162",
+    "page": "filter",
+    "pageId": "94:703",
+    "name": "Blue Whale",
+    "legacy": false,
+    "family": "Balaenopteridae",
+    "row": [
+      "Balaenopteridae",
+      "LT: 100’",
+      "WT: 200 Tons",
+      "Worldwide"
+    ],
+    "description": "The blue whale is the largest animal ever known to live on Earth, a massive yet graceful marine mammal that glides through the open ocean.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:26164;2108:268883",
+          "text": "LT: 100’",
+          "x": 233
+        },
+        {
+          "id": "I3962:26164;2108:268884",
+          "text": "Baleen Whale",
+          "x": 57
+        },
+        {
+          "id": "I3962:26164;2108:268885",
+          "text": "WT: 200 Tons",
+          "x": 385
+        },
+        {
+          "id": "I3962:26164;2108:268886",
+          "text": "Worldwide",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:26164;1455:8367",
+          "text": "The blue whale is the largest animal ever known to live on Earth, a massive yet graceful marine mammal that glides through the open ocean."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "oceanic-manta-ray",
+    "id": "3962:27263",
+    "page": "filter",
+    "pageId": "94:703",
+    "name": "Oceanic Manta Ray",
+    "legacy": false,
+    "family": "Mobulidae",
+    "row": [
+      "Mobulidae",
+      "WD: 22’",
+      "WT: 1.5 Tons",
+      "Tropics"
+    ],
+    "description": "Manta rays glide on giant wings, funneling plankton with their head fins. They also visit cleaning stations where small fish remove parasites.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:27265;3068:1062444",
+          "text": "LT: 22’",
+          "x": 233
+        },
+        {
+          "id": "I3962:27265;3068:1062445",
+          "text": "Mobula",
+          "x": 57
+        },
+        {
+          "id": "I3962:27265;3068:1062446",
+          "text": "WT: 1.5 Tons",
+          "x": 385
+        },
+        {
+          "id": "I3962:27265;3068:1062447",
+          "text": "Tropics",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:27265;3068:1062434",
+          "text": "Manta rays glide on giant “wings,” funneling plankton with unfurling head fins. They loop in graceful barrel rolls over cleaning stations."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "humpback-whale",
+    "id": "3962:27992",
+    "page": "filter",
+    "pageId": "94:703",
+    "name": "Humpback Whale",
+    "legacy": false,
+    "family": "Balaenopteridae",
+    "row": [
+      "Balaenopteridae",
+      "LT: 60’",
+      "WT: 40 Tons",
+      "Worldwide"
+    ],
+    "description": "Humpback whales sing long, evolving songs that can travel for miles. They team up to “bubble-net” feed, herding fish into a gulp with giant pleated throats.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:27994;2108:268883",
+          "text": "LT: 85’",
+          "x": 233
+        },
+        {
+          "id": "I3962:27994;2108:268884",
+          "text": "Baleen Whale",
+          "x": 57
+        },
+        {
+          "id": "I3962:27994;2108:268885",
+          "text": "WT: 40 Tons",
+          "x": 385
+        },
+        {
+          "id": "I3962:27994;2108:268886",
+          "text": "Worldwide",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:27994;1455:8367",
+          "text": "Humpback whales sing long, evolving songs that can travel for miles. They team up to “bubble-net” feed, herding fish into a gulp with giant pleated throats."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "killer-whale-oceanic",
+    "id": "3962:30546",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Killer Whale",
+    "legacy": false,
+    "family": "Delphinidae",
+    "row": [
+      "Delphinidae",
+      "LT: 31’ 8”",
+      "WT: 10 Tons",
+      "Worldwide"
+    ],
+    "description": "Orcas are the largest members of the dolphin family. Their close-knit groups use different hunting traditions to catch fish, seals, or other whales.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:30548;1993:12751",
+          "text": "LT: 31’ 8”",
+          "x": 233
+        },
+        {
+          "id": "I3962:30548;1993:12752",
+          "text": "Toothed Whale",
+          "x": 57
+        },
+        {
+          "id": "I3962:30548;1993:12753",
+          "text": "WT: 10 Tons",
+          "x": 385
+        },
+        {
+          "id": "I3962:30548;1993:12754",
+          "text": "Worldwide",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:30548;1993:12708",
+          "text": "The ultimate apex predator of the ocean, Orcas are known as “Killer Whales” for their ability to take down the largest and most feared ocean creatures."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "shortfin-mako-shark",
+    "id": "3962:32799",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Shortfin Mako Shark",
+    "legacy": false,
+    "family": "Lamnidae",
+    "row": [
+      "Lamnidae",
+      "LT: 13’",
+      "WT: 1300lbs",
+      "Worldwide"
+    ],
+    "description": "A powerful, fast-swimming shark, the shortfin mako pursues fish and squid. It can retain heat in parts of its body to stay active in cool water.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:32801;1993:12751",
+          "text": "LT: 13’",
+          "x": 233
+        },
+        {
+          "id": "I3962:32801;1993:12752",
+          "text": "Mackerel Shark",
+          "x": 57
+        },
+        {
+          "id": "I3962:32801;1993:12753",
+          "text": "WT: 1300lbs",
+          "x": 385
+        },
+        {
+          "id": "I3962:32801;1993:12754",
+          "text": "Worldwide",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:32801;1993:12708",
+          "text": "The ocean's fastest fish capable of swimming bursts over 46 mph. It has specialized scales along its flanks to greatly reduce hydrodynamic drag."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "megamouth-shark",
+    "id": "3962:33790",
+    "page": "filter",
+    "pageId": "94:703",
+    "name": "Megamouth Shark",
+    "legacy": false,
+    "family": "Megachasmidae",
+    "row": [
+      "Megachasmidae",
+      "LT: 18’",
+      "WT: 1.5 Tons",
+      "Worldwide"
+    ],
+    "description": "This rare shark filters tiny prey, including krill, through its enormous mouth. Its pale upper lip reflects light; it does not produce its own glow.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:33792;2115:56954",
+          "text": "LT: 18’",
+          "x": 224
+        },
+        {
+          "id": "I3962:33792;2115:56955",
+          "text": "Megachasmidae",
+          "x": 37
+        },
+        {
+          "id": "I3962:33792;2115:56956",
+          "text": "WT: 1.5 Tons",
+          "x": 386
+        },
+        {
+          "id": "I3962:33792;2115:56957",
+          "text": "Worldwide",
+          "x": 526
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:33792;2115:56916",
+          "text": "A deep-sea, filter-feeding fish that features a unique glowing band on its upper jaw to attract prey in the dark."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "colossal-squid",
+    "id": "3962:35714",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Colossal Squid",
+    "legacy": false,
+    "family": "Cranchiidae",
+    "row": [
+      "Cranchiidae",
+      "LT: 18’",
+      "WT: 1100lbs",
+      "Southern Ocean"
+    ],
+    "description": "The heaviest known squid lives in the cold Southern Ocean. Rotating hooks on its tentacle clubs help it hold slippery prey.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:35716;3068:1062444",
+          "text": "LT: 46’",
+          "x": 233
+        },
+        {
+          "id": "I3962:35716;3068:1062445",
+          "text": "Cephalopod",
+          "x": 57
+        },
+        {
+          "id": "I3962:35716;3068:1062446",
+          "text": "WT: 1100lbs",
+          "x": 385
+        },
+        {
+          "id": "I3962:35716;3068:1062447",
+          "text": "Arctic",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:35716;3068:1062434",
+          "text": "The largest, and most elusive invertebrate on the planet, no human has ever witnessed an adult colossal squid alive."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "sperm-whale",
+    "id": "3962:37999",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Sperm Whale",
+    "legacy": false,
+    "family": "Physeteridae",
+    "row": [
+      "Physeteridae",
+      "LT: 60’",
+      "WT: 50Tons",
+      "Worldwide"
+    ],
+    "description": "The largest toothed predators on Earth, sperm whales hunt for giant squid in the ocean deep using incredibly loud echolocation clicks.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3981:40116;2006:8978",
+          "text": "LT: 60’",
+          "x": 233
+        },
+        {
+          "id": "I3981:40116;2006:8979",
+          "text": " Physeteridae",
+          "x": 58
+        },
+        {
+          "id": "I3981:40116;2006:8980",
+          "text": "WT: 50Tons",
+          "x": 386
+        },
+        {
+          "id": "I3981:40116;2006:8981",
+          "text": "Worldwide",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3981:40116;1809:6836",
+          "text": "The largest toothed predators on Earth, sperm whales hunt for giant squid in the ocean deep using incredibly loud echolocation clicks."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "giant-phantom-jelly",
+    "id": "3962:40373",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Giant Phantom Jelly",
+    "legacy": false,
+    "family": "Ulmaridae",
+    "row": [
+      "Ulmaridae",
+      "Arms: 33’",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "Unlike most jellyfish, the giant phantom jelly lacks stinging tentacles. Instead, it uses its long arms to trap plankton and small fish.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:40375;2006:8978",
+          "text": "LT: 33’",
+          "x": 233
+        },
+        {
+          "id": "I3962:40375;2006:8979",
+          "text": "True Jellyfish",
+          "x": 58
+        },
+        {
+          "id": "I3962:40375;2006:8980",
+          "text": "WT: 90lbs",
+          "x": 386
+        },
+        {
+          "id": "I3962:40375;2006:8981",
+          "text": "Worldwide",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:40375;1809:6836",
+          "text": "Unlike most jellyfish, the giant phantom jelly lacks stinging tentacles. Instead, it uses its long arms to trap plankton and small fish."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "giant-squid",
+    "id": "3962:42053",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Giant Squid",
+    "legacy": false,
+    "family": "Architeuthidae",
+    "row": [
+      "Architeuthidae",
+      "LT: 43’",
+      "WT: 600lbs",
+      "Worldwide"
+    ],
+    "description": "With enormous eyes adapted to dim light, giant squid roam the ocean depths. Two long feeding tentacles reach out to snatch fish and other squid.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:42055;2006:8978",
+          "text": "LT: 43’",
+          "x": 233
+        },
+        {
+          "id": "I3962:42055;2006:8979",
+          "text": "Type",
+          "x": 58
+        },
+        {
+          "id": "I3962:42055;2006:8980",
+          "text": "WT: 600lbs",
+          "x": 386
+        },
+        {
+          "id": "I3962:42055;2006:8981",
+          "text": "Worldwide",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:42055;1809:6836",
+          "text": "Possessing the largest eyes in the animal kingdom, it roams the lightless ocean depths using two long feeding tentacles to snatch prey."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "greenland-shark",
+    "id": "3962:43966",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Greenland Shark",
+    "legacy": false,
+    "family": "Somniosidae",
+    "row": [
+      "Somniosidae",
+      "LT: 15’",
+      "WT: 1.1Tons",
+      "North Atlantic"
+    ],
+    "description": "A slow-moving deep-water apex predator famous for having the longest known lifespan of all vertebrate animals.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:43969;2006:8978",
+          "text": "LT: 15’",
+          "x": 233
+        },
+        {
+          "id": "I3962:43969;2006:8979",
+          "text": "Sleeper Shark",
+          "x": 58
+        },
+        {
+          "id": "I3962:43969;2006:8980",
+          "text": "WT: 1.1Tons",
+          "x": 386
+        },
+        {
+          "id": "I3962:43969;2006:8981",
+          "text": "North Atlantic",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:43969;1809:6836",
+          "text": "A slow-moving deep-water apex predator famous for having the longest known lifespan of all vertebrate animals."
+        }
+      ]
+    },
+    "changed": false
+  },
+  {
+    "cardId": "pilot-whale-oceanic",
+    "id": "3962:45957",
+    "page": "apex",
+    "pageId": "92:140",
+    "name": "Pilot Whale",
+    "legacy": false,
+    "family": "Delphinidae",
+    "row": [
+      "Delphinidae",
+      "LT: 18’",
+      "WT: 2.5Tons",
+      "Worldwide"
+    ],
+    "description": "Pilot whales live in close-knit pods led by experienced females. Deep divers, they chase squid in the dark and keep tight social bonds.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3981:40758;2006:8978",
+          "text": "LT: 18’",
+          "x": 233
+        },
+        {
+          "id": "I3981:40758;2006:8979",
+          "text": "Delphinidae",
+          "x": 58
+        },
+        {
+          "id": "I3981:40758;2006:8980",
+          "text": "WT: 2.5Tons",
+          "x": 386
+        },
+        {
+          "id": "I3981:40758;2006:8981",
+          "text": "Worldwide",
+          "x": 517
+        }
+      ],
+      "description": [
+        {
+          "id": "I3981:40758;1809:6836",
+          "text": "Pilot whales live in close-knit pods led by experienced females. Deep divers, they chase squid in the dark and keep tight social bonds."
+        }
+      ]
+    },
+    "changed": false
+  },
+  {
+    "cardId": "goblin-shark",
+    "id": "3962:48661",
+    "page": "predators",
+    "pageId": "92:2",
+    "name": "Goblin Shark",
+    "legacy": false,
+    "family": "Mitsukurinidae",
+    "row": [
+      "Mitsukurinidae",
+      "LT: 10’ 8”",
+      "WT: 750lbs",
+      "Worldwide"
+    ],
+    "description": "The goblin shark is a rare, deep-sea species recognized by its long snout and slingshot-like jaws that extend to capture prey",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:48663;1994:41212",
+          "text": "LT: 10’ 8”",
+          "x": 232
+        },
+        {
+          "id": "I3962:48663;1994:41213",
+          "text": "Mackerel shark",
+          "x": 56
+        },
+        {
+          "id": "I3962:48663;1994:41214",
+          "text": "WT: 750lbs",
+          "x": 384
+        },
+        {
+          "id": "I3962:48663;1994:41215",
+          "text": "Worldwide",
+          "x": 516
+        }
+      ],
+      "description": []
+    },
+    "changed": true
+  },
+  {
+    "cardId": "giant-isopod",
+    "id": "3962:51002",
+    "page": "invertebrates",
+    "pageId": "92:340",
+    "name": "Giant Isopod",
+    "legacy": false,
+    "family": "Cirolanidae",
+    "row": [
+      "Cirolanidae",
+      "LT: 16”",
+      "WT: Varies",
+      "Worldwide"
+    ],
+    "description": "Giant isopods are deep-sea relatives of woodlice. Their armored bodies protect them as they scavenge, and a slow metabolism helps them endure long fasts.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:51004;1994:41784",
+          "text": "LT: 20”",
+          "x": 232
+        },
+        {
+          "id": "I3962:51004;1994:41785",
+          "text": "Deep Crustacean",
+          "x": 56
+        },
+        {
+          "id": "I3962:51004;1994:41786",
+          "text": "WT: 3.5lbs",
+          "x": 384
+        },
+        {
+          "id": "I3962:51004;1994:41787",
+          "text": "Worldwide",
+          "x": 516
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:51004;1867:66607",
+          "text": "Often described as a resilient underwater tank, this living fossil features a tough exoskeleton. It can survive years between feedings."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "vampire-squid",
+    "id": "3962:52434",
+    "page": "invertebrates",
+    "pageId": "92:340",
+    "name": "Vampire Squid",
+    "legacy": false,
+    "family": "Vampyroteuthidae",
+    "row": [
+      "Vampyroteuthidae",
+      "LT: 12”",
+      "WT: Unknown",
+      "Worldwide"
+    ],
+    "description": "When threatened, it doesn't ink; instead, it cloaks itself by pulling its webbed arms over its head and releases glowing, bioluminescent clouds.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:52437;1994:41784",
+          "text": "LT: 12”",
+          "x": 232
+        },
+        {
+          "id": "I3962:52437;1994:41785",
+          "text": "Deep Cephalopod",
+          "x": 56
+        },
+        {
+          "id": "I3962:52437;1994:41786",
+          "text": "WT: 1lb",
+          "x": 384
+        },
+        {
+          "id": "I3962:52437;1994:41787",
+          "text": "Worldwide",
+          "x": 516
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:52437;1867:66607",
+          "text": "When threatened, it doesn't ink; instead, it cloaks itself by pulling its webbed arms over its head and releases glowing, bioluminescent clouds."
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "barrel-eye-fish",
+    "id": "3962:54556",
+    "page": "fish",
+    "pageId": "24:4",
+    "name": "Barrel Eye Fish",
+    "legacy": false,
+    "family": "Opisthoproctidae",
+    "row": [
+      "Opisthoproctidae",
+      "LT: 6.5”",
+      "WT: Unknown",
+      "N. Pacific"
+    ],
+    "description": "A transparent dome protects the barreleye's tubular green eyes. The eyes can rotate from looking upward to facing forward as the fish feeds.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:54558;1993:12218",
+          "text": "LT: 6.5”",
+          "x": 232
+        },
+        {
+          "id": "I3962:54558;1993:12219",
+          "text": "Spookfish",
+          "x": 56
+        },
+        {
+          "id": "I3962:54558;1993:12220",
+          "text": "WT: 1oz",
+          "x": 384
+        },
+        {
+          "id": "I3962:54558;1993:12221",
+          "text": "Worldwide",
+          "x": 516
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:54558;1867:66437",
+          "text": "The barreleye boasts a cockpit-like, see-through head that allows its internal organs and green eyes to be visible. "
+        }
+      ]
+    },
+    "changed": true
+  },
+  {
+    "cardId": "coelacanth",
+    "id": "3962:55990",
+    "page": "fish",
+    "pageId": "24:4",
+    "name": "Coelacanth",
+    "legacy": false,
+    "family": "Latimeriidae",
+    "row": [
+      "Latimeriidae",
+      "LT: 5’ 6”",
+      "WT: 100lbs",
+      "W. Indian Ocean"
+    ],
+    "description": "West Indian Ocean coelacanths have fleshy, lobed fins and a distinctive three-part tail. These deep-water fish belong to an ancient lineage.",
+    "before": {
+      "facts": [
+        {
+          "id": "I3962:55992;1993:12218",
+          "text": "LT: 5’ 6”",
+          "x": 232
+        },
+        {
+          "id": "I3962:55992;1993:12219",
+          "text": "Lobe-Finned Fish",
+          "x": 56
+        },
+        {
+          "id": "I3962:55992;1993:12220",
+          "text": "WT: 100lbs",
+          "x": 384
+        },
+        {
+          "id": "I3962:55992;1993:12221",
+          "text": "Worldwide",
+          "x": 516
+        }
+      ],
+      "description": [
+        {
+          "id": "I3962:55992;1867:66437",
+          "text": "Often dubbed \"living fossils\", coelacanths are rare, lobe-finned fish that can reach weights nearing 200lbs. \n"
+        }
+      ]
+    },
+    "changed": true
+  }
+]

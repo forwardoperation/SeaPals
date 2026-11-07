@@ -1,0 +1,36 @@
+{
+  "retrievedAt": "2026-10-16",
+  "figmaFileKey": "xeol2YE0jCE0N5vAD6tjzx",
+  "logo": "public/images/brand/searealm-tcg-logo.png",
+  "selectedCards": [
+    {
+      "name": "Humpback Whale",
+      "nodeId": "379:7745",
+      "file": "references/humpback-whale.png",
+      "prereleaseLabel": false
+    },
+    {
+      "name": "Reef Manta Ray",
+      "nodeId": "3961:7866",
+      "file": "references/reef-manta-ray.png",
+      "prereleaseLabel": false
+    },
+    {
+      "name": "Great White",
+      "nodeId": "4132:62194",
+      "file": "references/great-white.png",
+      "prereleaseLabel": false
+    }
+  ],
+  "verification": "Selected card exports were downloaded from Figma and visually inspected. None has a PRERELEASE label. The local gallery Humpback image is older and was not used.",
+  "generationMode": "built-in image_gen",
+  "promptFile": "generation-prompt.txt",
+  "background": {
+    "source": "C:/Users/jacob/Downloads/background (1).svg",
+    "preservedSource": "references/background.svg",
+    "rasterReference": "references/background.png",
+    "editPromptFile": "background-edit-prompt.txt"
+  },
+  "websiteAsset": "public/og-searealm-2026-10-v2.png",
+  "previousWebsiteAsset": "public/og-searealm-2026-10.png"
+}

@@ -1,0 +1,29 @@
+{
+  "figmaFileKey": "xeol2YE0jCE0N5vAD6tjzx",
+  "pageId": "4259:8746",
+  "sceneId": "4267:56456",
+  "fishId": "4261:451",
+  "backgroundId": "4267:56457",
+  "spotsId": "4266:56456",
+  "referenceId": "4259:8748",
+  "sceneSize": [1024, 1536],
+  "spots": {
+    "marks": 661,
+    "vectorPaths": 6,
+    "addedEffects": 0
+  },
+  "background": {
+    "vectorPaths": 19,
+    "effects": 0,
+    "imageFills": 0,
+    "externalReferences": 0
+  },
+  "validation": {
+    "figmaScreenshotInspected": true,
+    "originalFishPositionAndSizePreserved": true,
+    "spotsAlignedWithBody": true,
+    "originalReferenceRetainedAlongside": true,
+    "runtimeBenchmarkPerformed": false
+  },
+  "scope": "Added editable texture and background to the existing Figma illustration. Existing fish shading, outlines, and effects remain. No website runtime assets were replaced."
+}

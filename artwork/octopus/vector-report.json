@@ -1,0 +1,40 @@
+{
+  "source_contours": 32512,
+  "editable_vector_paths": 34831,
+  "regions": [
+    {
+      "name": "01 Mantle - mottled shadow skin",
+      "paths": 5401
+    },
+    {
+      "name": "02 Eye hood - raised papillae",
+      "paths": 3853
+    },
+    {
+      "name": "03 Shoulder - ivory papillae and ochre mottling",
+      "paths": 6614
+    },
+    {
+      "name": "04 Central body - vertical folds and fine granules",
+      "paths": 7519
+    },
+    {
+      "name": "05 Curled arm - cool shadows and skin ridges",
+      "paths": 4424
+    },
+    {
+      "name": "06 Foreground arm - sweeping skin folds",
+      "paths": 7019
+    }
+  ],
+  "bytes": 24419168,
+  "embedded_rasters": 0,
+  "canvas": [
+    1164,
+    902
+  ],
+  "placement": [
+    -465.9944,
+    -388.9736
+  ]
+}

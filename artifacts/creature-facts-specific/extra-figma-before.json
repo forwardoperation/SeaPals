@@ -1,0 +1,312 @@
+[
+  [
+    {
+      "id": "3961:42158",
+      "name": "holo-reef-011-giant-triton",
+      "texts": [
+        {
+          "id": "I3961:42160;213:3170",
+          "text": "Giant tritons are large predatory sea snails that hunt crown-of-thorns starfish, subduing them with a paralyzing bite.",
+          "x": 175,
+          "y": 918,
+          "w": 545,
+          "h": 71,
+          "size": 20
+        },
+        {
+          "id": "4036:39169",
+          "text": "Charoniidae",
+          "x": 175,
+          "y": 891,
+          "w": 171,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4036:39170",
+          "text": "Shell: 20”",
+          "x": 351,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4036:39171",
+          "text": "WT: Unknown",
+          "x": 466,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 15.5
+        },
+        {
+          "id": "4036:39172",
+          "text": "Indo-Pacific",
+          "x": 581,
+          "y": 891,
+          "w": 134,
+          "h": 27,
+          "size": 17
+        }
+      ]
+    },
+    {
+      "id": "3961:42254",
+      "name": "holo-reef-012-oysters",
+      "texts": [
+        {
+          "id": "I3961:42257;213:3170",
+          "text": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats.",
+          "x": 175,
+          "y": 918,
+          "w": 545,
+          "h": 71,
+          "size": 20
+        },
+        {
+          "id": "4036:39174",
+          "text": "Ostreidae",
+          "x": 175,
+          "y": 891,
+          "w": 171,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4036:39175",
+          "text": "LT: Varies",
+          "x": 351,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4036:39176",
+          "text": "WT: Varies",
+          "x": 466,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4036:39177",
+          "text": "Worldwide",
+          "x": 581,
+          "y": 891,
+          "w": 134,
+          "h": 27,
+          "size": 17
+        }
+      ]
+    },
+    {
+      "id": "3962:52434",
+      "name": "holo-deep-010-vampire-squid",
+      "texts": [
+        {
+          "id": "I3962:52437;1994:41784",
+          "text": "LT: 12”",
+          "x": 232,
+          "y": 488,
+          "w": 118.44000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3962:52437;1994:41785",
+          "text": "Vampyroteuthidae",
+          "x": 56,
+          "y": 488,
+          "w": 186.1199951171875,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3962:52437;1994:41786",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121.26000213623047,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3962:52437;1994:41787",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 141.94000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3962:52437;1867:66607",
+          "text": "When threatened, it doesn't ink; instead, it cloaks itself by pulling its webbed arms over its head and releases glowing, bioluminescent clouds.",
+          "x": 203,
+          "y": 915,
+          "w": 462.4800109863281,
+          "h": 62.040000915527344,
+          "size": 18.799999237060547
+        }
+      ]
+    },
+    {
+      "id": "3962:51002",
+      "name": "holo-deep-009-giant-isopod",
+      "texts": [
+        {
+          "id": "I3962:51004;1994:41784",
+          "text": "LT: 16”",
+          "x": 232,
+          "y": 488,
+          "w": 118.44000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3962:51004;1994:41785",
+          "text": "Cirolanidae",
+          "x": 56,
+          "y": 488,
+          "w": 186.1199951171875,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3962:51004;1994:41786",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 488,
+          "w": 121.26000213623047,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3962:51004;1994:41787",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 141.94000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3962:51004;1867:66607",
+          "text": "Giant isopods are deep-sea relatives of woodlice. Their armored bodies protect them as they scavenge, and a slow metabolism helps them endure long fasts.",
+          "x": 203,
+          "y": 915,
+          "w": 462.4800109863281,
+          "h": 62.040000915527344,
+          "size": 16.799999237060547
+        }
+      ]
+    }
+  ],
+  [
+    {
+      "id": "4028:40893",
+      "name": "Gallery preview — frogfish",
+      "texts": [
+        {
+          "id": "I4025:92508;2582:577194;1999:13864",
+          "text": "LT: Varies",
+          "x": 229,
+          "y": 488,
+          "w": 118.44000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I4025:92508;2582:577194;1999:13865",
+          "text": "Antennariidae",
+          "x": 53,
+          "y": 488,
+          "w": 186.1199951171875,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I4025:92508;2582:577194;1999:13866",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 488,
+          "w": 121.26000213623047,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I4025:92508;2582:577194;1999:13867",
+          "text": "Worldwide",
+          "x": 513,
+          "y": 488,
+          "w": 141.94000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I4025:92508;2582:577194;1314:88669",
+          "text": "Frogfish hide among reef growth and lure prey with a modified dorsal-fin spine. Their expanding mouths suck in unsuspecting animals in a rapid gulp.",
+          "x": 201,
+          "y": 915,
+          "w": 462.4800109863281,
+          "h": 62.040000915527344,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "id": "4028:40896",
+      "name": "Gallery preview — sea-urchin",
+      "texts": [
+        {
+          "id": "I4028:38788;2765:58993;1449:46543",
+          "text": "Long-spined sea urchins graze on algae and help keep reef surfaces clear. Their slender spines defend them while tube feet grip and move over rocks.",
+          "x": 201,
+          "y": 915,
+          "w": 462.4800109863281,
+          "h": 62.040000915527344,
+          "size": 16.799999237060547
+        },
+        {
+          "id": "I4028:38788;2765:58993;2055:41785",
+          "text": "Spines: 12”",
+          "x": 229,
+          "y": 488,
+          "w": 118.44000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I4028:38788;2765:58993;2055:41786",
+          "text": "Diadematidae",
+          "x": 53,
+          "y": 488,
+          "w": 186.1199951171875,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I4028:38788;2765:58993;2055:41787",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121.26000213623047,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I4028:38788;2765:58993;2055:41788",
+          "text": "W. Atlantic",
+          "x": 513,
+          "y": 488,
+          "w": 141.94000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        }
+      ]
+    }
+  ]
+]

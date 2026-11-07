@@ -1,0 +1,1103 @@
+{
+  "reviewedAt": "2026-10-05",
+  "taxonomyAuthority": "World Register of Marine Species (WoRMS)",
+  "measurementNotes": "Rounded reference sizes, not a uniform maximum-size series. Anatomical labels distinguish body length, shell length, span, bell width, and tentacles. Unknown means no reliable weight was established in this review; varies denotes a broad group or a changing school. Family varies is used when the card intentionally covers multiple families.",
+  "cards": {
+    "humpback-whale": {
+      "family": "Balaenopteridae",
+      "lengthLabel": "Length",
+      "length": "60’",
+      "weight": "40 Tons",
+      "region": "Worldwide",
+      "description": "Humpback whales sing long, evolving songs that can travel for miles. They team up to “bubble-net” feed, herding fish into a gulp with giant pleated throats."
+    },
+    "oceanic-manta-ray": {
+      "family": "Mobulidae",
+      "lengthLabel": "Width",
+      "length": "22’",
+      "weight": "1.5 Tons",
+      "region": "Tropics",
+      "description": "Manta rays glide on giant wings, funneling plankton with their head fins. They also visit cleaning stations where small fish remove parasites."
+    },
+    "ocean-sunfish": {
+      "family": "Molidae",
+      "lengthLabel": "Length",
+      "length": "8’ 6”",
+      "weight": "1 Ton",
+      "region": "Worldwide",
+      "description": "Among the heaviest bony fish, ocean sunfish feed on jellyfish and other prey. They visit cleaning stations where fish pick off parasites."
+    },
+    "whale-shark": {
+      "family": "Rhincodontidae",
+      "lengthLabel": "Length",
+      "length": "40’",
+      "weight": "12.5 Tons",
+      "region": "Worldwide",
+      "description": "Whale sharks are gentle giants—the largest fish on Earth—filtering plankton and tiny fish with a wide, sieve-like mouth."
+    },
+    "blue-whale": {
+      "family": "Balaenopteridae",
+      "lengthLabel": "Length",
+      "length": "100’",
+      "weight": "200 Tons",
+      "region": "Worldwide",
+      "description": "The blue whale is the largest animal ever known to live on Earth, a massive yet graceful marine mammal that glides through the open ocean."
+    },
+    "basking-shark": {
+      "family": "Cetorhinidae",
+      "lengthLabel": "Length",
+      "length": "35’",
+      "weight": "5 Tons",
+      "region": "Worldwide",
+      "description": "Despite their colossal size, these gentle giants consume tiny zooplankton by simply swimming with their cavernous mouths wide open."
+    },
+    "megamouth-shark": {
+      "family": "Megachasmidae",
+      "lengthLabel": "Length",
+      "length": "18’",
+      "weight": "1.5 Tons",
+      "region": "Worldwide",
+      "description": "This rare shark filters tiny prey, including krill, through its enormous mouth. Its pale upper lip reflects light; it does not produce its own glow."
+    },
+    "manta-ray": {
+      "family": "Mobulidae",
+      "lengthLabel": "Width",
+      "length": "10’",
+      "weight": "1500lbs",
+      "region": "Indo-Pacific",
+      "description": "Reef manta rays filter plankton with their head fins and visit cleaning stations. Unique patterns of belly spots help researchers identify individuals."
+    },
+    "hammerhead": {
+      "family": "Sphyrnidae",
+      "lengthLabel": "Length",
+      "length": "18’ 9”",
+      "weight": "1000lbs",
+      "region": "Worldwide",
+      "description": "They use their wide heads to sweep the ocean floor like a metal detector. They use thousands of tiny electrical sensors to find buried creatures."
+    },
+    "great-white": {
+      "family": "Lamnidae",
+      "lengthLabel": "Length",
+      "length": "20’",
+      "weight": "2 Tons",
+      "region": "Worldwide",
+      "description": "An apex hunter that shapes the whole food web. Built for ambush: countershaded body hides it in sunlit seas."
+    },
+    "bull-shark": {
+      "family": "Carcharhinidae",
+      "lengthLabel": "Length",
+      "length": "10’ 8”",
+      "weight": "450lbs",
+      "region": "Worldwide",
+      "description": "Bull sharks can live in both salt and freshwater, cruising far up rivers—even hundreds of miles inland."
+    },
+    "tiger-shark": {
+      "family": "Galeocerdonidae",
+      "lengthLabel": "Length",
+      "length": "14’ 2”",
+      "weight": "1300lbs",
+      "region": "Worldwide",
+      "description": "A large, powerful predator found in warm ocean waters around the world, it has a broad diet and a reputation as an opportunistic hunter."
+    },
+    "killer-whale-oceanic": {
+      "family": "Delphinidae",
+      "lengthLabel": "Length",
+      "length": "31’ 8”",
+      "weight": "10 Tons",
+      "region": "Worldwide",
+      "description": "Orcas are the largest members of the dolphin family. Their close-knit groups use different hunting traditions to catch fish, seals, or other whales."
+    },
+    "pilot-whale-oceanic": {
+      "family": "Delphinidae",
+      "lengthLabel": "Length",
+      "length": "18’",
+      "weight": "2.5Tons",
+      "region": "Worldwide",
+      "description": "Pilot whales live in close-knit pods led by experienced females. Deep divers, they chase squid in the dark and keep tight social bonds."
+    },
+    "bottlenose-dolphin": {
+      "family": "Delphinidae",
+      "lengthLabel": "Length",
+      "length": "11’ 6”",
+      "weight": "1000lbs",
+      "region": "Worldwide",
+      "description": "Bottlenose dolphins are intelligent, social marine mammals with sleek gray bodies and short snouts. They use echolocation to find prey."
+    },
+    "giant-squid": {
+      "family": "Architeuthidae",
+      "lengthLabel": "Length",
+      "length": "43’",
+      "weight": "600lbs",
+      "region": "Worldwide",
+      "description": "With enormous eyes adapted to dim light, giant squid roam the ocean depths. Two long feeding tentacles reach out to snatch fish and other squid."
+    },
+    "colossal-squid": {
+      "family": "Cranchiidae",
+      "lengthLabel": "Length",
+      "length": "18’",
+      "weight": "1100lbs",
+      "region": "Southern Ocean",
+      "description": "The heaviest known squid lives in the cold Southern Ocean. Rotating hooks on its tentacle clubs help it hold slippery prey."
+    },
+    "greenland-shark": {
+      "family": "Somniosidae",
+      "lengthLabel": "Length",
+      "length": "15’",
+      "weight": "1.1Tons",
+      "region": "North Atlantic",
+      "description": "A slow-moving deep-water apex predator famous for having the longest known lifespan of all vertebrate animals."
+    },
+    "giant-phantom-jelly": {
+      "family": "Ulmaridae",
+      "lengthLabel": "Arm length",
+      "length": "33’",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "Unlike most jellyfish, the giant phantom jelly lacks stinging tentacles. Instead, it uses its long arms to trap plankton and small fish."
+    },
+    "sperm-whale": {
+      "family": "Physeteridae",
+      "lengthLabel": "Length",
+      "length": "60’",
+      "weight": "50Tons",
+      "region": "Worldwide",
+      "description": "The largest toothed predators on Earth, sperm whales hunt for giant squid in the ocean deep using incredibly loud echolocation clicks."
+    },
+    "shortfin-mako-shark": {
+      "family": "Lamnidae",
+      "lengthLabel": "Length",
+      "length": "13’",
+      "weight": "1300lbs",
+      "region": "Worldwide",
+      "description": "A powerful, fast-swimming shark, the shortfin mako pursues fish and squid. It can retain heat in parts of its body to stay active in cool water."
+    },
+    "black-marlin": {
+      "family": "Istiophoridae",
+      "lengthLabel": "Length",
+      "length": "15’",
+      "weight": "1650lbs",
+      "region": "Indo-Pacific",
+      "description": "Black marlin hunt fish and squid with a long, spear-like bill. Their rigid pectoral fins cannot fold flat against the sides of the body."
+    },
+    "swordfish": {
+      "family": "Xiphiidae",
+      "lengthLabel": "Length",
+      "length": "14’",
+      "weight": "1000lbs",
+      "region": "Worldwide",
+      "description": "Charging through the pitch-black twilight zone, the swordfish uses its razor-sharp bill to slash and stun fast-moving schools of squid and fish."
+    },
+    "bluefin-tuna": {
+      "family": "Scombridae",
+      "lengthLabel": "Length",
+      "length": "13’",
+      "weight": "1000lbs",
+      "region": "Atlantic",
+      "description": "Atlantic bluefin tuna retain heat in their muscles and other tissues. This helps them pursue prey across both cool and warm ocean waters."
+    },
+    "great-barracuda": {
+      "family": "Sphyraenidae",
+      "lengthLabel": "Length",
+      "length": "4’",
+      "weight": "40lbs",
+      "region": "Worldwide",
+      "description": "Barracudas hover like steel spears, then explode forward in a silver blur to snatch prey with dagger teeth. They are drawn to flashes of light."
+    },
+    "green-moray-eel": {
+      "family": "Muraenidae",
+      "lengthLabel": "Length",
+      "length": "8’ 6”",
+      "weight": "65lbs",
+      "region": "Caribbean",
+      "description": "Moray eels lurk in crevices. They snatch prey, then fire out a second set of jaws (pharyngeal jaws) to pull it down."
+    },
+    "reef-shark": {
+      "family": "Carcharhinidae",
+      "lengthLabel": "Length",
+      "length": "5’",
+      "weight": "80lbs",
+      "region": "Indo-Pacific",
+      "description": "Blacktip reef sharks are shallow-reef sprinters with signature black-tipped fins. They dart through lagoons at dawn and dusk, snapping up small fish."
+    },
+    "goliath-grouper": {
+      "family": "Epinephelidae",
+      "lengthLabel": "Length",
+      "length": "7’ 4”",
+      "weight": "800lbs",
+      "region": "Atlantic",
+      "description": "Groupers are ambush hunters that gulp prey with a sudden vacuum from their huge mouths. They lurk in shadows, waiting for prey."
+    },
+    "green-sea-turtle": {
+      "family": "Cheloniidae",
+      "lengthLabel": "Shell length",
+      "length": "4’",
+      "weight": "425lbs",
+      "region": "Tropics",
+      "description": "Adult green turtles graze mainly on seagrass and algae. After long ocean migrations, females return to their natal nesting regions to lay eggs."
+    },
+    "spinner-dolphins": {
+      "family": "Delphinidae",
+      "lengthLabel": "Length",
+      "length": "5’ 9”",
+      "weight": "180lbs",
+      "region": "Worldwide",
+      "description": "Spinner dolphins leap in tight, corkscrew spins that can launch them high above the waves. They can spin up to 7 times in the air."
+    },
+    "thresher-shark": {
+      "family": "Alopiidae",
+      "lengthLabel": "Length",
+      "length": "14’ 5”",
+      "weight": "600lbs",
+      "region": "Worldwide",
+      "description": "A thresher shark is a sleek, fast-swimming ocean predator famous for its extraordinarily long, whip-like tail that it uses to stun prey."
+    },
+    "goblin-shark": {
+      "family": "Mitsukurinidae",
+      "lengthLabel": "Length",
+      "length": "10’ 8”",
+      "weight": "750lbs",
+      "region": "Worldwide",
+      "description": "The goblin shark is a rare, deep-sea species recognized by its long snout and slingshot-like jaws that extend to capture prey"
+    },
+    "gulper-eel": {
+      "family": "Eurypharyngidae",
+      "lengthLabel": "Length",
+      "length": "3’ 6”",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "The gulper eel's enormous mouth and expandable throat can engulf prey. A tiny light-producing organ sits at the tip of its long, whip-like tail."
+    },
+    "deep-sea-skate": {
+      "family": "Arhynchobatidae",
+      "lengthLabel": "Length",
+      "length": "5’",
+      "weight": "80lbs",
+      "region": "N. Pacific",
+      "description": "Found in extreme depths of up to 3km, these resilient marine creatures gracefully glide over the ocean floor to hunt for bottom dwellers."
+    },
+    "chimera": {
+      "family": "Family varies",
+      "lengthLabel": "Length",
+      "length": "2’",
+      "weight": "9lbs",
+      "region": "Worldwide",
+      "description": "Often referred to as a \"ghost shark,\" this bizarre creature is famous for its shimmering, scaleless skin, large rabbit-like eyes."
+    },
+    "frilled-shark": {
+      "family": "Chlamydoselachidae",
+      "lengthLabel": "Length",
+      "length": "6’",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "Six pairs of frilly gill slits give this deep-water shark its name. Its eel-like body and rows of three-pointed teeth help it capture prey."
+    },
+    "cookie-cutter-shark": {
+      "family": "Dalatiidae",
+      "lengthLabel": "Length",
+      "length": "22”",
+      "weight": "2.2lbs",
+      "region": "Tropics",
+      "description": "Cookiecutter sharks use thick lips to grip larger animals and sharp lower teeth to cut round plugs of flesh. Their undersides glow with bioluminescence."
+    },
+    "silky-shark": {
+      "family": "Carcharhinidae",
+      "lengthLabel": "Length",
+      "length": "11’",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "A swift, pelagic shark that gets its name from its exceptionally smooth, soft skin, which is covered in densely packed overlapping scales."
+    },
+    "oceanic-whitetip-shark": {
+      "family": "Carcharhinidae",
+      "lengthLabel": "Length",
+      "length": "8’",
+      "weight": "150lbs",
+      "region": "Worldwide",
+      "description": "Long, rounded pectoral fins and white-tipped fins distinguish this open-ocean shark. It searches warm seas for fish, squid, and other food."
+    },
+    "blue-shark-oceanic": {
+      "family": "Carcharhinidae",
+      "lengthLabel": "Length",
+      "length": "7’",
+      "weight": "300lbs",
+      "region": "Worldwide",
+      "description": "Blue sharks make long migrations through temperate and tropical seas. Their slender bodies and long pectoral fins suit life in the open ocean."
+    },
+    "galapagos-shark": {
+      "family": "Carcharhinidae",
+      "lengthLabel": "Length",
+      "length": "12’",
+      "weight": "188lbs",
+      "region": "Worldwide",
+      "description": "Galapagos sharks favor clear, warm water around oceanic islands. These large requiem sharks patrol reef edges and feed mainly on fish."
+    },
+    "yellowfin-tuna": {
+      "family": "Scombridae",
+      "lengthLabel": "Length",
+      "length": "7’",
+      "weight": "400lbs",
+      "region": "Worldwide",
+      "description": "They utilize a biological hydraulic system that pumps fluid into their fins, instantly stiffening them to execute razor-sharp, high-speed turns."
+    },
+    "sailfish": {
+      "family": "Istiophoridae",
+      "lengthLabel": "Length",
+      "length": "8’",
+      "weight": "200lbs",
+      "region": "Tropics",
+      "description": "Sailfish use their long bills to slash or tap schooling prey. They raise their large dorsal fins while hunting and fold them down when swimming quickly."
+    },
+    "wahoo": {
+      "family": "Scombridae",
+      "lengthLabel": "Length",
+      "length": "5’",
+      "weight": "80lbs",
+      "region": "Tropics",
+      "description": "Wahoo are streamlined predators with sharp teeth and blue bars along their sides. They hunt fish and squid in warm ocean waters."
+    },
+    "loggerhead-sea-turtle": {
+      "family": "Cheloniidae",
+      "lengthLabel": "Length",
+      "length": "3’ 6”",
+      "weight": "300lbs",
+      "region": "Subtropical",
+      "description": "Loggerheads use large heads and powerful jaws to crush crabs, whelks, and other hard-shelled prey. Adults travel widely between feeding and nesting areas."
+    },
+    "nurse-shark": {
+      "family": "Ginglymostomatidae",
+      "lengthLabel": "Length",
+      "length": "8’",
+      "weight": "Varies",
+      "region": "Atlantic",
+      "description": "Nurse sharks can rest completely still on the ocean floor and pump water directly over their gills to breathe, unlike many other shark species."
+    },
+    "yellow-lipped-sea-krait": {
+      "family": "Elapidae",
+      "lengthLabel": "Length",
+      "length": "5’ 6”",
+      "weight": "4lbs",
+      "region": "Indo-Pacific",
+      "description": "Yellow-lipped sea kraits hunt eels underwater with potent venom. Unlike fully aquatic sea snakes, they come ashore to rest, digest meals, and lay eggs."
+    },
+    "emerald-crab": {
+      "family": "Mithracidae",
+      "lengthLabel": "Length",
+      "length": "1.8”",
+      "weight": "1 oz",
+      "region": "Caribbean",
+      "description": "Emerald crabs prowl at night, picking algae and leftovers with spoon-tipped claws. Their leafy green shell hides them among corals."
+    },
+    "sea-urchin": {
+      "family": "Diadematidae",
+      "lengthLabel": "Spine length",
+      "length": "12”",
+      "weight": "Unknown",
+      "region": "W. Atlantic",
+      "description": "Long-spined sea urchins graze on algae and help keep reef surfaces clear. Their slender spines defend them while tube feet grip and move over rocks."
+    },
+    "anemone": {
+      "family": "Family varies",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Sea anemones anchor to rock and hunt with stinging tentacles packed with tiny harpoons. Some host clownfish, trading shelter for scraps."
+    },
+    "blue-crab": {
+      "family": "Portunidae",
+      "lengthLabel": "Width",
+      "length": "7”",
+      "weight": "0.7lbs",
+      "region": "W. Atlantic",
+      "description": "Blue crabs swim with paddle-shaped rear legs. They shed their shells to grow, leaving them briefly soft until the new shell hardens."
+    },
+    "arrow-crab": {
+      "family": "Inachoididae",
+      "lengthLabel": "Span",
+      "length": "9.5”",
+      "weight": "Unknown",
+      "region": "W. Atlantic",
+      "description": "Arrow crabs tiptoe on stilt-like legs, their long “arrow” snout probing crevices. At night they scavenge around for leftovers."
+    },
+    "mantis-shrimp": {
+      "family": "Family varies",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Warm seas",
+      "description": "Mantis shrimp hunt with specialized clubs or spears. Club-bearing species strike so fast that collapsing cavitation bubbles add a second impact."
+    },
+    "leather-starfish": {
+      "family": "Asteropseidae",
+      "lengthLabel": "Span",
+      "length": "10”",
+      "weight": "Unknown",
+      "region": "NE Pacific",
+      "description": "Leather stars have smooth, rubbery skin and a garlic-like odor. Tube feet carry them over rocky Pacific shores as they feed on anemones and other prey."
+    },
+    "cleaner-shrimp": {
+      "family": "Lysmatidae",
+      "lengthLabel": "Length",
+      "length": "3”",
+      "weight": "Unknown",
+      "region": "Indo-Pacific",
+      "description": "Scarlet cleaner shrimp wave long white antennae at cleaning stations. Fish visit to have parasites and dead tissue removed from their skin and mouths."
+    },
+    "crown-of-thorns": {
+      "family": "Acanthasteridae",
+      "lengthLabel": "Span",
+      "length": "18”",
+      "weight": "6lbs",
+      "region": "Indo-Pacific",
+      "description": "Crown-of-thorns sea stars spread their stomachs over corals to digest living tissue outside their bodies. Venomous spines help deter predators."
+    },
+    "nudibranch": {
+      "family": "Chromodorididae",
+      "lengthLabel": "Length",
+      "length": "3”",
+      "weight": "Unknown",
+      "region": "Indo-Pacific",
+      "description": "The magnificent chromodoris is a brightly patterned, sponge-eating sea slug. Chemicals obtained from its food help defend it against predators."
+    },
+    "giant-triton": {
+      "family": "Charoniidae",
+      "lengthLabel": "Shell length",
+      "length": "20”",
+      "weight": "Unknown",
+      "region": "Indo-Pacific",
+      "description": "Giant tritons are large predatory sea snails that hunt crown-of-thorns starfish, subduing them with a paralyzing bite."
+    },
+    "octopus": {
+      "family": "Family varies",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Octopuses change color and texture in a blink, melting into reef or rock. With eight clever arms and hundreds of suckers, they solve puzzles—then vanish in a puff of ink."
+    },
+    "oysters": {
+      "family": "Ostreidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats."
+    },
+    "giant-clam": {
+      "family": "Cardiidae",
+      "lengthLabel": "Shell length",
+      "length": "4’ 3”",
+      "weight": "500lbs",
+      "region": "Indo-Pacific",
+      "description": "Giant clams are the largest living bivalves. Living in warm, shallow coral reefs, they anchor themselves and rely on symbiotic algae for much of their energy."
+    },
+    "deep-cucumber": {
+      "family": "Family varies",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Deep-sea sea cucumbers feed on organic particles on or near the seafloor. Their soft bodies and feeding tentacles come in many shapes across species."
+    },
+    "brittlestar": {
+      "family": "Family varies",
+      "lengthLabel": "Span",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Brittle stars move with slender, flexible arms joined to a central disc. Many can shed an arm to escape a predator and later regrow it."
+    },
+    "vampire-squid": {
+      "family": "Vampyroteuthidae",
+      "lengthLabel": "Length",
+      "length": "12”",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "When threatened, it doesn't ink; instead, it cloaks itself by pulling its webbed arms over its head and releases glowing, bioluminescent clouds."
+    },
+    "giant-isopod": {
+      "family": "Cirolanidae",
+      "lengthLabel": "Length",
+      "length": "16”",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Giant isopods are deep-sea relatives of woodlice. Their armored bodies protect them as they scavenge, and a slow metabolism helps them endure long fasts."
+    },
+    "giant-tube-worm": {
+      "family": "Siboglinidae",
+      "lengthLabel": "Length",
+      "length": "8’",
+      "weight": "Unknown",
+      "region": "E. Pacific",
+      "description": "Giant tube worms live at hydrothermal vents. Without a mouth or gut, adults rely on internal bacteria that use chemicals from vent fluids to make food."
+    },
+    "peacock-squid": {
+      "family": "Cranchiidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "Peacock squid have large eyes and nearly transparent bodies. Light organs beneath the eyes help hide their silhouettes from predators below."
+    },
+    "deep-sea-jelly": {
+      "family": "Atollidae",
+      "lengthLabel": "Bell width",
+      "length": "6”",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "Atolla jellyfish can flash rings of blue bioluminescence when disturbed. This burglar-alarm display may draw larger predators toward an attacker."
+    },
+    "dumbo-octopus": {
+      "family": "Grimpoteuthidae",
+      "lengthLabel": "Length",
+      "length": "10”",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "To hunt they hover right above the seafloor and \"hoover\" up worms, snails, and crustaceans, swallowing their prey whole."
+    },
+    "giant-red-shrimp": {
+      "family": "Gnathophausiidae",
+      "lengthLabel": "Length",
+      "length": "5”",
+      "weight": "1oz",
+      "region": "Worldwide",
+      "description": "Famous for its vivid, deep red coloration, extremely long antennae, and a prominent crest."
+    },
+    "man-o-war": {
+      "family": "Physaliidae",
+      "lengthLabel": "Tentacle length",
+      "length": "65’",
+      "weight": "Unknown",
+      "region": "Tropics",
+      "description": "A Portuguese man o' war is a colony of specialized zooids. Its gas-filled float rides at the surface while long, stinging tentacles capture prey below."
+    },
+    "blue-sea-dragon": {
+      "family": "Glaucidae",
+      "lengthLabel": "Length",
+      "length": "1.2”",
+      "weight": "Unknown",
+      "region": "Warm seas",
+      "description": "Blue sea dragons float upside down at the surface. They eat animals such as the Portuguese man o' war and store stolen stinging cells for defense."
+    },
+    "market-squid": {
+      "family": "Loliginidae",
+      "lengthLabel": "Length",
+      "length": "12”",
+      "weight": "Unknown",
+      "region": "NE Pacific",
+      "description": "Market squid live only about six to nine months. They gather to mate and lay egg capsules on the seafloor, then die after spawning."
+    },
+    "box-jellyfish": {
+      "family": "Chirodropidae",
+      "lengthLabel": "Bell width",
+      "length": "12”",
+      "weight": "Unknown",
+      "region": "Indo-Pacific",
+      "description": "The Australian box jellyfish has a cube-shaped bell and clusters of eyes. Its long tentacles carry powerful venom for catching fish and shrimp."
+    },
+    "lionfish": {
+      "family": "Scorpaenidae",
+      "lengthLabel": "Length",
+      "length": "1’ 3”",
+      "weight": "2.3lbs",
+      "region": "Worldwide",
+      "description": "Lionfish spread their broad fins to corner small fish before striking. Their defensive spines are venomous; introduced populations threaten Atlantic reefs."
+    },
+    "winter-flounder": {
+      "family": "Pleuronectidae",
+      "lengthLabel": "Length",
+      "length": "2’ 2”",
+      "weight": "7lbs",
+      "region": "Atlantic",
+      "description": "Flounders lie flat and camouflaged, burying in sand with both eyes on one side. They ambush prey with a sudden snap."
+    },
+    "cleaner-wrasse": {
+      "family": "Labridae",
+      "lengthLabel": "Length",
+      "length": "5.5”",
+      "weight": "1.1 oz",
+      "region": "Indo-Pacific",
+      "description": "Cleaner wrasses run reef “stations” where big fish queue for a cleanup. They pick off parasites and dead skin—earning a safe meal and trust."
+    },
+    "fairy-parrotfish": {
+      "family": "Labridae",
+      "lengthLabel": "Length",
+      "length": "2’ 2”",
+      "weight": "Varies",
+      "region": "Tropical reefs",
+      "description": "Parrotfish scrape food from reef surfaces with beak-like teeth, helping produce sand. Some species sleep inside protective mucus cocoons."
+    },
+    "bluestriped-grunt": {
+      "family": "Haemulidae",
+      "lengthLabel": "Length",
+      "length": "18”",
+      "weight": "1.7lbs",
+      "region": "Caribbean",
+      "description": "Bluestriped grunts gather over reefs by day and feed over sand and seagrass at night. They make grunting sounds by rubbing their throat teeth."
+    },
+    "clownfish": {
+      "family": "Pomacentridae",
+      "lengthLabel": "Length",
+      "length": "3”",
+      "weight": "2.5oz",
+      "region": "Indo-Pacific",
+      "description": "Bearing bright orange and white markings, they are renowned for their unique ability to safely live inside venomous sea anemones without getting stung."
+    },
+    "spanish-hogfish": {
+      "family": "Labridae",
+      "lengthLabel": "Length",
+      "length": "16”",
+      "weight": "2.2lbs",
+      "region": "Caribbean",
+      "description": "Young Spanish hogfish clean parasites from other fish. Adults feed on bottom-dwelling invertebrates, and some females later change into males."
+    },
+    "picasso-triggerfish": {
+      "family": "Balistidae",
+      "lengthLabel": "Length",
+      "length": "11”",
+      "weight": "2lbs",
+      "region": "Indo-Pacific",
+      "description": "Known for its striking colors and pugnacious attitude, this triggerfish can lock its dorsal spine into coral crevices for protection."
+    },
+    "porcupine-fish": {
+      "family": "Diodontidae",
+      "lengthLabel": "Length",
+      "length": "2’ 6”",
+      "weight": "9lbs",
+      "region": "Tropics",
+      "description": "Porcupinefish puff into a spiky ball to scare off predators. Their beak crushes shells, and some species carry a powerful toxin."
+    },
+    "french-angelfish": {
+      "family": "Pomacanthidae",
+      "lengthLabel": "Length",
+      "length": "1’ 5”",
+      "weight": "4.4lbs",
+      "region": "Caribbean",
+      "description": "French angelfish cruise reefs in bonded pairs, flashing yellow-edged scales and a dark mask."
+    },
+    "sargeant-major": {
+      "family": "Pomacentridae",
+      "lengthLabel": "Length",
+      "length": "6”",
+      "weight": "3.5oz",
+      "region": "Caribbean",
+      "description": "Sergeant major damselfish wear bold black-and-white bars with a splash of yellow on top. Males fiercely guard egg patches."
+    },
+    "longhorn-cowfish": {
+      "family": "Ostraciidae",
+      "lengthLabel": "Length",
+      "length": "18”",
+      "weight": "Unknown",
+      "region": "Indo-Pacific",
+      "description": "Protected by a rigid, box-like body, longhorn cowfish graze on small bottom-dwelling prey. When severely stressed, they can release toxic mucus."
+    },
+    "spotfin-butterflyfish": {
+      "family": "Chaetodontidae",
+      "lengthLabel": "Length",
+      "length": "5”",
+      "weight": "2 oz",
+      "region": "W. Atlantic",
+      "description": "A black spot near the rear of the dorsal fin gives the spotfin butterflyfish its name. A dark stripe crosses its eye as it forages around reefs."
+    },
+    "queen-angelfish": {
+      "family": "Pomacanthidae",
+      "lengthLabel": "Length",
+      "length": "14”",
+      "weight": "3lbs",
+      "region": "Caribbean",
+      "description": "The Queen Angelfish is a brilliantly colored reef fish that glides through warm, clear Caribbean shallows, recognizable by its vivid colors."
+    },
+    "blue-tang": {
+      "family": "Acanthuridae",
+      "lengthLabel": "Length",
+      "length": "10”",
+      "weight": "10oz",
+      "region": "Caribbean",
+      "description": "An active herbivore that shifts between territorial, wandering, and schooling social phases. It grazes continuously on algae."
+    },
+    "frogfish": {
+      "family": "Antennariidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Frogfish hide among reef growth and lure prey with a modified dorsal-fin spine. Their expanding mouths suck in unsuspecting animals in a rapid gulp."
+    },
+    "spectacled-parrotfish": {
+      "family": "Labridae",
+      "lengthLabel": "Length",
+      "length": "24”",
+      "weight": "15.4lbs",
+      "region": "Hawaiian Islands",
+      "description": "Known for its distinctive “spectacle-like” markings around the eyes and beak, it contributes to sand production through its feeding."
+    },
+    "bristlemouth": {
+      "family": "Gonostomatidae",
+      "lengthLabel": "Length",
+      "length": "3”",
+      "weight": "1oz",
+      "region": "Worldwide",
+      "description": "Bristlemouths are tiny deep-sea fish considered the most abundant vertebrates on Earth, with populations in the quadrillions."
+    },
+    "owlfish": {
+      "family": "Bathylagidae",
+      "lengthLabel": "Length",
+      "length": "6.5”",
+      "weight": "1oz",
+      "region": "N. Pacific",
+      "description": "These stealthy predators drift through pitch-black environments using their massive eyes to spot the faintest glimmers of bioluminescent prey."
+    },
+    "pacific-grenadier": {
+      "family": "Macrouridae",
+      "lengthLabel": "Length",
+      "length": "2’ 6”",
+      "weight": "Unknown",
+      "region": "N. Pacific",
+      "description": "Often called a \"rattail\" because of its slender, whip-like tail, this deep-sea fish can live for over 70 years in extreme pressures."
+    },
+    "viperfish": {
+      "family": "Stomiidae",
+      "lengthLabel": "Length",
+      "length": "14”",
+      "weight": "8oz",
+      "region": "Tropics",
+      "description": "Long, needle-like teeth help viperfish hold slippery prey. Light-producing organs on their bodies and dorsal-fin lure shine in the deep sea."
+    },
+    "humpback-anglerfish": {
+      "family": "Melanocetidae",
+      "lengthLabel": "Length",
+      "length": "7”",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "Female humpback anglerfish carry a lure lit by symbiotic bacteria. It dangles above the mouth, drawing prey close in the darkness of the deep sea."
+    },
+    "barrel-eye-fish": {
+      "family": "Opisthoproctidae",
+      "lengthLabel": "Length",
+      "length": "6.5”",
+      "weight": "Unknown",
+      "region": "N. Pacific",
+      "description": "A transparent dome protects the barreleye's tubular green eyes. The eyes can rotate from looking upward to facing forward as the fish feeds."
+    },
+    "fangtooth-fish": {
+      "family": "Anoplogastridae",
+      "lengthLabel": "Length",
+      "length": "7”",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "Fangtooth fish have enormous teeth for their small bodies. Special sockets in the roof of the mouth make room for the long lower fangs."
+    },
+    "black-swallower": {
+      "family": "Chiasmodontidae",
+      "lengthLabel": "Length",
+      "length": "9”",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "The black swallower has an elastic stomach that can hold prey larger than itself. This adaptation helps it take advantage of scarce deep-sea meals."
+    },
+    "tripod-fish": {
+      "family": "Ipnopidae",
+      "lengthLabel": "Length",
+      "length": "17”",
+      "weight": "Unknown",
+      "region": "Worldwide",
+      "description": "Tripod fish stand above the seabed on three elongated fin rays. Facing into the current, they spread their pectoral fins to help detect drifting prey."
+    },
+    "coelacanth": {
+      "family": "Latimeriidae",
+      "lengthLabel": "Length",
+      "length": "5’ 6”",
+      "weight": "100lbs",
+      "region": "W. Indian Ocean",
+      "description": "West Indian Ocean coelacanths have fleshy, lobed fins and a distinctive three-part tail. These deep-water fish belong to an ancient lineage."
+    },
+    "flying-fish": {
+      "family": "Exocoetidae",
+      "lengthLabel": "Length",
+      "length": "12”",
+      "weight": "1.1lbs",
+      "region": "Worldwide",
+      "description": "It escapes underwater predators by rocketing to the surface and using its rigid, wing-like fins to glide gracefully through the air for hundreds of feet."
+    },
+    "barracuda-oceanic": {
+      "family": "Sphyraenidae",
+      "lengthLabel": "Length",
+      "length": "3’",
+      "weight": "15lbs",
+      "region": "Tropics",
+      "description": "Barracudas wait near prey before lunging with bursts of speed. Their streamlined bodies and sharp teeth help them catch other fish."
+    },
+    "mahi-mahi": {
+      "family": "Coryphaenidae",
+      "lengthLabel": "Length",
+      "length": "3’",
+      "weight": "30lbs",
+      "region": "Tropics",
+      "description": "Mahi-mahi grow rapidly in warm ocean waters. They hunt fish and squid, often gathering near floating seaweed, logs, and other objects."
+    },
+    "king-mackerel": {
+      "family": "Scombridae",
+      "lengthLabel": "Length",
+      "length": "4’",
+      "weight": "65lbs",
+      "region": "Atlantic",
+      "description": "A highly sought-after, migratory coastal pelagic fish that is renowned for \"skyrocketing\" clear out of the water when aggressively attacking prey."
+    },
+    "tripletail": {
+      "family": "Lobotidae",
+      "lengthLabel": "Length",
+      "length": "3’",
+      "weight": "15lbs",
+      "region": "Atlantic",
+      "description": "The tripletail is a master of surface deception. It drifts sideways to mimic floating dead leaves and fool its prey."
+    },
+    "halfbeak": {
+      "family": "Hemiramphidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Tropics",
+      "description": "Halfbeaks have a long lower jaw and a much shorter upper jaw. These surface-dwelling fish may leap or skip across the water to escape predators."
+    },
+    "needlefish": {
+      "family": "Belonidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Tropics",
+      "description": "Needlefish hunt near the surface with long jaws lined with sharp teeth. When startled, they can leap clear of the water."
+    },
+    "bluefin-tuna-juvenile": {
+      "family": "Scombridae",
+      "lengthLabel": "Length",
+      "length": "2’",
+      "weight": "20lbs",
+      "region": "Atlantic",
+      "description": "Young Atlantic bluefin tuna grow quickly and gather in schools. They eat small fish, squid, and crustaceans as they develop into powerful ocean hunters."
+    },
+    "remora": {
+      "family": "Echeneidae",
+      "lengthLabel": "Length",
+      "length": "2’",
+      "weight": "4lbs",
+      "region": "Worldwide",
+      "description": "A modified dorsal fin forms the remora's suction disc. It attaches to larger marine animals for transport and feeds on scraps or parasites."
+    },
+    "bluefish": {
+      "family": "Pomatomidae",
+      "lengthLabel": "Length",
+      "length": "2’",
+      "weight": "12lbs",
+      "region": "Worldwide",
+      "description": "Bluefish are the only living species in the family Pomatomidae. Schools of these sharp-toothed predators pursue smaller fish in coastal waters."
+    },
+    "bonito-tuna": {
+      "family": "Scombridae",
+      "lengthLabel": "Length",
+      "length": "2.5’",
+      "weight": "18lbs",
+      "region": "Worldwide",
+      "description": "Bonitos are streamlined relatives of tunas and mackerels. They hunt small schooling fish, squid, and crustaceans in open coastal waters."
+    },
+    "crevalle-jack": {
+      "family": "Carangidae",
+      "lengthLabel": "Length",
+      "length": "1.5’",
+      "weight": "10lbs",
+      "region": "Atlantic",
+      "description": "Crevalle jacks are powerful coastal predators that often hunt in schools. They can make grunting sounds using their teeth and swim bladder."
+    },
+    "yellowtail-amberjack": {
+      "family": "Carangidae",
+      "lengthLabel": "Length",
+      "length": "4’",
+      "weight": "60lbs",
+      "region": "Subtropics",
+      "description": "Yellowtail amberjacks are strong-swimming predators with a yellow tail and side stripe. They school around rocky reefs and hunt fish and squid."
+    },
+    "frigate-tuna": {
+      "family": "Scombridae",
+      "lengthLabel": "Length",
+      "length": "1’",
+      "weight": "4lbs",
+      "region": "Worldwide",
+      "description": "Frigate tuna form large schools in warm seas. They pursue small fish, squid, and crustaceans and may also feed on members of their own species."
+    },
+    "lookdown": {
+      "family": "Carangidae",
+      "lengthLabel": "Length",
+      "length": "10”",
+      "weight": "2lbs",
+      "region": "Western Atlantic",
+      "description": "The lookdown gets its name from its steep forehead and high-set eyes. Its thin, silvery body reflects light as it swims in coastal schools."
+    },
+    "pompano": {
+      "family": "Carangidae",
+      "lengthLabel": "Length",
+      "length": "12”",
+      "weight": "2lbs",
+      "region": "Atlantic",
+      "description": "Florida pompano forage over sandy bottoms for small crustaceans and mollusks. These silvery fish often travel in schools along the surf zone."
+    },
+    "ocean-triggerfish": {
+      "family": "Balistidae",
+      "lengthLabel": "Length",
+      "length": "20”",
+      "weight": "12lbs",
+      "region": "Atlantic",
+      "description": "Ocean triggerfish swim above reefs and drop-offs, feeding on plankton and small animals. They can lock their first dorsal spine upright for defense."
+    },
+    "african-pompano": {
+      "family": "Carangidae",
+      "lengthLabel": "Length",
+      "length": "3’",
+      "weight": "25lbs",
+      "region": "Tropics",
+      "description": "Young African pompano trail long, thread-like fin rays that resemble jellyfish tentacles. These streamers shorten as the fish grow into silvery adults."
+    },
+    "krill-bloom-base": {
+      "family": "Family varies",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish."
+    },
+    "krill-bloom-stage1": {
+      "family": "Family varies",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish."
+    },
+    "krill-bloom-stage2": {
+      "family": "Family varies",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish."
+    },
+    "sardine-ball-base": {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together."
+    },
+    "anchovy-ball-base": {
+      "family": "Engraulidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish."
+    },
+    "silverside-ball-base": {
+      "family": "Atherinopsidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "W. Atlantic",
+      "description": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together."
+    },
+    "sardine-ball-stage1": {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together."
+    },
+    "anchovy-ball-stage1": {
+      "family": "Engraulidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish."
+    },
+    "silverside-ball-stage1": {
+      "family": "Atherinopsidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "W. Atlantic",
+      "description": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together."
+    },
+    "sardine-ball-stage2": {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together."
+    },
+    "anchovy-ball-stage2": {
+      "family": "Engraulidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "Worldwide",
+      "description": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish."
+    },
+    "silverside-ball-stage2": {
+      "family": "Atherinopsidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "W. Atlantic",
+      "description": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together."
+    },
+    "herring-ball-base": {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "N. Atlantic",
+      "description": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish."
+    },
+    "herring-ball-stage1": {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "N. Atlantic",
+      "description": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish."
+    },
+    "herring-ball-stage2": {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "Varies",
+      "weight": "Varies",
+      "region": "N. Atlantic",
+      "description": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish."
+    },
+    "white-grunt": {
+      "family": "Haemulidae",
+      "lengthLabel": "Length",
+      "length": "12”",
+      "weight": "3lbs",
+      "region": "Caribbean",
+      "description": "White grunts school around reefs by day and forage at night. They make low grunting sounds by rubbing teeth in their throats."
+    },
+    "emperor-angelfish": {
+      "family": "Pomacanthidae",
+      "lengthLabel": "Length",
+      "length": "15”",
+      "weight": "1.5lbs",
+      "region": "Indo-Pacific",
+      "description": "When startled, adult emperor angelfishes can produce a loud, audible thumping or knocking sound that resembles a drum roll."
+    },
+    "flounder": {
+      "family": "Paralichthyidae",
+      "lengthLabel": "Length",
+      "length": "2’ 2”",
+      "weight": "7lbs",
+      "region": "Atlantic",
+      "description": "Flounders lie flat and camouflaged, burying in sand with both eyes on one side. They ambush prey with a sudden snap."
+    }
+  }
+}

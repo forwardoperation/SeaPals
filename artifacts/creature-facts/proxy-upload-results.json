@@ -1,0 +1,34 @@
+[
+  {
+    "cardId": "lionfish",
+    "success": true,
+    "imageHash": "fd8f7c328eda59b068536860dfe5d4904f280e9e",
+    "sizeBytes": 409655,
+    "contentType": "image/png",
+    "placedOnNodeId": "4028:40889"
+  },
+  {
+    "cardId": "blue-tang",
+    "success": true,
+    "imageHash": "85aded20cee43a17e52d3f205ef44f915f946ca0",
+    "sizeBytes": 385964,
+    "contentType": "image/png",
+    "placedOnNodeId": "4028:40892"
+  },
+  {
+    "cardId": "frogfish",
+    "success": true,
+    "imageHash": "4f49315db9c6e993ea746a94e63c4f4135515741",
+    "sizeBytes": 376160,
+    "contentType": "image/png",
+    "placedOnNodeId": "4028:40895"
+  },
+  {
+    "cardId": "sea-urchin",
+    "success": true,
+    "imageHash": "2761e83389739c31188e66adf2b3c7f964b6ce8a",
+    "sizeBytes": 353365,
+    "contentType": "image/png",
+    "placedOnNodeId": "4028:40898"
+  }
+]

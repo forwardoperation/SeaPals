@@ -1,0 +1,292 @@
+{
+  "verifiedAt": "2026-10-05T11:42:51.483Z",
+  "origin": "https://searealm.com",
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "url": "https://searealm.com/"
+    },
+    {
+      "route": "/decks",
+      "status": 200,
+      "url": "https://searealm.com/decks"
+    },
+    {
+      "route": "/store",
+      "status": 200,
+      "url": "https://searealm.com/store"
+    },
+    {
+      "route": "/simulator",
+      "status": 200,
+      "url": "https://searealm.com/simulator"
+    },
+    {
+      "route": "/adventure",
+      "status": 200,
+      "url": "https://searealm.com/adventure"
+    },
+    {
+      "route": "/gallery",
+      "status": 200,
+      "url": "https://searealm.com/gallery"
+    },
+    {
+      "route": "/set-list",
+      "status": 200,
+      "url": "https://searealm.com/set-list"
+    },
+    {
+      "route": "/encyclopedia/owlfish",
+      "status": 200,
+      "url": "https://searealm.com/encyclopedia/owlfish"
+    },
+    {
+      "route": "/encyclopedia/oceanic-manta-ray",
+      "status": 200,
+      "url": "https://searealm.com/encyclopedia/oceanic-manta-ray"
+    }
+  ],
+  "matchingGameAssets": [
+    {
+      "src": "/_next/static/chunks/4bd1b696-c2f6e0877b6c10aa.js",
+      "sha256": "c44812d818aed0a5034941164dcad78b5bb7d8a00daed7a33efe3ebc6ccfb492"
+    },
+    {
+      "src": "/_next/static/chunks/3794-9e54f1de291f2323.js",
+      "sha256": "24b850633752121049ecc5e0a6877367aabb66fd2a0049d8d9ee1ddcdb22308c"
+    },
+    {
+      "src": "/_next/static/chunks/main-app-51c8aa5b78bb8bd4.js",
+      "sha256": "5bdf8fd300fc129291538f877581031824228aca6d68f4f590e55666f9ad50c5"
+    },
+    {
+      "src": "/_next/static/chunks/8500-3953cc33eeceb44e.js",
+      "sha256": "89cb18e673c5225d6b74e95ff28b3e9c26f6434089c6756ad557d89613ee7450"
+    },
+    {
+      "src": "/_next/static/chunks/8437-e74155deec521a50.js",
+      "sha256": "5537539d9a24ead04aaacd8a7174bda066f7f5e2f09b24d2738a43a37acdaab7"
+    },
+    {
+      "src": "/_next/static/chunks/2430-e16a51398f167cdf.js",
+      "sha256": "c4c5e0b872ae9917aa1871916aaa1e385a58b37f02e54c71173478b718639d86"
+    },
+    {
+      "src": "/_next/static/chunks/9914-661f1f61cb6552ec.js",
+      "sha256": "0ab8befa39b5f5cb175d0d04f28a17e1e11fb168f2af34b22a424a1e7f7f5914"
+    },
+    {
+      "src": "/_next/static/chunks/app/layout-969bad0d7f4cd712.js",
+      "sha256": "982af0fee7c09e1e20d36e729646e0ede0782858aa4a411d321159f0de9c0357"
+    },
+    {
+      "src": "/_next/static/chunks/5517-ffc5732496d05d04.js",
+      "sha256": "8d306da077f5ddc775c9fe5f6c988860d7fc4faeff3a3acc15ababad9eb92c73"
+    },
+    {
+      "src": "/_next/static/chunks/5024-7d2776fd92702a55.js",
+      "sha256": "08386ec591402d5b1bc9a8f41c279fef56af891ab4c3a174536fcd7b7d87984e"
+    },
+    {
+      "src": "/_next/static/chunks/2463-4643ced718bffe88.js",
+      "sha256": "047f32811c2faf4aa47100020b27e45a16345d5df01bc99893d0193b16401c27"
+    },
+    {
+      "src": "/_next/static/chunks/6861-83977b549f400678.js",
+      "sha256": "6f5318cb0b4766bcb38c0727d4b7f0629a26d7cb8456692c3ea4502431627f81"
+    },
+    {
+      "src": "/_next/static/chunks/app/simulator/page-8ab3be3433fbd06c.js",
+      "sha256": "0725e7b39f6b6faced54957d344566d28d0526eba47adede2ef9000f319e6c5a"
+    },
+    {
+      "src": "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "sha256": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683"
+    },
+    {
+      "src": "/_next/static/chunks/webpack-32ad24b8b24d1f1e.js",
+      "sha256": "f3d346212bb728e94905ee4ce0cba66e6600576740069f1eb38bc0c7c3196812"
+    },
+    {
+      "src": "/_next/static/chunks/44530001-19af4f8621795bc2.js",
+      "sha256": "012adc8a53397c12f95ff9bade02c4b5830079ff1785cdddc59fcd6ca7013b6e"
+    },
+    {
+      "src": "/_next/static/chunks/3187-424c76eba18da644.js",
+      "sha256": "dea65085cd9114f7af9b16c77313adfbadc30afb38c6c598cea333c38f80d3da"
+    },
+    {
+      "src": "/_next/static/chunks/app/adventure/page-8f2d0aeb883d3c8c.js",
+      "sha256": "a8b6f9ceead1b0220f9335c8cf5d43d3377a9a1e0de223bb22395b828a65bad5"
+    }
+  ],
+  "verifiedImages": [
+    {
+      "cardId": "oceanic-manta-ray",
+      "src": "/images/cards/filter-feeders/Oceanic/oceanic-manta-ray.png?v=15ebd866c5e0",
+      "sha256": "15ebd866c5e0cd91ff8a3795950387c42ccc281deddd71857e99a72684dd04bb",
+      "status": 200
+    },
+    {
+      "cardId": "bluefin-tuna",
+      "src": "/images/cards/apex/Oceanic/bluefin-tuna.png?v=7ff9a614aabd",
+      "sha256": "7ff9a614aabd0bd841e523b1b4383cbac173373a98e0bb2be25389bd499525e2",
+      "status": 200
+    },
+    {
+      "cardId": "owlfish",
+      "src": "/images/cards/fish/Deep/owlfish.png?v=40c3285ff444",
+      "sha256": "40c3285ff444e6a2b4c32146b5125f0bd2377957aaec600529ac8ffd731028ff",
+      "status": 200
+    },
+    {
+      "cardId": "spearfishing",
+      "src": "/images/cards/support/spearfishing.png?v=c3cb524ebb45",
+      "sha256": "c3cb524ebb45b77154ac17ae2dab580b53d169825f782f24940f19c8eb7038ca",
+      "status": 200
+    },
+    {
+      "cardId": "robotic-survey",
+      "src": "/images/cards/support/robotic-survey.png?v=c6da50fdcb9d",
+      "sha256": "c6da50fdcb9d13fafba4a018c15b8ab591689d81837422674c9c661614a485a2",
+      "status": 200
+    },
+    {
+      "cardId": "capt-dani",
+      "src": "/images/cards/support/capt-dani.png?v=3bcb5c7aaf59",
+      "sha256": "3bcb5c7aaf594eb71c08ccdbe106ac13b2fdd1879d2526f00cc764aae2067c1e",
+      "status": 200
+    },
+    {
+      "cardId": "poison-heal",
+      "src": "/images/cards/support/poison-heal.png?v=1fcee0b47a39",
+      "sha256": "1fcee0b47a39bcd9adaca7faf6f70fa0a3177b75e798d66cd05269036b4cc805",
+      "status": 200
+    },
+    {
+      "cardId": "whirlpool",
+      "src": "/images/cards/support/whirlpool.png?v=f10943b537b2",
+      "sha256": "f10943b537b225513beea9e01fca320557ca60556316d2449c03d070ae5adb9b",
+      "status": 200
+    },
+    {
+      "cardId": "coral-gardener",
+      "src": "/images/cards/support/coral-gardener.png?v=45c0c8f13e7e",
+      "sha256": "45c0c8f13e7e3cb7e0a999373416d1dd547a671d62aff982761a05f2f589aa04",
+      "status": 200
+    },
+    {
+      "cardId": "super-whirlpool",
+      "src": "/images/cards/support/super-whirlpool.png?v=b520a03ab4dc",
+      "sha256": "b520a03ab4dc0633744d602346686e5318a0c8af394cc040841371fe2eeccc56",
+      "status": 200
+    },
+    {
+      "cardId": "restocking",
+      "src": "/images/cards/support/restocking.png?v=bce3794077f1",
+      "sha256": "bce3794077f117dcfbaf9695f5b5845dd7967e3aa8c7be4f3d5b18060cc4c9c2",
+      "status": 200
+    },
+    {
+      "cardId": "scientist-jes",
+      "src": "/images/cards/support/scientist-jes.png?v=cd3e2a659be5",
+      "sha256": "cd3e2a659be5eebd47a83e12c3441ea9485b87278a3db077d7f70dfe7bfbe574",
+      "status": 200
+    },
+    {
+      "cardId": "coral-heal",
+      "src": "/images/cards/support/full-heal.png?v=d5eaf343f9b5",
+      "sha256": "d5eaf343f9b5faad98eb3ea8d2daff84fbad40cc5f7d1d81a0211aaa59298852",
+      "status": 200
+    },
+    {
+      "cardId": "dr-evans",
+      "src": "/images/cards/support/dr-evans.png?v=e33aa5079563",
+      "sha256": "e33aa5079563b57e6dd43eea7325eeb295b329870a9acb8b378fdb16a4d834f8",
+      "status": 200
+    },
+    {
+      "cardId": "deep-sea-fishing",
+      "src": "/images/cards/support/deep-sea-fishing-rod.png?v=ebfe3b86e7c3",
+      "sha256": "ebfe3b86e7c3fc74c9c6c57f1ae48de92e2ca74a3e831fac79594b5ad4b0979b",
+      "status": 200
+    },
+    {
+      "cardId": "coral-cement",
+      "src": "/images/cards/support/coral-cement.png?v=b277101ed049",
+      "sha256": "b277101ed049c349ee72413e4186b18593a53169be08fd430c2edb773fade02c",
+      "status": 200
+    },
+    {
+      "cardId": "remote-search",
+      "src": "/images/cards/support/remote-search.png?v=a8323967b561",
+      "sha256": "a8323967b561839e6684abf70a2490bbf7f8bf38104eec272bc520966f4cd55d",
+      "status": 200
+    },
+    {
+      "cardId": "fishing",
+      "src": "/images/cards/support/fishing.png?v=054dbb84bff4",
+      "sha256": "054dbb84bff4d2f76b4afb1cc77046e0be5657138c5dd2251d45f3e28e7c7cf6",
+      "status": 200
+    },
+    {
+      "cardId": "crab-trap",
+      "src": "/images/cards/support/crab-trap.png?v=640d5361ce9c",
+      "sha256": "640d5361ce9cb6ec484b427ce2b2d7807d6f0f07ad992ebedb7a359c598d2765",
+      "status": 200
+    },
+    {
+      "cardId": "cast-net",
+      "src": "/images/cards/support/cast-net.png?v=aeadb61bc710",
+      "sha256": "aeadb61bc710c420ae4bf5085843a8cc3ca5e6a65a35278b3205a193dd900957",
+      "status": 200
+    },
+    {
+      "cardId": "recovery",
+      "src": "/images/cards/support/recovery.png?v=e1ca3ba41d14",
+      "sha256": "e1ca3ba41d142053c6faa406d329e3b9fc1effeb5e29275e1eaeacc178d76870",
+      "status": 200
+    },
+    {
+      "cardId": "explorer-jordan",
+      "src": "/images/cards/support/explorer-jordan.png?v=5b28b653a247",
+      "sha256": "5b28b653a2473fdaa88cc97c47b96cce52f2ec916363204db3c26d03e00ccab6",
+      "status": 200
+    },
+    {
+      "cardId": "rov-lights",
+      "src": "/images/cards/support/Deep/rov-lights.png?v=f9c7db31481d",
+      "sha256": "f9c7db31481ded1c879db97c19a47dd82065ab2a036a580afef1cea81cc6a0f0",
+      "status": 200
+    }
+  ],
+  "verifiedRarities": [
+    {
+      "cardId": "capt-dani",
+      "number": "54/102",
+      "rarity": "Rare"
+    },
+    {
+      "cardId": "spearfishing",
+      "number": "85/102",
+      "rarity": "Uncommon"
+    },
+    {
+      "cardId": "robotic-survey",
+      "number": "88/102",
+      "rarity": "Uncommon"
+    },
+    {
+      "cardId": "poison-heal",
+      "number": "90/102",
+      "rarity": "Uncommon"
+    },
+    {
+      "cardId": "bluefin-tuna",
+      "number": "14/64",
+      "rarity": "Rare"
+    }
+  ]
+}

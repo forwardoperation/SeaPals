@@ -221,6 +221,24 @@ test("RP bank cap includes structured and legacy EcoBoost cards in the ecosystem
   assert.equal(calculateRpBankCap([], null), 8, "removed EcoBoost cards stop increasing the live cap");
 });
 
+test("conditional Eco Boost applies once per card when a Coral Reef is in either ecosystem", () => {
+  const oysters = {
+    id: "oysters",
+    passives: [{ effect: {
+      type: "modifyRpBankCap", amount: 2,
+      conditionalBonus: { amount: 2, requires: { cardId: "coral-reef", controller: "any" } },
+    } }],
+  };
+  const reef = { id: "coral-reef" };
+  assert.equal(calculateRpBankCap([oysters]), 10);
+  assert.equal(calculateRpBankCap([oysters, reef]), 12);
+  assert.equal(calculateRpBankCap([oysters], null, 8, { opposingCardIdsInPlay: [reef.id] }), 12);
+  assert.equal(calculateRpBankCap([oysters, reef, reef], null, 8, { opposingCardIdsInPlay: [reef.id] }), 12);
+  assert.equal(calculateRpBankCap([oysters, oysters, reef]), 16);
+  assert.equal(calculateRpBankCap([oysters], { effects: [{ type: "modifyRpBankCap", amount: -2 }] }, 8, { opposingCardIdsInPlay: [reef.id] }), 10);
+  assert.equal(calculateRpBankCap([reef]), 8, "removing Oysters removes both parts of its bonus");
+});
+
 test("victory points include conditional and per-card reef bonuses", () => {
   const cards = [
     { id: "coral-reef" },
@@ -241,6 +259,22 @@ test("victory target resolves normal and simultaneous finishes", () => {
   assert.equal(determineVictoryResult(8, 10, 10).winner, "opponent");
   assert.equal(determineVictoryResult(12, 11, 10).winner, "player");
   assert.equal(determineVictoryResult(10, 12, 10).winner, "opponent");
+});
+
+test("equal simultaneous VP finishes continue until either side becomes the sole leader", () => {
+  for (const tiedVp of [10, 12, 30]) {
+    assert.equal(determineVictoryResult(tiedVp, tiedVp, 10), null);
+    assert.equal(determineVictoryResult(tiedVp + 1, tiedVp, 10).winner, "player");
+    assert.equal(determineVictoryResult(tiedVp, tiedVp + 1, 10).winner, "opponent");
+    assert.equal(determineVictoryResult(tiedVp, tiedVp - 1, 10).winner, "player");
+    assert.equal(determineVictoryResult(tiedVp - 1, tiedVp, 10).winner, "opponent");
+  }
+});
+
+test("a broken VP tie still requires the leader to meet the target", () => {
+  assert.equal(determineVictoryResult(9, 8, 10), null);
+  assert.equal(determineVictoryResult(8, 9, 10), null);
+  assert.equal(determineVictoryResult("10", 10, 10), null);
 });
 
 test("continuous health bonuses preserve damage and can destroy when removed", () => {

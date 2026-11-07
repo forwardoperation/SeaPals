@@ -75,6 +75,7 @@ function createRuntimeResolver({ regenerate = false } = {}) {
     getHostedDefenseBonusDice: () => null,
     getCloakDefenseBonus: () => 0,
     getDarknessShroudDefenseBonus: () => 0,
+    getKingOfCamouflageDefenseBonus: () => 0,
     cardHasAncientResilience: () => false,
     createRegenerateDecision: () => ({ available: regenerate }),
     resolveRegenerateDecision: () => ({ keepDefender: true, rpCost: 1 }),

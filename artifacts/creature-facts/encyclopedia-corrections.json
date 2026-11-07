@@ -1,0 +1,72 @@
+[
+  {
+    "file": "src/data/encyclopedia/reef.js",
+    "exportName": "reefEncyclopediaEntries",
+    "name": "Fairy Parrotfish",
+    "changes": {
+      "scientificName": "Labridae (subfamily Scarinae)",
+      "home": "Warm coral reefs, seagrass beds, and rocky shallows; the exact range depends on the parrotfish species."
+    }
+  },
+  {
+    "file": "src/data/encyclopedia/reef.js",
+    "exportName": "reefEncyclopediaEntries",
+    "name": "Cleaner Shrimp",
+    "changes": {
+      "scientificName": "Lysmata amboinensis",
+      "aliases": [
+        "Pacific Cleaner Shrimp",
+        "Skunk Cleaner Shrimp",
+        "Scarlet Cleaner Shrimp"
+      ],
+      "tagline": "A red-and-white reef cleaner waving extra-long antennae.",
+      "home": "Indo-Pacific and Red Sea reefs, where it shelters in crevices and advertises cleaning stations.",
+      "size": "About 2–3 in (5–7.5 cm) long, with much longer antennae",
+      "funFacts": [
+        "A white stripe runs down its red back.",
+        "Long white antennae act like a cleaning-station sign.",
+        "It sheds its outer skeleton as it grows.",
+        "Client fish may hold still and open their mouths for service."
+      ],
+      "lookFor": "Look for a red-and-white shrimp waving long white antennae from a reef crevice.",
+      "sourceUrls": [
+        "https://www.aquariumofpacific.org/onlinelearningcenter/species/pacific_cleaner_shrimp"
+      ]
+    }
+  },
+  {
+    "file": "src/data/encyclopedia/reef.js",
+    "exportName": "reefEncyclopediaEntries",
+    "name": "Nudibranch",
+    "changes": {
+      "scientificName": "Chromodoris magnifica",
+      "aliases": [
+        "Sea Slug",
+        "Magnificent Chromodoris",
+        "Naked-gill Sea Slug"
+      ],
+      "intro": "The magnificent chromodoris is a sea slug with bold dark stripes and an orange-edged mantle. It feeds on sponges and uses chemicals obtained from its food for defense.",
+      "home": "Tropical western Pacific reefs, including areas of Southeast Asia and Australia.",
+      "diet": "Sponges growing on reef surfaces.",
+      "size": "A few inches long",
+      "superpower": "Its vivid pattern advertises chemical defenses obtained from sponge prey.",
+      "sourceUrls": [
+        "https://seaslugforum.net/find/chrmag"
+      ]
+    }
+  },
+  {
+    "file": "src/data/encyclopedia/deep.js",
+    "exportName": "deepEncyclopediaEntries",
+    "name": "Vampire Squid",
+    "changes": {
+      "size": "Total length up to about 12 in (30 cm)—ruler-length",
+      "funFacts": [
+        "Vampire squid belong to a distinct cephalopod lineage, separate from true squid and octopuses.",
+        "Its eyes are enormous compared with the size of its body.",
+        "The sticky feeding filaments can stretch to about eight times its body length.",
+        "Instead of ordinary ink, it can release glowing sticky mucus from its arm tips."
+      ]
+    }
+  }
+]

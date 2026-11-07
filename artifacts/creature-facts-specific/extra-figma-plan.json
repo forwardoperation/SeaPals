@@ -1,0 +1,124 @@
+[
+  {
+    "cardId": "giant-triton",
+    "id": "3961:42158",
+    "pageId": "3961:6979",
+    "edits": [
+      {
+        "id": "4036:39170",
+        "before": "Shell: 20”",
+        "after": "Shell: 11.3”"
+      },
+      {
+        "id": "4036:39171",
+        "before": "WT: Unknown",
+        "after": "WT: ~5.7lbs"
+      }
+    ]
+  },
+  {
+    "cardId": "oysters",
+    "id": "3961:42254",
+    "pageId": "3961:6979",
+    "edits": [
+      {
+        "id": "I3961:42257;213:3170",
+        "before": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats.",
+        "after": "Eastern oysters filter plankton from coastal water. Their rough shells grow together into reefs that shelter fish, crabs, and other small animals."
+      },
+      {
+        "id": "4036:39175",
+        "before": "LT: Varies",
+        "after": "Shell: 2.4”"
+      },
+      {
+        "id": "4036:39176",
+        "before": "WT: Varies",
+        "after": "WT: ~48g"
+      },
+      {
+        "id": "4036:39177",
+        "before": "Worldwide",
+        "after": "W. Atlantic"
+      }
+    ]
+  },
+  {
+    "cardId": "vampire-squid",
+    "id": "3962:52434",
+    "pageId": "3961:6979",
+    "edits": [
+      {
+        "id": "I3962:52437;1994:41786",
+        "before": "WT: Unknown",
+        "after": "WT: ~250g"
+      }
+    ]
+  },
+  {
+    "cardId": "giant-isopod",
+    "id": "3962:51002",
+    "pageId": "3961:6979",
+    "edits": [
+      {
+        "id": "I3962:51004;1994:41784",
+        "before": "LT: 16”",
+        "after": "LT: 14”"
+      },
+      {
+        "id": "I3962:51004;1994:41786",
+        "before": "WT: Varies",
+        "after": "WT: 2.4lbs"
+      },
+      {
+        "id": "I3962:51004;1994:41787",
+        "before": "Worldwide",
+        "after": "W. Atlantic"
+      }
+    ]
+  },
+  {
+    "cardId": "frogfish",
+    "id": "4028:40893",
+    "pageId": "4025:79142",
+    "edits": [
+      {
+        "id": "I4025:92508;2582:577194;1999:13864",
+        "before": "LT: Varies",
+        "after": "LT: 12”"
+      },
+      {
+        "id": "I4025:92508;2582:577194;1999:13866",
+        "before": "WT: Varies",
+        "after": "WT: ~660g"
+      },
+      {
+        "id": "I4025:92508;2582:577194;1999:13867",
+        "before": "Worldwide",
+        "after": "Indo-Pacific"
+      },
+      {
+        "id": "I4025:92508;2582:577194;1314:88669",
+        "before": "Frogfish hide among reef growth and lure prey with a modified dorsal-fin spine. Their expanding mouths suck in unsuspecting animals in a rapid gulp.",
+        "after": "Giant frogfish blend into sponges and reef growth, then lure prey with a modified fin spine. An expanding mouth pulls the victim in with a sudden gulp."
+      }
+    ]
+  },
+  {
+    "cardId": "sea-urchin",
+    "id": "4028:40896",
+    "pageId": "4025:79142",
+    "edits": [
+      {
+        "id": "I4028:38788;2765:58993;2055:41785",
+        "before": "Spines: 12”",
+        "after": "Test: 3”"
+      },
+      {
+        "id": "I4028:38788;2765:58993;2055:41787",
+        "before": "WT: Unknown",
+        "after": "WT: ~160g"
+      }
+    ]
+  }
+]

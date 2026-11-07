@@ -45,6 +45,24 @@ test("retired placeholders and off-list previews cannot leak from the playable c
   assert.match(byId.get("ocean-jake").src, /ocean-jake\.png\?v=[a-f0-9]{12}$/);
 });
 
+test("support and Bluefin Tuna rarities follow the revised Figma cards", () => {
+  for (const [cardId, number, rarity] of [
+    ["capt-dani", 54, "Rare"],
+    ["spearfishing", 85, "Uncommon"],
+    ["robotic-survey", 88, "Uncommon"],
+    ["poison-heal", 90, "Uncommon"],
+    ["bluefin-tuna", 14, "Rare"],
+  ]) {
+    assert.deepEqual(byId.get(cardId).printings, [{ number, rarity }]);
+  }
+  const manta = byId.get("oceanic-manta-ray");
+  assert.equal(manta.card.schoolDensity, 170);
+  assert.equal(manta.card.cost.rp, 8);
+  assert.deepEqual(manta.printings, [
+    { number: 2, rarity: "Holo Rare" }, { number: 8, rarity: "Rare" },
+  ]);
+});
+
 test("master set placement and baitball stages override catalog classifications", () => {
   for (const id of ["sperm-whale", "pilot-whale-oceanic", "rov-lights"]) {
     assert.equal(byId.get(id).zone, "deep", id);
@@ -58,22 +76,24 @@ test("master set placement and baitball stages override catalog classifications"
 
 test("Prerelease cards are excluded from completed counts but remain in set totals", () => {
   const progress = getGalleryArtProgress(gallery);
-  assert.equal(cards.filter((card) => card.prerelease).length, 107);
+  assert.equal(cards.filter((card) => card.prerelease).length, 103);
   assert.equal(progress.totalCards, 193);
-  assert.equal(progress.completedCards, 74);
-  assert.equal(progress.overallPercent, 38);
+  assert.equal(progress.completedCards, 78);
+  assert.equal(progress.overallPercent, 40);
   assert.deepEqual(progress.categoryStats.map((set) => [set.zone, set.complete]), [
-    ["reef", 65], ["ocean", 6], ["deep", 3],
+    ["reef", 66], ["ocean", 9], ["deep", 3],
   ]);
   assert.equal(byId.get("nurse-shark").prerelease, true);
-  assert.equal(byId.get("humpback-whale").prerelease, true);
+  for (const id of ["humpback-whale", "ocean-sunfish", "basking-shark", "oysters", "octopus"]) {
+    assert.equal(byId.get(id).prerelease, false, id);
+  }
   assert.equal(byId.get("colossal-squid").prerelease, false);
   assert.equal(byId.get("thresher-shark").prerelease, false);
   assert.equal(byId.get("open-ocean").prerelease, true);
   assert.equal(byId.get("abyss").prerelease, true);
   for (const id of ["recovery", "fishing", "robotic-survey", "restocking",
     "coral-gardener", "spearfishing", "scientist-jes", "capt-dani", "dr-evans",
-    "leather-starfish", "giant-triton", "oysters", "green-sea-turtle"]) {
+    "leather-starfish", "giant-triton", "green-sea-turtle"]) {
     assert.equal(byId.get(id).hasImage, true, id);
     assert.equal(byId.get(id).prerelease, true, id);
   }

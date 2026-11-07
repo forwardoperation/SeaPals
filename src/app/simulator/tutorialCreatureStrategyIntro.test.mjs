@@ -240,16 +240,16 @@ test("card disruption, Coral pressure, and hand shaping receive distinct strateg
   );
 });
 
-test("plural creatures and Coral Reef payoff cards read naturally", () => {
+test("plural creatures and the current Eco Boost cards read naturally", () => {
   assert.match(getCreatureGameplayIntroduction(creatureById.get("oysters")), /^The oysters are\b/i);
   assert.match(getCreatureGameplayIntroduction(creatureById.get("spinner-dolphins")), /^The spinner dolphins are\b/i);
   assert.match(
     getCreatureGameplayIntroduction(creatureById.get("french-angelfish")),
-    /scoring specialist.*Coral Reef.*extra scoring value/i,
+    /Eco Boost.*RP/i,
   );
   assert.match(
     getCreatureGameplayIntroduction(creatureById.get("blue-tang")),
-    /Habitat-gated scoring.*Coral Reef.*immediate scoring value/i,
+    /Eco Boost.*RP/i,
   );
 });
 
@@ -292,11 +292,11 @@ test("Scavenge pitches preserve each card's actual card-flow role", async (t) =>
   });
 });
 
-test("Blue Sea Dragon describes its own Munch attack and defensive Toxic rule", () => {
+test("Blue Sea Dragon describes its own Munch attack and Venomous disadvantage", () => {
   const introduction = getProductionCreatureIntroduction("blue-sea-dragon");
 
   assert.match(introduction, /Munch(?=[^.]*\bInvertebrates?\b)(?=[^.]*\bMan O['’] War\b)/i);
-  assert.match(introduction, /Toxic[^.]*(?:incoming attack|targeted|attack fail|deter)/i);
+  assert.match(introduction, /Venomous[^.]*disadvantage/i);
   assert.doesNotMatch(introduction, /Munch[^.]*(?:Coral|RP production)/i);
   assert.doesNotMatch(introduction, /Toxic[^.]*(?:consum|eaten|usual retaliation)/i);
 });
@@ -310,7 +310,7 @@ test("attached-Coral protection and source-specific Toxic Immunity stay precise"
   assert.doesNotMatch(sargeantMajor, /Coral Protector[^.]*flexible placement/i);
 
   const giantTriton = getProductionCreatureIntroduction("giant-triton");
-  assert.match(giantTriton, /Toxic Immunity[^.]*Crown of Thorns/i);
+  assert.match(giantTriton, /Starfish Hunt[^.]*Invertebrates.*advantage.*Crown of Thorns/i);
   assert.doesNotMatch(giantTriton, /Toxic Immunity[^.]*Toxic prey/i);
   assert.doesNotMatch(giantTriton, /Starfish Hunt[^,.]*Starfish[^,.]*(?:Toxic|retaliation)/i);
 });
@@ -330,8 +330,8 @@ test("one-time and triggered economy effects are not pitched as generic long-ter
       assert.notEqual(plenteousIndex, -1, "the introduction should explain Plenteous");
       const plenteousPitch = introduction.slice(plenteousIndex);
       assert.match(plenteousPitch, /\b(?:destroyed|falls|removed)\b/i);
-      assert.match(plenteousPitch, /\bKrill Bloom\b/i);
-      assert.match(plenteousPitch, /\bdiscard\b[^.]*\bdeck\b|\bdeck\b[^.]*\bdiscard\b/i);
+      assert.match(plenteousPitch, /this destroyed School/i);
+      assert.match(plenteousPitch, /Foundation Deck/i);
       assert.doesNotMatch(plenteousPitch, /recovers value from cards? that (?:has|have) already been spent/i);
     });
   }

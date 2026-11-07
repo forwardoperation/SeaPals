@@ -14,13 +14,13 @@ function sourceBetween(startMarker, endMarker) {
   return simulatorSource.slice(start, end);
 }
 
-test("opponent Recovery and targeted coin actions retain their already-resolved outcome", () => {
+test("opponent Recovery is deterministic and targeted coin actions retain their resolved outcome", () => {
   const supports = sourceBetween("function runOpponentSupports", "function runOpponentTurn");
   const recoveryStart = supports.indexOf('} else if (card.id === "recovery") {');
   const recoveryEnd = supports.indexOf('} else if (card.id === "ocean-jake") {', recoveryStart);
   const recovery = supports.slice(recoveryStart, recoveryEnd);
-  assert.match(recovery, /const coin = nextGameplayRandom\(\) < 0\.5 \? "heads" : "tails"/);
-  assert.match(recovery, /opponentCoinFlip = \{[\s\S]*?result: coin[\s\S]*?successResult: "heads"/);
+  assert.doesNotMatch(recovery, /nextGameplayRandom|opponentCoinFlip/);
+  assert.match(recovery, /removeOneCard\(next.discardPile.slice\(1\), recoveredId\)/);
   assert.match(supports, /type: "opponent-play"[\s\S]*?opponentCoinFlip,/);
 
   const utility = sourceBetween("function runOpponentUtilityAction", "function runOpponentUtilityActions");
@@ -50,7 +50,7 @@ test("compact playback inserts one automatic opponent-reef coin beat before resu
 
 test("Dr. Evans preserves its resolution and defers a successful refresh until the new hand is mounted", () => {
   const completion = sourceBetween("function completeDrEvans", "function getInspectedPlayerCardInstanceId");
-  assert.match(completion, /searchContext\?\.mode !== "draw-seven"/);
+  assert.match(completion, /searchContext\?\.mode !== "refresh-hand"/);
   assert.match(completion, /const foundationCards = foundationDeck\.slice\(0, turnDrawSelection\.foundation\)/);
   assert.match(completion, /const palsCards = palsDeck\.slice\(0, turnDrawSelection\.pals\)/);
   assert.match(completion, /const drawnCards = \[\.\.\.foundationCards, \.\.\.palsCards\]/);
@@ -69,18 +69,18 @@ test("Dr. Evans preserves its resolution and defers a successful refresh until t
   assert.match(completion, /setTurnDrawSelection\(null\)/);
   assert.match(completion, /setModal\(null\)/);
   assert.match(completion, /setSelectedHandCard\(null\)/, "no new hand card is selected while its arrival is pending");
-  assert.match(completion, /mandatory seven-card draw[\s\S]*?deck depletion/);
+  assert.match(completion, /mandatory eight-card draw[\s\S]*?deck depletion/);
   assert.match(completion, /pushLog\(message\)/, "the detailed resolution remains available in history");
   assert.match(
     completion,
-    /if \(shortfall\) setGameResult\([\s\S]*?Dr\. Evans required seven cards[\s\S]*?drawnCards\.length/,
+    /if \(shortfall\) setGameResult\([\s\S]*?Dr\. Evans required eight cards[\s\S]*?drawnCards\.length/,
     "an incomplete mandatory refresh must still produce the existing depletion loss",
   );
 
   assert.match(
     completion,
     /setPendingHandArrivalFlight\(shortfall > 0 \? null : \{[\s\S]*?revealed,[\s\S]*?baseHandLength: 0,[\s\S]*?kind: "dr-evans-refresh",[\s\S]*?announcement: `Dr\. Evans drew \$\{drawResult\.cardsToHand\.length\} new cards into your hand\.`/,
-    "only a successful seven-card refresh should enqueue the post-layout presentation",
+    "only a successful eight-card refresh should enqueue the post-layout presentation",
   );
   assert.doesNotMatch(completion, /startMobileDrawFlights\(/, "the picker commit cannot measure an unmounted hand");
   assert.match(completion, /setEventOverlay\(null\)/);

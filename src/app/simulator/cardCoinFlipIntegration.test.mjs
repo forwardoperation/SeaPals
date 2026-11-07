@@ -63,33 +63,19 @@ test("one V2 card tap samples once and reduced motion still lands through an ID-
   );
 });
 
-test("Recovery commits once, snapshots the old discard pile, and defers only the V2 outcome", () => {
+test("Recovery selects an eligible Support before committing its deterministic effect", () => {
   const playCard = sourceBetween("function playCardFromHand(", "function completeInvasivePlacement");
-  const recovery = playCard.slice(
-    playCard.indexOf('if (card.id === "recovery")'),
-    playCard.indexOf('if (card.id === "scientist-jes")'),
-  );
-  assert.ok(recovery.length > 0, "missing Recovery Support branch");
-
-  const snapshotIndex = recovery.indexOf("const recoveredCandidates = [...new Set(discardPile)]");
-  const discardCommitIndex = recovery.indexOf("setDiscardPile(");
-  assert.ok(snapshotIndex >= 0 && snapshotIndex < discardCommitIndex, "eligible cards must be captured before Recovery enters discard");
-
-  assert.equal(countMatches(recovery, /setHand\(/g), 1, "Recovery leaves the hand once");
-  assert.equal(countMatches(recovery, /setDiscardPile\(/g), 1, "Recovery enters discard once");
-  assert.equal(countMatches(recovery, /setRp\(/g), 1, "Recovery charges its RP cost once");
-  assert.equal(countMatches(recovery, /applyExplicitSupportLock\(/g), 1, "a printed Support lock is committed once");
-
-  assert.match(recovery, /\(card\.effects \?\? \[\]\)\.find\([^\n]*EffectType\.FLIP_COIN/);
-  assert.match(
-    recovery,
-    /if \(previewExperience\) \{[\s\S]*?beginCardCoinFlipPresentation\(\{[\s\S]*?sourceCardId:\s*card\.id[\s\S]*?successResult:[\s\S]*?continuation:\s*\{[\s\S]*?type:\s*"recover-from-discard"[\s\S]*?candidates:\s*recoveredCandidates[\s\S]*?\}\)[\s\S]*?return;[\s\S]*?\}\s*if \(nextGameplayRandom\(\) < 0\.5\)/,
-    "V2 should stage the board toss without sampling; the legacy presentation path still consumes the persisted stream",
-  );
-  assert.doesNotMatch(
-    recovery.slice(recovery.indexOf("if (previewExperience)"), recovery.indexOf("if (nextGameplayRandom()")),
-    /Math\.random/,
-  );
+  const recovery = playCard.slice(playCard.indexOf('if (card.id === "recovery")'), playCard.indexOf('if (card.id === "scientist-jes")'));
+  assert.match(recovery, /cardsById\[id\]\?\.kind === CardKind\.SUPPORT/);
+  assert.match(recovery, /setModal\("recover"\)/);
+  assert.doesNotMatch(recovery, /nextGameplayRandom|beginCardCoinFlipPresentation|setRp\(|setHand\(|setDiscardPile\(/);
+  const complete = sourceBetween("function completeRecovery(cardId)", "function ", );
+  assert.match(complete, /kind !== CardKind\.SUPPORT/);
+  assert.equal(countMatches(complete, /setRp\(/g), 1);
+  assert.equal(countMatches(complete, /setHand\(/g), 1);
+  assert.equal(countMatches(complete, /setDiscardPile\(/g), 1);
+  assert.match(complete, /returnFromSupportFlowToBoard\(/);
+  assert.doesNotMatch(complete, /nextGameplayRandom|coin/);
 });
 
 test("Recovery heads resumes its original picker while tails returns to the V2 reef", () => {
@@ -179,7 +165,7 @@ test("the committed card coin locks every V2 board surface until its continuatio
   );
 });
 
-test("restart cancellation invalidates a card toss, while legacy Recovery and opening tutorial behavior remain", () => {
+test("restart cancellation invalidates a card toss, while deterministic Recovery and opening tutorial behavior remain", () => {
   const restart = sourceBetween("function restartGame(", "function openNewGameSetup");
   assert.match(restart, /cancelCardCoinFlipPresentation\(\)/);
   const cancellation = sourceBetween("function cancelCardCoinFlipPresentation", "function beginCardCoinFlipPresentation");
@@ -192,8 +178,8 @@ test("restart cancellation invalidates a card toss, while legacy Recovery and op
     playCard.indexOf('if (card.id === "recovery")'),
     playCard.indexOf('if (card.id === "scientist-jes")'),
   );
-  assert.match(recovery, /if \(nextGameplayRandom\(\) < 0\.5\)[\s\S]*?setModal\("recover"\)/);
-  assert.match(recovery, /else \{[\s\S]*?returnFromSupportFlowToBoard\(\)/);
+  assert.match(recovery, /setModal\("recover"\)/);
+  assert.doesNotMatch(recovery, /nextGameplayRandom|beginCardCoinFlipPresentation/);
 
   const openingFlip = sourceBetween("function flipForOpeningTurn", "function completeOpeningCoinFlip");
   assert.match(openingFlip, /forcedWinner: tutorialUsesScriptedScenario \? OpeningPlayer\.PLAYER : null/);

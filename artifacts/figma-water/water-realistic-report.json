@@ -1,0 +1,21 @@
+{
+  "bytes": 2115114,
+  "layers": [
+    {
+      "layer": "Broad water tones",
+      "paths": 37,
+      "contours": 25467,
+      "vertices": 82213,
+      "max_path": 36998
+    },
+    {
+      "layer": "Water relief and reflected light",
+      "paths": 133,
+      "contours": 28836,
+      "vertices": 144205,
+      "max_path": 36999
+    }
+  ],
+  "total_paths": 171,
+  "groups": 0
+}

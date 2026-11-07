@@ -1587,7 +1587,11 @@ export default function OrdersDashboard() {
 
   async function loadOrders(event) {
     event?.preventDefault();
-    const token = adminToken.trim();
+    // Read the form itself because password managers can fill it without onChange.
+    const token = (event
+      ? String(new FormData(event.currentTarget).get("password") ?? "")
+      : adminToken
+    ).trim();
 
     setError("");
     setNotice("");
@@ -1597,6 +1601,7 @@ export default function OrdersDashboard() {
       return;
     }
 
+    setAdminToken(token);
     setLoading(true);
 
     try {
@@ -1609,11 +1614,7 @@ export default function OrdersDashboard() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          try {
-            window.sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-          } catch {
-            // Ignore unavailable browser storage.
-          }
+          forgetToken();
         }
         throw new Error(payload.error || "Could not load store orders.");
       }
@@ -1635,6 +1636,11 @@ export default function OrdersDashboard() {
       } catch {
         // The token remains in memory for this page when storage is unavailable.
       }
+
+      if (event) {
+        // Pair removal of the login form with a navigation signal for password managers.
+        window.history.replaceState(window.history.state, "", window.location.href);
+      }
     } catch (requestError) {
       setError(requestError.message || "Could not load store orders.");
     } finally {
@@ -1652,7 +1658,7 @@ export default function OrdersDashboard() {
     setAdminToken("");
     setOrders(null);
     setError("");
-    setNotice("The staff token was cleared from this tab.");
+    setNotice("Signed out of this tab. Saved passwords stay in your password manager.");
     setLastUpdated(null);
     setPaFilingOrders(null);
     setPaAccountNumber("");
@@ -1899,41 +1905,74 @@ export default function OrdersDashboard() {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-        <form onSubmit={loadOrders} className="flex flex-col gap-4 lg:flex-row lg:items-end">
-          <label className="min-w-0 flex-1 text-sm font-black text-slate-800">
-            Staff admin token
+        {orders === null ? (
+          <form
+            id="store-admin-login"
+            method="post"
+            autoComplete="on"
+            onSubmit={loadOrders}
+            className="flex flex-col gap-4 lg:flex-row lg:items-end"
+          >
+            {/* The shared staff login has an implicit username for password managers. */}
             <input
-              type="password"
-              autoComplete="off"
-              spellCheck={false}
-              value={adminToken}
-              onChange={(event) => setAdminToken(event.target.value)}
-              placeholder="Enter the private admin token"
-              className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 font-mono text-sm text-slate-950 outline-none placeholder:font-sans placeholder:text-slate-400 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
+              id="store-admin-username"
+              name="username"
+              type="text"
+              autoComplete="username"
+              value="fulfillment"
+              readOnly
+              hidden
             />
-          </label>
-          <div className="flex flex-wrap gap-3">
+            <label htmlFor="store-admin-password" className="min-w-0 flex-1 text-sm font-black text-slate-800">
+              Staff password
+              <input
+                id="store-admin-password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                autoCapitalize="none"
+                spellCheck={false}
+                required
+                value={adminToken}
+                onChange={(event) => setAdminToken(event.target.value)}
+                placeholder="Enter the private admin token"
+                aria-describedby="store-admin-password-help"
+                className="mt-2 min-h-12 w-full rounded-xl border border-slate-300 px-4 py-3 font-mono text-sm text-slate-950 outline-none placeholder:font-sans placeholder:text-slate-400 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100"
+              />
+            </label>
             <button
               type="submit"
               disabled={loading}
               className="inline-flex min-h-12 items-center justify-center rounded-xl bg-cyan-700 px-5 py-3 font-black text-white transition hover:bg-cyan-800 disabled:cursor-wait disabled:bg-cyan-400"
             >
-              {loading ? "Loading…" : orders === null ? "Load orders" : "Refresh orders"}
+              {loading ? "Signing in…" : "Sign in & load orders"}
             </button>
-            {adminToken || orders !== null ? (
-              <button
-                type="button"
-                onClick={forgetToken}
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-700 hover:bg-slate-50"
-              >
-                Forget token
-              </button>
-            ) : null}
+          </form>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="mr-auto text-sm font-bold text-slate-800">Signed in to fulfillment</p>
+            <button
+              type="button"
+              onClick={() => loadOrders()}
+              disabled={loading}
+              className="inline-flex min-h-12 items-center justify-center rounded-xl bg-cyan-700 px-5 py-3 font-black text-white transition hover:bg-cyan-800 disabled:cursor-wait disabled:bg-cyan-400"
+            >
+              {loading ? "Loading…" : "Refresh orders"}
+            </button>
+            <button
+              type="button"
+              onClick={forgetToken}
+              disabled={loading}
+              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Sign out
+            </button>
           </div>
-        </form>
-        <p className="mt-3 text-xs leading-5 text-slate-500">
-          The token is kept only in this browser tab&apos;s session storage and is
-          never added to the page URL.
+        )}
+        <p id="store-admin-password-help" className="mt-3 text-xs leading-5 text-slate-500">
+          Save this password in your phone or browser&apos;s password manager when
+          prompted after signing in. Next time, use AutoFill. Signing out clears
+          this tab without deleting your saved password.
         </p>
 
         <div aria-live="polite" className="mt-3 min-h-5 text-sm font-semibold">
@@ -2291,7 +2330,7 @@ export default function OrdersDashboard() {
 
                 <p className="rounded-xl bg-slate-100 px-4 py-3 text-xs leading-5 text-slate-600">
                   The account and entity IDs stay only in this page&apos;s memory and
-                  the downloaded file. They are cleared when you choose Forget token
+                  the downloaded file. They are cleared when you choose Sign out
                   or close the tab. E-911 is fixed at $0 because the current catalog
                   contains no prepaid-wireless products.
                 </p>

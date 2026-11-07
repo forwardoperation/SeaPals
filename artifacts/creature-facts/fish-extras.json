@@ -1,0 +1,78 @@
+[
+  {
+    "id": "2231:106618",
+    "name": "white-grunt",
+    "facts": [
+      {
+        "id": "I2231:106380;2231:106037",
+        "text": "Grunt",
+        "x": 57,
+        "y": 488
+      },
+      {
+        "id": "I2231:106380;2231:106036",
+        "text": "LT: 12”",
+        "x": 233,
+        "y": 488
+      },
+      {
+        "id": "I2231:106380;2231:106038",
+        "text": "WT: 3lbs",
+        "x": 385,
+        "y": 488
+      },
+      {
+        "id": "I2231:106380;2231:106039",
+        "text": "Caribbean",
+        "x": 517,
+        "y": 488
+      }
+    ],
+    "description": [
+      {
+        "id": "I2231:106380;2231:105592",
+        "text": "They produce low,“grunt” sounds especially when disturbed or communicating in groups.",
+        "x": 199,
+        "y": 913
+      }
+    ]
+  },
+  {
+    "id": "3746:101433",
+    "name": "emperor-angelfish",
+    "facts": [
+      {
+        "id": "I3746:81762;1999:13865",
+        "text": "Pomacanthidae",
+        "x": 53,
+        "y": 488
+      },
+      {
+        "id": "I3746:81762;1999:13864",
+        "text": "LT: 15”",
+        "x": 229,
+        "y": 488
+      },
+      {
+        "id": "I3746:81762;1999:13866",
+        "text": "WT: 1.5lbs",
+        "x": 384,
+        "y": 488
+      },
+      {
+        "id": "I3746:81762;1999:13867",
+        "text": "Indo-Pacific",
+        "x": 513,
+        "y": 488
+      }
+    ],
+    "description": [
+      {
+        "id": "I3746:81762;1314:88669",
+        "text": "When startled, adult emperor angelfishes can produce a loud, audible thumping or knocking sound that resembles a drum roll.",
+        "x": 201,
+        "y": 915
+      }
+    ]
+  }
+]

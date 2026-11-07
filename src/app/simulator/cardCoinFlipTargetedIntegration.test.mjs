@@ -50,7 +50,7 @@ test("every targeted Coral coin action, including Nerve Agent, shares the generi
     .sort((left, right) => left.key.localeCompare(right.key));
 
   assert.deepEqual(targetedCoinActions, [
-    { key: "crown-of-thorns:Stun", successResult: "heads", onSuccessType: "stunCoral" },
+    { key: "crown-of-thorns:Coral Shock", successResult: "heads", onSuccessType: "stunCoral" },
     { key: "crown-of-thorns:Venom Spines", successResult: "heads", onSuccessType: "damage" },
     { key: "man-o-war:Nerve Agent", successResult: "heads", onSuccessType: "stunCoral" },
     { key: "nudibranch:Munch", successResult: "heads", onSuccessType: "modifyRpGeneration" },
@@ -59,7 +59,7 @@ test("every targeted Coral coin action, including Nerve Agent, shares the generi
 
 test("V2 validates a chosen Coral, commits once, and enters the board-native tap flip before resolving", () => {
   const beginAction = sourceBetween(
-    "function beginCreatureUtilityAction(action)",
+    "function beginCreatureUtilityAction(",
     "function completeActionDeckSearch",
   );
   const coinChoiceStart = beginAction.indexOf("if (effect.type === EffectType.FLIP_COIN)");

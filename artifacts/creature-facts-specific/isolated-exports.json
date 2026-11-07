@@ -1,0 +1,296 @@
+[
+  {
+    "createdNodeIds": [
+      "4086:20512",
+      "4086:20513",
+      "4086:20944",
+      "4086:21374",
+      "4086:21715"
+    ],
+    "pageId": "4086:20512",
+    "exports": [
+      {
+        "cardId": "chimera",
+        "nodeId": "4086:20513",
+        "sourceId": "1885:181563"
+      },
+      {
+        "cardId": "frilled-shark",
+        "nodeId": "4086:20944",
+        "sourceId": "1885:182155"
+      },
+      {
+        "cardId": "silky-shark",
+        "nodeId": "4086:21374",
+        "sourceId": "2261:223207"
+      },
+      {
+        "cardId": "nurse-shark",
+        "nodeId": "4086:21715",
+        "sourceId": "3387:42923"
+      }
+    ]
+  },
+  {
+    "createdNodeIds": [
+      "4086:413753",
+      "4086:413754",
+      "4086:414681",
+      "4086:415516",
+      "4086:416218",
+      "4086:416275",
+      "4086:416723",
+      "4086:416779",
+      "4086:417415",
+      "4086:417473",
+      "4086:417811",
+      "4086:418148",
+      "4086:418500",
+      "4086:418838",
+      "4086:419163",
+      "4086:419712",
+      "4086:419839",
+      "4086:419959"
+    ],
+    "pageId": "4086:413753",
+    "exports": [
+      {
+        "cardId": "anemone",
+        "nodeId": "4086:413754",
+        "sourceId": "241:848"
+      },
+      {
+        "cardId": "arrow-crab",
+        "nodeId": "4086:414681",
+        "sourceId": "241:851"
+      },
+      {
+        "cardId": "mantis-shrimp",
+        "nodeId": "4086:415516",
+        "sourceId": "241:852"
+      },
+      {
+        "cardId": "leather-starfish",
+        "nodeId": "4086:416218",
+        "sourceId": "241:855"
+      },
+      {
+        "cardId": "cleaner-shrimp",
+        "nodeId": "4086:416275",
+        "sourceId": "241:854"
+      },
+      {
+        "cardId": "giant-triton",
+        "nodeId": "4086:416723",
+        "sourceId": "241:856"
+      },
+      {
+        "cardId": "octopus",
+        "nodeId": "4086:416779",
+        "sourceId": "746:146691"
+      },
+      {
+        "cardId": "oysters",
+        "nodeId": "4086:417415",
+        "sourceId": "746:147861"
+      },
+      {
+        "cardId": "deep-cucumber",
+        "nodeId": "4086:417473",
+        "sourceId": "1916:16624"
+      },
+      {
+        "cardId": "brittlestar",
+        "nodeId": "4086:417811",
+        "sourceId": "1916:16629"
+      },
+      {
+        "cardId": "vampire-squid",
+        "nodeId": "4086:418148",
+        "sourceId": "1916:16630"
+      },
+      {
+        "cardId": "giant-isopod",
+        "nodeId": "4086:418500",
+        "sourceId": "1916:16631"
+      },
+      {
+        "cardId": "giant-tube-worm",
+        "nodeId": "4086:418838",
+        "sourceId": "1916:16632"
+      },
+      {
+        "cardId": "peacock-squid",
+        "nodeId": "4086:419163",
+        "sourceId": "1916:16628"
+      },
+      {
+        "cardId": "man-o-war",
+        "nodeId": "4086:419712",
+        "sourceId": "2285:31376"
+      },
+      {
+        "cardId": "market-squid",
+        "nodeId": "4086:419839",
+        "sourceId": "2294:52505"
+      },
+      {
+        "cardId": "box-jellyfish",
+        "nodeId": "4086:419959",
+        "sourceId": "3492:178297"
+      }
+    ]
+  },
+  {
+    "createdNodeIds": [
+      "4086:471893",
+      "4086:471894",
+      "4086:474420",
+      "4086:475333",
+      "4086:475859",
+      "4086:476387",
+      "4086:476906",
+      "4086:477419",
+      "4086:477717",
+      "4086:477935",
+      "4086:478264",
+      "4086:478469",
+      "4086:478674",
+      "4086:478879",
+      "4086:479078",
+      "4086:479378",
+      "4086:479583",
+      "4086:479782",
+      "4086:480252",
+      "4086:480457",
+      "4086:480656",
+      "4086:480956",
+      "4086:481161",
+      "4086:481360",
+      "4086:481660"
+    ],
+    "pageId": "4086:471893",
+    "exports": [
+      {
+        "cardId": "fairy-parrotfish",
+        "nodeId": "4086:471894",
+        "sourceId": "241:1493"
+      },
+      {
+        "cardId": "longhorn-cowfish",
+        "nodeId": "4086:474420",
+        "sourceId": "241:1497"
+      },
+      {
+        "cardId": "pacific-grenadier",
+        "nodeId": "4086:475333",
+        "sourceId": "1901:9371"
+      },
+      {
+        "cardId": "humpback-anglerfish",
+        "nodeId": "4086:475859",
+        "sourceId": "1901:9373"
+      },
+      {
+        "cardId": "fangtooth-fish",
+        "nodeId": "4086:476387",
+        "sourceId": "1901:9375"
+      },
+      {
+        "cardId": "black-swallower",
+        "nodeId": "4086:476906",
+        "sourceId": "1901:9376"
+      },
+      {
+        "cardId": "tripod-fish",
+        "nodeId": "4086:477419",
+        "sourceId": "1901:9377"
+      },
+      {
+        "cardId": "halfbeak",
+        "nodeId": "4086:477717",
+        "sourceId": "2285:31389"
+      },
+      {
+        "cardId": "needlefish",
+        "nodeId": "4086:477935",
+        "sourceId": "2285:31384"
+      },
+      {
+        "cardId": "krill-bloom-base",
+        "nodeId": "4086:478264",
+        "sourceId": "2279:17422"
+      },
+      {
+        "cardId": "krill-bloom-stage1",
+        "nodeId": "4086:478469",
+        "sourceId": "2279:17423"
+      },
+      {
+        "cardId": "krill-bloom-stage2",
+        "nodeId": "4086:478674",
+        "sourceId": "2279:17424"
+      },
+      {
+        "cardId": "sardine-ball-base",
+        "nodeId": "4086:478879",
+        "sourceId": "2279:17421"
+      },
+      {
+        "cardId": "sardine-ball-stage1",
+        "nodeId": "4086:479078",
+        "sourceId": "2279:17425"
+      },
+      {
+        "cardId": "sardine-ball-stage2",
+        "nodeId": "4086:479378",
+        "sourceId": "2279:17426"
+      },
+      {
+        "cardId": "anchovy-ball-base",
+        "nodeId": "4086:479583",
+        "sourceId": "2279:17427"
+      },
+      {
+        "cardId": "anchovy-ball-stage1",
+        "nodeId": "4086:479782",
+        "sourceId": "2279:17428"
+      },
+      {
+        "cardId": "anchovy-ball-stage2",
+        "nodeId": "4086:480252",
+        "sourceId": "2279:17429"
+      },
+      {
+        "cardId": "silverside-ball-base",
+        "nodeId": "4086:480457",
+        "sourceId": "2279:17430"
+      },
+      {
+        "cardId": "silverside-ball-stage1",
+        "nodeId": "4086:480656",
+        "sourceId": "2279:17431"
+      },
+      {
+        "cardId": "silverside-ball-stage2",
+        "nodeId": "4086:480956",
+        "sourceId": "2279:17432"
+      },
+      {
+        "cardId": "herring-ball-base",
+        "nodeId": "4086:481161",
+        "sourceId": "2279:17433"
+      },
+      {
+        "cardId": "herring-ball-stage1",
+        "nodeId": "4086:481360",
+        "sourceId": "2279:17434"
+      },
+      {
+        "cardId": "herring-ball-stage2",
+        "nodeId": "4086:481660",
+        "sourceId": "2279:17435"
+      }
+    ]
+  }
+]

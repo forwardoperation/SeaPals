@@ -1,0 +1,162 @@
+[
+  {
+    "cardId": "box-jellyfish",
+    "nodeId": "3492:178297",
+    "src": "/images/cards/invertebrates/Reef/box-jellyfish.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "00df1791f088"
+  },
+  {
+    "cardId": "market-squid",
+    "nodeId": "2294:52505",
+    "src": "/images/cards/invertebrates/Oceanic/market-squid.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "ab36506f52c7"
+  },
+  {
+    "cardId": "peacock-squid",
+    "nodeId": "1916:16628",
+    "src": "/images/cards/invertebrates/Deep/peacock-squid.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "637a9f94daba"
+  },
+  {
+    "cardId": "man-o-war",
+    "nodeId": "2285:31376",
+    "src": "/images/cards/invertebrates/Oceanic/portugese-man-o-war.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "f6b4bd6038c0"
+  },
+  {
+    "cardId": "deep-sea-jelly",
+    "nodeId": "1916:16627",
+    "src": "/images/cards/invertebrates/Deep/deep-sea-jelly.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "f0c00342cd7b"
+  },
+  {
+    "cardId": "dumbo-octopus",
+    "nodeId": "1916:16626",
+    "src": "/images/cards/invertebrates/Deep/dumbo-octopus.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "33581ed1b2f5"
+  },
+  {
+    "cardId": "giant-red-shrimp",
+    "nodeId": "1916:16625",
+    "src": "/images/cards/invertebrates/Deep/giant-red-shrimp.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "beee782fb91e"
+  },
+  {
+    "cardId": "blue-sea-dragon",
+    "nodeId": "2285:31377",
+    "src": "/images/cards/invertebrates/Oceanic/blue-sea-dragon.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "f25b764e271c"
+  },
+  {
+    "cardId": "cleaner-wrasse",
+    "nodeId": "241:1494",
+    "src": "/images/cards/fish/Reef/cleaner-wrasse.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "1708b02dd660"
+  },
+  {
+    "cardId": "fairy-parrotfish",
+    "nodeId": "241:1493",
+    "src": "/images/cards/fish/Reef/fairy-parrotfish.png",
+    "width": 375,
+    "height": 526,
+    "sourceWidth": 375,
+    "sourceHeight": 526,
+    "contentHash": "9947e4a4f027"
+  },
+  {
+    "cardId": "french-angelfish",
+    "nodeId": "241:1501",
+    "src": "/images/cards/fish/Reef/french-angelfish.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 375,
+    "sourceHeight": 525,
+    "contentHash": "98920f1fdff8"
+  },
+  {
+    "cardId": "porcupine-fish",
+    "nodeId": "241:1496",
+    "src": "/images/cards/fish/Reef/Porcupinefish.png",
+    "width": 376,
+    "height": 525,
+    "sourceWidth": 376,
+    "sourceHeight": 525,
+    "contentHash": "754fd8b97d0b"
+  },
+  {
+    "cardId": "spotfin-butterflyfish",
+    "nodeId": "434:9041",
+    "src": "/images/cards/fish/Reef/spotfin-butterflyfish.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 750,
+    "sourceHeight": 1050,
+    "contentHash": "87e0df52958e"
+  },
+  {
+    "cardId": "bluestriped-grunt",
+    "nodeId": "432:8203",
+    "src": "/images/cards/fish/Reef/bluestriped-grunt.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 750,
+    "sourceHeight": 1050,
+    "contentHash": "d03fffb68a95"
+  },
+  {
+    "cardId": "longhorn-cowfish",
+    "nodeId": "241:1497",
+    "src": "/images/cards/fish/Reef/longhorn-cowfish.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 750,
+    "sourceHeight": 1050,
+    "contentHash": "4303d5977c40"
+  },
+  {
+    "cardId": "spanish-hogfish",
+    "nodeId": "193:26",
+    "src": "/images/cards/fish/Reef/spanish-hogfish.png",
+    "width": 375,
+    "height": 525,
+    "sourceWidth": 750,
+    "sourceHeight": 1050,
+    "contentHash": "1676993696cd"
+  }
+]

@@ -242,8 +242,8 @@ test("target selection excludes the source, deduplicates, scores once, and keeps
   assert.deepEqual(scoreCalls, ["first", "second", "tied"]);
 });
 
-test("D4-1 Invader combat uses distinct attack and defense rolls and defender wins ties", () => {
-  assert.equal(LIONFISH_INVADER_ATTACK_DICE, "D4-1");
+test("D4 Invader combat uses distinct attack and defense rolls and defender wins ties", () => {
+  assert.equal(LIONFISH_INVADER_ATTACK_DICE, "D4");
   const target = { instanceId: "target" };
   let attackCalls = 0;
   let defenseCalls = 0;
@@ -254,9 +254,9 @@ test("D4-1 Invader combat uses distinct attack and defense rolls and defender wi
     attackRandom: () => { attackCalls += 1; return 0.999; },
     defenseRandom: () => { defenseCalls += 1; return 0; },
   });
-  assert.equal(success.attack.expression, "D4-1");
+  assert.equal(success.attack.expression, "D4");
   assert.equal(success.attack.natural, 4);
-  assert.equal(success.attack.total, 3);
+  assert.equal(success.attack.total, 4);
   assert.equal(success.defense.total, 1);
   assert.equal(success.attackerWins, true);
   assert.equal(attackCalls, 1);
@@ -266,7 +266,7 @@ test("D4-1 Invader combat uses distinct attack and defense rolls and defender wi
     target,
     candidates: [target],
     defenseDice: "D4",
-    attackRandom: () => 0.49,
+    attackRandom: () => 0,
     defenseRandom: () => 0,
   });
   assert.equal(tie.attack.total, 1);

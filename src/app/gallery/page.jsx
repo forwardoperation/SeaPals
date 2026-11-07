@@ -238,15 +238,26 @@ function CardMetadata({ image }) {
         <MetadataRow label="Kind" value={formatLabel(card.kind)} />
         <MetadataRow label="Type" value={formatCreatureType(card)} />
         <MetadataRow label="Role" value={card.bio?.role} />
-        <MetadataRow label="Species" value={card.bio?.species} />
+        <MetadataRow label="Family" value={card.bio?.family} />
         <MetadataRow label="Region" value={card.bio?.region} />
         <MetadataRow label="Habitat" value={card.bio?.habitat} />
         <MetadataRow label="Diet" value={card.bio?.diet} />
-        <MetadataRow label="Length" value={card.bio?.length} />
+        <MetadataRow label={card.bio?.lengthLabel ?? "Length"} value={card.bio?.length} />
         <MetadataRow label="Weight" value={card.bio?.weight} />
         <MetadataRow label="Weaknesses" value={formatList(card.weaknesses)} />
         <MetadataRow label="Tags" value={formatList(card.tags)} />
       </div>
+
+      {card.bio?.representativeSpecies && (
+        <p className="mt-3 text-cyan-100">
+          Representative species: {card.bio.representativeSpecies}
+        </p>
+      )}
+      {card.bio?.measurementNote && (
+        <p className="mt-2 text-sm leading-relaxed text-cyan-200">
+          {card.bio.measurementNote} A tilde (~) marks an approximate value.
+        </p>
+      )}
 
       {card.bonusVictoryPoints?.text && (
         <div className="mt-4 rounded-xl bg-slate-950/25 p-3 text-cyan-50">

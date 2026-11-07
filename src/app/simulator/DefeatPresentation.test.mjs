@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { determineVictoryResult } from "./gameRules.mjs";
 
 const componentSource = await readFile(new URL("./DefeatPresentation.jsx", import.meta.url), "utf8");
 const styleSource = await readFile(new URL("./DefeatPresentation.module.css", import.meta.url), "utf8");
@@ -55,7 +56,16 @@ test("the simulator routes both VP and deck-depletion losses to the defeat dialo
     /gameResult && !tutorialLessonWon && \/\^Defeat\\b\/i\.test\(gameResult\)[\s\S]*?<DefeatPresentation/,
   );
   assert.match(simulatorSource, /<DefeatPresentation[\s\S]*?message=\{gameResult\}/);
-  assert.match(simulatorSource, /Defeat:[^\n]*(?:opponent[^\n]*VP|VP[^\n]*opponent)/i);
+  for (const [playerVp, opponentVp] of [[9, 10], [10, 11]]) {
+    const result = determineVictoryResult(playerVp, opponentVp, 10);
+    assert.equal(result.winner, "opponent");
+    assert.match(result.message, /^Defeat:[^\n]*opponent[^\n]*VP/i);
+  }
+  assert.equal(determineVictoryResult(10, 10, 10), null, "a simultaneous VP tie must not open the defeat dialog");
+  assert.match(determineVictoryResult(11, 10, 10).message, /^Victory:/);
+  assert.match(simulatorSource, /determineVictoryResult\(nextPlayerVp, nextOpponentVp, victoryTarget\)/);
+  assert.match(simulatorSource, /const result = getResolvedVictoryResult\(playerVp, opponentVp\);[\s\S]*?setGameResult\([\s\S]*?return result\.message;/);
+  assert.match(simulatorSource, /gameResultAfter: opponentLostAfterUtility[^\n]*: stagedVictoryResult\?\.message \?\? null/);
   assert.match(simulatorSource, /Defeat:[^\n]*(?:required[^\n]*draw|personal decks)/i);
 });
 

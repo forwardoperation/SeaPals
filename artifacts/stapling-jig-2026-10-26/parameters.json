@@ -1,0 +1,21 @@
+{
+  "paper_width_mm": 215.9,
+  "paper_height_mm": 279.4,
+  "glue_width_mm": 209.55,
+  "glue_height_mm": 273.05,
+  "stapler_base_width_mm": 38.1,
+  "stapler_width_clearance_mm": 0.6,
+  "toe_to_staple_mm_ASSUMED": 18.0,
+  "anvil_above_stapler_floor_mm_ASSUMED": 12.0,
+  "bottom_sheet_thickness_mm_ASSUMED": 0.2,
+  "glue_sheet_thickness_mm_ASSUMED": 0.15,
+  "top_sheet_thickness_mm_ASSUMED": 0.2,
+  "guide_finger_thickness_mm": 0.6,
+  "guide_vertical_clearance_mm": 0.05,
+  "opposite_glue_edge_clearance_mm": 0.2,
+  "staple_center_from_left_mm": 5.4186666667,
+  "staple_centers_from_top_mm": [49.403, 233.807],
+  "dock_floor_mm": 4.0,
+  "maximum_print_footprint_mm": 180.0,
+  "status": "PROTOTYPE - physical fit and print scaling unverified"
+}

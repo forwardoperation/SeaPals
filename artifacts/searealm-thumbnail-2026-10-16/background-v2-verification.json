@@ -1,0 +1,9 @@
+{
+  "asset": "public/og-searealm-2026-10-v2.png",
+  "width": 1200,
+  "height": 630,
+  "format": "png",
+  "hasAlpha": false,
+  "openGraphAndTwitterReferencesMatch": true,
+  "validation": "Image decode, dimensions and source metadata references checked; no new runtime preview was required for the filename-only change."
+}

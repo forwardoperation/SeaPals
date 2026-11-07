@@ -155,6 +155,25 @@ function isOceanic(card) {
   return card?.tags?.includes("oceanic") || card?.subtype === "oceanic";
 }
 
+/** Call for attack destruction only: Plenteous returns the same physical copy and stage. */
+export function resolvePlenteousDestruction(destroyedCards, discardPile, foundationDeck, random = Math.random) {
+  const recycledCardIds = destroyedCards.filter((card) => (card?.passives ?? []).some((passive) =>
+    /plenteous:.*instead of discarding.*shuffle.*deck/i.test(typeof passive === "string" ? passive : `${passive?.name}: ${passive?.text}`),
+  )).map((card) => card.id);
+  if (!recycledCardIds.length) return { discardPile, foundationDeck, recycledCardIds };
+  const nextDiscard = [...discardPile];
+  for (const cardId of recycledCardIds) {
+    const index = nextDiscard.indexOf(cardId);
+    if (index >= 0) nextDiscard.splice(index, 1);
+  }
+  const nextDeck = [...foundationDeck, ...recycledCardIds];
+  for (let index = nextDeck.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [nextDeck[index], nextDeck[swapIndex]] = [nextDeck[swapIndex], nextDeck[index]];
+  }
+  return { discardPile: nextDiscard, foundationDeck: nextDeck, recycledCardIds };
+}
+
 export function getRequiredOceanicPredatorCount(card) {
   const rules = [...(card?.playRequirements ?? []), ...(card?.specialRules ?? [])]
     .map((rule) => typeof rule === "string" ? rule : rule?.text ?? "");

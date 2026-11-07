@@ -1,0 +1,7096 @@
+{
+  "scope": [
+    {
+      "cardId": "giant-phantom-jelly",
+      "id": "1811:14449",
+      "pageId": "92:140",
+      "legacy": false,
+      "before": {
+        "family": "Ulmaridae",
+        "lengthLabel": "Arm length",
+        "length": "33’",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "Unlike most jellyfish, the giant phantom jelly lacks stinging tentacles. Instead, it uses its long arms to trap plankton and small fish."
+      },
+      "old": {
+        "id": "1811:14449",
+        "name": "giant-phantom-jelly",
+        "facts": [
+          {
+            "id": "I1811:14149;2006:8978",
+            "text": "LT: 33’",
+            "x": 233,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1811:14149;2006:8979",
+            "text": "Ulmaridae",
+            "x": 58,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1811:14149;2006:8980",
+            "text": "WT: 90lbs",
+            "x": 386,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1811:14149;2006:8981",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1811:14149;1809:6836",
+            "text": "Unlike most jellyfish, the giant phantom jelly lacks stinging tentacles. Instead, it uses its long arms to trap plankton and small fish."
+          }
+        ]
+      },
+      "holo": [
+        {
+          "cardId": "giant-phantom-jelly",
+          "id": "3962:40373",
+          "page": "apex",
+          "pageId": "92:140",
+          "name": "Giant Phantom Jelly",
+          "legacy": false,
+          "family": "Ulmaridae",
+          "row": [
+            "Ulmaridae",
+            "Arms: 33’",
+            "WT: Unknown",
+            "Worldwide"
+          ],
+          "description": "Unlike most jellyfish, the giant phantom jelly lacks stinging tentacles. Instead, it uses its long arms to trap plankton and small fish.",
+          "before": {
+            "facts": [
+              {
+                "id": "I3962:40375;2006:8978",
+                "text": "LT: 33’",
+                "x": 233
+              },
+              {
+                "id": "I3962:40375;2006:8979",
+                "text": "True Jellyfish",
+                "x": 58
+              },
+              {
+                "id": "I3962:40375;2006:8980",
+                "text": "WT: 90lbs",
+                "x": 386
+              },
+              {
+                "id": "I3962:40375;2006:8981",
+                "text": "Worldwide",
+                "x": 517
+              }
+            ],
+            "description": [
+              {
+                "id": "I3962:40375;1809:6836",
+                "text": "Unlike most jellyfish, the giant phantom jelly lacks stinging tentacles. Instead, it uses its long arms to trap plankton and small fish."
+              }
+            ]
+          },
+          "changed": true
+        }
+      ]
+    },
+    {
+      "cardId": "gulper-eel",
+      "id": "1826:14192",
+      "pageId": "92:2",
+      "legacy": false,
+      "before": {
+        "family": "Eurypharyngidae",
+        "lengthLabel": "Length",
+        "length": "3’ 6”",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "The gulper eel's enormous mouth and expandable throat can engulf prey. A tiny light-producing organ sits at the tip of its long, whip-like tail."
+      },
+      "old": {
+        "id": "1826:14192",
+        "name": "gulper-eel",
+        "facts": [
+          {
+            "id": "I1823:13661;1994:41212",
+            "text": "LT: 3’ 6”",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1823:13661;1994:41213",
+            "text": "Ray-Finned Fish",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1823:13661;1994:41214",
+            "text": "WT: 1lb",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1823:13661;1994:41215",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1823:13661;1753:11339",
+            "text": "A bizarre deep-sea fish characterized by its massive, unhinged pelican-like jaw and a long, whip-like tail."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "chimera",
+      "id": "1885:181563",
+      "pageId": "92:2",
+      "legacy": false,
+      "before": {
+        "family": "Family varies",
+        "lengthLabel": "Length",
+        "length": "2’",
+        "weight": "9lbs",
+        "region": "Worldwide",
+        "description": "Often referred to as a \"ghost shark,\" this bizarre creature is famous for its shimmering, scaleless skin, large rabbit-like eyes."
+      },
+      "old": {
+        "id": "1885:181563",
+        "name": "chimera",
+        "facts": [
+          {
+            "id": "I1885:181226;1994:41212",
+            "text": "LT: 2’",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1885:181226;1994:41213",
+            "text": "Cartilaginous",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1885:181226;1994:41214",
+            "text": "WT: 9lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1885:181226;1994:41215",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1885:181226;1753:11339",
+            "text": "Often referred to as a \"ghost shark,\" this bizarre creature is famous for its shimmering, scaleless skin, large rabbit-like eyes."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "frilled-shark",
+      "id": "1885:182155",
+      "pageId": "92:2",
+      "legacy": false,
+      "before": {
+        "family": "Chlamydoselachidae",
+        "lengthLabel": "Length",
+        "length": "6’",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "Six pairs of frilly gill slits give this deep-water shark its name. Its eel-like body and rows of three-pointed teeth help it capture prey."
+      },
+      "old": {
+        "id": "1885:182155",
+        "name": "frilled-shark",
+        "facts": [
+          {
+            "id": "I1885:181565;1994:41212",
+            "text": "LT: 6’",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1885:181565;1994:41213",
+            "text": "Cartilaginous",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1885:181565;1994:41214",
+            "text": "WT: 150lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1885:181565;1994:41215",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1885:181565;1753:11339",
+            "text": "This sea-serpent like predator strikes its prey with a quick, snake-like lunge and holds them fast with an arsenal of over 300 needle-sharp teeth."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "silky-shark",
+      "id": "2261:223207",
+      "pageId": "92:2",
+      "legacy": false,
+      "before": {
+        "family": "Carcharhinidae",
+        "lengthLabel": "Length",
+        "length": "11’",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "A swift, pelagic shark that gets its name from its exceptionally smooth, soft skin, which is covered in densely packed overlapping scales."
+      },
+      "old": {
+        "id": "2261:223207",
+        "name": "silky-shark",
+        "facts": [
+          {
+            "id": "I2261:44889;1993:12653",
+            "text": "LT: 14’ 5”",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I2261:44889;1993:12654",
+            "text": "Ground Shark",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I2261:44889;1993:12655",
+            "text": "WT: 600lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I2261:44889;1993:12656",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I2261:44889;1993:12610",
+            "text": "A swift, pelagic shark that gets its name from its exceptionally smooth, soft skin, which is covered in densely packed overlapping scales."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "nurse-shark",
+      "id": "3387:42923",
+      "pageId": "92:2",
+      "legacy": false,
+      "before": {
+        "family": "Ginglymostomatidae",
+        "lengthLabel": "Length",
+        "length": "8’",
+        "weight": "Varies",
+        "region": "Atlantic",
+        "description": "Nurse sharks can rest completely still on the ocean floor and pump water directly over their gills to breathe, unlike many other shark species."
+      },
+      "old": {
+        "id": "3387:42923",
+        "name": "nurse-shark",
+        "facts": [
+          {
+            "id": "I3387:43169;2082:7550",
+            "text": "LT: 4’",
+            "x": 229,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I3387:43169;2082:7551",
+            "text": "Elasmobranch",
+            "x": 53,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I3387:43169;2082:7552",
+            "text": "WT: 100lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I3387:43169;2082:7553",
+            "text": "Worldwide",
+            "x": 513,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I3387:43169;1321:111970",
+            "text": "Nurse sharks can rest completely still on the ocean floor and pump water directly over their gills to breathe, unlike many other shark species."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "sea-urchin",
+      "id": "241:847",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Diadematidae",
+        "lengthLabel": "Spine length",
+        "length": "12”",
+        "weight": "Unknown",
+        "region": "W. Atlantic",
+        "description": "Long-spined sea urchins graze on algae and help keep reef surfaces clear. Their slender spines defend them while tube feet grip and move over rocks."
+      },
+      "old": {
+        "id": "241:847",
+        "name": "Sea Urchin",
+        "facts": [
+          {
+            "id": "I2765:58993;2055:41785",
+            "text": "LT: 12”",
+            "x": 229,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I2765:58993;2055:41786",
+            "text": "Diadematidae",
+            "x": 53,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I2765:58993;2055:41787",
+            "text": "WT: 1.2lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I2765:58993;2055:41788",
+            "text": "Worldwide",
+            "x": 513,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I2765:58993;1449:46543",
+            "text": "Despite being lacking a brain, heart, or lungs, it possesses hundreds of tiny, glowing blue dots on its shell that act as sensitive light receptors."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "anemone",
+      "id": "241:848",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Family varies",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Sea anemones anchor to rock and hunt with stinging tentacles packed with tiny harpoons. Some host clownfish, trading shelter for scraps."
+      },
+      "old": {
+        "id": "241:848",
+        "name": "Anemone",
+        "facts": [
+          {
+            "id": "I2362:183066;2055:41785",
+            "text": "LT: 18”",
+            "x": 229,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I2362:183066;2055:41786",
+            "text": "Anenthemonae",
+            "x": 53,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I2362:183066;2055:41787",
+            "text": "WT: 8oz",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I2362:183066;2055:41788",
+            "text": "Worldwide",
+            "x": 513,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I2362:183066;1449:46543",
+            "text": "Sea anemones anchor to rock and hunt with stinging tentacles packed with tiny harpoons. Some host clownfish, trading shelter for scraps."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "arrow-crab",
+      "id": "241:851",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Inachoididae",
+        "lengthLabel": "Span",
+        "length": "9.5”",
+        "weight": "Unknown",
+        "region": "W. Atlantic",
+        "description": "Arrow crabs tiptoe on stilt-like legs, their long “arrow” snout probing crevices. At night they scavenge around for leftovers."
+      },
+      "old": {
+        "id": "241:851",
+        "name": "Arrow Crab",
+        "facts": [
+          {
+            "id": "I3400:71586;2055:41785",
+            "text": "LT: 9.5”",
+            "x": 229,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I3400:71586;2055:41786",
+            "text": "Spider Crab",
+            "x": 53,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I3400:71586;2055:41787",
+            "text": "WT: 6oz",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I3400:71586;2055:41788",
+            "text": "Atlantic",
+            "x": 513,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I3400:71586;1449:46543",
+            "text": "Arrow crabs tiptoe on stilt-like legs, their long “arrow” snout probing crevices. At night they scavenge around for leftovers."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "mantis-shrimp",
+      "id": "241:852",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Family varies",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Warm seas",
+        "description": "Mantis shrimp hunt with specialized clubs or spears. Club-bearing species strike so fast that collapsing cavitation bubbles add a second impact."
+      },
+      "old": {
+        "id": "241:852",
+        "name": "Mantis Shrimp",
+        "facts": [
+          {
+            "id": "I3017:15944;2055:41785",
+            "text": "LT: 2’ 6”",
+            "x": 229,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I3017:15944;2055:41786",
+            "text": "Stomatopoda",
+            "x": 53,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I3017:15944;2055:41787",
+            "text": "WT: 1.2lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I3017:15944;2055:41788",
+            "text": "Indo-Pacific",
+            "x": 513,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I3017:15944;1449:46543",
+            "text": "Mantis shrimp strike with club or spear arms so fast they create cavitation bubbles—tiny shockwave “explosions” that stun prey."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "leather-starfish",
+      "id": "241:855",
+      "pageId": "92:340",
+      "legacy": true,
+      "before": {
+        "family": "Asteropseidae",
+        "lengthLabel": "Span",
+        "length": "10”",
+        "weight": "Unknown",
+        "region": "NE Pacific",
+        "description": "Leather stars have smooth, rubbery skin and a garlic-like odor. Tube feet carry them over rocky Pacific shores as they feed on anemones and other prey."
+      },
+      "old": {
+        "id": "241:855",
+        "name": "Invertebrate",
+        "facts": [
+          {
+            "id": "I223:601;213:3172;205:269",
+            "text": "Defense",
+            "x": 16,
+            "y": 891,
+            "w": 127,
+            "h": 27
+          },
+          {
+            "id": "I223:601;261:2989",
+            "text": "Length: 1’ 4”",
+            "x": 175,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          },
+          {
+            "id": "I223:601;261:2990",
+            "text": "Weight: 2lbs",
+            "x": 373,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          },
+          {
+            "id": "I223:601;261:2991",
+            "text": "Caribbean",
+            "x": 575,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          }
+        ],
+        "description": [
+          {
+            "id": "I223:601;213:3170",
+            "text": "Leather starfish wear smooth, rubbery skin instead of spines, often mottled orange, brown, or purple. They glide on hundreds of tube feet to graze anemones"
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "cleaner-shrimp",
+      "id": "241:854",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Lysmatidae",
+        "lengthLabel": "Length",
+        "length": "3”",
+        "weight": "Unknown",
+        "region": "Indo-Pacific",
+        "description": "Scarlet cleaner shrimp wave long white antennae at cleaning stations. Fish visit to have parasites and dead tissue removed from their skin and mouths."
+      },
+      "old": {
+        "id": "241:854",
+        "name": "Cleaner Shrimp",
+        "facts": [
+          {
+            "id": "I2906:237313;2055:41785",
+            "text": "LT: 3”",
+            "x": 229,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I2906:237313;2055:41786",
+            "text": "Amboinensis",
+            "x": 53,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I2906:237313;2055:41787",
+            "text": "WT: 1 oz",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I2906:237313;2055:41788",
+            "text": "Caribbean",
+            "x": 513,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I2906:237313;1449:46543",
+            "text": "Cleaner shrimp set up “stations,” waving long white antennae to invite fish clients. They pluck parasites and dead skin  earning protection for their service."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "nudibranch",
+      "id": "241:857",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Chromodorididae",
+        "lengthLabel": "Length",
+        "length": "3”",
+        "weight": "Unknown",
+        "region": "Indo-Pacific",
+        "description": "The magnificent chromodoris is a brightly patterned, sponge-eating sea slug. Chemicals obtained from its food help defend it against predators."
+      },
+      "old": {
+        "id": "241:857",
+        "name": "Nudibranch",
+        "facts": [
+          {
+            "id": "I3035:265326;2055:41785",
+            "text": "LT: 3”",
+            "x": 229,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I3035:265326;2055:41786",
+            "text": "Chromodorididae",
+            "x": 53,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I3035:265326;2055:41787",
+            "text": "WT: 2 oz",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I3035:265326;2055:41788",
+            "text": "Indo-Pacific",
+            "x": 513,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I3035:265326;1449:46543",
+            "text": "Their bright patterns warn of potent chemical defenses. Some steal stinging cells from their prey and reuse them as toxic armor."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "giant-triton",
+      "id": "241:856",
+      "pageId": "92:340",
+      "legacy": true,
+      "before": {
+        "family": "Charoniidae",
+        "lengthLabel": "Shell length",
+        "length": "20”",
+        "weight": "Unknown",
+        "region": "Indo-Pacific",
+        "description": "Giant tritons are large predatory sea snails that hunt crown-of-thorns starfish, subduing them with a paralyzing bite."
+      },
+      "old": {
+        "id": "241:856",
+        "name": "Giant Triton",
+        "facts": [
+          {
+            "id": "I223:471;213:3172;205:269",
+            "text": "Defense",
+            "x": 16,
+            "y": 891,
+            "w": 127,
+            "h": 27
+          },
+          {
+            "id": "I223:471;261:2989",
+            "text": "Length: 1’ 10”",
+            "x": 175,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          },
+          {
+            "id": "I223:471;261:2990",
+            "text": "Weight: 10lbs",
+            "x": 373,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          },
+          {
+            "id": "I223:471;261:2991",
+            "text": "Australia",
+            "x": 575,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          }
+        ],
+        "description": [
+          {
+            "id": "I223:471;213:3170",
+            "text": "Giant tritons are large predatory sea snails that hunt crown-of-thorns starfish, subduing them with a paralyzing bite."
+          }
+        ]
+      },
+      "holo": [
+        {
+          "cardId": "giant-triton",
+          "id": "3961:42158",
+          "page": "invertebrates",
+          "pageId": "92:340",
+          "name": "Giant Triton",
+          "legacy": true,
+          "family": "Charoniidae",
+          "row": [
+            "Charoniidae",
+            "Shell: 20”",
+            "WT: Unknown",
+            "Indo-Pacific"
+          ],
+          "description": "Giant tritons are large predatory sea snails that hunt crown-of-thorns starfish, subduing them with a paralyzing bite.",
+          "before": {
+            "facts": [
+              {
+                "id": "I3961:42160;261:2989",
+                "text": "Length: 1’ 10”",
+                "x": 175
+              },
+              {
+                "id": "I3961:42160;261:2990",
+                "text": "Weight: 10lbs",
+                "x": 373
+              },
+              {
+                "id": "I3961:42160;261:2991",
+                "text": "Australia",
+                "x": 575
+              }
+            ],
+            "description": [
+              {
+                "id": "I3961:42160;213:3170",
+                "text": "Giant tritons are large predatory sea snails that hunt crown-of-thorns starfish, subduing them with a paralyzing bite."
+              }
+            ]
+          },
+          "changed": true
+        }
+      ]
+    },
+    {
+      "cardId": "octopus",
+      "id": "746:146691",
+      "pageId": "92:340",
+      "legacy": true,
+      "before": {
+        "family": "Family varies",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Octopuses change color and texture in a blink, melting into reef or rock. With eight clever arms and hundreds of suckers, they solve puzzles—then vanish in a puff of ink."
+      },
+      "old": {
+        "id": "746:146691",
+        "name": "Octopus",
+        "facts": [
+          {
+            "id": "I745:145216;213:3172;205:269",
+            "text": "Defense",
+            "x": 16,
+            "y": 891,
+            "w": 127,
+            "h": 27
+          },
+          {
+            "id": "I745:145216;261:2989",
+            "text": "Length: 3’ 2”",
+            "x": 175,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          },
+          {
+            "id": "I745:145216;261:2990",
+            "text": "Weight: 2lbs",
+            "x": 373,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          },
+          {
+            "id": "I745:145216;261:2991",
+            "text": "Worldwide",
+            "x": 575,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          }
+        ],
+        "description": [
+          {
+            "id": "I745:145216;213:3170",
+            "text": "Octopuses change color and texture in a blink, melting into reef or rock. With eight clever arms and hundreds of suckers, they solve puzzles—then vanish in a puff of ink."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "oysters",
+      "id": "746:147861",
+      "pageId": "92:340",
+      "legacy": true,
+      "before": {
+        "family": "Ostreidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats."
+      },
+      "old": {
+        "id": "746:147861",
+        "name": "Oysters",
+        "facts": [
+          {
+            "id": "I746:147297;213:3172;205:269",
+            "text": "Defense",
+            "x": 16,
+            "y": 891,
+            "w": 127,
+            "h": 27
+          },
+          {
+            "id": "I746:147297;261:2989",
+            "text": "Length: 10”",
+            "x": 175,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          },
+          {
+            "id": "I746:147297;261:2990",
+            "text": "Weight: 1.3lbs",
+            "x": 373,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          },
+          {
+            "id": "I746:147297;261:2991",
+            "text": "Worldwide",
+            "x": 575,
+            "y": 891,
+            "w": 137,
+            "h": 29
+          }
+        ],
+        "description": [
+          {
+            "id": "I746:147297;213:3170",
+            "text": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats."
+          }
+        ]
+      },
+      "holo": [
+        {
+          "cardId": "oysters",
+          "id": "3961:42254",
+          "page": "invertebrates",
+          "pageId": "92:340",
+          "name": "Oysters",
+          "legacy": true,
+          "family": "Ostreidae",
+          "row": [
+            "Ostreidae",
+            "LT: Varies",
+            "WT: Varies",
+            "Worldwide"
+          ],
+          "description": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats.",
+          "before": {
+            "facts": [
+              {
+                "id": "I3961:42257;261:2989",
+                "text": "Length: 10”",
+                "x": 175
+              },
+              {
+                "id": "I3961:42257;261:2990",
+                "text": "Weight: 1.3lbs",
+                "x": 373
+              },
+              {
+                "id": "I3961:42257;261:2991",
+                "text": "Worldwide",
+                "x": 575
+              }
+            ],
+            "description": [
+              {
+                "id": "I3961:42257;213:3170",
+                "text": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats."
+              }
+            ]
+          },
+          "changed": true
+        }
+      ]
+    },
+    {
+      "cardId": "deep-cucumber",
+      "id": "1916:16624",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Family varies",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Deep-sea sea cucumbers feed on organic particles on or near the seafloor. Their soft bodies and feeding tentacles come in many shapes across species."
+      },
+      "old": {
+        "id": "1916:16624",
+        "name": "deep-cucumber",
+        "facts": [
+          {
+            "id": "I1901:12438;1994:41784",
+            "text": "LT: 8”",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1901:12438;1994:41785",
+            "text": "Holothuroidea",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1901:12438;1994:41786",
+            "text": "WT: 2lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1901:12438;1994:41787",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1901:12438;1867:66607",
+            "text": "Deep-sea cucumbers look remarkably soft, blobby, and fleshy—often resembling a cross between a worm and a gelatinous slug."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "brittlestar",
+      "id": "1916:16629",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Family varies",
+        "lengthLabel": "Span",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Brittle stars move with slender, flexible arms joined to a central disc. Many can shed an arm to escape a predator and later regrow it."
+      },
+      "old": {
+        "id": "1916:16629",
+        "name": "brittlestar",
+        "facts": [
+          {
+            "id": "I1901:13561;1994:41784",
+            "text": "LT: 20”",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1901:13561;1994:41785",
+            "text": "Echinoderm",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1901:13561;1994:41786",
+            "text": "WT: 8lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1901:13561;1994:41787",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1901:13561;1867:66607",
+            "text": "Brittlestars  have five long, snakelike arms that easily snap off and regrow to help them escape predators."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "vampire-squid",
+      "id": "1916:16630",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Vampyroteuthidae",
+        "lengthLabel": "Length",
+        "length": "12”",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "When threatened, it doesn't ink; instead, it cloaks itself by pulling its webbed arms over its head and releases glowing, bioluminescent clouds."
+      },
+      "old": {
+        "id": "1916:16630",
+        "name": "vampire-squid",
+        "facts": [
+          {
+            "id": "I1904:13999;1994:41784",
+            "text": "LT: 12”",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1904:13999;1994:41785",
+            "text": "Deep Cephalopod",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1904:13999;1994:41786",
+            "text": "WT: 1lb",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1904:13999;1994:41787",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1904:13999;1867:66607",
+            "text": "When threatened, it doesn't ink; instead, it cloaks itself by pulling its webbed arms over its head and releases glowing, bioluminescent clouds."
+          }
+        ]
+      },
+      "holo": [
+        {
+          "cardId": "vampire-squid",
+          "id": "3962:52434",
+          "page": "invertebrates",
+          "pageId": "92:340",
+          "name": "Vampire Squid",
+          "legacy": false,
+          "family": "Vampyroteuthidae",
+          "row": [
+            "Vampyroteuthidae",
+            "LT: 12”",
+            "WT: Unknown",
+            "Worldwide"
+          ],
+          "description": "When threatened, it doesn't ink; instead, it cloaks itself by pulling its webbed arms over its head and releases glowing, bioluminescent clouds.",
+          "before": {
+            "facts": [
+              {
+                "id": "I3962:52437;1994:41784",
+                "text": "LT: 12”",
+                "x": 232
+              },
+              {
+                "id": "I3962:52437;1994:41785",
+                "text": "Deep Cephalopod",
+                "x": 56
+              },
+              {
+                "id": "I3962:52437;1994:41786",
+                "text": "WT: 1lb",
+                "x": 384
+              },
+              {
+                "id": "I3962:52437;1994:41787",
+                "text": "Worldwide",
+                "x": 516
+              }
+            ],
+            "description": [
+              {
+                "id": "I3962:52437;1867:66607",
+                "text": "When threatened, it doesn't ink; instead, it cloaks itself by pulling its webbed arms over its head and releases glowing, bioluminescent clouds."
+              }
+            ]
+          },
+          "changed": true
+        }
+      ]
+    },
+    {
+      "cardId": "giant-isopod",
+      "id": "1916:16631",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Cirolanidae",
+        "lengthLabel": "Length",
+        "length": "16”",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Giant isopods are deep-sea relatives of woodlice. Their armored bodies protect them as they scavenge, and a slow metabolism helps them endure long fasts."
+      },
+      "old": {
+        "id": "1916:16631",
+        "name": "giant-isopod",
+        "facts": [
+          {
+            "id": "I1904:14194;1994:41784",
+            "text": "LT: 20”",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1904:14194;1994:41785",
+            "text": "Deep Crustacean",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1904:14194;1994:41786",
+            "text": "WT: 3.5lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1904:14194;1994:41787",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1904:14194;1867:66607",
+            "text": "Often described as a resilient underwater tank, this living fossil features a tough exoskeleton. It can survive years between feedings."
+          }
+        ]
+      },
+      "holo": [
+        {
+          "cardId": "giant-isopod",
+          "id": "3962:51002",
+          "page": "invertebrates",
+          "pageId": "92:340",
+          "name": "Giant Isopod",
+          "legacy": false,
+          "family": "Cirolanidae",
+          "row": [
+            "Cirolanidae",
+            "LT: 16”",
+            "WT: Varies",
+            "Worldwide"
+          ],
+          "description": "Giant isopods are deep-sea relatives of woodlice. Their armored bodies protect them as they scavenge, and a slow metabolism helps them endure long fasts.",
+          "before": {
+            "facts": [
+              {
+                "id": "I3962:51004;1994:41784",
+                "text": "LT: 20”",
+                "x": 232
+              },
+              {
+                "id": "I3962:51004;1994:41785",
+                "text": "Deep Crustacean",
+                "x": 56
+              },
+              {
+                "id": "I3962:51004;1994:41786",
+                "text": "WT: 3.5lbs",
+                "x": 384
+              },
+              {
+                "id": "I3962:51004;1994:41787",
+                "text": "Worldwide",
+                "x": 516
+              }
+            ],
+            "description": [
+              {
+                "id": "I3962:51004;1867:66607",
+                "text": "Often described as a resilient underwater tank, this living fossil features a tough exoskeleton. It can survive years between feedings."
+              }
+            ]
+          },
+          "changed": true
+        }
+      ]
+    },
+    {
+      "cardId": "giant-tube-worm",
+      "id": "1916:16632",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Siboglinidae",
+        "lengthLabel": "Length",
+        "length": "8’",
+        "weight": "Unknown",
+        "region": "E. Pacific",
+        "description": "Giant tube worms live at hydrothermal vents. Without a mouth or gut, adults rely on internal bacteria that use chemicals from vent fluids to make food."
+      },
+      "old": {
+        "id": "1916:16632",
+        "name": "giant-tube-worm",
+        "facts": [
+          {
+            "id": "I1914:16424;1994:41784",
+            "text": "LT: 8’",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1914:16424;1994:41785",
+            "text": "Annelid ",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1914:16424;1994:41786",
+            "text": "WT: Unknown",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1914:16424;1994:41787",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1914:16424;1867:66607",
+            "text": "Lives in pitch-black, toxic environments relying on symbiotic bacteria for food. It builds a tough, protective tube to bear harsh temperatures."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "peacock-squid",
+      "id": "1916:16628",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Cranchiidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "Peacock squid have large eyes and nearly transparent bodies. Light organs beneath the eyes help hide their silhouettes from predators below."
+      },
+      "old": {
+        "id": "1916:16628",
+        "name": "peacock-squid",
+        "facts": [
+          {
+            "id": "I1901:13365;1994:41784",
+            "text": "LT: 5’",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1901:13365;1994:41785",
+            "text": "Glass Squid",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1901:13365;1994:41786",
+            "text": "WT: 6lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1901:13365;1994:41787",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1901:13365;1867:66607",
+            "text": "It emits faint bioluminescent light from photophores located just beneath its eyes to help camouflage it’s silhouette."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "deep-sea-jelly",
+      "id": "1916:16627",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Atollidae",
+        "lengthLabel": "Bell width",
+        "length": "6”",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "Atolla jellyfish can flash rings of blue bioluminescence when disturbed. This burglar-alarm display may draw larger predators toward an attacker."
+      },
+      "old": {
+        "id": "1916:16627",
+        "name": "deep-sea-jelly",
+        "facts": [
+          {
+            "id": "I1901:13169;1994:41784",
+            "text": "LT: 12’",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1901:13169;1994:41785",
+            "text": "Coronatae",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1901:13169;1994:41786",
+            "text": "WT: 0.5oz",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1901:13169;1994:41787",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1901:13169;1867:66607",
+            "text": "It possess the unique ability to flash bioluminescent blue when attacked to attract other predators to scare off the attacker. "
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "dumbo-octopus",
+      "id": "1916:16626",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Grimpoteuthidae",
+        "lengthLabel": "Length",
+        "length": "10”",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "To hunt they hover right above the seafloor and \"hoover\" up worms, snails, and crustaceans, swallowing their prey whole."
+      },
+      "old": {
+        "id": "1916:16626",
+        "name": "dumbo-octopus",
+        "facts": [
+          {
+            "id": "I1901:12973;1994:41784",
+            "text": "LT: 10”",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I1901:12973;1994:41785",
+            "text": "Umbrella Octopus",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I1901:12973;1994:41786",
+            "text": "WT: 8lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I1901:12973;1994:41787",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I1901:12973;1867:66607",
+            "text": "To hunt they hover right above the seafloor and \"hoover\" up worms, snails, and crustaceans, swallowing their prey whole."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "man-o-war",
+      "id": "2285:31376",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Physaliidae",
+        "lengthLabel": "Tentacle length",
+        "length": "65’",
+        "weight": "Unknown",
+        "region": "Tropics",
+        "description": "A Portuguese man o' war is a colony of specialized zooids. Its gas-filled float rides at the surface while long, stinging tentacles capture prey below."
+      },
+      "old": {
+        "id": "2285:31376",
+        "name": "portugese-man-o-war",
+        "facts": [
+          {
+            "id": "I2282:28199;1993:12848",
+            "text": "LT: 65’",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I2282:28199;1993:12849",
+            "text": "Physaliidae",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I2282:28199;1993:12850",
+            "text": "WT: 1lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I2282:28199;1993:12851",
+            "text": "Tropics",
+            "x": 515,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I2282:28199;1993:12805",
+            "text": "Despite looking like a single animal, the Portuguese man o' war is actually a bizarre colony of thousands of genetically identical, clones called zooids."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "blue-sea-dragon",
+      "id": "2285:31377",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Glaucidae",
+        "lengthLabel": "Length",
+        "length": "1.2”",
+        "weight": "Unknown",
+        "region": "Warm seas",
+        "description": "Blue sea dragons float upside down at the surface. They eat animals such as the Portuguese man o' war and store stolen stinging cells for defense."
+      },
+      "old": {
+        "id": "2285:31377",
+        "name": "blue-sea-dragon",
+        "facts": [
+          {
+            "id": "I2284:30827;1993:12848",
+            "text": "LT: 65’",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I2284:30827;1993:12849",
+            "text": "Physaliidae",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I2284:30827;1993:12850",
+            "text": "WT: 1lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I2284:30827;1993:12851",
+            "text": "Tropics",
+            "x": 515,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I2284:30827;1993:12805",
+            "text": "It survives by eating highly venomous creatures like the Portuguese Man O' War, stealing their stinging cells, to use for it’s own defense."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "market-squid",
+      "id": "2294:52505",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Loliginidae",
+        "lengthLabel": "Length",
+        "length": "12”",
+        "weight": "Unknown",
+        "region": "NE Pacific",
+        "description": "Market squid live only about six to nine months. They gather to mate and lay egg capsules on the seafloor, then die after spawning."
+      },
+      "old": {
+        "id": "2294:52505",
+        "name": "market-squid",
+        "facts": [
+          {
+            "id": "I2293:52394;1993:12848",
+            "text": "LT: 65’",
+            "x": 232,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I2293:52394;1993:12849",
+            "text": "Loliginidae",
+            "x": 56,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I2293:52394;1993:12850",
+            "text": "WT: 1lbs",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I2293:52394;1993:12851",
+            "text": "Tropics",
+            "x": 515,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I2293:52394;1993:12805",
+            "text": "After mating in massive swarms, the entire population dies within a year, leaving their fertilized eggs to hatch the next generation."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "box-jellyfish",
+      "id": "3492:178297",
+      "pageId": "92:340",
+      "legacy": false,
+      "before": {
+        "family": "Chirodropidae",
+        "lengthLabel": "Bell width",
+        "length": "12”",
+        "weight": "Unknown",
+        "region": "Indo-Pacific",
+        "description": "The Australian box jellyfish has a cube-shaped bell and clusters of eyes. Its long tentacles carry powerful venom for catching fish and shrimp."
+      },
+      "old": {
+        "id": "3492:178297",
+        "name": "box-jellyfish",
+        "facts": [
+          {
+            "id": "I3492:164629;2055:41785",
+            "text": "LT: 2’",
+            "x": 229,
+            "y": 488,
+            "w": 118,
+            "h": 25
+          },
+          {
+            "id": "I3492:164629;2055:41786",
+            "text": "Chirodropidae",
+            "x": 53,
+            "y": 488,
+            "w": 186,
+            "h": 25
+          },
+          {
+            "id": "I3492:164629;2055:41787",
+            "text": "WT: 0.03oz",
+            "x": 384,
+            "y": 488,
+            "w": 121,
+            "h": 25
+          },
+          {
+            "id": "I3492:164629;2055:41788",
+            "text": "Indo-Pacific",
+            "x": 513,
+            "y": 488,
+            "w": 142,
+            "h": 25
+          }
+        ],
+        "description": [
+          {
+            "id": "I3492:164629;1449:46543",
+            "text": "Considered the most venomous marine creature on Earth, it carries a potent venom that can kill a human within just two to five minutes of a sting."
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "fairy-parrotfish",
+      "id": "241:1493",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Labridae",
+        "lengthLabel": "Length",
+        "length": "2’ 2”",
+        "weight": "Varies",
+        "region": "Tropical reefs",
+        "description": "Parrotfish scrape food from reef surfaces with beak-like teeth, helping produce sand. Some species sleep inside protective mucus cocoons."
+      },
+      "old": {
+        "id": "241:1493",
+        "name": "fairy-parrotfish",
+        "facts": [
+          {
+            "id": "I2445:113100;1999:13865",
+            "text": "Labridae",
+            "x": 53,
+            "y": 489
+          },
+          {
+            "id": "I2445:113100;1999:13864",
+            "text": "LT: 2’ 2”",
+            "x": 229,
+            "y": 489
+          },
+          {
+            "id": "I2445:113100;1999:13866",
+            "text": "WT: 32lbs",
+            "x": 384,
+            "y": 489
+          },
+          {
+            "id": "I2445:113100;1999:13867",
+            "text": "Caribbean",
+            "x": 513,
+            "y": 489
+          }
+        ],
+        "description": [
+          {
+            "id": "I2445:113100;1314:88669",
+            "text": "They scrape algae with a beak-like bite, grinding coral into fine sand. Some wrap in a nighttime mucus cocoon to hide their scent from predators.",
+            "x": 201,
+            "y": 916
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "longhorn-cowfish",
+      "id": "241:1497",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Ostraciidae",
+        "lengthLabel": "Length",
+        "length": "18”",
+        "weight": "Unknown",
+        "region": "Indo-Pacific",
+        "description": "Protected by a rigid, box-like body, longhorn cowfish graze on small bottom-dwelling prey. When severely stressed, they can release toxic mucus."
+      },
+      "old": {
+        "id": "241:1497",
+        "name": "Boxfish",
+        "facts": [
+          {
+            "id": "I3782:122265;1999:13865",
+            "text": "Ostraciidae",
+            "x": 53,
+            "y": 488
+          },
+          {
+            "id": "I3782:122265;1999:13864",
+            "text": "LT: 18”",
+            "x": 229,
+            "y": 488
+          },
+          {
+            "id": "I3782:122265;1999:13866",
+            "text": "WT: 5.5oz",
+            "x": 384,
+            "y": 488
+          },
+          {
+            "id": "I3782:122265;1999:13867",
+            "text": "Indo-Pacific",
+            "x": 513,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I3782:122265;1314:88669",
+            "text": "When severely threatened, the longhorn cowfish secretes a potent neurotoxin creating an invisible cloud that can kill any creatures in close proximity.",
+            "x": 201,
+            "y": 915
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "frogfish",
+      "id": "241:1499",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Antennariidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Frogfish hide among reef growth and lure prey with a modified dorsal-fin spine. Their expanding mouths suck in unsuspecting animals in a rapid gulp."
+      },
+      "old": {
+        "id": "241:1499",
+        "name": "Frogfish",
+        "facts": [
+          {
+            "id": "I2582:577194;1999:13865",
+            "text": "Antennariidae",
+            "x": 53,
+            "y": 488
+          },
+          {
+            "id": "I2582:577194;1999:13864",
+            "text": "LT: 8”",
+            "x": 229,
+            "y": 488
+          },
+          {
+            "id": "I2582:577194;1999:13866",
+            "text": "WT: 33g",
+            "x": 384,
+            "y": 488
+          },
+          {
+            "id": "I2582:577194;1999:13867",
+            "text": "Worldwide",
+            "x": 513,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2582:577194;1314:88669",
+            "text": "Frogfish vanish in plain sight. They “fish” with a built-in lure, then gulp prey with one of the fastest strikes in the ocean.",
+            "x": 201,
+            "y": 915
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "pacific-grenadier",
+      "id": "1901:9371",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Macrouridae",
+        "lengthLabel": "Length",
+        "length": "2’ 6”",
+        "weight": "Unknown",
+        "region": "N. Pacific",
+        "description": "Often called a \"rattail\" because of its slender, whip-like tail, this deep-sea fish can live for over 70 years in extreme pressures."
+      },
+      "old": {
+        "id": "1901:9371",
+        "name": "pacific-grenadier",
+        "facts": [
+          {
+            "id": "I1885:182868;1993:12219",
+            "text": "Deep Groundfish",
+            "x": 56,
+            "y": 488
+          },
+          {
+            "id": "I1885:182868;1993:12218",
+            "text": "LT: 2’ 6”",
+            "x": 232,
+            "y": 488
+          },
+          {
+            "id": "I1885:182868;1993:12220",
+            "text": "WT: 8lbs",
+            "x": 384,
+            "y": 488
+          },
+          {
+            "id": "I1885:182868;1993:12221",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I1885:182868;1867:66437",
+            "text": "Often called a \"rattail\" because of its slender, whip-like tail, this deep-sea fish can live for over 70 years in extreme pressures.",
+            "x": 201,
+            "y": 915
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "humpback-anglerfish",
+      "id": "1901:9373",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Melanocetidae",
+        "lengthLabel": "Length",
+        "length": "7”",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "Female humpback anglerfish carry a lure lit by symbiotic bacteria. It dangles above the mouth, drawing prey close in the darkness of the deep sea."
+      },
+      "old": {
+        "id": "1901:9373",
+        "name": "humpback-anglerfish",
+        "facts": [
+          {
+            "id": "I1885:183600;1993:12219",
+            "text": "Deep-Sea Smelt",
+            "x": 56,
+            "y": 488
+          },
+          {
+            "id": "I1885:183600;1993:12218",
+            "text": "LT: 7”",
+            "x": 232,
+            "y": 488
+          },
+          {
+            "id": "I1885:183600;1993:12220",
+            "text": "WT: 0.5oz",
+            "x": 384,
+            "y": 488
+          },
+          {
+            "id": "I1885:183600;1993:12221",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I1885:183600;1867:66437",
+            "text": "The tip of their dorsal fin contains a glowing sac of bioluminescent bacteria used to attract prey in the pitch-black ocean depths.",
+            "x": 201,
+            "y": 915
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "barrel-eye-fish",
+      "id": "1901:9374",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Opisthoproctidae",
+        "lengthLabel": "Length",
+        "length": "6.5”",
+        "weight": "Unknown",
+        "region": "N. Pacific",
+        "description": "A transparent dome protects the barreleye's tubular green eyes. The eyes can rotate from looking upward to facing forward as the fish feeds."
+      },
+      "old": {
+        "id": "1901:9374",
+        "name": "barrel-eye-fish",
+        "facts": [
+          {
+            "id": "I1885:183963;1993:12219",
+            "text": "Spookfish",
+            "x": 56,
+            "y": 488
+          },
+          {
+            "id": "I1885:183963;1993:12218",
+            "text": "LT: 6.5”",
+            "x": 232,
+            "y": 488
+          },
+          {
+            "id": "I1885:183963;1993:12220",
+            "text": "WT: 1oz",
+            "x": 384,
+            "y": 488
+          },
+          {
+            "id": "I1885:183963;1993:12221",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I1885:183963;1867:66437",
+            "text": "The barreleye boasts a cockpit-like, see-through head that allows its internal organs and green eyes to be visible. ",
+            "x": 201,
+            "y": 915
+          }
+        ]
+      },
+      "holo": [
+        {
+          "cardId": "barrel-eye-fish",
+          "id": "3962:54556",
+          "page": "fish",
+          "pageId": "24:4",
+          "name": "Barrel Eye Fish",
+          "legacy": false,
+          "family": "Opisthoproctidae",
+          "row": [
+            "Opisthoproctidae",
+            "LT: 6.5”",
+            "WT: Unknown",
+            "N. Pacific"
+          ],
+          "description": "A transparent dome protects the barreleye's tubular green eyes. The eyes can rotate from looking upward to facing forward as the fish feeds.",
+          "before": {
+            "facts": [
+              {
+                "id": "I3962:54558;1993:12218",
+                "text": "LT: 6.5”",
+                "x": 232
+              },
+              {
+                "id": "I3962:54558;1993:12219",
+                "text": "Spookfish",
+                "x": 56
+              },
+              {
+                "id": "I3962:54558;1993:12220",
+                "text": "WT: 1oz",
+                "x": 384
+              },
+              {
+                "id": "I3962:54558;1993:12221",
+                "text": "Worldwide",
+                "x": 516
+              }
+            ],
+            "description": [
+              {
+                "id": "I3962:54558;1867:66437",
+                "text": "The barreleye boasts a cockpit-like, see-through head that allows its internal organs and green eyes to be visible. "
+              }
+            ]
+          },
+          "changed": true
+        }
+      ]
+    },
+    {
+      "cardId": "fangtooth-fish",
+      "id": "1901:9375",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Anoplogastridae",
+        "lengthLabel": "Length",
+        "length": "7”",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "Fangtooth fish have enormous teeth for their small bodies. Special sockets in the roof of the mouth make room for the long lower fangs."
+      },
+      "old": {
+        "id": "1901:9375",
+        "name": "fangtooth-fish",
+        "facts": [
+          {
+            "id": "I1885:184326;1993:12219",
+            "text": "Ray-Finned Fish",
+            "x": 56,
+            "y": 488
+          },
+          {
+            "id": "I1885:184326;1993:12218",
+            "text": "LT: 7”",
+            "x": 232,
+            "y": 488
+          },
+          {
+            "id": "I1885:184326;1993:12220",
+            "text": "WT: 4oz",
+            "x": 384,
+            "y": 488
+          },
+          {
+            "id": "I1885:184326;1993:12221",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I1885:184326;1867:66437",
+            "text": "A small but fearsome-looking deep-sea predator renowned for having the largest teeth-to-body ratio of any fish in the ocean.",
+            "x": 201,
+            "y": 915
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "black-swallower",
+      "id": "1901:9376",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Chiasmodontidae",
+        "lengthLabel": "Length",
+        "length": "9”",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "The black swallower has an elastic stomach that can hold prey larger than itself. This adaptation helps it take advantage of scarce deep-sea meals."
+      },
+      "old": {
+        "id": "1901:9376",
+        "name": "black-swallower",
+        "facts": [
+          {
+            "id": "I1895:7228;1993:12219",
+            "text": "Bony Fish",
+            "x": 56,
+            "y": 488
+          },
+          {
+            "id": "I1895:7228;1993:12218",
+            "text": "LT: 9”",
+            "x": 232,
+            "y": 488
+          },
+          {
+            "id": "I1895:7228;1993:12220",
+            "text": "WT: 8oz",
+            "x": 384,
+            "y": 488
+          },
+          {
+            "id": "I1895:7228;1993:12221",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I1895:7228;1867:66437",
+            "text": "A deep-sea fish known for its highly distensible stomach, allowing it to consume prey over twice its length and 10 times its mass.",
+            "x": 201,
+            "y": 915
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "tripod-fish",
+      "id": "1901:9377",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Ipnopidae",
+        "lengthLabel": "Length",
+        "length": "17”",
+        "weight": "Unknown",
+        "region": "Worldwide",
+        "description": "Tripod fish stand above the seabed on three elongated fin rays. Facing into the current, they spread their pectoral fins to help detect drifting prey."
+      },
+      "old": {
+        "id": "1901:9377",
+        "name": "tripod-fish",
+        "facts": [
+          {
+            "id": "I1895:7734;1993:12219",
+            "text": "Bony Fish",
+            "x": 56,
+            "y": 488
+          },
+          {
+            "id": "I1895:7734;1993:12218",
+            "text": "LT: 17”",
+            "x": 232,
+            "y": 488
+          },
+          {
+            "id": "I1895:7734;1993:12220",
+            "text": "WT: 2lbs",
+            "x": 384,
+            "y": 488
+          },
+          {
+            "id": "I1895:7734;1993:12221",
+            "text": "Worldwide",
+            "x": 516,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I1895:7734;1867:66437",
+            "text": " Completely blind, it rests on the ocean floor using three extraordinarily long, stiff fin rays to both elevate its body and move prey to it’s mouth.",
+            "x": 201,
+            "y": 915
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "halfbeak",
+      "id": "2285:31389",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Hemiramphidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Tropics",
+        "description": "Halfbeaks have a long lower jaw and a much shorter upper jaw. These surface-dwelling fish may leap or skip across the water to escape predators."
+      },
+      "old": {
+        "id": "2285:31389",
+        "name": "halfbeak",
+        "facts": [
+          {
+            "id": "I2270:244153;1993:12122",
+            "text": "Hemiramphidae",
+            "x": 56,
+            "y": 488
+          },
+          {
+            "id": "I2270:244153;1993:12121",
+            "text": "LT: 6”",
+            "x": 232,
+            "y": 488
+          },
+          {
+            "id": "I2270:244153;1993:12123",
+            "text": "WT: 0.7lbs",
+            "x": 384,
+            "y": 488
+          },
+          {
+            "id": "I2270:244153;1993:12124",
+            "text": "Tropics",
+            "x": 516,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2270:244153;1993:12078",
+            "text": "Many halfbeak species are capable of breaching the water's surface to \"fly\" or skip across the waves to escape predators, much like flying fish.",
+            "x": 201,
+            "y": 910
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "needlefish",
+      "id": "2285:31384",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Belonidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Tropics",
+        "description": "Needlefish hunt near the surface with long jaws lined with sharp teeth. When startled, they can leap clear of the water."
+      },
+      "old": {
+        "id": "2285:31384",
+        "name": "needlefish",
+        "facts": [
+          {
+            "id": "I2280:18845;1993:12122",
+            "text": "Belonidae",
+            "x": 56,
+            "y": 488
+          },
+          {
+            "id": "I2280:18845;1993:12121",
+            "text": "LT: 6”",
+            "x": 232,
+            "y": 488
+          },
+          {
+            "id": "I2280:18845;1993:12123",
+            "text": "WT: 0.7lbs",
+            "x": 384,
+            "y": 488
+          },
+          {
+            "id": "I2280:18845;1993:12124",
+            "text": "Tropics",
+            "x": 516,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2280:18845;1993:12078",
+            "text": "Needlefish are hyper-fast, slender ocean hunters known to skip across the water at speeds up to 40 mph, sometimes running into swimmers.",
+            "x": 201,
+            "y": 910
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "krill-bloom-base",
+      "id": "2279:17422",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Family varies",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish."
+      },
+      "old": {
+        "id": "2279:17422",
+        "name": "krill-bloom-base",
+        "facts": [
+          {
+            "id": "I2271:247030;2271:245652",
+            "text": "Crustaceans",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2271:247030;2271:245651",
+            "text": "LT: 2’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2271:247030;2271:245653",
+            "text": "WT: 20lbs",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2271:247030;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2271:247030;2271:245667",
+            "text": "A highly concentrated, massive defensive swarm of krill containing up to millions of individual crustaceans.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "krill-bloom-stage1",
+      "id": "2279:17423",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Family varies",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish."
+      },
+      "old": {
+        "id": "2279:17423",
+        "name": "krill-bloom-stage-1",
+        "facts": [
+          {
+            "id": "I2271:247223;2271:245652",
+            "text": "Crustaceans",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2271:247223;2271:245651",
+            "text": "LT: 20’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2271:247223;2271:245653",
+            "text": "WT: 600lbs",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2271:247223;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2271:247223;2271:245667",
+            "text": "A highly concentrated, massive defensive swarm of krill containing up to millions of individual crustaceans.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "krill-bloom-stage2",
+      "id": "2279:17424",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Family varies",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish."
+      },
+      "old": {
+        "id": "2279:17424",
+        "name": "krill-bloom-stage-2",
+        "facts": [
+          {
+            "id": "I2271:247612;2271:245652",
+            "text": "Crustaceans",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2271:247612;2271:245651",
+            "text": "LT: 30’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2271:247612;2271:245653",
+            "text": "WT: 1 Ton",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2271:247612;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2271:247612;2271:245667",
+            "text": "A highly concentrated, massive defensive swarm of krill containing up to millions of individual crustaceans.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "sardine-ball-base",
+      "id": "2279:17421",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Clupeidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together."
+      },
+      "old": {
+        "id": "2279:17421",
+        "name": "sardine-ball-base",
+        "facts": [
+          {
+            "id": "I2271:248005;2271:245652",
+            "text": "Herring",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2271:248005;2271:245651",
+            "text": "LT: 3’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2271:248005;2271:245653",
+            "text": "WT: 30lbs",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2271:248005;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2271:248005;2271:245667",
+            "text": "They are famed for traveling in massive, synchronized schools reaching up to 20 meters in diameter.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "anchovy-ball-base",
+      "id": "2279:17427",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Engraulidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish."
+      },
+      "old": {
+        "id": "2279:17427",
+        "name": "anchovy-ball-base",
+        "facts": [
+          {
+            "id": "I2275:15413;2271:245652",
+            "text": "Oily Fish",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2275:15413;2271:245651",
+            "text": "LT: 3’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2275:15413;2271:245653",
+            "text": "WT: 30lbs",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2275:15413;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2275:15413;2271:245667",
+            "text": "A small, silver, open-ocean schooling fish which filter microscopic plankton and sustain entire marine ecosystems.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "silverside-ball-base",
+      "id": "2279:17430",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Atherinopsidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "W. Atlantic",
+        "description": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together."
+      },
+      "old": {
+        "id": "2279:17430",
+        "name": "silverside-ball-base",
+        "facts": [
+          {
+            "id": "I2275:17755;2271:245652",
+            "text": "Atlantic Silverside",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2275:17755;2271:245651",
+            "text": "LT: 3’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2275:17755;2271:245653",
+            "text": "WT: 30lbs",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2275:17755;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2275:17755;2271:245667",
+            "text": "They flash their reflective silver stripes in massive, synchronized schools to blind and disorient attacking predators.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "sardine-ball-stage1",
+      "id": "2279:17425",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Clupeidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together."
+      },
+      "old": {
+        "id": "2279:17425",
+        "name": "sardine-ball-stage-1",
+        "facts": [
+          {
+            "id": "I2271:248014;2271:245652",
+            "text": "Herring",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2271:248014;2271:245651",
+            "text": "LT: 15’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2271:248014;2271:245653",
+            "text": "WT: 400lbs",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2271:248014;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2271:248014;2271:245667",
+            "text": "They are famed for traveling in massive, synchronized schools reaching up to 20 meters in diameter.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "anchovy-ball-stage1",
+      "id": "2279:17428",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Engraulidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish."
+      },
+      "old": {
+        "id": "2279:17428",
+        "name": "anchovy-ball-stage-1",
+        "facts": [
+          {
+            "id": "I2275:15421;2231:106037",
+            "text": "Crustaceans",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2275:15422;2271:245652",
+            "text": "Oily Fish",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2275:15421;2231:106036",
+            "text": "LT: 3’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2275:15422;2271:245651",
+            "text": "LT: 12 ’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2275:15421;2231:106038",
+            "text": "WT: 8lbs",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2275:15422;2271:245653",
+            "text": "WT: 600lbs",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2275:15421;2231:106039",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          },
+          {
+            "id": "I2275:15422;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2275:15421;2231:105592",
+            "text": "A highly concentrated, massive defensive swarm of krill containing up to millions of individual crustaceans.",
+            "x": 199,
+            "y": 913
+          },
+          {
+            "id": "I2275:15422;2271:245667",
+            "text": "A small, silver, open-ocean schooling fish which filter microscopic plankton and sustain entire marine ecosystems.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "silverside-ball-stage1",
+      "id": "2279:17431",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Atherinopsidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "W. Atlantic",
+        "description": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together."
+      },
+      "old": {
+        "id": "2279:17431",
+        "name": "silverside-ball-stage-1",
+        "facts": [
+          {
+            "id": "I2275:17764;2271:245652",
+            "text": "Atlantic Silverside",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2275:17764;2271:245651",
+            "text": "LT: 10’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2275:17764;2271:245653",
+            "text": "WT: 400lbs",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2275:17764;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2275:17764;2271:245667",
+            "text": "They flash their reflective silver stripes in massive, synchronized schools to blind and disorient attacking predators.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "sardine-ball-stage2",
+      "id": "2279:17426",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Clupeidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together."
+      },
+      "old": {
+        "id": "2279:17426",
+        "name": "sardine-ball-stage-2",
+        "facts": [
+          {
+            "id": "I2271:248023;2271:245652",
+            "text": "Herring",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2271:248023;2271:245651",
+            "text": "LT: 65’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2271:248023;2271:245653",
+            "text": "WT: 4 Tons",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2271:248023;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2271:248023;2271:245667",
+            "text": "They are famed for traveling in massive, synchronized schools reaching up to 20 meters in diameter.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "anchovy-ball-stage2",
+      "id": "2279:17429",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Engraulidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "Worldwide",
+        "description": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish."
+      },
+      "old": {
+        "id": "2279:17429",
+        "name": "anchovy-ball-stage-2",
+        "facts": [
+          {
+            "id": "I2275:15432;2271:245652",
+            "text": "Oily Fish",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2275:15432;2271:245651",
+            "text": "LT: 65’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2275:15432;2271:245653",
+            "text": "WT: 4 Tons",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2275:15432;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2275:15432;2271:245667",
+            "text": "A small, silver, open-ocean schooling fish which filter microscopic plankton and sustain entire marine ecosystems.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "silverside-ball-stage2",
+      "id": "2279:17432",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Atherinopsidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "W. Atlantic",
+        "description": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together."
+      },
+      "old": {
+        "id": "2279:17432",
+        "name": "silverside-ball-stage-2",
+        "facts": [
+          {
+            "id": "I2275:17773;2271:245652",
+            "text": "Atlantic Silverside",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2275:17773;2271:245651",
+            "text": "LT: 45’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2275:17773;2271:245653",
+            "text": "WT: 2 Tons",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2275:17773;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2275:17773;2271:245667",
+            "text": "They flash their reflective silver stripes in massive, synchronized schools to blind and disorient attacking predators.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "herring-ball-base",
+      "id": "2279:17433",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Clupeidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "N. Atlantic",
+        "description": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish."
+      },
+      "old": {
+        "id": "2279:17433",
+        "name": "herring-ball-base",
+        "facts": [
+          {
+            "id": "I2275:16587;2271:245652",
+            "text": "Herring",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2275:16587;2271:245651",
+            "text": "LT: 2.5’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2275:16587;2271:245653",
+            "text": "WT: 25lbs",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2275:16587;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2275:16587;2271:245667",
+            "text": "When threatened by predators, herring pack together into a synchronized, spinning defensive formations.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "herring-ball-stage1",
+      "id": "2279:17434",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Clupeidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "N. Atlantic",
+        "description": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish."
+      },
+      "old": {
+        "id": "2279:17434",
+        "name": "herring-ball-stage-1",
+        "facts": [
+          {
+            "id": "I2275:16596;2271:245652",
+            "text": "Herring",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2275:16596;2271:245651",
+            "text": "LT: 15’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2275:16596;2271:245653",
+            "text": "WT: 900lbs",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2275:16596;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2275:16596;2271:245667",
+            "text": "When threatened by predators, herring pack together into a synchronized, spinning defensive formations.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    },
+    {
+      "cardId": "herring-ball-stage2",
+      "id": "2279:17435",
+      "pageId": "24:4",
+      "legacy": false,
+      "before": {
+        "family": "Clupeidae",
+        "lengthLabel": "Length",
+        "length": "Varies",
+        "weight": "Varies",
+        "region": "N. Atlantic",
+        "description": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish."
+      },
+      "old": {
+        "id": "2279:17435",
+        "name": "herring-ball-stage-2",
+        "facts": [
+          {
+            "id": "I2275:16605;2271:245652",
+            "text": "Herring",
+            "x": 57,
+            "y": 488
+          },
+          {
+            "id": "I2275:16605;2271:245651",
+            "text": "LT: 140’",
+            "x": 233,
+            "y": 488
+          },
+          {
+            "id": "I2275:16605;2271:245653",
+            "text": "WT: 10 Tons",
+            "x": 385,
+            "y": 488
+          },
+          {
+            "id": "I2275:16605;2271:245654",
+            "text": "Worldwide",
+            "x": 517,
+            "y": 488
+          }
+        ],
+        "description": [
+          {
+            "id": "I2275:16605;2271:245667",
+            "text": "When threatened by predators, herring pack together into a synchronized, spinning defensive formations.",
+            "x": 199,
+            "y": 911
+          }
+        ]
+      },
+      "holo": []
+    }
+  ],
+  "live": [
+    {
+      "cardId": "giant-phantom-jelly",
+      "id": "1811:14449",
+      "legacy": false,
+      "name": "giant-phantom-jelly",
+      "type": "COMPONENT",
+      "width": 750,
+      "height": 1050,
+      "text": [
+        {
+          "id": "I1811:14149;3068:1047488;3052:951300",
+          "name": "Defense",
+          "text": "Defense",
+          "x": 47,
+          "y": 909,
+          "w": 127,
+          "h": 27,
+          "size": 22
+        },
+        {
+          "id": "I1811:14149;3068:1047488;3052:951302",
+          "name": "Illus. J. Easterling",
+          "text": "Illus. J. Easterling",
+          "x": 460,
+          "y": 992,
+          "w": 245,
+          "h": 18,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1811:14149;3068:1047488;3052:951327",
+          "name": "PRERELEASE",
+          "text": "PRERELEASE",
+          "x": 465,
+          "y": 452,
+          "w": 220.89999389648438,
+          "h": 26.31999969482422,
+          "size": 28.200000762939453
+        },
+        {
+          "id": "I1811:14149;3068:1047488;3052:951330",
+          "name": "© 2026, Sea Realm, LLC",
+          "text": "© 2026, Sea Realm, LLC",
+          "x": 270,
+          "y": 992,
+          "w": 210.55999755859375,
+          "h": 17.860000610351562,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1811:14149;1809:6836",
+          "name": "Losum Ipsum",
+          "text": "Unlike most jellyfish, the giant phantom jelly lacks stinging tentacles. Instead, it uses its long arms to trap plankton and small fish.",
+          "x": 203,
+          "y": 915,
+          "w": 486.9200134277344,
+          "h": 62.040000915527344,
+          "size": 18.799999237060547
+        },
+        {
+          "id": "I1811:14149;2265:227333;2042:55508",
+          "name": "4/62",
+          "text": "19/62",
+          "x": 68,
+          "y": 992,
+          "w": 81.77999877929688,
+          "h": 20.68000030517578,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1811:14149;1809:6835",
+          "name": "D12",
+          "text": "D8",
+          "x": 46,
+          "y": 920,
+          "w": 131.60000610351562,
+          "h": 73.31999969482422,
+          "size": 38.540000915527344
+        },
+        {
+          "id": "I1811:14149;2006:8978",
+          "name": "LT: 43’",
+          "text": "Arms: 33’",
+          "x": 233,
+          "y": 488,
+          "w": 118.44000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1811:14149;2006:8979",
+          "name": "Type",
+          "text": "Ulmaridae",
+          "x": 58,
+          "y": 488,
+          "w": 186.1199951171875,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1811:14149;2006:8980",
+          "name": "WT: 600lbs",
+          "text": "WT: Unknown",
+          "x": 386,
+          "y": 488,
+          "w": 121.26000213623047,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1811:14149;2006:8981",
+          "name": "Worldwide",
+          "text": "Worldwide",
+          "x": 517,
+          "y": 488,
+          "w": 141.94000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1811:14149;2058:15267",
+          "name": "No. 123",
+          "text": "No. 161",
+          "x": 64,
+          "y": 460,
+          "w": 111.86000061035156,
+          "h": 27.260000228881836,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1811:14164;1302:14123",
+          "name": "Can only be played if a Drop Off structure card is in play on your reef",
+          "text": "Can only be played if       Abyss Habitat is in your Ecosystem. If destroyed, place in lost zone.",
+          "x": 54,
+          "y": 574,
+          "w": 631.6799926757812,
+          "h": 71.44000244140625,
+          "size": 26
+        },
+        {
+          "id": "I1811:14164;1302:14126",
+          "name": "Special Rules",
+          "text": "Special Rules",
+          "x": 60,
+          "y": 538,
+          "w": 180.47999572753906,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I1811:14439;1292:91356",
+          "name": "Opponent’s fish cost +1 RP to play.",
+          "text": "All of your attacks have +3 on dice rolls.",
+          "x": 54,
+          "y": 818,
+          "w": 631.6799926757812,
+          "h": 61.099998474121094,
+          "size": 26
+        },
+        {
+          "id": "I1811:14439;1292:91377",
+          "name": "Passive",
+          "text": "Passive",
+          "x": 63,
+          "y": 778,
+          "w": 106.22000122070312,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I1811:14439;1292:91385",
+          "name": "Intimidation",
+          "text": "Phantom Boost",
+          "x": 187,
+          "y": 769,
+          "w": 432.3999938964844,
+          "h": 44.18000030517578,
+          "size": 36.65999984741211
+        },
+        {
+          "id": "I1966:4860;1449:48428",
+          "name": "Forage",
+          "text": "Cloak in Darkness",
+          "x": 190,
+          "y": 643,
+          "w": 388.2200012207031,
+          "h": 44.18000030517578,
+          "size": 39
+        },
+        {
+          "id": "I1966:4860;1449:78591",
+          "name": "10RP",
+          "text": "0RP",
+          "x": 442,
+          "y": 643,
+          "w": 245.33999633789062,
+          "h": 44.18000030517578,
+          "size": 36.65999984741211
+        },
+        {
+          "id": "I1966:4860;1449:48431",
+          "name": "Action",
+          "text": "Action",
+          "x": 57,
+          "y": 652,
+          "w": 115.62000274658203,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I1966:4860;1449:48432",
+          "name": "Lorum Ispum",
+          "text": "Choose one of your opponent’s coral, that coral is now stunned.",
+          "x": 56,
+          "y": 692,
+          "w": 631.6799926757812,
+          "h": 105.27999877929688,
+          "size": 26
+        }
+      ]
+    },
+    {
+      "cardId": "gulper-eel",
+      "id": "1826:14192",
+      "legacy": false,
+      "name": "gulper-eel",
+      "type": "COMPONENT",
+      "width": 750,
+      "height": 1050,
+      "text": [
+        {
+          "id": "I1823:13661;3069:1089506;3052:951300",
+          "name": "Defense",
+          "text": "Defense",
+          "x": 47,
+          "y": 909,
+          "w": 127,
+          "h": 27,
+          "size": 22
+        },
+        {
+          "id": "I1823:13661;3069:1089506;3052:951302",
+          "name": "Illus. J. Easterling",
+          "text": "Illus. J. Easterling",
+          "x": 460,
+          "y": 992,
+          "w": 245,
+          "h": 18,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1823:13661;3069:1089506;3052:951327",
+          "name": "PRERELEASE",
+          "text": "PRERELEASE",
+          "x": 465,
+          "y": 452,
+          "w": 220.89999389648438,
+          "h": 26.31999969482422,
+          "size": 28.200000762939453
+        },
+        {
+          "id": "I1823:13661;3069:1089506;3052:951330",
+          "name": "© 2026, Sea Realm, LLC",
+          "text": "© 2026, Sea Realm, LLC",
+          "x": 270,
+          "y": 992,
+          "w": 210.55999755859375,
+          "h": 17.860000610351562,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1823:13661;2058:17676",
+          "name": "No. 123",
+          "text": "No. 143",
+          "x": 63,
+          "y": 460,
+          "w": 111.86000061035156,
+          "h": 27.260000228881836,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1823:13661;2266:229155;2042:55508",
+          "name": "4/62",
+          "text": "43/62",
+          "x": 67,
+          "y": 992,
+          "w": 81.77999877929688,
+          "h": 20.68000030517578,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1823:13661;1994:41212",
+          "name": "LT: 18”",
+          "text": "LT: 3’ 6”",
+          "x": 232,
+          "y": 488,
+          "w": 118.44000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1823:13661;1994:41213",
+          "name": "Type",
+          "text": "Eurypharyngidae",
+          "x": 56,
+          "y": 488,
+          "w": 186.1199951171875,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1823:13661;1994:41214",
+          "name": "WT: 8lbs",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121.26000213623047,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1823:13661;1994:41215",
+          "name": "Worldwide",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 141.94000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1823:13661;1753:11339",
+          "name": "Losum Ipsum",
+          "text": "The gulper eel's enormous mouth and expandable throat can engulf prey. A tiny light-producing organ sits at the tip of its long, whip-like tail.",
+          "x": 201,
+          "y": 910,
+          "w": 462.4800109863281,
+          "h": 62.040000915527344,
+          "size": 16.799999237060547
+        },
+        {
+          "id": "I1823:13661;1753:11338",
+          "name": "D10",
+          "text": "D4-2",
+          "x": 45,
+          "y": 920,
+          "w": 131.60000610351562,
+          "h": 73.31999969482422,
+          "size": 38.540000915527344
+        },
+        {
+          "id": "I1823:13676;1302:14131",
+          "name": "Crushing Jaws",
+          "text": "Swallow Up",
+          "x": 188,
+          "y": 646,
+          "w": 450.260009765625,
+          "h": 44.18000030517578,
+          "size": 36.65999984741211
+        },
+        {
+          "id": "I1823:13676;1302:14134",
+          "name": "On Play",
+          "text": "On Play",
+          "x": 64,
+          "y": 655,
+          "w": 106.22000122070312,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I1823:13677;1292:89622",
+          "name": "D20",
+          "text": "D6",
+          "x": 87,
+          "y": 730,
+          "w": 75.19999694824219,
+          "h": 33.84000015258789,
+          "size": 24.90999984741211
+        },
+        {
+          "id": "I1823:13922;1292:91356",
+          "name": "Opponent’s fish cost +1 RP to play.",
+          "text": "If       Abyss is in play, gain +4 Defense",
+          "x": 52,
+          "y": 589,
+          "w": 631.6799926757812,
+          "h": 61.099998474121094,
+          "size": 26
+        },
+        {
+          "id": "I1823:13922;1292:91377",
+          "name": "Passive",
+          "text": "Passive",
+          "x": 61,
+          "y": 549,
+          "w": 106.22000122070312,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I1823:13922;1292:91385",
+          "name": "Intimidation",
+          "text": "Darkness Shroud",
+          "x": 185,
+          "y": 540,
+          "w": 432.3999938964844,
+          "h": 44.18000030517578,
+          "size": 36.65999984741211
+        }
+      ]
+    },
+    {
+      "cardId": "chimera",
+      "id": "1885:181563",
+      "legacy": false,
+      "name": "chimera",
+      "type": "COMPONENT",
+      "width": 750,
+      "height": 1050,
+      "text": [
+        {
+          "id": "I1885:181226;3069:1089506;3052:951300",
+          "name": "Defense",
+          "text": "Defense",
+          "x": 47,
+          "y": 909,
+          "w": 127,
+          "h": 27,
+          "size": 22
+        },
+        {
+          "id": "I1885:181226;3069:1089506;3052:951302",
+          "name": "Illus. J. Easterling",
+          "text": "Illus. J. Easterling",
+          "x": 460,
+          "y": 992,
+          "w": 245,
+          "h": 18,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181226;3069:1089506;3052:951327",
+          "name": "PRERELEASE",
+          "text": "PRERELEASE",
+          "x": 465,
+          "y": 452,
+          "w": 220.89999389648438,
+          "h": 26.31999969482422,
+          "size": 28.200000762939453
+        },
+        {
+          "id": "I1885:181226;3069:1089506;3052:951330",
+          "name": "© 2026, Sea Realm, LLC",
+          "text": "© 2026, Sea Realm, LLC",
+          "x": 270,
+          "y": 992,
+          "w": 210.55999755859375,
+          "h": 17.860000610351562,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181226;2058:17676",
+          "name": "No. 123",
+          "text": "No. 136",
+          "x": 63,
+          "y": 460,
+          "w": 111.86000061035156,
+          "h": 27.260000228881836,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181226;2266:229155;2042:55508",
+          "name": "4/62",
+          "text": "41/62",
+          "x": 67,
+          "y": 992,
+          "w": 81.77999877929688,
+          "h": 20.68000030517578,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181226;1994:41212",
+          "name": "LT: 18”",
+          "text": "LT: 2’",
+          "x": 232,
+          "y": 488,
+          "w": 118.44000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181226;1994:41213",
+          "name": "Type",
+          "text": "Family varies",
+          "x": 56,
+          "y": 488,
+          "w": 186.1199951171875,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181226;1994:41214",
+          "name": "WT: 8lbs",
+          "text": "WT: 9lbs",
+          "x": 384,
+          "y": 488,
+          "w": 121.26000213623047,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181226;1994:41215",
+          "name": "Worldwide",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 141.94000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181226;1753:11339",
+          "name": "Losum Ipsum",
+          "text": "Often referred to as a \"ghost shark,\" this bizarre creature is famous for its shimmering, scaleless skin, large rabbit-like eyes.",
+          "x": 201,
+          "y": 910,
+          "w": 462.4800109863281,
+          "h": 62.040000915527344,
+          "size": 18.799999237060547
+        },
+        {
+          "id": "I1885:181226;1753:11338",
+          "name": "D10",
+          "text": "D6",
+          "x": 45,
+          "y": 920,
+          "w": 131.60000610351562,
+          "h": 73.31999969482422,
+          "size": 38.540000915527344
+        },
+        {
+          "id": "I1885:181242;1302:14131",
+          "name": "Crushing Jaws",
+          "text": "Bite",
+          "x": 186,
+          "y": 542,
+          "w": 450.260009765625,
+          "h": 44.18000030517578,
+          "size": 36.65999984741211
+        },
+        {
+          "id": "I1885:181242;1302:14134",
+          "name": "On Play",
+          "text": "On Play",
+          "x": 62,
+          "y": 551,
+          "w": 106.22000122070312,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I1885:181243;1292:89622",
+          "name": "D20",
+          "text": "D6",
+          "x": 85,
+          "y": 629,
+          "w": 75.19999694824219,
+          "h": 33.84000015258789,
+          "size": 24.90999984741211
+        },
+        {
+          "id": "1885:181498",
+          "name": "If Abyss is in your play area, add +2 to your roll.",
+          "text": "If       Abyss is in your play\narea, add +2 to your roll.",
+          "x": 312,
+          "y": 613,
+          "w": 672,
+          "h": 112,
+          "size": 27
+        }
+      ]
+    },
+    {
+      "cardId": "frilled-shark",
+      "id": "1885:182155",
+      "legacy": false,
+      "name": "frilled-shark",
+      "type": "COMPONENT",
+      "width": 750,
+      "height": 1050,
+      "text": [
+        {
+          "id": "I1885:181565;3069:1089506;3052:951300",
+          "name": "Defense",
+          "text": "Defense",
+          "x": 47,
+          "y": 909,
+          "w": 127,
+          "h": 27,
+          "size": 22
+        },
+        {
+          "id": "I1885:181565;3069:1089506;3052:951302",
+          "name": "Illus. J. Easterling",
+          "text": "Illus. J. Easterling",
+          "x": 460,
+          "y": 992,
+          "w": 245,
+          "h": 18,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181565;3069:1089506;3052:951327",
+          "name": "PRERELEASE",
+          "text": "PRERELEASE",
+          "x": 465,
+          "y": 452,
+          "w": 220.89999389648438,
+          "h": 26.31999969482422,
+          "size": 28.200000762939453
+        },
+        {
+          "id": "I1885:181565;3069:1089506;3052:951330",
+          "name": "© 2026, Sea Realm, LLC",
+          "text": "© 2026, Sea Realm, LLC",
+          "x": 270,
+          "y": 992,
+          "w": 210.55999755859375,
+          "h": 17.860000610351562,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181565;2058:17676",
+          "name": "No. 123",
+          "text": "No. 131",
+          "x": 63,
+          "y": 460,
+          "w": 111.86000061035156,
+          "h": 27.260000228881836,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181565;2266:229155;2042:55508",
+          "name": "4/62",
+          "text": "23/62",
+          "x": 67,
+          "y": 992,
+          "w": 81.77999877929688,
+          "h": 20.68000030517578,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181565;1994:41212",
+          "name": "LT: 18”",
+          "text": "LT: 6’",
+          "x": 232,
+          "y": 488,
+          "w": 118.44000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181565;1994:41213",
+          "name": "Type",
+          "text": "Chlamydoselachidae",
+          "x": 56,
+          "y": 488,
+          "w": 186.1199951171875,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181565;1994:41214",
+          "name": "WT: 8lbs",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121.26000213623047,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181565;1994:41215",
+          "name": "Worldwide",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 141.94000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:181565;1753:11339",
+          "name": "Losum Ipsum",
+          "text": "Six pairs of frilly gill slits give this deep-water shark its name. Its eel-like body and rows of three-pointed teeth help it capture prey.",
+          "x": 201,
+          "y": 910,
+          "w": 462.4800109863281,
+          "h": 62.040000915527344,
+          "size": 16.799999237060547
+        },
+        {
+          "id": "I1885:181565;1753:11338",
+          "name": "D10",
+          "text": "D6",
+          "x": 45,
+          "y": 920,
+          "w": 131.60000610351562,
+          "h": 73.31999969482422,
+          "size": 38.540000915527344
+        },
+        {
+          "id": "I1885:181862;1302:14131",
+          "name": "Crushing Jaws",
+          "text": "Ancient Presence",
+          "x": 186,
+          "y": 536,
+          "w": 450.260009765625,
+          "h": 44.18000030517578,
+          "size": 36.65999984741211
+        },
+        {
+          "id": "I1885:181862;1302:14134",
+          "name": "On Play",
+          "text": "On Play",
+          "x": 62,
+          "y": 545,
+          "w": 106.22000122070312,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I1885:181862;1302:14135",
+          "name": "Inflict 60HP of damage to an opponent’s coral",
+          "text": "Discard 2 cards from the top of your opponent’s deck.",
+          "x": 52,
+          "y": 585,
+          "w": 631.6799926757812,
+          "h": 105.27999877929688,
+          "size": 26
+        },
+        {
+          "id": "I1885:181581;1302:14131",
+          "name": "Crushing Jaws",
+          "text": "Ancient Strike",
+          "x": 186,
+          "y": 669,
+          "w": 450.260009765625,
+          "h": 44.18000030517578,
+          "size": 36.65999984741211
+        },
+        {
+          "id": "I1885:181581;1302:14134",
+          "name": "On Play",
+          "text": "On Play",
+          "x": 62,
+          "y": 678,
+          "w": 106.22000122070312,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I1885:181582;1292:89622",
+          "name": "D20",
+          "text": "D6",
+          "x": 85,
+          "y": 745,
+          "w": 75.19999694824219,
+          "h": 33.84000015258789,
+          "size": 24.90999984741211
+        }
+      ]
+    },
+    {
+      "cardId": "silky-shark",
+      "id": "2261:223207",
+      "legacy": false,
+      "name": "silky-shark",
+      "type": "COMPONENT",
+      "width": 750,
+      "height": 1050,
+      "text": [
+        {
+          "id": "I2261:44889;3078:1195310;3052:951300",
+          "name": "Defense",
+          "text": "Defense",
+          "x": 47,
+          "y": 909,
+          "w": 127,
+          "h": 27,
+          "size": 22
+        },
+        {
+          "id": "I2261:44889;3078:1195310;3052:951302",
+          "name": "Illus. J. Easterling",
+          "text": "Illus. J. Easterling",
+          "x": 460,
+          "y": 992,
+          "w": 245,
+          "h": 18,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2261:44889;3078:1195310;3052:951327",
+          "name": "PRERELEASE",
+          "text": "PRERELEASE",
+          "x": 465,
+          "y": 452,
+          "w": 220.89999389648438,
+          "h": 26.31999969482422,
+          "size": 28.200000762939453
+        },
+        {
+          "id": "I2261:44889;3078:1195310;3052:951330",
+          "name": "© 2026, Sea Realm, LLC",
+          "text": "© 2026, Sea Realm, LLC",
+          "x": 270,
+          "y": 992,
+          "w": 210.55999755859375,
+          "h": 17.860000610351562,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2261:44889;1993:12653",
+          "name": "LT: 18”",
+          "text": "LT: 11’",
+          "x": 232,
+          "y": 488,
+          "w": 118.44000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2261:44889;1993:12654",
+          "name": "Type",
+          "text": "Carcharhinidae",
+          "x": 56,
+          "y": 488,
+          "w": 186.1199951171875,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2261:44889;1993:12655",
+          "name": "WT: 8lbs",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121.26000213623047,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2261:44889;1993:12656",
+          "name": "Worldwide",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 141.94000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2261:44889;1993:12622;1314:109390",
+          "name": "4/64",
+          "text": "25/64",
+          "x": 67,
+          "y": 992,
+          "w": 81.77999877929688,
+          "h": 20.68000030517578,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2261:44889;1993:12614",
+          "name": "D6-2",
+          "text": "D6",
+          "x": 44,
+          "y": 935,
+          "w": 131.60000610351562,
+          "h": 45.119998931884766,
+          "size": 38.540000915527344
+        },
+        {
+          "id": "I2261:44889;1993:12610",
+          "name": "Lorum Ipsom",
+          "text": "A swift, pelagic shark that gets its name from its exceptionally smooth, soft skin, which is covered in densely packed overlapping scales.",
+          "x": 201,
+          "y": 915,
+          "w": 498,
+          "h": 68,
+          "size": 18.799999237060547
+        },
+        {
+          "id": "I2261:44889;2042:55529",
+          "name": "No. 123",
+          "text": "No. 009",
+          "x": 63,
+          "y": 460,
+          "w": 111.86000061035156,
+          "h": 27.260000228881836,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2261:45982;1302:14123",
+          "name": "Can only be played if a Drop Off structure card is in play on your reef",
+          "text": "Requires 3      Oceanic Fish in your Ecosystem to play.",
+          "x": 55,
+          "y": 570,
+          "w": 631.6799926757812,
+          "h": 71.44000244140625,
+          "size": 26
+        },
+        {
+          "id": "I2261:45982;1302:14126",
+          "name": "Special Rules",
+          "text": "Special Rules",
+          "x": 61,
+          "y": 534,
+          "w": 180.47999572753906,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I2261:46005;1302:14131",
+          "name": "Crushing Jaws",
+          "text": "Bite",
+          "x": 188,
+          "y": 772,
+          "w": 450.260009765625,
+          "h": 44.18000030517578,
+          "size": 36.65999984741211
+        },
+        {
+          "id": "I2261:46005;1302:14134",
+          "name": "On Play",
+          "text": "On Play",
+          "x": 64,
+          "y": 781,
+          "w": 106.22000122070312,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I2261:46005;1302:14135",
+          "name": "Inflict 60HP of damage to an opponent’s coral",
+          "text": "",
+          "x": 54,
+          "y": 821,
+          "w": 631.6799926757812,
+          "h": 105.27999877929688,
+          "size": 26
+        },
+        {
+          "id": "I2261:46007;1292:89622",
+          "name": "D20",
+          "text": "D6",
+          "x": 87,
+          "y": 844,
+          "w": 75.19999694824219,
+          "h": 33.84000015258789,
+          "size": 24.90999984741211
+        },
+        {
+          "id": "I2261:46229;1449:48428",
+          "name": "Forage",
+          "text": "Smooth Operator",
+          "x": 188,
+          "y": 643,
+          "w": 388.2200012207031,
+          "h": 44.18000030517578,
+          "size": 36.65999984741211
+        },
+        {
+          "id": "I2261:46229;1449:78591",
+          "name": "10RP",
+          "text": "2RP",
+          "x": 440,
+          "y": 643,
+          "w": 245.33999633789062,
+          "h": 44.18000030517578,
+          "size": 36.65999984741211
+        },
+        {
+          "id": "I2261:46229;1449:48431",
+          "name": "Action",
+          "text": "Action",
+          "x": 55,
+          "y": 652,
+          "w": 115.62000274658203,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I2261:46229;1449:48432",
+          "name": "Lorum Ispum",
+          "text": "Look at the top 5 cards in your deck and rearrange them however you see fit.",
+          "x": 54,
+          "y": 692,
+          "w": 631.6799926757812,
+          "h": 105.27999877929688,
+          "size": 26
+        }
+      ]
+    },
+    {
+      "cardId": "nurse-shark",
+      "id": "3387:42923",
+      "legacy": false,
+      "name": "nurse-shark",
+      "type": "COMPONENT",
+      "width": 750,
+      "height": 1050,
+      "text": [
+        {
+          "id": "I3387:43169;3055:627499;3052:951300",
+          "name": "Defense",
+          "text": "Defense",
+          "x": 47,
+          "y": 909,
+          "w": 127,
+          "h": 27,
+          "size": 22
+        },
+        {
+          "id": "I3387:43169;3055:627499;3052:951302",
+          "name": "Illus. J. Easterling",
+          "text": "Illus. J. Easterling",
+          "x": 460,
+          "y": 992,
+          "w": 245,
+          "h": 18,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3387:43169;3055:627499;3052:951327",
+          "name": "PRERELEASE",
+          "text": "PRERELEASE",
+          "x": 465,
+          "y": 452,
+          "w": 220.89999389648438,
+          "h": 26.31999969482422,
+          "size": 28.200000762939453
+        },
+        {
+          "id": "I3387:43169;3055:627499;3052:951330",
+          "name": "© 2026, Sea Realm, LLC",
+          "text": "© 2026, Sea Realm, LLC",
+          "x": 270,
+          "y": 992,
+          "w": 210.55999755859375,
+          "h": 17.860000610351562,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3387:43169;2082:7550",
+          "name": "LT: 5’ 9”",
+          "text": "LT: 8’",
+          "x": 229,
+          "y": 488,
+          "w": 118.44000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3387:43169;2082:7551",
+          "name": "Type",
+          "text": "Ginglymostomatidae",
+          "x": 53,
+          "y": 488,
+          "w": 186.1199951171875,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3387:43169;2082:7552",
+          "name": "WT: 180lbs",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 488,
+          "w": 121.26000213623047,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3387:43169;2082:7553",
+          "name": "Worldwide",
+          "text": "Atlantic",
+          "x": 513,
+          "y": 488,
+          "w": 141.94000244140625,
+          "h": 25.3799991607666,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3387:43169;2115:64304;2042:42427",
+          "name": "4/102",
+          "text": "36/102",
+          "x": 67,
+          "y": 992,
+          "w": 81.77999877929688,
+          "h": 20.68000030517578,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3387:43169;2082:16034",
+          "name": "No. 123",
+          "text": "No. 062",
+          "x": 63,
+          "y": 460,
+          "w": 111.86000061035156,
+          "h": 27.260000228881836,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3387:43169;1321:111970",
+          "name": "Lorum Ipsom",
+          "text": "Nurse sharks can rest completely still on the ocean floor and pump water directly over their gills to breathe, unlike many other shark species.",
+          "x": 201,
+          "y": 915,
+          "w": 462.4800109863281,
+          "h": 62.040000915527344,
+          "size": 18.799999237060547
+        },
+        {
+          "id": "I3387:43169;1321:111969",
+          "name": "D10",
+          "text": "D6",
+          "x": 45,
+          "y": 920,
+          "w": 131.60000610351562,
+          "h": 73.31999969482422,
+          "size": 38.540000915527344
+        },
+        {
+          "id": "I3387:43414;1292:91356",
+          "name": "Opponent’s fish cost +1 RP to play.",
+          "text": "Perform a D4 attack targeting your opponent’s fish or invertebrates whenever another one of your creatures lands a successful attack.",
+          "x": 59,
+          "y": 574,
+          "w": 631.6799926757812,
+          "h": 61.099998474121094,
+          "size": 26
+        },
+        {
+          "id": "I3387:43414;1292:91377",
+          "name": "Passive",
+          "text": "Passive",
+          "x": 68,
+          "y": 534,
+          "w": 106.22000122070312,
+          "h": 25.3799991607666,
+          "size": 25.3799991607666
+        },
+        {
+          "id": "I3387:43414;1292:91385",
+          "name": "Intimidation",
+          "text": "Opportunist",
+          "x": 192,
+          "y": 525,
+          "w": 432.3999938964844,
+          "h": 44.18000030517578,
+          "size": 36.65999984741211
+        }
+      ]
+    },
+    {
+      "cardId": "sea-urchin",
+      "id": "241:847",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2765:58993;1449:46543",
+          "text": "Long-spined sea urchins graze on algae and help keep reef surfaces clear. Their slender spines defend them while tube feet grip and move over rocks.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        },
+        {
+          "id": "I2765:58993;2055:41785",
+          "text": "Spines: 12”",
+          "x": 229,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2765:58993;2055:41786",
+          "text": "Diadematidae",
+          "x": 53,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2765:58993;2055:41787",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2765:58993;2055:41788",
+          "text": "W. Atlantic",
+          "x": 513,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "anemone",
+      "id": "241:848",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2362:183066;1449:46543",
+          "text": "Sea anemones anchor to rock and hunt with stinging tentacles packed with tiny harpoons. Some host clownfish, trading shelter for scraps.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 18.799999237060547
+        },
+        {
+          "id": "I2362:183066;2055:41785",
+          "text": "LT: Varies",
+          "x": 229,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2362:183066;2055:41786",
+          "text": "Family varies",
+          "x": 53,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2362:183066;2055:41787",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2362:183066;2055:41788",
+          "text": "Worldwide",
+          "x": 513,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "arrow-crab",
+      "id": "241:851",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I3400:71586;1449:46543",
+          "text": "Arrow crabs tiptoe on stilt-like legs, their long “arrow” snout probing crevices. At night they scavenge around for leftovers.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 18.799999237060547
+        },
+        {
+          "id": "I3400:71586;2055:41785",
+          "text": "Span: 9.5”",
+          "x": 229,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3400:71586;2055:41786",
+          "text": "Inachoididae",
+          "x": 53,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3400:71586;2055:41787",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3400:71586;2055:41788",
+          "text": "W. Atlantic",
+          "x": 513,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "mantis-shrimp",
+      "id": "241:852",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I3017:15944;1449:46543",
+          "text": "Mantis shrimp hunt with specialized clubs or spears. Club-bearing species strike so fast that collapsing cavitation bubbles add a second impact.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        },
+        {
+          "id": "I3017:15944;2055:41785",
+          "text": "LT: Varies",
+          "x": 229,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3017:15944;2055:41786",
+          "text": "Family varies",
+          "x": 53,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3017:15944;2055:41787",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3017:15944;2055:41788",
+          "text": "Warm seas",
+          "x": 513,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "leather-starfish",
+      "id": "241:855",
+      "legacy": true,
+      "text": [
+        {
+          "id": "I223:601;213:3172;205:269",
+          "text": "Defense",
+          "x": 16,
+          "y": 891,
+          "w": 127,
+          "h": 27,
+          "size": 22
+        },
+        {
+          "id": "I223:601;213:3170",
+          "text": "Leather stars have smooth, rubbery skin and a garlic-like odor. Tube feet carry them over rocky Pacific shores as they feed on anemones and other prey.",
+          "x": 175,
+          "y": 918,
+          "w": 545,
+          "h": 71,
+          "size": 19
+        },
+        {
+          "id": "4008:452904",
+          "text": "Asteropseidae",
+          "x": 175,
+          "y": 891,
+          "w": 171,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4008:452905",
+          "text": "Span: 10”",
+          "x": 351,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4008:452906",
+          "text": "WT: Unknown",
+          "x": 466,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 15.5
+        },
+        {
+          "id": "4008:452907",
+          "text": "NE Pacific",
+          "x": 581,
+          "y": 891,
+          "w": 134,
+          "h": 27,
+          "size": 17
+        }
+      ]
+    },
+    {
+      "cardId": "cleaner-shrimp",
+      "id": "241:854",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2906:237313;1449:46543",
+          "text": "Scarlet cleaner shrimp wave long white antennae at cleaning stations. Fish visit to have parasites and dead tissue removed from their skin and mouths.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        },
+        {
+          "id": "I2906:237313;2055:41785",
+          "text": "LT: 3”",
+          "x": 229,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2906:237313;2055:41786",
+          "text": "Lysmatidae",
+          "x": 53,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2906:237313;2055:41787",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2906:237313;2055:41788",
+          "text": "Indo-Pacific",
+          "x": 513,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "nudibranch",
+      "id": "241:857",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I3035:265326;1449:46543",
+          "text": "The magnificent chromodoris is a brightly patterned, sponge-eating sea slug. Chemicals obtained from its food help defend it against predators.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        },
+        {
+          "id": "I3035:265326;2055:41785",
+          "text": "LT: 3”",
+          "x": 229,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3035:265326;2055:41786",
+          "text": "Chromodorididae",
+          "x": 53,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3035:265326;2055:41787",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3035:265326;2055:41788",
+          "text": "Indo-Pacific",
+          "x": 513,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "giant-triton",
+      "id": "241:856",
+      "legacy": true,
+      "text": [
+        {
+          "id": "I223:471;213:3172;205:269",
+          "text": "Defense",
+          "x": 16,
+          "y": 891,
+          "w": 127,
+          "h": 27,
+          "size": 22
+        },
+        {
+          "id": "I223:471;213:3170",
+          "text": "Giant tritons are large predatory sea snails that hunt crown-of-thorns starfish, subduing them with a paralyzing bite.",
+          "x": 175,
+          "y": 918,
+          "w": 545,
+          "h": 71,
+          "size": 20
+        },
+        {
+          "id": "4008:452909",
+          "text": "Charoniidae",
+          "x": 175,
+          "y": 891,
+          "w": 171,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4008:452910",
+          "text": "Shell: 20”",
+          "x": 351,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4008:452911",
+          "text": "WT: Unknown",
+          "x": 466,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 15.5
+        },
+        {
+          "id": "4008:452912",
+          "text": "Indo-Pacific",
+          "x": 581,
+          "y": 891,
+          "w": 134,
+          "h": 27,
+          "size": 17
+        }
+      ]
+    },
+    {
+      "cardId": "octopus",
+      "id": "746:146691",
+      "legacy": true,
+      "text": [
+        {
+          "id": "I745:145216;213:3172;205:269",
+          "text": "Defense",
+          "x": 16,
+          "y": 891,
+          "w": 127,
+          "h": 27,
+          "size": 22
+        },
+        {
+          "id": "I745:145216;213:3170",
+          "text": "Octopuses change color and texture in a blink, melting into reef or rock. With eight clever arms and hundreds of suckers, they solve puzzles—then vanish in a puff of ink.",
+          "x": 175,
+          "y": 918,
+          "w": 545,
+          "h": 71,
+          "size": 20
+        },
+        {
+          "id": "4008:452914",
+          "text": "Family varies",
+          "x": 175,
+          "y": 891,
+          "w": 171,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4008:452915",
+          "text": "LT: Varies",
+          "x": 351,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4008:452916",
+          "text": "WT: Varies",
+          "x": 466,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4008:452917",
+          "text": "Worldwide",
+          "x": 581,
+          "y": 891,
+          "w": 134,
+          "h": 27,
+          "size": 17
+        }
+      ]
+    },
+    {
+      "cardId": "oysters",
+      "id": "746:147861",
+      "legacy": true,
+      "text": [
+        {
+          "id": "I746:147297;213:3172;205:269",
+          "text": "Defense",
+          "x": 16,
+          "y": 891,
+          "w": 127,
+          "h": 27,
+          "size": 22
+        },
+        {
+          "id": "I746:147297;213:3170",
+          "text": "Oysters are a vital component of marine ecosystems, primarily functioning as filter feeders that significantly improve water quality and create complex reef habitats.",
+          "x": 175,
+          "y": 918,
+          "w": 545,
+          "h": 71,
+          "size": 20
+        },
+        {
+          "id": "4008:452919",
+          "text": "Ostreidae",
+          "x": 175,
+          "y": 891,
+          "w": 171,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4008:452920",
+          "text": "LT: Varies",
+          "x": 351,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4008:452921",
+          "text": "WT: Varies",
+          "x": 466,
+          "y": 891,
+          "w": 110,
+          "h": 27,
+          "size": 17
+        },
+        {
+          "id": "4008:452922",
+          "text": "Worldwide",
+          "x": 581,
+          "y": 891,
+          "w": 134,
+          "h": 27,
+          "size": 17
+        }
+      ]
+    },
+    {
+      "cardId": "deep-cucumber",
+      "id": "1916:16624",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1901:12438;1994:41784",
+          "text": "LT: Varies",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:12438;1994:41785",
+          "text": "Family varies",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:12438;1994:41786",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:12438;1994:41787",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:12438;1867:66607",
+          "text": "Deep-sea sea cucumbers feed on organic particles on or near the seafloor. Their soft bodies and feeding tentacles come in many shapes across species.",
+          "x": 203,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "brittlestar",
+      "id": "1916:16629",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1901:13561;1994:41784",
+          "text": "Span: Varies",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13561;1994:41785",
+          "text": "Family varies",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13561;1994:41786",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13561;1994:41787",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13561;1867:66607",
+          "text": "Brittle stars move with slender, flexible arms joined to a central disc. Many can shed an arm to escape a predator and later regrow it.",
+          "x": 203,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "vampire-squid",
+      "id": "1916:16630",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1904:13999;1994:41784",
+          "text": "LT: 12”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1904:13999;1994:41785",
+          "text": "Vampyroteuthidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1904:13999;1994:41786",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1904:13999;1994:41787",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1904:13999;1867:66607",
+          "text": "When threatened, it doesn't ink; instead, it cloaks itself by pulling its webbed arms over its head and releases glowing, bioluminescent clouds.",
+          "x": 203,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 18.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "giant-isopod",
+      "id": "1916:16631",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1904:14194;1994:41784",
+          "text": "LT: 16”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1904:14194;1994:41785",
+          "text": "Cirolanidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1904:14194;1994:41786",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1904:14194;1994:41787",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1904:14194;1867:66607",
+          "text": "Giant isopods are deep-sea relatives of woodlice. Their armored bodies protect them as they scavenge, and a slow metabolism helps them endure long fasts.",
+          "x": 203,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "giant-tube-worm",
+      "id": "1916:16632",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1914:16424;1994:41784",
+          "text": "LT: 8’",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1914:16424;1994:41785",
+          "text": "Siboglinidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1914:16424;1994:41786",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1914:16424;1994:41787",
+          "text": "E. Pacific",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1914:16424;1867:66607",
+          "text": "Giant tube worms live at hydrothermal vents. Without a mouth or gut, adults rely on internal bacteria that use chemicals from vent fluids to make food.",
+          "x": 203,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "peacock-squid",
+      "id": "1916:16628",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1901:13365;1994:41784",
+          "text": "LT: Varies",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13365;1994:41785",
+          "text": "Cranchiidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13365;1994:41786",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13365;1994:41787",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13365;1867:66607",
+          "text": "Peacock squid have large eyes and nearly transparent bodies. Light organs beneath the eyes help hide their silhouettes from predators below.",
+          "x": 203,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "deep-sea-jelly",
+      "id": "1916:16627",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1901:13169;1994:41784",
+          "text": "Bell: 6”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13169;1994:41785",
+          "text": "Atollidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13169;1994:41786",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13169;1994:41787",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:13169;1867:66607",
+          "text": "Atolla jellyfish can flash rings of blue bioluminescence when disturbed. This burglar-alarm display may draw larger predators toward an attacker.",
+          "x": 203,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "dumbo-octopus",
+      "id": "1916:16626",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1901:12973;1994:41784",
+          "text": "LT: 10”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:12973;1994:41785",
+          "text": "Grimpoteuthidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:12973;1994:41786",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:12973;1994:41787",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1901:12973;1867:66607",
+          "text": "To hunt they hover right above the seafloor and \"hoover\" up worms, snails, and crustaceans, swallowing their prey whole.",
+          "x": 203,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 18.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "man-o-war",
+      "id": "2285:31376",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2282:28199;1993:12805",
+          "text": "A Portuguese man o' war is a colony of specialized zooids. Its gas-filled float rides at the surface while long, stinging tentacles capture prey below.",
+          "x": 200,
+          "y": 912,
+          "w": 500,
+          "h": 68,
+          "size": 18.299999237060547
+        },
+        {
+          "id": "I2282:28199;1993:12848",
+          "text": "Tent.: 65’",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2282:28199;1993:12849",
+          "text": "Physaliidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2282:28199;1993:12850",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2282:28199;1993:12851",
+          "text": "Tropics",
+          "x": 515,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "blue-sea-dragon",
+      "id": "2285:31377",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2284:30827;1993:12805",
+          "text": "Blue sea dragons float upside down at the surface. They eat animals such as the Portuguese man o' war and store stolen stinging cells for defense.",
+          "x": 200,
+          "y": 912,
+          "w": 500,
+          "h": 68,
+          "size": 18.299999237060547
+        },
+        {
+          "id": "I2284:30827;1993:12848",
+          "text": "LT: 1.2”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2284:30827;1993:12849",
+          "text": "Glaucidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2284:30827;1993:12850",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2284:30827;1993:12851",
+          "text": "Warm seas",
+          "x": 515,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2284:30828;1292:91385",
+          "text": "EcoBoost",
+          "x": 187,
+          "y": 514,
+          "w": 432,
+          "h": 44,
+          "size": 36.65999984741211
+        }
+      ]
+    },
+    {
+      "cardId": "market-squid",
+      "id": "2294:52505",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2293:52394;1993:12805",
+          "text": "Market squid live only about six to nine months. They gather to mate and lay egg capsules on the seafloor, then die after spawning.",
+          "x": 200,
+          "y": 912,
+          "w": 500,
+          "h": 68,
+          "size": 18.299999237060547
+        },
+        {
+          "id": "I2293:52394;1993:12848",
+          "text": "LT: 12”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2293:52394;1993:12849",
+          "text": "Loliginidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2293:52394;1993:12850",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2293:52394;1993:12851",
+          "text": "NE Pacific",
+          "x": 515,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "box-jellyfish",
+      "id": "3492:178297",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I3492:164629;1449:46543",
+          "text": "The Australian box jellyfish has a cube-shaped bell and clusters of eyes. Its long tentacles carry powerful venom for catching fish and shrimp.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        },
+        {
+          "id": "I3492:164629;2055:41785",
+          "text": "Bell: 12”",
+          "x": 229,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3492:164629;2055:41786",
+          "text": "Chirodropidae",
+          "x": 53,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3492:164629;2055:41787",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3492:164629;2055:41788",
+          "text": "Indo-Pacific",
+          "x": 513,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "fairy-parrotfish",
+      "id": "241:1493",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2445:113100;1999:13864",
+          "text": "LT: 2’ 2”",
+          "x": 229,
+          "y": 489,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2445:113100;1999:13865",
+          "text": "Labridae",
+          "x": 53,
+          "y": 489,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2445:113100;1999:13866",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 489,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2445:113100;1999:13867",
+          "text": "Tropical reefs",
+          "x": 513,
+          "y": 489,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2445:113100;1314:88669",
+          "text": "Parrotfish scrape food from reef surfaces with beak-like teeth, helping produce sand. Some species sleep inside protective mucus cocoons.",
+          "x": 201,
+          "y": 916,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "longhorn-cowfish",
+      "id": "241:1497",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I3782:122265;1999:13864",
+          "text": "LT: 18”",
+          "x": 229,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3782:122265;1999:13865",
+          "text": "Ostraciidae",
+          "x": 53,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3782:122265;1999:13866",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3782:122265;1999:13867",
+          "text": "Indo-Pacific",
+          "x": 513,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I3782:122265;1314:88669",
+          "text": "Protected by a rigid, box-like body, longhorn cowfish graze on small bottom-dwelling prey. When severely stressed, they can release toxic mucus.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "frogfish",
+      "id": "241:1499",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2582:577194;1999:13864",
+          "text": "LT: Varies",
+          "x": 229,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2582:577194;1999:13865",
+          "text": "Antennariidae",
+          "x": 53,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2582:577194;1999:13866",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2582:577194;1999:13867",
+          "text": "Worldwide",
+          "x": 513,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2582:577194;1314:88669",
+          "text": "Frogfish hide among reef growth and lure prey with a modified dorsal-fin spine. Their expanding mouths suck in unsuspecting animals in a rapid gulp.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "pacific-grenadier",
+      "id": "1901:9371",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1885:182868;1993:12218",
+          "text": "LT: 2’ 6”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:182868;1993:12219",
+          "text": "Macrouridae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:182868;1993:12220",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:182868;1993:12221",
+          "text": "N. Pacific",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:182868;1867:66437",
+          "text": "Often called a \"rattail\" because of its slender, whip-like tail, this deep-sea fish can live for over 70 years in extreme pressures.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 18.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "humpback-anglerfish",
+      "id": "1901:9373",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1885:183600;1993:12218",
+          "text": "LT: 7”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:183600;1993:12219",
+          "text": "Melanocetidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:183600;1993:12220",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:183600;1993:12221",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:183600;1867:66437",
+          "text": "Female humpback anglerfish carry a lure lit by symbiotic bacteria. It dangles above the mouth, drawing prey close in the darkness of the deep sea.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "barrel-eye-fish",
+      "id": "1901:9374",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1885:183963;1993:12218",
+          "text": "LT: 6.5”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:183963;1993:12219",
+          "text": "Opisthoproctidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:183963;1993:12220",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:183963;1993:12221",
+          "text": "N. Pacific",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:183963;1867:66437",
+          "text": "A transparent dome protects the barreleye's tubular green eyes. The eyes can rotate from looking upward to facing forward as the fish feeds.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "fangtooth-fish",
+      "id": "1901:9375",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1885:184326;1993:12218",
+          "text": "LT: 7”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:184326;1993:12219",
+          "text": "Anoplogastridae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:184326;1993:12220",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:184326;1993:12221",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1885:184326;1867:66437",
+          "text": "Fangtooth fish have enormous teeth for their small bodies. Special sockets in the roof of the mouth make room for the long lower fangs.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "black-swallower",
+      "id": "1901:9376",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1895:7228;1993:12218",
+          "text": "LT: 9”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1895:7228;1993:12219",
+          "text": "Chiasmodontidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1895:7228;1993:12220",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1895:7228;1993:12221",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1895:7228;1867:66437",
+          "text": "The black swallower has an elastic stomach that can hold prey larger than itself. This adaptation helps it take advantage of scarce deep-sea meals.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "tripod-fish",
+      "id": "1901:9377",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I1895:7734;1993:12218",
+          "text": "LT: 17”",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1895:7734;1993:12219",
+          "text": "Ipnopidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1895:7734;1993:12220",
+          "text": "WT: Unknown",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1895:7734;1993:12221",
+          "text": "Worldwide",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I1895:7734;1867:66437",
+          "text": "Tripod fish stand above the seabed on three elongated fin rays. Facing into the current, they spread their pectoral fins to help detect drifting prey.",
+          "x": 201,
+          "y": 915,
+          "w": 462,
+          "h": 62,
+          "size": 16.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "halfbeak",
+      "id": "2285:31389",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2270:244153;1993:12121",
+          "text": "LT: Varies",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2270:244153;1993:12122",
+          "text": "Hemiramphidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2270:244153;1993:12123",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2270:244153;1993:12124",
+          "text": "Tropics",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2270:244153;1993:12078",
+          "text": "Halfbeaks have a long lower jaw and a much shorter upper jaw. These surface-dwelling fish may leap or skip across the water to escape predators.",
+          "x": 201,
+          "y": 910,
+          "w": 498,
+          "h": 73,
+          "size": 18.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "needlefish",
+      "id": "2285:31384",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2280:18845;1993:12121",
+          "text": "LT: Varies",
+          "x": 232,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2280:18845;1993:12122",
+          "text": "Belonidae",
+          "x": 56,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2280:18845;1993:12123",
+          "text": "WT: Varies",
+          "x": 384,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2280:18845;1993:12124",
+          "text": "Tropics",
+          "x": 516,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2280:18845;1993:12078",
+          "text": "Needlefish hunt near the surface with long jaws lined with sharp teeth. When startled, they can leap clear of the water.",
+          "x": 201,
+          "y": 910,
+          "w": 498,
+          "h": 73,
+          "size": 18.799999237060547
+        }
+      ]
+    },
+    {
+      "cardId": "krill-bloom-base",
+      "id": "2279:17422",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2271:247030;2271:245667",
+          "text": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 15.299999237060547
+        },
+        {
+          "id": "I2271:247030;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:247030;2271:245652",
+          "text": "Family varies",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:247030;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:247030;2271:245654",
+          "text": "Worldwide",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "krill-bloom-stage1",
+      "id": "2279:17423",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2271:247223;2271:245667",
+          "text": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 15.299999237060547
+        },
+        {
+          "id": "I2271:247223;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:247223;2271:245652",
+          "text": "Family varies",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:247223;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:247223;2271:245654",
+          "text": "Worldwide",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "krill-bloom-stage2",
+      "id": "2279:17424",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2271:247612;2271:245667",
+          "text": "Krill are small, shrimp-like crustaceans that gather in dense swarms. These shifting groups provide food for whales, seals, seabirds, and fish.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 15.299999237060547
+        },
+        {
+          "id": "I2271:247612;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:247612;2271:245652",
+          "text": "Family varies",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:247612;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:247612;2271:245654",
+          "text": "Worldwide",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "sardine-ball-base",
+      "id": "2279:17421",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2271:248005;2271:245667",
+          "text": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 15.299999237060547
+        },
+        {
+          "id": "I2271:248005;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:248005;2271:245652",
+          "text": "Clupeidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:248005;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:248005;2271:245654",
+          "text": "Worldwide",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "anchovy-ball-base",
+      "id": "2279:17427",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2275:15413;2271:245667",
+          "text": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 15
+        },
+        {
+          "id": "I2275:15413;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15413;2271:245652",
+          "text": "Engraulidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15413;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15413;2271:245654",
+          "text": "Worldwide",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "silverside-ball-base",
+      "id": "2279:17430",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2275:17755;2271:245667",
+          "text": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 16.799999237060547
+        },
+        {
+          "id": "I2275:17755;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:17755;2271:245652",
+          "text": "Atherinopsidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:17755;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:17755;2271:245654",
+          "text": "W. Atlantic",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "sardine-ball-stage1",
+      "id": "2279:17425",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2271:248014;2271:245667",
+          "text": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 15.299999237060547
+        },
+        {
+          "id": "I2271:248014;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:248014;2271:245652",
+          "text": "Clupeidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:248014;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:248014;2271:245654",
+          "text": "Worldwide",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "anchovy-ball-stage1",
+      "id": "2279:17428",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2275:15421;2231:106036",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15421;2231:106037",
+          "text": "Engraulidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15421;2231:106038",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15421;2231:106039",
+          "text": "Worldwide",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15421;2231:105592",
+          "text": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish.",
+          "x": 199,
+          "y": 913,
+          "w": 359,
+          "h": 62,
+          "size": 15
+        },
+        {
+          "id": "I2275:15422;2271:245667",
+          "text": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 15
+        },
+        {
+          "id": "I2275:15422;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15422;2271:245652",
+          "text": "Engraulidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15422;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15422;2271:245654",
+          "text": "Worldwide",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "silverside-ball-stage1",
+      "id": "2279:17431",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2275:17764;2271:245667",
+          "text": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 16.799999237060547
+        },
+        {
+          "id": "I2275:17764;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:17764;2271:245652",
+          "text": "Atherinopsidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:17764;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:17764;2271:245654",
+          "text": "W. Atlantic",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "sardine-ball-stage2",
+      "id": "2279:17426",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2271:248023;2271:245667",
+          "text": "Sardines gather in shifting schools that tighten when predators approach. School size and mass vary as fish join, leave, and move together.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 15.299999237060547
+        },
+        {
+          "id": "I2271:248023;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:248023;2271:245652",
+          "text": "Clupeidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:248023;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2271:248023;2271:245654",
+          "text": "Worldwide",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "anchovy-ball-stage2",
+      "id": "2279:17429",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2275:15432;2271:245667",
+          "text": "Anchovies are small schooling fish that feed on plankton. Their shifting schools support predators ranging from seabirds to much larger fish.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 15
+        },
+        {
+          "id": "I2275:15432;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15432;2271:245652",
+          "text": "Engraulidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15432;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:15432;2271:245654",
+          "text": "Worldwide",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "silverside-ball-stage2",
+      "id": "2279:17432",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2275:17773;2271:245667",
+          "text": "Atlantic silversides form shimmering schools in shallow coastal water. Their silver stripes reflect light as the group turns together.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 16.799999237060547
+        },
+        {
+          "id": "I2275:17773;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:17773;2271:245652",
+          "text": "Atherinopsidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:17773;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:17773;2271:245654",
+          "text": "W. Atlantic",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "herring-ball-base",
+      "id": "2279:17433",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2275:16587;2271:245667",
+          "text": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 17
+        },
+        {
+          "id": "I2275:16587;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:16587;2271:245652",
+          "text": "Clupeidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:16587;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:16587;2271:245654",
+          "text": "N. Atlantic",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "herring-ball-stage1",
+      "id": "2279:17434",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2275:16596;2271:245667",
+          "text": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 17
+        },
+        {
+          "id": "I2275:16596;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:16596;2271:245652",
+          "text": "Clupeidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:16596;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:16596;2271:245654",
+          "text": "N. Atlantic",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    },
+    {
+      "cardId": "herring-ball-stage2",
+      "id": "2279:17435",
+      "legacy": false,
+      "text": [
+        {
+          "id": "I2275:16605;2271:245667",
+          "text": "Atlantic herring gather in shifting schools. These plankton-feeding fish are important prey for whales, seabirds, and larger fish.",
+          "x": 199,
+          "y": 911,
+          "w": 359,
+          "h": 68,
+          "size": 17
+        },
+        {
+          "id": "I2275:16605;2271:245651",
+          "text": "LT: Varies",
+          "x": 233,
+          "y": 488,
+          "w": 118,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:16605;2271:245652",
+          "text": "Clupeidae",
+          "x": 57,
+          "y": 488,
+          "w": 186,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:16605;2271:245653",
+          "text": "WT: Varies",
+          "x": 385,
+          "y": 488,
+          "w": 121,
+          "h": 25,
+          "size": 16.920000076293945
+        },
+        {
+          "id": "I2275:16605;2271:245654",
+          "text": "N. Atlantic",
+          "x": 517,
+          "y": 488,
+          "w": 142,
+          "h": 25,
+          "size": 16.920000076293945
+        }
+      ]
+    }
+  ]
+}

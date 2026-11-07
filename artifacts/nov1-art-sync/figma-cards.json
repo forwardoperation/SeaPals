@@ -1,0 +1,3057 @@
+[
+  {
+    "cardId": "humpback-whale",
+    "nodeId": "379:7745",
+    "sourcePageId": "94:703",
+    "name": "Humpback Whale",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I2117:19080;3039:313051",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I2117:19080;3039:313066",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2117:19080;3039:313067",
+        "name": "© 2026, SeaRealm, LLC",
+        "text": "© 2026, SeaRealm, LLC"
+      },
+      {
+        "id": "I2117:19080;1455:8367",
+        "name": "Lorum Ispom",
+        "text": "Humpback whales sing long, evolving songs that can travel for miles. They team up to “bubble-net” feed, herding fish into a gulp with giant pleated throats."
+      },
+      {
+        "id": "I2117:19080;1455:8366",
+        "name": "D10",
+        "text": "D20"
+      },
+      {
+        "id": "I2117:19080;2108:268844",
+        "name": "150SD",
+        "text": "200SD"
+      },
+      {
+        "id": "I2117:19080;1455:8368",
+        "name": "10RP",
+        "text": "10RP"
+      },
+      {
+        "id": "I2117:19080;1455:8370",
+        "name": "12VP",
+        "text": "12VP"
+      },
+      {
+        "id": "I2117:19080;1455:8371",
+        "name": "Name",
+        "text": "Humpback Whale"
+      },
+      {
+        "id": "I2117:19080;2108:268853;1314:109390",
+        "name": "4/64",
+        "text": "9/64"
+      },
+      {
+        "id": "I2117:19080;2108:268892",
+        "name": "No. 123",
+        "text": "No. 002"
+      },
+      {
+        "id": "I2117:19080;2108:268883",
+        "name": "LT: 18”",
+        "text": "LT: 60’"
+      },
+      {
+        "id": "I2117:19080;2108:268884",
+        "name": "Type",
+        "text": "Balaenopteridae"
+      },
+      {
+        "id": "I2117:19080;2108:268885",
+        "name": "WT: 8lbs",
+        "text": "WT: 40 Tons"
+      },
+      {
+        "id": "I2117:19080;2108:268886",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I2117:20159;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "Has advantage on defensive dice rolls"
+      },
+      {
+        "id": "I2117:20159;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I2117:20159;1292:91385",
+        "name": "Intimidation",
+        "text": "Massive"
+      },
+      {
+        "id": "I2225:46396;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if        Open Ocean Habitat is in your Ecosystem. If destroyed, place this card in your lost."
+      },
+      {
+        "id": "I2225:46396;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "oceanic-manta-ray",
+    "nodeId": "241:1612",
+    "sourcePageId": "94:703",
+    "name": "oceanic-manta-ray",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I3133:246995;3068:1062414",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I3133:246995;3068:1062429",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I3133:246995;3068:1062430",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I3133:246995;3068:1062434",
+        "name": "Lorum Ispom",
+        "text": "Manta rays glide on giant wings, funneling plankton with their head fins. They also visit cleaning stations where small fish remove parasites."
+      },
+      {
+        "id": "I3133:246995;3068:1062435",
+        "name": "D10",
+        "text": "D10"
+      },
+      {
+        "id": "I3133:246995;3068:1062436",
+        "name": "12VP",
+        "text": "10VP"
+      },
+      {
+        "id": "I3133:246995;3068:1062437",
+        "name": "Name",
+        "text": "Oceanic Manta Ray"
+      },
+      {
+        "id": "I3133:246995;3068:1062438;1314:109390",
+        "name": "4/64",
+        "text": "8/64"
+      },
+      {
+        "id": "I3133:246995;3068:1062443",
+        "name": "No. 123",
+        "text": "No. 012"
+      },
+      {
+        "id": "I3133:246995;3068:1062444",
+        "name": "LT: 18”",
+        "text": "WD: 22’"
+      },
+      {
+        "id": "I3133:246995;3068:1062445",
+        "name": "Type",
+        "text": "Mobulidae"
+      },
+      {
+        "id": "I3133:246995;3068:1062446",
+        "name": "WT: 8lbs",
+        "text": "WT: 1.5 Tons"
+      },
+      {
+        "id": "I3133:246995;3068:1062447",
+        "name": "Worldwide",
+        "text": "Tropics"
+      },
+      {
+        "id": "I2225:44257;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if        Open Ocean is in your Ecosystem. If destroyed, place this card in your lost."
+      },
+      {
+        "id": "I2225:44257;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      },
+      {
+        "id": "3133:253308",
+        "name": "150SD",
+        "text": "170SD"
+      },
+      {
+        "id": "3133:253309",
+        "name": "8RP",
+        "text": "8RP"
+      }
+    ]
+  },
+  {
+    "cardId": "ocean-sunfish",
+    "nodeId": "379:7747",
+    "sourcePageId": "94:703",
+    "name": "ocean-sunfish",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I2117:18225;3039:313051",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I2117:18225;3039:313066",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2117:18225;3039:313067",
+        "name": "© 2026, SeaRealm, LLC",
+        "text": "© 2026, SeaRealm, LLC"
+      },
+      {
+        "id": "I2117:18225;1455:8367",
+        "name": "Lorum Ispom",
+        "text": "Among the heaviest bony fish, ocean sunfish feed on jellyfish and other prey. They visit cleaning stations where fish pick off parasites."
+      },
+      {
+        "id": "I2117:18225;1455:8366",
+        "name": "D10",
+        "text": "D8"
+      },
+      {
+        "id": "I2117:18225;2108:268844",
+        "name": "150SD",
+        "text": "150SD"
+      },
+      {
+        "id": "I2117:18225;1455:8368",
+        "name": "10RP",
+        "text": "8RP"
+      },
+      {
+        "id": "I2117:18225;1455:8370",
+        "name": "12VP",
+        "text": "8VP"
+      },
+      {
+        "id": "I2117:18225;1455:8371",
+        "name": "Name",
+        "text": "Ocean Sunfish"
+      },
+      {
+        "id": "I2117:18225;2108:268853;1314:109390",
+        "name": "4/64",
+        "text": "12/64"
+      },
+      {
+        "id": "I2117:18225;2108:268892",
+        "name": "No. 123",
+        "text": "No. 036"
+      },
+      {
+        "id": "I2117:18225;2108:268883",
+        "name": "LT: 18”",
+        "text": "LT: 8’ 6”"
+      },
+      {
+        "id": "I2117:18225;2108:268884",
+        "name": "Type",
+        "text": "Molidae"
+      },
+      {
+        "id": "I2117:18225;2108:268885",
+        "name": "WT: 8lbs",
+        "text": "WT: 1 Ton"
+      },
+      {
+        "id": "I2117:18225;2108:268886",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I2225:46844;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if        Open Ocean is in your Ecosystem. If destroyed, place this card in your lost."
+      },
+      {
+        "id": "I2225:46844;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "whale-shark",
+    "nodeId": "379:7748",
+    "sourcePageId": "94:703",
+    "name": "Whale Shark",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I2117:19000;3039:313051",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I2117:19000;3039:313066",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2117:19000;3039:313067",
+        "name": "© 2026, SeaRealm, LLC",
+        "text": "© 2026, SeaRealm, LLC"
+      },
+      {
+        "id": "I2117:19000;1455:8367",
+        "name": "Lorum Ispom",
+        "text": "Whale sharks are gentle giants—the largest fish on Earth—filtering plankton and tiny fish with a wide, sieve-like mouth."
+      },
+      {
+        "id": "I2117:19000;1455:8366",
+        "name": "D10",
+        "text": "D20"
+      },
+      {
+        "id": "I2117:19000;2108:268844",
+        "name": "150SD",
+        "text": "180SD"
+      },
+      {
+        "id": "I2117:19000;1455:8368",
+        "name": "10RP",
+        "text": "9RP"
+      },
+      {
+        "id": "I2117:19000;1455:8370",
+        "name": "12VP",
+        "text": "11VP"
+      },
+      {
+        "id": "I2117:19000;1455:8371",
+        "name": "Name",
+        "text": "Whale Shark"
+      },
+      {
+        "id": "I2117:19000;2108:268853;1314:109390",
+        "name": "4/64",
+        "text": "11/64"
+      },
+      {
+        "id": "I2117:19000;2108:268892",
+        "name": "No. 123",
+        "text": "No. 005"
+      },
+      {
+        "id": "I2117:19000;2108:268883",
+        "name": "LT: 18”",
+        "text": "LT: 40’"
+      },
+      {
+        "id": "I2117:19000;2108:268884",
+        "name": "Type",
+        "text": "Rhincodontidae"
+      },
+      {
+        "id": "I2117:19000;2108:268885",
+        "name": "WT: 8lbs",
+        "text": "WT: 12.5 Tons"
+      },
+      {
+        "id": "I2117:19000;2108:268886",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I2225:46453;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if        Open Ocean or Coral Reef Habitat is in your Ecosystem. If destroyed, place this card in your lost."
+      },
+      {
+        "id": "I2225:46453;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "blue-whale",
+    "nodeId": "379:7744",
+    "sourcePageId": "94:703",
+    "name": "Blue Whale",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I2114:326;3039:313051",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I2114:326;3039:313066",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2114:326;3039:313067",
+        "name": "© 2026, SeaRealm, LLC",
+        "text": "© 2026, SeaRealm, LLC"
+      },
+      {
+        "id": "I2114:326;1455:8367",
+        "name": "Lorum Ispom",
+        "text": "The blue whale is the largest animal ever known to live on Earth, a massive yet graceful marine mammal that glides through the open ocean."
+      },
+      {
+        "id": "I2114:326;1455:8366",
+        "name": "D10",
+        "text": "D20"
+      },
+      {
+        "id": "I2114:326;2108:268844",
+        "name": "150SD",
+        "text": "250SD"
+      },
+      {
+        "id": "I2114:326;1455:8368",
+        "name": "10RP",
+        "text": "14RP"
+      },
+      {
+        "id": "I2114:326;1455:8370",
+        "name": "12VP",
+        "text": "16VP"
+      },
+      {
+        "id": "I2114:326;1455:8371",
+        "name": "Name",
+        "text": "Blue Whale"
+      },
+      {
+        "id": "I2114:326;2108:268853;1314:109390",
+        "name": "4/64",
+        "text": "7/64"
+      },
+      {
+        "id": "I2114:326;2108:268892",
+        "name": "No. 123",
+        "text": "No. 001"
+      },
+      {
+        "id": "I2114:326;2108:268883",
+        "name": "LT: 18”",
+        "text": "LT: 100’"
+      },
+      {
+        "id": "I2114:326;2108:268884",
+        "name": "Type",
+        "text": "Balaenopteridae"
+      },
+      {
+        "id": "I2114:326;2108:268885",
+        "name": "WT: 8lbs",
+        "text": "WT: 200 Tons"
+      },
+      {
+        "id": "I2114:326;2108:268886",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I1509:106872;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "Has advantage on defensive dice rolls"
+      },
+      {
+        "id": "I1509:106872;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I1509:106872;1292:91385",
+        "name": "Intimidation",
+        "text": "Massive"
+      },
+      {
+        "id": "I2225:46039;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if        Open Ocean Habitat is in your Ecosystem. If destroyed, place this card in your lost."
+      },
+      {
+        "id": "I2225:46039;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "basking-shark",
+    "nodeId": "2253:9730",
+    "sourcePageId": "94:703",
+    "name": "basking-shark",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I2253:8598;3039:313051",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I2253:8598;3039:313066",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2253:8598;3039:313067",
+        "name": "© 2026, SeaRealm, LLC",
+        "text": "© 2026, SeaRealm, LLC"
+      },
+      {
+        "id": "I2253:8598;1455:8367",
+        "name": "Lorum Ispom",
+        "text": "Despite their colossal size, these gentle giants consume tiny zooplankton by simply swimming with their cavernous mouths wide open."
+      },
+      {
+        "id": "I2253:8598;1455:8366",
+        "name": "D10",
+        "text": "D20"
+      },
+      {
+        "id": "I2253:8598;2108:268844",
+        "name": "150SD",
+        "text": "180SD"
+      },
+      {
+        "id": "I2253:8598;1455:8368",
+        "name": "10RP",
+        "text": "8RP"
+      },
+      {
+        "id": "I2253:8598;1455:8370",
+        "name": "12VP",
+        "text": "10VP"
+      },
+      {
+        "id": "I2253:8598;1455:8371",
+        "name": "Name",
+        "text": "Basking Shark"
+      },
+      {
+        "id": "I2253:8598;2108:268853;1314:109390",
+        "name": "4/64",
+        "text": "10/64"
+      },
+      {
+        "id": "I2253:8598;2108:268892",
+        "name": "No. 123",
+        "text": "No. 004"
+      },
+      {
+        "id": "I2253:8598;2108:268883",
+        "name": "LT: 18”",
+        "text": "LT: 35’"
+      },
+      {
+        "id": "I2253:8598;2108:268884",
+        "name": "Type",
+        "text": "Cetorhinidae"
+      },
+      {
+        "id": "I2253:8598;2108:268885",
+        "name": "WT: 8lbs",
+        "text": "WT: 5 Tons"
+      },
+      {
+        "id": "I2253:8598;2108:268886",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I2253:8600;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if        Open Ocean is in your Ecosystem. If destroyed, place this card in your lost."
+      },
+      {
+        "id": "I2253:8600;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "megamouth-shark",
+    "nodeId": "2253:9925",
+    "sourcePageId": "94:703",
+    "name": "megamouth-shark",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I2253:9731;2115:56916",
+        "name": "Lorum Ispom",
+        "text": "This rare shark filters tiny prey, including krill, through its enormous mouth. Its pale upper lip reflects light; it does not produce its own glow."
+      },
+      {
+        "id": "I2253:9731;2115:56919",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I2253:9731;2115:56920",
+        "name": "D10",
+        "text": "D10"
+      },
+      {
+        "id": "I2253:9731;2115:56921",
+        "name": "150SD",
+        "text": "150SD"
+      },
+      {
+        "id": "I2253:9731;2115:56922",
+        "name": "10RP",
+        "text": "9RP"
+      },
+      {
+        "id": "I2253:9731;2115:56923",
+        "name": "12VP",
+        "text": "11VP"
+      },
+      {
+        "id": "I2253:9731;2115:56924",
+        "name": "Name",
+        "text": "Megamouth Shark"
+      },
+      {
+        "id": "I2253:9731;2115:56929;1314:109390",
+        "name": "4/64",
+        "text": "16/62"
+      },
+      {
+        "id": "I2253:9731;2115:56933",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2253:9731;2115:56951",
+        "name": "Genesis 1:21",
+        "text": "Genesis 1:21"
+      },
+      {
+        "id": "I2253:9731;2115:56952",
+        "name": "PRERELEASE",
+        "text": "PRERELEASE"
+      },
+      {
+        "id": "I2253:9731;2115:56953",
+        "name": "No. 123",
+        "text": "No. 134"
+      },
+      {
+        "id": "I2253:9731;2115:56954",
+        "name": "LT: 18”",
+        "text": "LT: 18’"
+      },
+      {
+        "id": "I2253:9731;2115:56955",
+        "name": "Type",
+        "text": "Megachasmidae"
+      },
+      {
+        "id": "I2253:9731;2115:56956",
+        "name": "WT: 8lbs",
+        "text": "WT: 1.5 Tons"
+      },
+      {
+        "id": "I2253:9731;2115:56957",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I2253:9639;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if        Open Ocean is in your Ecosystem. If destroyed, place this card in your lost."
+      },
+      {
+        "id": "I2253:9639;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "manta-ray",
+    "nodeId": "3402:607522",
+    "sourcePageId": "94:703",
+    "name": "reef-manta-ray",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I3402:607186;3068:1062414",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I3402:607186;3068:1062429",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I3402:607186;3068:1062430",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I3402:607186;3068:1062434",
+        "name": "Lorum Ispom",
+        "text": "Reef manta rays filter plankton with their head fins and visit cleaning stations. Unique patterns of belly spots help researchers identify individuals."
+      },
+      {
+        "id": "I3402:607186;3068:1062435",
+        "name": "D10",
+        "text": "D8"
+      },
+      {
+        "id": "I3402:607186;3068:1062436",
+        "name": "12VP",
+        "text": "6VP"
+      },
+      {
+        "id": "I3402:607186;3068:1062437",
+        "name": "Name",
+        "text": "Reef Manta Ray"
+      },
+      {
+        "id": "I3402:607186;3068:1062443",
+        "name": "No. 123",
+        "text": "No. 065"
+      },
+      {
+        "id": "I3402:607186;3068:1062444",
+        "name": "LT: 18”",
+        "text": "WD: 10’"
+      },
+      {
+        "id": "I3402:607186;3068:1062445",
+        "name": "Type",
+        "text": "Mobulidae"
+      },
+      {
+        "id": "I3402:607186;3068:1062446",
+        "name": "WT: 8lbs",
+        "text": "WT: 1500lbs"
+      },
+      {
+        "id": "I3402:607186;3068:1062447",
+        "name": "Worldwide",
+        "text": "Indo-Pacific"
+      },
+      {
+        "id": "I3402:607186;3277:49136;2042:42427",
+        "name": "4/102",
+        "text": "16/102"
+      },
+      {
+        "id": "3410:607523",
+        "name": "135SD",
+        "text": "135SD"
+      },
+      {
+        "id": "3410:607524",
+        "name": "4RP",
+        "text": "4RP"
+      },
+      {
+        "id": "I3410:610735;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if         Coral Reef Habitat is in your Ecosystem. If destroyed, place this card in your lost."
+      },
+      {
+        "id": "I3410:610735;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "hammerhead",
+    "nodeId": "241:1125",
+    "sourcePageId": "92:140",
+    "name": "hammerhead",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I1302:72042;3055:459590;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I1302:72042;3055:459590;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I1302:72042;3055:459590;3052:951319",
+        "name": "Creature Class",
+        "text": "Reef Apex Predator "
+      },
+      {
+        "id": "I1302:72042;3055:459590;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I1302:72042;2055:41894",
+        "name": "LT: 15’ 8”",
+        "text": "LT: 18’ 9”"
+      },
+      {
+        "id": "I1302:72042;2055:41895",
+        "name": "Type",
+        "text": "Sphyrnidae"
+      },
+      {
+        "id": "I1302:72042;2055:41896",
+        "name": "WT: 6500lbs",
+        "text": "WT: 1000lbs"
+      },
+      {
+        "id": "I1302:72042;2055:41897",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I1302:72042;2058:34045;2042:42427",
+        "name": "4/102",
+        "text": "20/102"
+      },
+      {
+        "id": "I1302:72042;1302:14161",
+        "name": "8RP",
+        "text": "6RP"
+      },
+      {
+        "id": "I1302:72042;1302:14164",
+        "name": "8VP",
+        "text": "6VP"
+      },
+      {
+        "id": "I1302:72042;1302:14165",
+        "name": "Name",
+        "text": "Hammerhead"
+      },
+      {
+        "id": "I1302:72042;1302:14159",
+        "name": "D10",
+        "text": "D12"
+      },
+      {
+        "id": "I1302:72042;1302:14160",
+        "name": "Lorum Ipsom",
+        "text": "They use their wide heads to sweep the ocean floor like a metal detector. They use thousands of tiny electrical sensors to find buried creatures."
+      },
+      {
+        "id": "I1302:72042;2058:20944",
+        "name": "No. 123",
+        "text": "No. 061"
+      },
+      {
+        "id": "1302:72104",
+        "name": "+",
+        "text": "+"
+      },
+      {
+        "id": "1302:72105",
+        "name": "Inflict 1D4 * 10 of damage to an opponent’s coral",
+        "text": "Inflict 1D4 * 10 of damage to an opponent’s coral"
+      },
+      {
+        "id": "I1302:72106;1292:89610",
+        "name": "x3",
+        "text": "x2"
+      },
+      {
+        "id": "I1302:72106;1292:89622",
+        "name": "D20",
+        "text": "D8"
+      },
+      {
+        "id": "I1302:110924;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Ravage"
+      },
+      {
+        "id": "I1302:110924;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I1302:110925;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "Opponent’s fish cost +1 RP to play."
+      },
+      {
+        "id": "I1302:110925;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I1302:110925;1292:91385",
+        "name": "Intimidation",
+        "text": "Intimidation"
+      },
+      {
+        "id": "I1302:110926;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if       Coral Reef Habitat is in your Ecosystem. If destroyed, place in lost zone."
+      },
+      {
+        "id": "I1302:110926;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "great-white",
+    "nodeId": "241:1124",
+    "sourcePageId": "92:140",
+    "name": "great-white",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I3277:56116;3068:1062414",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I3277:56116;3068:1062429",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I3277:56116;3068:1062430",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I3277:56116;3068:1062434",
+        "name": "Lorum Ispom",
+        "text": "An apex hunter that shapes the whole food web. Built for ambush: countershaded body hides it in sunlit seas."
+      },
+      {
+        "id": "I3277:56116;3068:1062435",
+        "name": "D10",
+        "text": "D10"
+      },
+      {
+        "id": "I3277:56116;3068:1062436",
+        "name": "12VP",
+        "text": "8VP"
+      },
+      {
+        "id": "I3277:56116;3068:1062437",
+        "name": "Name",
+        "text": "Great White"
+      },
+      {
+        "id": "I3277:56116;3068:1062443",
+        "name": "No. 123",
+        "text": "No. 060"
+      },
+      {
+        "id": "I3277:56116;3068:1062444",
+        "name": "LT: 18”",
+        "text": "LT: 20’"
+      },
+      {
+        "id": "I3277:56116;3068:1062445",
+        "name": "Type",
+        "text": "Lamnidae"
+      },
+      {
+        "id": "I3277:56116;3068:1062446",
+        "name": "WT: 8lbs",
+        "text": "WT: 2 Tons"
+      },
+      {
+        "id": "I3277:56116;3068:1062447",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I3277:56116;3068:1062582",
+        "name": "2RP",
+        "text": "8RP"
+      },
+      {
+        "id": "I3277:56116;3277:49136;2042:42427",
+        "name": "4/102",
+        "text": "17/102"
+      },
+      {
+        "id": "I3277:56117;1292:89610",
+        "name": "x3",
+        "text": "x3"
+      },
+      {
+        "id": "I3277:56117;1292:89622",
+        "name": "D20",
+        "text": "D12"
+      },
+      {
+        "id": "3277:56118",
+        "name": "+",
+        "text": "+"
+      },
+      {
+        "id": "3277:56119",
+        "name": "Inflict 60HP of damage to an opponent’s coral",
+        "text": "Inflict 60HP of damage to an opponent’s coral"
+      },
+      {
+        "id": "I3277:56120;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "Opponent’s fish cost +1 RP to play."
+      },
+      {
+        "id": "I3277:56120;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I3277:56120;1292:91385",
+        "name": "Intimidation",
+        "text": "Intimidation"
+      },
+      {
+        "id": "I3277:56121;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Crushing Jaws"
+      },
+      {
+        "id": "I3277:56121;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I3277:56123;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      },
+      {
+        "id": "4115:1093356",
+        "name": "Can only be played if Coral Reef Habitat is in your Ecosystem. If destroyed, place in lost zone.",
+        "text": "Can only be played if        Coral Reef Habitat is in your Ecosystem. If destroyed, place in lost zone."
+      }
+    ]
+  },
+  {
+    "cardId": "bull-shark",
+    "nodeId": "241:1126",
+    "sourcePageId": "92:140",
+    "name": "bull-shark",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I1302:85177;3055:459590;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I1302:85177;3055:459590;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I1302:85177;3055:459590;3052:951319",
+        "name": "Creature Class",
+        "text": "Reef Apex Predator "
+      },
+      {
+        "id": "I1302:85177;3055:459590;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I1302:85177;2055:41894",
+        "name": "LT: 15’ 8”",
+        "text": "LT: 10’ 8”"
+      },
+      {
+        "id": "I1302:85177;2055:41895",
+        "name": "Type",
+        "text": "Carcharhinidae"
+      },
+      {
+        "id": "I1302:85177;2055:41896",
+        "name": "WT: 6500lbs",
+        "text": "WT: 450lbs"
+      },
+      {
+        "id": "I1302:85177;2055:41897",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I1302:85177;2058:34045;2042:42427",
+        "name": "4/102",
+        "text": "19/102"
+      },
+      {
+        "id": "I1302:85177;1302:14161",
+        "name": "8RP",
+        "text": "6RP"
+      },
+      {
+        "id": "I1302:85177;1302:14164",
+        "name": "8VP",
+        "text": "6VP"
+      },
+      {
+        "id": "I1302:85177;1302:14165",
+        "name": "Name",
+        "text": "Bull Shark"
+      },
+      {
+        "id": "I1302:85177;1302:14159",
+        "name": "D10",
+        "text": "D8"
+      },
+      {
+        "id": "I1302:85177;1302:14160",
+        "name": "Lorum Ipsom",
+        "text": "Bull sharks can live in both salt and freshwater, cruising far up rivers—even hundreds of miles inland."
+      },
+      {
+        "id": "I1302:85177;2058:20944",
+        "name": "No. 123",
+        "text": "No. 059"
+      },
+      {
+        "id": "1302:85537",
+        "name": "+",
+        "text": "+"
+      },
+      {
+        "id": "1302:85538",
+        "name": "Inflict 1D4 * 10 of damage to an opponent’s coral",
+        "text": "Inflict 1D4 * 10 of damage to an opponent’s coral"
+      },
+      {
+        "id": "I1302:85539;1292:89610",
+        "name": "x3",
+        "text": "x2"
+      },
+      {
+        "id": "I1302:85539;1292:89622",
+        "name": "D20",
+        "text": "D10"
+      },
+      {
+        "id": "I1302:111027;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Tear Apart"
+      },
+      {
+        "id": "I1302:111027;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I1302:111028;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "Opponent’s fish cost +1 RP to play."
+      },
+      {
+        "id": "I1302:111028;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I1302:111028;1292:91385",
+        "name": "Intimidation",
+        "text": "Intimidation"
+      },
+      {
+        "id": "I2108:89701;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if       Coral Reef Habitat is in your Ecosystem. If destroyed, place in lost zone."
+      },
+      {
+        "id": "I2108:89701;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "tiger-shark",
+    "nodeId": "241:1127",
+    "sourcePageId": "92:140",
+    "name": "tiger-shark",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I1302:28356;3055:459590;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I1302:28356;3055:459590;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I1302:28356;3055:459590;3052:951319",
+        "name": "Creature Class",
+        "text": "Reef Apex Predator "
+      },
+      {
+        "id": "I1302:28356;3055:459590;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I1302:28356;2055:41894",
+        "name": "LT: 15’ 8”",
+        "text": "LT: 14’ 2”"
+      },
+      {
+        "id": "I1302:28356;2055:41895",
+        "name": "Type",
+        "text": "Galeocerdonidae"
+      },
+      {
+        "id": "I1302:28356;2055:41896",
+        "name": "WT: 6500lbs",
+        "text": "WT: 1300lbs"
+      },
+      {
+        "id": "I1302:28356;2055:41897",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I1302:28356;2058:34045;2042:42427",
+        "name": "4/102",
+        "text": "18/102"
+      },
+      {
+        "id": "I1302:28356;1302:14161",
+        "name": "8RP",
+        "text": "7RP"
+      },
+      {
+        "id": "I1302:28356;1302:14164",
+        "name": "8VP",
+        "text": "7VP"
+      },
+      {
+        "id": "I1302:28356;1302:14165",
+        "name": "Name",
+        "text": "Tiger Shark"
+      },
+      {
+        "id": "I1302:28356;1302:14159",
+        "name": "D10",
+        "text": "D12"
+      },
+      {
+        "id": "I1302:28356;1302:14160",
+        "name": "Lorum Ipsom",
+        "text": "A large, powerful predator found in warm ocean waters around the world, it has a broad diet and a reputation as an opportunistic hunter."
+      },
+      {
+        "id": "I1302:28356;2058:20944",
+        "name": "No. 123",
+        "text": "No. 064"
+      },
+      {
+        "id": "1302:41147",
+        "name": "+",
+        "text": "+"
+      },
+      {
+        "id": "1302:41148",
+        "name": "Inflict 50HP of damage to an opponent’s coral",
+        "text": "Inflict 50HP of damage to an opponent’s coral"
+      },
+      {
+        "id": "I1302:41149;1292:89610",
+        "name": "x3",
+        "text": "x2"
+      },
+      {
+        "id": "I1302:41149;1292:89622",
+        "name": "D20",
+        "text": "D12"
+      },
+      {
+        "id": "I1302:110754;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Decimate"
+      },
+      {
+        "id": "I1302:110754;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I1302:110755;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "Opponent’s fish cost +1 RP to play."
+      },
+      {
+        "id": "I1302:110755;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I1302:110755;1292:91385",
+        "name": "Intimidation",
+        "text": "Intimidation"
+      },
+      {
+        "id": "I2108:86908;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if       Coral Reef Habitat is in your Ecosystem. If destroyed, place in lost zone."
+      },
+      {
+        "id": "I2108:86908;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "killer-whale-oceanic",
+    "nodeId": "745:139304",
+    "sourcePageId": "92:140",
+    "name": "killer-whale",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I2108:102658;3078:1172815;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I2108:102658;3078:1172815;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2108:102658;3078:1172815;3052:951319",
+        "name": "Creature Class",
+        "text": "Oceanic Apex Predator"
+      },
+      {
+        "id": "I2108:102658;3078:1172815;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I2108:102658;1993:12751",
+        "name": "LT: 18’",
+        "text": "LT: 31’ 8”"
+      },
+      {
+        "id": "I2108:102658;1993:12752",
+        "name": "Type",
+        "text": "Delphinidae"
+      },
+      {
+        "id": "I2108:102658;1993:12753",
+        "name": "WT: 1000lbs",
+        "text": "WT: 10 Tons"
+      },
+      {
+        "id": "I2108:102658;1993:12754",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I2108:102658;2042:55511",
+        "name": "No. 123",
+        "text": "No. 003"
+      },
+      {
+        "id": "I2108:102658;1993:12708",
+        "name": "Lorum Ipsom",
+        "text": "Orcas are the largest members of the dolphin family. Their close-knit groups use different hunting traditions to catch fish, seals, or other whales."
+      },
+      {
+        "id": "I2108:102658;1993:12712",
+        "name": "D6-2",
+        "text": "D20"
+      },
+      {
+        "id": "I2108:102658;1993:12713",
+        "name": "3RP",
+        "text": "10RP"
+      },
+      {
+        "id": "I2108:102658;1993:12714",
+        "name": "5+VP",
+        "text": "10VP"
+      },
+      {
+        "id": "I2108:102658;1993:12715",
+        "name": "Name",
+        "text": "Killer Whale"
+      },
+      {
+        "id": "I2108:102658;1993:12720;1314:109390",
+        "name": "4/64",
+        "text": "6/64"
+      },
+      {
+        "id": "1321:14482",
+        "name": "Attacks have Advantage",
+        "text": "Attacks have Advantage"
+      },
+      {
+        "id": "I1691:327274;1292:89610",
+        "name": "x3",
+        "text": "x2"
+      },
+      {
+        "id": "I1691:327274;1292:89622",
+        "name": "D20",
+        "text": "D20"
+      },
+      {
+        "id": "I2108:103247;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Apex Hunter"
+      },
+      {
+        "id": "I2108:103247;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I2746:418568;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if If      Open Ocean and 2       Oceanic Predators are in your ecosystem. If destroyed, place in your lost zone."
+      },
+      {
+        "id": "I2746:418568;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "pilot-whale-oceanic",
+    "nodeId": "745:139301",
+    "sourcePageId": "92:140",
+    "name": "pilot-whale",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I3972:111306;3068:1047488;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I3972:111306;3068:1047488;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I3972:111306;3068:1047488;3052:951319",
+        "name": "Creature Class",
+        "text": "Deep Apex Predator"
+      },
+      {
+        "id": "I3972:111306;3068:1047488;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I3972:111306;1809:6836",
+        "name": "Losum Ipsum",
+        "text": "Pilot whales live in close-knit pods led by experienced females. Deep divers, they chase squid in the dark and keep tight social bonds."
+      },
+      {
+        "id": "I3972:111306;2265:227333;2042:55508",
+        "name": "4/62",
+        "text": "22/62"
+      },
+      {
+        "id": "I3972:111306;1809:6835",
+        "name": "D12",
+        "text": "D20"
+      },
+      {
+        "id": "I3972:111306;1809:6837",
+        "name": "8RP",
+        "text": "9RP"
+      },
+      {
+        "id": "I3972:111306;1809:6839",
+        "name": "14VP",
+        "text": "9VP"
+      },
+      {
+        "id": "I3972:111306;1809:6840",
+        "name": "Name",
+        "text": "Pilot Whale"
+      },
+      {
+        "id": "I3972:111306;2006:8978",
+        "name": "LT: 43’",
+        "text": "LT: 18’"
+      },
+      {
+        "id": "I3972:111306;2006:8979",
+        "name": "Type",
+        "text": "Delphinidae"
+      },
+      {
+        "id": "I3972:111306;2006:8980",
+        "name": "WT: 600lbs",
+        "text": "WT: 2.5Tons"
+      },
+      {
+        "id": "I3972:111306;2006:8981",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I3972:111306;2058:15267",
+        "name": "No. 123",
+        "text": "No. 128"
+      },
+      {
+        "id": "I1302:110728;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Echo Disruption"
+      },
+      {
+        "id": "I1302:110728;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I1302:112255;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Deep Hunt"
+      },
+      {
+        "id": "I1302:112255;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "1302:110734",
+        "name": "Your opponent cannot play support cards on their next turn.",
+        "text": "Your opponent cannot play support cards on their next turn."
+      },
+      {
+        "id": "I1302:112262;1292:89610",
+        "name": "x3",
+        "text": "x2"
+      },
+      {
+        "id": "I1302:112262;1292:89622",
+        "name": "D20",
+        "text": "D12"
+      },
+      {
+        "id": "I3972:94505;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if       Abyss Habitat is in your Ecosystem. If destroyed, place in lost zone."
+      },
+      {
+        "id": "I3972:94505;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "bottlenose-dolphin",
+    "nodeId": "745:139303",
+    "sourcePageId": "92:140",
+    "name": "bottlenose-dolpin",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I1569:154843;3055:459590;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I1569:154843;3055:459590;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I1569:154843;3055:459590;3052:951319",
+        "name": "Creature Class",
+        "text": "Reef Apex Predator "
+      },
+      {
+        "id": "I1569:154843;3055:459590;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I1569:154843;2055:41894",
+        "name": "LT: 15’ 8”",
+        "text": "LT: 11’ 6”"
+      },
+      {
+        "id": "I1569:154843;2055:41895",
+        "name": "Type",
+        "text": "Delphinidae"
+      },
+      {
+        "id": "I1569:154843;2055:41896",
+        "name": "WT: 6500lbs",
+        "text": "WT: 1000lbs"
+      },
+      {
+        "id": "I1569:154843;2055:41897",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I1569:154843;2058:34045;2042:42427",
+        "name": "4/102",
+        "text": "21/102"
+      },
+      {
+        "id": "I1569:154843;1302:14161",
+        "name": "8RP",
+        "text": "5RP"
+      },
+      {
+        "id": "I1569:154843;1302:14164",
+        "name": "8VP",
+        "text": "5VP"
+      },
+      {
+        "id": "I1569:154843;1302:14165",
+        "name": "Name",
+        "text": "Bottlenose Dolphin"
+      },
+      {
+        "id": "I1569:154843;1302:14159",
+        "name": "D10",
+        "text": "D10"
+      },
+      {
+        "id": "I1569:154843;1302:14160",
+        "name": "Lorum Ipsom",
+        "text": "Bottlenose dolphins are intelligent, social marine mammals with sleek gray bodies and short snouts. They use echolocation to find prey."
+      },
+      {
+        "id": "I1569:154843;2058:20944",
+        "name": "No. 123",
+        "text": "No. 057"
+      },
+      {
+        "id": "I1569:164060;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Echo Locate"
+      },
+      {
+        "id": "I1569:164060;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I1569:164060;1302:14135",
+        "name": "Inflict 60HP of damage to an opponent’s coral",
+        "text": "Draw Three Cards"
+      },
+      {
+        "id": "I1569:164067;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Social Hunter"
+      },
+      {
+        "id": "I1569:164067;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "1569:166077",
+        "name": "Add +2 for each dolphin in your ecosystem.",
+        "text": "Add +2 for each dolphin in your ecosystem."
+      },
+      {
+        "id": "I1569:164073;1292:89622",
+        "name": "D20",
+        "text": "D10"
+      },
+      {
+        "id": "I2108:95085;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if a       Coral Reef Habitat is in your Ecosystem. If destroyed, place in lost zone."
+      },
+      {
+        "id": "I2108:95085;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "giant-squid",
+    "nodeId": "1811:12856",
+    "sourcePageId": "92:140",
+    "name": "giant-squid",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I1808:6555;3068:1047488;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I1808:6555;3068:1047488;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I1808:6555;3068:1047488;3052:951319",
+        "name": "Creature Class",
+        "text": "Deep Apex Predator"
+      },
+      {
+        "id": "I1808:6555;3068:1047488;3052:951327",
+        "name": "PRERELEASE",
+        "text": "PRERELEASE"
+      },
+      {
+        "id": "I1808:6555;3068:1047488;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I1808:6555;1809:6836",
+        "name": "Losum Ipsum",
+        "text": "With enormous eyes adapted to dim light, giant squid roam the ocean depths. Two long feeding tentacles reach out to snatch fish and other squid."
+      },
+      {
+        "id": "I1808:6555;2265:227333;2042:55508",
+        "name": "4/62",
+        "text": "20/62"
+      },
+      {
+        "id": "I1808:6555;1809:6835",
+        "name": "D12",
+        "text": "D8"
+      },
+      {
+        "id": "I1808:6555;1809:6837",
+        "name": "8RP",
+        "text": "7RP"
+      },
+      {
+        "id": "I1808:6555;1809:6839",
+        "name": "14VP",
+        "text": "7VP"
+      },
+      {
+        "id": "I1808:6555;1809:6840",
+        "name": "Name",
+        "text": "Giant Squid"
+      },
+      {
+        "id": "I1808:6555;2006:8978",
+        "name": "LT: 43’",
+        "text": "LT: 43’"
+      },
+      {
+        "id": "I1808:6555;2006:8979",
+        "name": "Type",
+        "text": "Architeuthidae"
+      },
+      {
+        "id": "I1808:6555;2006:8980",
+        "name": "WT: 600lbs",
+        "text": "WT: 600lbs"
+      },
+      {
+        "id": "I1808:6555;2006:8981",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I1808:6555;2058:15267",
+        "name": "No. 123",
+        "text": "No. 150"
+      },
+      {
+        "id": "I1808:6637;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Ensnare"
+      },
+      {
+        "id": "I1808:6637;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I1808:6637;1302:14135",
+        "name": "Inflict 60HP of damage to an opponent’s coral",
+        "text": "Flip a Coin, if heads, the defending creature gets -3 defense on your next attack. You may perform this once per attack."
+      },
+      {
+        "id": "I1808:10444;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Grab from the Deep"
+      },
+      {
+        "id": "I1808:10444;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I1808:10451;1292:89610",
+        "name": "x3",
+        "text": "x2"
+      },
+      {
+        "id": "I1808:10451;1292:89622",
+        "name": "D20",
+        "text": "D10"
+      },
+      {
+        "id": "I1811:13642;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if       Abyss Habitat is in your Ecosystem. If destroyed, place in lost zone."
+      },
+      {
+        "id": "I1811:13642;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "colossal-squid",
+    "nodeId": "1811:13424",
+    "sourcePageId": "92:140",
+    "name": "colossal-squid",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I3068:1070729;3068:1062414",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I3068:1070729;3068:1062429",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I3068:1070729;3068:1062430",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I3068:1070729;3068:1062434",
+        "name": "Lorum Ispom",
+        "text": "The heaviest known squid lives in the cold Southern Ocean. Rotating hooks on its tentacle clubs help it hold slippery prey."
+      },
+      {
+        "id": "I3068:1070729;3068:1062435",
+        "name": "D10",
+        "text": "D12"
+      },
+      {
+        "id": "I3068:1070729;3068:1062436",
+        "name": "12VP",
+        "text": "14VP"
+      },
+      {
+        "id": "I3068:1070729;3068:1062437",
+        "name": "Name",
+        "text": "Colossal Squid"
+      },
+      {
+        "id": "I3068:1070729;3068:1062438;1314:109390",
+        "name": "4/64",
+        "text": "17/62"
+      },
+      {
+        "id": "I3068:1070729;3068:1062443",
+        "name": "No. 123",
+        "text": "No. 149"
+      },
+      {
+        "id": "I3068:1070729;3068:1062444",
+        "name": "LT: 18”",
+        "text": "LT: 18’"
+      },
+      {
+        "id": "I3068:1070729;3068:1062445",
+        "name": "Type",
+        "text": "Cranchiidae"
+      },
+      {
+        "id": "I3068:1070729;3068:1062446",
+        "name": "WT: 8lbs",
+        "text": "WT: 1100lbs"
+      },
+      {
+        "id": "I3068:1070729;3068:1062447",
+        "name": "Worldwide",
+        "text": "Southern Ocean"
+      },
+      {
+        "id": "I3068:1070729;3068:1062582",
+        "name": "2RP",
+        "text": "14RP"
+      },
+      {
+        "id": "I1811:12876;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Ensnare"
+      },
+      {
+        "id": "I1811:12876;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I1811:12876;1302:14135",
+        "name": "Inflict 60HP of damage to an opponent’s coral",
+        "text": "Flip a Coin, if heads, the defending creature gets -6 defense on your next attack. You may perform this once per attack."
+      },
+      {
+        "id": "I1811:12877;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Grab from the Deep"
+      },
+      {
+        "id": "I1811:12877;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I1811:12878;1292:89610",
+        "name": "x3",
+        "text": "x3"
+      },
+      {
+        "id": "I1811:12878;1292:89622",
+        "name": "D20",
+        "text": "D12"
+      },
+      {
+        "id": "I1811:13511;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      },
+      {
+        "id": "4115:1093353",
+        "name": "Can only be played if Abyss Habitat is in your Ecosystem. If destroyed, place in lost zone.",
+        "text": "Can only be played if        Abyss Habitat is in your Ecosystem. If destroyed, place in lost zone."
+      }
+    ]
+  },
+  {
+    "cardId": "greenland-shark",
+    "nodeId": "1811:14431",
+    "sourcePageId": "92:140",
+    "name": "greenland-shark",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I1811:13151;3068:1047488;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I1811:13151;3068:1047488;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I1811:13151;3068:1047488;3052:951319",
+        "name": "Creature Class",
+        "text": "Deep Apex Predator"
+      },
+      {
+        "id": "I1811:13151;3068:1047488;3052:951327",
+        "name": "PRERELEASE",
+        "text": "PRERELEASE"
+      },
+      {
+        "id": "I1811:13151;3068:1047488;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I1811:13151;1809:6836",
+        "name": "Losum Ipsum",
+        "text": "A slow-moving deep-water apex predator famous for having the longest known lifespan of all vertebrate animals."
+      },
+      {
+        "id": "I1811:13151;2265:227333;2042:55508",
+        "name": "4/62",
+        "text": "21/62"
+      },
+      {
+        "id": "I1811:13151;1809:6835",
+        "name": "D12",
+        "text": "D12"
+      },
+      {
+        "id": "I1811:13151;1809:6837",
+        "name": "8RP",
+        "text": "8RP"
+      },
+      {
+        "id": "I1811:13151;1809:6839",
+        "name": "14VP",
+        "text": "10VP"
+      },
+      {
+        "id": "I1811:13151;1809:6840",
+        "name": "Name",
+        "text": "Greenland Shark"
+      },
+      {
+        "id": "I1811:13151;2006:8978",
+        "name": "LT: 43’",
+        "text": "LT: 15’"
+      },
+      {
+        "id": "I1811:13151;2006:8979",
+        "name": "Type",
+        "text": "Somniosidae"
+      },
+      {
+        "id": "I1811:13151;2006:8980",
+        "name": "WT: 600lbs",
+        "text": "WT: 1.1Tons"
+      },
+      {
+        "id": "I1811:13151;2006:8981",
+        "name": "Worldwide",
+        "text": "North Atlantic"
+      },
+      {
+        "id": "I1811:13151;2058:15267",
+        "name": "No. 123",
+        "text": "No. 133"
+      },
+      {
+        "id": "I1811:13909;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if       Abyss Habitat is in your Ecosystem. If destroyed, place in lost zone."
+      },
+      {
+        "id": "I1811:13909;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      },
+      {
+        "id": "I1811:13926;1449:48428",
+        "name": "Forage",
+        "text": "Enduring Attack"
+      },
+      {
+        "id": "I1811:13926;1449:78591",
+        "name": "10RP",
+        "text": "4RP"
+      },
+      {
+        "id": "I1811:13926;1449:48431",
+        "name": "Action",
+        "text": "Action"
+      },
+      {
+        "id": "I1811:13934;1292:89622",
+        "name": "D20",
+        "text": "D8"
+      },
+      {
+        "id": "1811:14142",
+        "name": "Cannot be used on your next turn.",
+        "text": "Cannot be used on your next turn."
+      }
+    ]
+  },
+  {
+    "cardId": "giant-phantom-jelly",
+    "nodeId": "1811:14449",
+    "sourcePageId": "92:140",
+    "name": "giant-phantom-jelly",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I1811:14149;3068:1047488;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I1811:14149;3068:1047488;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I1811:14149;3068:1047488;3052:951319",
+        "name": "Creature Class",
+        "text": "Deep Apex Predator"
+      },
+      {
+        "id": "I1811:14149;3068:1047488;3052:951327",
+        "name": "PRERELEASE",
+        "text": "PRERELEASE"
+      },
+      {
+        "id": "I1811:14149;3068:1047488;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I1811:14149;1809:6836",
+        "name": "Losum Ipsum",
+        "text": "Unlike most jellyfish, the giant phantom jelly lacks stinging tentacles. Instead, it uses its long arms to trap plankton and small fish."
+      },
+      {
+        "id": "I1811:14149;2265:227333;2042:55508",
+        "name": "4/62",
+        "text": "19/62"
+      },
+      {
+        "id": "I1811:14149;1809:6835",
+        "name": "D12",
+        "text": "D8"
+      },
+      {
+        "id": "I1811:14149;1809:6837",
+        "name": "8RP",
+        "text": "6RP"
+      },
+      {
+        "id": "I1811:14149;1809:6839",
+        "name": "14VP",
+        "text": "6VP"
+      },
+      {
+        "id": "I1811:14149;1809:6840",
+        "name": "Name",
+        "text": "Giant Phantom Jelly"
+      },
+      {
+        "id": "I1811:14149;2006:8978",
+        "name": "LT: 43’",
+        "text": "Arms: 33’"
+      },
+      {
+        "id": "I1811:14149;2006:8979",
+        "name": "Type",
+        "text": "Ulmaridae"
+      },
+      {
+        "id": "I1811:14149;2006:8980",
+        "name": "WT: 600lbs",
+        "text": "WT: Unknown"
+      },
+      {
+        "id": "I1811:14149;2006:8981",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I1811:14149;2058:15267",
+        "name": "No. 123",
+        "text": "No. 161"
+      },
+      {
+        "id": "I1811:14164;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if       Abyss Habitat is in your Ecosystem. If destroyed, place in lost zone."
+      },
+      {
+        "id": "I1811:14164;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      },
+      {
+        "id": "I1811:14439;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "All of your attacks have +3 on dice rolls."
+      },
+      {
+        "id": "I1811:14439;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I1811:14439;1292:91385",
+        "name": "Intimidation",
+        "text": "Phantom Boost"
+      },
+      {
+        "id": "I1966:4860;1449:48428",
+        "name": "Forage",
+        "text": "Cloak in Darkness"
+      },
+      {
+        "id": "I1966:4860;1449:78591",
+        "name": "10RP",
+        "text": "0RP"
+      },
+      {
+        "id": "I1966:4860;1449:48431",
+        "name": "Action",
+        "text": "Action"
+      },
+      {
+        "id": "I1966:4860;1449:48432",
+        "name": "Lorum Ispum",
+        "text": "Choose one of your opponent’s coral, that coral is now stunned."
+      }
+    ]
+  },
+  {
+    "cardId": "sperm-whale",
+    "nodeId": "2249:52164",
+    "sourcePageId": "92:140",
+    "name": "sperm-whale",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I3972:91389;3068:1047488;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I3972:91389;3068:1047488;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I3972:91389;3068:1047488;3052:951319",
+        "name": "Creature Class",
+        "text": "Deep Apex Predator"
+      },
+      {
+        "id": "I3972:91389;3068:1047488;3052:951327",
+        "name": "PRERELEASE",
+        "text": "PRERELEASE"
+      },
+      {
+        "id": "I3972:91389;3068:1047488;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I3972:91389;1809:6836",
+        "name": "Losum Ipsum",
+        "text": "The largest toothed predators on Earth, sperm whales hunt for giant squid in the ocean deep using incredibly loud echolocation clicks."
+      },
+      {
+        "id": "I3972:91389;2265:227333;2042:55508",
+        "name": "4/62",
+        "text": "18/62"
+      },
+      {
+        "id": "I3972:91389;1809:6835",
+        "name": "D12",
+        "text": "D20"
+      },
+      {
+        "id": "I3972:91389;1809:6837",
+        "name": "8RP",
+        "text": "9RP"
+      },
+      {
+        "id": "I3972:91389;1809:6839",
+        "name": "14VP",
+        "text": "9VP"
+      },
+      {
+        "id": "I3972:91389;1809:6840",
+        "name": "Name",
+        "text": "Sperm Whale"
+      },
+      {
+        "id": "I3972:91389;2006:8978",
+        "name": "LT: 43’",
+        "text": "LT: 60’"
+      },
+      {
+        "id": "I3972:91389;2006:8979",
+        "name": "Type",
+        "text": "Physeteridae"
+      },
+      {
+        "id": "I3972:91389;2006:8980",
+        "name": "WT: 600lbs",
+        "text": "WT: 50Tons"
+      },
+      {
+        "id": "I3972:91389;2006:8981",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I3972:91389;2058:15267",
+        "name": "No. 123",
+        "text": "No. 129"
+      },
+      {
+        "id": "I2245:51822;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "If this Sperm Whale is attacking a Giant or Colossal squid, gain +6."
+      },
+      {
+        "id": "I2245:51822;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I2245:51822;1292:91385",
+        "name": "Intimidation",
+        "text": "Battle of the Titans"
+      },
+      {
+        "id": "I2245:51607;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Deep Hunt"
+      },
+      {
+        "id": "I2245:51607;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I2245:51609;1292:89610",
+        "name": "x3",
+        "text": "x2"
+      },
+      {
+        "id": "I2245:51609;1292:89622",
+        "name": "D20",
+        "text": "D12"
+      },
+      {
+        "id": "I3972:94499;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if       Abyss Habitat is in your Ecosystem. If destroyed, place in lost zone."
+      },
+      {
+        "id": "I3972:94499;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "shortfin-mako-shark",
+    "nodeId": "2285:38220",
+    "sourcePageId": "92:140",
+    "name": "shortfin-mako",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I2249:51834;3078:1172815;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I2249:51834;3078:1172815;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2249:51834;3078:1172815;3052:951319",
+        "name": "Creature Class",
+        "text": "Oceanic Apex Predator"
+      },
+      {
+        "id": "I2249:51834;3078:1172815;3052:951327",
+        "name": "PRERELEASE",
+        "text": "PRERELEASE"
+      },
+      {
+        "id": "I2249:51834;3078:1172815;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I2249:51834;1993:12751",
+        "name": "LT: 18’",
+        "text": "LT: 13’"
+      },
+      {
+        "id": "I2249:51834;1993:12752",
+        "name": "Type",
+        "text": "Lamnidae"
+      },
+      {
+        "id": "I2249:51834;1993:12753",
+        "name": "WT: 1000lbs",
+        "text": "WT: 1300lbs"
+      },
+      {
+        "id": "I2249:51834;1993:12754",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I2249:51834;2042:55511",
+        "name": "No. 123",
+        "text": "No. 010"
+      },
+      {
+        "id": "I2249:51834;1993:12708",
+        "name": "Lorum Ipsom",
+        "text": "A powerful, fast-swimming shark, the shortfin mako pursues fish and squid. It can retain heat in parts of its body to stay active in cool water."
+      },
+      {
+        "id": "I2249:51834;1993:12712",
+        "name": "D6-2",
+        "text": "D12"
+      },
+      {
+        "id": "I2249:51834;1993:12713",
+        "name": "3RP",
+        "text": "8RP"
+      },
+      {
+        "id": "I2249:51834;1993:12714",
+        "name": "5+VP",
+        "text": "8VP"
+      },
+      {
+        "id": "I2249:51834;1993:12715",
+        "name": "Name",
+        "text": "Shortfin Mako"
+      },
+      {
+        "id": "I2249:51834;1993:12720;1314:109390",
+        "name": "4/64",
+        "text": "13/64"
+      },
+      {
+        "id": "I2249:51839;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "Gain +3 on attacks when       Open Ocean Habitat is in your Ecosystem. "
+      },
+      {
+        "id": "I2249:51839;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I2249:51839;1292:91385",
+        "name": "Intimidation",
+        "text": "Open Pursuit"
+      },
+      {
+        "id": "I2249:51840;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Breach Strike"
+      },
+      {
+        "id": "I2249:51840;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "I2249:51842;1292:89610",
+        "name": "x3",
+        "text": "x2"
+      },
+      {
+        "id": "I2249:51842;1292:89622",
+        "name": "D20",
+        "text": "D8+5"
+      },
+      {
+        "id": "I2255:26187;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if If   Open Ocean and 2       Oceanic Predators are in your ecosystem. If destroyed, place in your lost zone."
+      },
+      {
+        "id": "I2255:26187;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "black-marlin",
+    "nodeId": "2259:30144",
+    "sourcePageId": "92:140",
+    "name": "black-marlin",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I2255:28358;3078:1180237;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I2255:28358;3078:1180237;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2255:28358;3078:1180237;3052:951319",
+        "name": "Creature Class",
+        "text": "Oceanic Apex Predator"
+      },
+      {
+        "id": "I2255:28358;3078:1180237;3052:951327",
+        "name": "PRERELEASE",
+        "text": "PRERELEASE"
+      },
+      {
+        "id": "I2255:28358;3078:1180237;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I2255:28358;2255:26721",
+        "name": "LT: 18’",
+        "text": "LT: 15’"
+      },
+      {
+        "id": "I2255:28358;2255:26722",
+        "name": "Type",
+        "text": "Istiophoridae"
+      },
+      {
+        "id": "I2255:28358;2255:26723",
+        "name": "WT: 1000lbs",
+        "text": "WT: 1650lbs"
+      },
+      {
+        "id": "I2255:28358;2255:26724",
+        "name": "Worldwide",
+        "text": "Indo-Pacific"
+      },
+      {
+        "id": "I2255:28358;2255:28263",
+        "name": "3RP",
+        "text": "6RP"
+      },
+      {
+        "id": "I2255:28358;2255:28264",
+        "name": "30SD",
+        "text": "90SD"
+      },
+      {
+        "id": "I2255:28358;2255:26691;1314:109390",
+        "name": "4/64",
+        "text": "16/64"
+      },
+      {
+        "id": "I2255:28358;2255:26726",
+        "name": "No. 123",
+        "text": "No. 021"
+      },
+      {
+        "id": "I2255:28358;2255:26686",
+        "name": "Name",
+        "text": "Black Marlin"
+      },
+      {
+        "id": "I2255:28358;2255:26681",
+        "name": "D6-2",
+        "text": "D12"
+      },
+      {
+        "id": "I2255:28358;2255:26683",
+        "name": "5+VP",
+        "text": "6VP"
+      },
+      {
+        "id": "I2255:28358;2255:26677",
+        "name": "Lorum Ipsom",
+        "text": "Black marlin hunt fish and squid with a long, spear-like bill. Their rigid pectoral fins cannot fold flat against the sides of the body."
+      },
+      {
+        "id": "I2255:26235;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Quick Strikes"
+      },
+      {
+        "id": "I2255:26235;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "2255:26236",
+        "name": "Defending Fish have -1 Defense against attacks.",
+        "text": "Defending Fish have -1 Defense against attacks."
+      },
+      {
+        "id": "I2255:26237;1292:89610",
+        "name": "x3",
+        "text": "x4"
+      },
+      {
+        "id": "I2255:26237;1292:89622",
+        "name": "D20",
+        "text": "D6"
+      },
+      {
+        "id": "I2256:29805;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if       Open Ocean Habitat is in your Ecosystem. If destroyed, place in your lost zone."
+      },
+      {
+        "id": "I2256:29805;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      }
+    ]
+  },
+  {
+    "cardId": "swordfish",
+    "nodeId": "2259:30491",
+    "sourcePageId": "92:140",
+    "name": "swordfish",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I2259:29826;3078:1180237;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I2259:29826;3078:1180237;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2259:29826;3078:1180237;3052:951319",
+        "name": "Creature Class",
+        "text": "Oceanic Apex Predator"
+      },
+      {
+        "id": "I2259:29826;3078:1180237;3052:951327",
+        "name": "PRERELEASE",
+        "text": "PRERELEASE"
+      },
+      {
+        "id": "I2259:29826;3078:1180237;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I2259:29826;2255:26721",
+        "name": "LT: 18’",
+        "text": "LT: 14’"
+      },
+      {
+        "id": "I2259:29826;2255:26722",
+        "name": "Type",
+        "text": "Xiphiidae"
+      },
+      {
+        "id": "I2259:29826;2255:26723",
+        "name": "WT: 1000lbs",
+        "text": "WT: 1000lbs"
+      },
+      {
+        "id": "I2259:29826;2255:26724",
+        "name": "Worldwide",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I2259:29826;2255:28263",
+        "name": "3RP",
+        "text": "6RP"
+      },
+      {
+        "id": "I2259:29826;2255:28264",
+        "name": "30SD",
+        "text": "90SD"
+      },
+      {
+        "id": "I2259:29826;2255:26691;1314:109390",
+        "name": "4/64",
+        "text": "15/64"
+      },
+      {
+        "id": "I2259:29826;2255:26726",
+        "name": "No. 123",
+        "text": "No. 023"
+      },
+      {
+        "id": "I2259:29826;2255:26686",
+        "name": "Name",
+        "text": "Swordfish"
+      },
+      {
+        "id": "I2259:29826;2255:26681",
+        "name": "D6-2",
+        "text": "D10"
+      },
+      {
+        "id": "I2259:29826;2255:26683",
+        "name": "5+VP",
+        "text": "6VP"
+      },
+      {
+        "id": "I2259:29826;2255:26677",
+        "name": "Lorum Ipsom",
+        "text": "Charging through the pitch-black twilight zone, the swordfish uses its razor-sharp bill to slash and stun fast-moving schools of squid and fish."
+      },
+      {
+        "id": "I2259:29827;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Slash"
+      },
+      {
+        "id": "I2259:29827;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "2259:29828",
+        "name": "Ignore defensive bonuses.",
+        "text": "Ignore defensive bonuses."
+      },
+      {
+        "id": "I2259:29829;1292:89610",
+        "name": "x3",
+        "text": "x3"
+      },
+      {
+        "id": "I2259:29829;1292:89622",
+        "name": "D20",
+        "text": "D8"
+      },
+      {
+        "id": "I2259:29831;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if       Open Ocean or Abyss Habitat is in your Ecosystem. If destroyed, place in your lost zone."
+      },
+      {
+        "id": "I2259:29831;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      },
+      {
+        "id": "I2259:30146;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "Add +3 to this card’s attack when targeting a creature with Deep in it’s name."
+      },
+      {
+        "id": "I2259:30146;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I2259:30146;1292:91385",
+        "name": "Intimidation",
+        "text": "Night Vision"
+      }
+    ]
+  },
+  {
+    "cardId": "bluefin-tuna",
+    "nodeId": "2260:30509",
+    "sourcePageId": "92:140",
+    "name": "bluefin-tuna",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I2259:30164;3078:1180237;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I2259:30164;3078:1180237;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2259:30164;3078:1180237;3052:951319",
+        "name": "Creature Class",
+        "text": "Oceanic Apex Predator"
+      },
+      {
+        "id": "I2259:30164;3078:1180237;3052:951327",
+        "name": "PRERELEASE",
+        "text": "PRERELEASE"
+      },
+      {
+        "id": "I2259:30164;3078:1180237;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I2259:30164;2255:26721",
+        "name": "LT: 18’",
+        "text": "LT: 13’"
+      },
+      {
+        "id": "I2259:30164;2255:26722",
+        "name": "Type",
+        "text": "Scombridae"
+      },
+      {
+        "id": "I2259:30164;2255:26723",
+        "name": "WT: 1000lbs",
+        "text": "WT: 1000lbs"
+      },
+      {
+        "id": "I2259:30164;2255:26724",
+        "name": "Worldwide",
+        "text": "Atlantic"
+      },
+      {
+        "id": "I2259:30164;2255:28263",
+        "name": "3RP",
+        "text": "5RP"
+      },
+      {
+        "id": "I2259:30164;2255:28264",
+        "name": "30SD",
+        "text": "70SD"
+      },
+      {
+        "id": "I2259:30164;2255:26691;1314:109390",
+        "name": "4/64",
+        "text": "14/64"
+      },
+      {
+        "id": "I2259:30164;2255:26726",
+        "name": "No. 123",
+        "text": "No. 015"
+      },
+      {
+        "id": "I2259:30164;2255:26686",
+        "name": "Name",
+        "text": "Bluefin Tuna"
+      },
+      {
+        "id": "I2259:30164;2255:26681",
+        "name": "D6-2",
+        "text": "D10"
+      },
+      {
+        "id": "I2259:30164;2255:26683",
+        "name": "5+VP",
+        "text": "5VP"
+      },
+      {
+        "id": "I2259:30164;2255:26677",
+        "name": "Lorum Ipsom",
+        "text": "Atlantic bluefin tuna retain heat in their muscles and other tissues. This helps them pursue prey across both cool and warm ocean waters."
+      },
+      {
+        "id": "I2259:30165;1302:14131",
+        "name": "Crushing Jaws",
+        "text": "Group Hunt"
+      },
+      {
+        "id": "I2259:30165;1302:14134",
+        "name": "On Play",
+        "text": "On Play"
+      },
+      {
+        "id": "2259:30166",
+        "name": "Perform a second attack for each Tuna in your Ecosystem (Max 2)",
+        "text": "Perform a second attack for each Tuna in your Ecosystem (Max 2)"
+      },
+      {
+        "id": "I2259:30167;1292:89622",
+        "name": "D20",
+        "text": "D8+5"
+      },
+      {
+        "id": "I2259:30169;1302:14123",
+        "name": "Can only be played if a Drop Off structure card is in play on your reef",
+        "text": "Can only be played if       Open Ocean is in your Ecosystem. If destroyed, place in your lost zone."
+      },
+      {
+        "id": "I2259:30169;1302:14126",
+        "name": "Special Rules",
+        "text": "Special Rules"
+      },
+      {
+        "id": "I2259:30172;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "If targeted, the opponent must first flip a coin, if tails, the attack fails."
+      },
+      {
+        "id": "I2259:30172;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I2259:30172;1292:91385",
+        "name": "Intimidation",
+        "text": "Agility"
+      }
+    ]
+  },
+  {
+    "cardId": "octopus",
+    "nodeId": "746:146691",
+    "sourcePageId": "92:340",
+    "name": "Day Octopus",
+    "width": 750,
+    "height": 1050,
+    "texts": [
+      {
+        "id": "I4465:58514;3056:229815;3052:951300",
+        "name": "Defense",
+        "text": "Defense"
+      },
+      {
+        "id": "I4465:58514;3056:229815;3052:951302",
+        "name": "Illus. J. Easterling",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I4465:58514;3056:229815;3052:951319",
+        "name": "Creature Class",
+        "text": "Reef Invertebrate"
+      },
+      {
+        "id": "I4465:58514;3056:229815;3052:951330",
+        "name": "© 2026, Sea Realm, LLC",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I4465:58514;1449:46542",
+        "name": "D4",
+        "text": "D6"
+      },
+      {
+        "id": "I4465:58514;2117:42863;2042:42427",
+        "name": "4/102",
+        "text": "46/102"
+      },
+      {
+        "id": "I4465:58514;1449:46543",
+        "name": "Lorum Ipsom",
+        "text": "Known as the “King of Camouflage”, the Day Octopus stealthily hunts during daytime hours, unlike almost all other Octopus species."
+      },
+      {
+        "id": "I4465:58514;2055:41785",
+        "name": "LT: 15’ 8”",
+        "text": "LT: 31”"
+      },
+      {
+        "id": "I4465:58514;2055:41786",
+        "name": "Type",
+        "text": "Octopodidae"
+      },
+      {
+        "id": "I4465:58514;2055:41787",
+        "name": "WT: 15 oz",
+        "text": "WT: 10lb"
+      },
+      {
+        "id": "I4465:58514;2055:41788",
+        "name": "Worldwide",
+        "text": "Indo-Pacific"
+      },
+      {
+        "id": "I4465:58514;2117:54638",
+        "name": "No. 123",
+        "text": "No. 100"
+      },
+      {
+        "id": "I4465:58514;1449:46544",
+        "name": "1RP",
+        "text": "4RP"
+      },
+      {
+        "id": "I4465:58514;1449:46546",
+        "name": "1VP",
+        "text": "4VP"
+      },
+      {
+        "id": "I4465:58514;1449:46547",
+        "name": "Name",
+        "text": "Day Octopus"
+      },
+      {
+        "id": "I4465:95169;1449:48428",
+        "name": "Forage",
+        "text": "Mimic"
+      },
+      {
+        "id": "I4465:95169;1449:78591",
+        "name": "10RP",
+        "text": "3RP"
+      },
+      {
+        "id": "I4465:95169;1449:48431",
+        "name": "Action",
+        "text": "Action"
+      },
+      {
+        "id": "I4465:95169;1449:48432",
+        "name": "Lorum Ispum",
+        "text": "Choose a creature in your opponent’s ecosystem with an action ability and perform it as if it were your own."
+      },
+      {
+        "id": "I4465:93866;1292:91356",
+        "name": "Opponent’s fish cost +1 RP to play.",
+        "text": "If      coral reef habitat is in play, add +4 Defense to this Day Octopus."
+      },
+      {
+        "id": "I4465:93866;1292:91377",
+        "name": "Passive",
+        "text": "Passive"
+      },
+      {
+        "id": "I4465:93866;1292:91385",
+        "name": "Intimidation",
+        "text": "King of Camouflage"
+      }
+    ]
+  }
+]

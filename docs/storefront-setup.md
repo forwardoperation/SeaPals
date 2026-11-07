@@ -635,8 +635,11 @@ with `STORE_ADMIN_TOKEN` to move mailed orders through Awaiting Production, In
 Production, Packing, Awaiting Shipment, and Shipped. Pickup orders follow
 Awaiting Production, In Production, Packing for Pickup, Ready for Pickup, and
 Picked Up. On Hold and Cancelled remain available for exceptions. Tracking is
-unavailable for pickup. The token is stored only in that browser tab's session
-storage.
+unavailable for pickup. The app keeps the token only in that browser tab's
+session storage. The staff sign-in form also supports browser password managers:
+sign in once and accept the save-password prompt, then use AutoFill on later
+visits. The saved login is labeled `fulfillment`. **Sign out** clears the tab's
+session without deleting the password-manager entry.
 
 The scheduled Worker also sends one private due-soon reminder for each paid
 live order that has not reached its method's ready state. Expedited orders use

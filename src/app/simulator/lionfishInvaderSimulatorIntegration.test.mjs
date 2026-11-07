@@ -32,7 +32,7 @@ test("Lionfish Invader resolves exactly once before player turn collection and p
   assert.match(startRound, /setDiscardPile\(playerAtTurnStart\.discardPile\)/);
   assert.match(startRound, /setLostZone\(playerAtTurnStart\.lostZone\)/);
   assert.match(startRound, /setOpponent\(opponentHandLimitResult\.state\)/);
-  assert.match(startRound, /previewExperience && playerTriggerableInvaders\.length[\s\S]*createLiveLionfishTurnEvents\(\{/);
+  assert.match(startRound, /playerTriggerableInvaders\.length[\s\S]*createLiveLionfishTurnEvents\(\{/);
   assert.match(startRound, /startRoundRef\.current\?\.\(nextRound,[\s\S]*skipLionfish: true/);
   assert.match(startRound, /presentQueuedEvent\(firstLionfishEvent, remainingLionfishEvents/);
   assert.doesNotMatch(startRound, /insertOpponentRollCheckpoints\(lionfishResolution\.events/);
@@ -50,8 +50,8 @@ test("Lionfish Invader resolves exactly once before opponent Parasite and automa
   assert.equal(occurrenceCount(opponentTurn, /beginFlashingAlarmTurn\(opponent\.flashingAlarmAttackBonus\)/g), 1);
   assert.match(opponentTurn, /playerStateAfter: stagedPlayerState/);
   assert.match(opponentTurn, /opponentStateAfter: opponentAtTurnStart/);
-  assert.match(opponentTurn, /runOpponentTurn\(opponentForTurn, \{ startTurnAlreadyBegun: true \}\)/);
-  assert.match(opponentTurn, /previewExperience && opponentTriggerableInvaders\.length[\s\S]*createLiveLionfishTurnEvents\(\{/);
+  assert.match(opponentTurn, /runOpponentTurn\(opponentForTurn, \{\s*startTurnAlreadyBegun: true,[\s\S]*?opposingHabitats:/);
+  assert.match(opponentTurn, /opponentTriggerableInvaders\.length[\s\S]*createLiveLionfishTurnEvents\(\{/);
   assert.match(opponentTurn, /resolveOpponentTurnRef\.current\?\.\(\{[\s\S]*skipLionfish: true/);
   assert.doesNotMatch(opponentTurn, /insertOpponentRollCheckpoints\(lionfishTurnEvents/);
 
@@ -70,13 +70,13 @@ test("Invader controller branches, source exclusion, fizzle, and owner-zone rout
   assert.match(resolver, /targetBelongsToAttacker: targetController === invader\.controller/);
   assert.match(resolver, /resolutionProbability: targetResolutionProbability/);
   assert.match(resolver, /no other legal Fish[\s\S]*mandatory attack fizzled/);
-  assert.match(resolver, /stoppedPrimaryRolls \?\? resolveOpposedRoll\("D4-1", defenseDice, random\)/);
+  assert.match(resolver, /stoppedPrimaryRolls \?\? resolveOpposedRoll\("D4", defenseDice, random\)/);
   assert.match(resolver, /const attackerWins = attackTotal > defenseTotal/);
   assert.match(resolver, /routeLionfishDestroyedCard\(states, target\.controller, target\.cardId\)/);
   assert.match(resolver, /routeLionfishDestroyedCard\(states, invader\.controller, invader\.cardId\)/);
   const poisonHealCommit = resolver.indexOf("const invaderPoisonHealActive");
   const schoolResolution = resolver.indexOf('target.location === "foundation"');
-  const ordinaryResolution = resolver.indexOf('stoppedPrimaryRolls ?? resolveOpposedRoll("D4-1", defenseDice, random)');
+  const ordinaryResolution = resolver.indexOf('stoppedPrimaryRolls ?? resolveOpposedRoll("D4", defenseDice, random)');
   assert.ok(poisonHealCommit >= 0 && poisonHealCommit < schoolResolution && schoolResolution < ordinaryResolution);
   assert.match(resolver, /poisonImmunityNextPredatorAttack: false/);
   assert.match(resolver, /poisonHealActive: invaderPoisonHealActive/);
@@ -86,13 +86,13 @@ test("Invader controller branches, source exclusion, fizzle, and owner-zone rout
   assert.match(resolver, /forcedPlans\.find\(\(candidatePlan\)/);
 });
 
-test("Creature Schools take one D4-1 roll as tenfold HP damage before ordinary defense", () => {
+test("Creature Schools take one D4 roll as tenfold HP damage before ordinary defense", () => {
   const resolver = sourceBetween("function resolveHostTurnLionfishInvaders({", "function createDeck(");
   const schoolBranch = resolver.indexOf('target.location === "foundation" && isCreatureSchool(target.card)');
-  const opposedBranch = resolver.indexOf('resolveOpposedRoll("D4-1", defenseDice, random)');
+  const opposedBranch = resolver.indexOf('resolveOpposedRoll("D4", defenseDice, random)');
 
   assert.ok(schoolBranch >= 0 && schoolBranch < opposedBranch);
-  assert.match(resolver, /Number\.isFinite\(combatRollPacket\?\.attack\)[\s\S]*\{ total: Number\(combatRollPacket\.attack\) \}[\s\S]*: rollDie\("D4-1", random\)/);
+  assert.match(resolver, /Number\.isFinite\(combatRollPacket\?\.attack\)[\s\S]*\{ total: Number\(combatRollPacket\.attack\) \}[\s\S]*: rollDie\("D4", random\)/);
   assert.match(resolver, /const damage = attackRoll\.total \* 10/);
   assert.match(resolver, /const damageResult = applyDamage\(school\.health \?\? school\.maxHealth, damage\)/);
   assert.match(resolver, /health: damageResult\.remainingHealth/);
@@ -117,7 +117,7 @@ test("preview Lionfish combat resolves one invader at a time from the board dice
   assert.match(liveResolver, /mode: "resolve-live-lionfish-step"/);
   assert.match(liveResolver, /resolve: \(stoppedPacket\) => \{[\s\S]*combatRollPackets: \[stoppedPacket\]/);
   assert.match(liveResolver, /forcedPlans: \[plan\]/);
-  assert.match(liveResolver, /\.\.\.createLiveLionfishTurnEvents\(\{/);
+  assert.match(liveResolver, /createReefPostCombatEvents\([\s\S]*createLiveLionfishTurnEvents\(\{/);
   assert.match(liveResolver, /type: "live-lionfish-continuation"/);
 });
 

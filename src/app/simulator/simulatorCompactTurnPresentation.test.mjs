@@ -337,7 +337,7 @@ test("the first RP lesson focuses Photosynthesis, restores the camera, then star
 test("both controllers collect RP from stable board sources into a counting RP bank", () => {
   const sourcePlan = sourceSection(
     simulatorSource,
-    "function getEcosystemStartTurnRpSources(playerCorals, activeCondition = null)",
+    "function getEcosystemStartTurnRpSources(playerCorals, activeCondition = null, abilityStatuses = {})",
     "function getEcosystemCreatureCardIds(",
   );
   assert.match(sourcePlan, /\{ key: "round-supply", amount: 1 \}/);
@@ -371,7 +371,7 @@ test("both controllers collect RP from stable board sources into a counting RP b
     "function cancelOpeningCoinFlip()",
   );
   assert.match(opponentTurn, /const startTurnCorals = current\.corals\.map/);
-  assert.match(opponentTurn, /const rpSources = getEcosystemStartTurnRpSources\(startTurnCorals, activeCondition\)\.map/);
+  assert.match(opponentTurn, /const rpSources = getEcosystemStartTurnRpSources\(startTurnCorals, activeCondition, current\.creatureStatuses\)\.map/);
   assert.match(opponentTurn, /bankBefore: rpBeforeCollection/);
   assert.match(opponentTurn, /rpSources,/);
 });

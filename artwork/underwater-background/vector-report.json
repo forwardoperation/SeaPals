@@ -1,0 +1,30 @@
+{
+  "width": 1536,
+  "height": 1024,
+  "viewBox": "0 0 1536 1024",
+  "paths": 55317,
+  "bytes": 20607797,
+  "embedded_images": 0,
+  "external_references": 0,
+  "settings": {
+    "colormode": "color",
+    "hierarchical": "stacked",
+    "mode": "spline",
+    "filter_speckle": 1,
+    "color_precision": 8,
+    "layer_difference": 4,
+    "corner_threshold": 60,
+    "length_threshold": 3.5,
+    "max_iterations": 10,
+    "splice_threshold": 45,
+    "path_precision": 2
+  },
+  "elapsed_seconds": 16.69,
+  "render_validation": {
+    "renderer": "sharp / librsvg",
+    "width": 1536,
+    "height": 1024,
+    "mean_absolute_channel_error": 5.355,
+    "peak_signal_to_noise_ratio_db": 26.91
+  }
+}

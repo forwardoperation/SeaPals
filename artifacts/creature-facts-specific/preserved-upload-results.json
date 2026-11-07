@@ -1,0 +1,362 @@
+[
+  {
+    "cardId": "chimera",
+    "success": true,
+    "imageHash": "12d359d934e3331929525d6edff6486102fc78b5",
+    "sizeBytes": 256621,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:11006"
+  },
+  {
+    "cardId": "nurse-shark",
+    "success": true,
+    "imageHash": "fefd94e7e70a28734e814bbf7098da815cf64644",
+    "sizeBytes": 319238,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:11030"
+  },
+  {
+    "cardId": "silky-shark",
+    "success": true,
+    "imageHash": "7dbe5e8d70bee16c709900130da4926ecdb35e83",
+    "sizeBytes": 301694,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:11022"
+  },
+  {
+    "cardId": "anemone",
+    "success": true,
+    "imageHash": "73783b7951bb4d2ef026b8ccc1975539be19002e",
+    "sizeBytes": 336004,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277094"
+  },
+  {
+    "cardId": "frilled-shark",
+    "success": true,
+    "imageHash": "8be296ef403538aea55da0ae0985ff8dd7ca56ad",
+    "sizeBytes": 292305,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:11014"
+  },
+  {
+    "cardId": "leather-starfish",
+    "success": true,
+    "imageHash": "11be325212a76c69e0436f7ae39cc9bd9bf4feef",
+    "sizeBytes": 288202,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277118"
+  },
+  {
+    "cardId": "mantis-shrimp",
+    "success": true,
+    "imageHash": "2942748229b4b3a3139234aebd6f1d5cd9eb0da5",
+    "sizeBytes": 316584,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277110"
+  },
+  {
+    "cardId": "giant-triton",
+    "success": true,
+    "imageHash": "039658895cc50c4697d67fac3f400a80edf93259",
+    "sizeBytes": 245522,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277134"
+  },
+  {
+    "cardId": "arrow-crab",
+    "success": true,
+    "imageHash": "79b5c072fc3f9584f2d6008feaec3fa6fc32e620",
+    "sizeBytes": 323908,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277102"
+  },
+  {
+    "cardId": "cleaner-shrimp",
+    "success": true,
+    "imageHash": "39ae4eca18076198555508af3b3e337bf47160d5",
+    "sizeBytes": 327253,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277126"
+  },
+  {
+    "cardId": "octopus",
+    "success": true,
+    "imageHash": "fd1f96fdc2d5c0a675d6a6119d42e3731a5d7d2c",
+    "sizeBytes": 290439,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277142"
+  },
+  {
+    "cardId": "brittlestar",
+    "success": true,
+    "imageHash": "893d37d1a3aea92ec0488fafc79f917329c10198",
+    "sizeBytes": 340574,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277166"
+  },
+  {
+    "cardId": "oysters",
+    "success": true,
+    "imageHash": "65c270abb5b92ed0bef48c06fbb1b0211b5d23f8",
+    "sizeBytes": 306592,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277150"
+  },
+  {
+    "cardId": "vampire-squid",
+    "success": true,
+    "imageHash": "76bdecaea438c30486b990aae90a4e79f590cd0b",
+    "sizeBytes": 277067,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277174"
+  },
+  {
+    "cardId": "deep-cucumber",
+    "success": true,
+    "imageHash": "0fc47dcdf2595d090c009774a492fb62aedb1065",
+    "sizeBytes": 347821,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277158"
+  },
+  {
+    "cardId": "man-o-war",
+    "success": true,
+    "imageHash": "8e73dbe9ca9edf675040cc9de48106aa715e2df8",
+    "sizeBytes": 311944,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277206"
+  },
+  {
+    "cardId": "peacock-squid",
+    "success": true,
+    "imageHash": "edb4cee70e95540340b586145074d714b6e06350",
+    "sizeBytes": 298179,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277198"
+  },
+  {
+    "cardId": "giant-tube-worm",
+    "success": true,
+    "imageHash": "365cfcbcf242e104dacc0949ee31d99a8d0dede1",
+    "sizeBytes": 320009,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277190"
+  },
+  {
+    "cardId": "giant-isopod",
+    "success": true,
+    "imageHash": "6aaec9d754043cc494c13df14da37fe52102f3c6",
+    "sizeBytes": 336856,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277182"
+  },
+  {
+    "cardId": "market-squid",
+    "success": true,
+    "imageHash": "28e5697c6e6b9c9a337dd497c627e80165cf18c4",
+    "sizeBytes": 298297,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277214"
+  },
+  {
+    "cardId": "fairy-parrotfish",
+    "success": true,
+    "imageHash": "25541940be6014bb292a6d3abb6fcc485d458005",
+    "sizeBytes": 315660,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287177"
+  },
+  {
+    "cardId": "longhorn-cowfish",
+    "success": true,
+    "imageHash": "9dd750efd993aa0d75de74c1b55575cbdc7b1217",
+    "sizeBytes": 370193,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287185"
+  },
+  {
+    "cardId": "pacific-grenadier",
+    "success": true,
+    "imageHash": "a08f890debd884e51b003591d96e3ffe04ed3fb2",
+    "sizeBytes": 295230,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287193"
+  },
+  {
+    "cardId": "box-jellyfish",
+    "success": true,
+    "imageHash": "7d10b5dfae4c84f546821ff01446b65934283230",
+    "sizeBytes": 303907,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:277222"
+  },
+  {
+    "cardId": "humpback-anglerfish",
+    "success": true,
+    "imageHash": "d702f4c37073933ca6cc9c8e26c93c77e56f01f8",
+    "sizeBytes": 317311,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287201"
+  },
+  {
+    "cardId": "fangtooth-fish",
+    "success": true,
+    "imageHash": "aa3dc89ec27cdf25d4a07ce65974817f6be65f6a",
+    "sizeBytes": 283684,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287209"
+  },
+  {
+    "cardId": "halfbeak",
+    "success": true,
+    "imageHash": "3e99bf164d6930451a42b936958331b0111321ba",
+    "sizeBytes": 296150,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287233"
+  },
+  {
+    "cardId": "tripod-fish",
+    "success": true,
+    "imageHash": "630d577fccae295335e8724e71ec8e432eac81fd",
+    "sizeBytes": 328645,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287225"
+  },
+  {
+    "cardId": "black-swallower",
+    "success": true,
+    "imageHash": "9c5ba66935c6f0cef072fedbccdedd81e12c741c",
+    "sizeBytes": 300653,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287217"
+  },
+  {
+    "cardId": "needlefish",
+    "success": true,
+    "imageHash": "2236a58f6263044d05615c8849df0b15dadf0339",
+    "sizeBytes": 271990,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287241"
+  },
+  {
+    "cardId": "sardine-ball-base",
+    "success": true,
+    "imageHash": "44e021d80c6250684f2f2cf2ec80a99c98df151f",
+    "sizeBytes": 365482,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287273"
+  },
+  {
+    "cardId": "krill-bloom-stage2",
+    "success": true,
+    "imageHash": "ef8965f67e911006876a1b6699f5d12e27438d55",
+    "sizeBytes": 333386,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287265"
+  },
+  {
+    "cardId": "krill-bloom-stage1",
+    "success": true,
+    "imageHash": "ee581a6c1b27ee5e7d560f66aa606ae1216a0488",
+    "sizeBytes": 381979,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287257"
+  },
+  {
+    "cardId": "krill-bloom-base",
+    "success": true,
+    "imageHash": "4b30fde916719fafc36a74de534ad9b312fd4241",
+    "sizeBytes": 363796,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287249"
+  },
+  {
+    "cardId": "sardine-ball-stage1",
+    "success": true,
+    "imageHash": "fc9948ad54e7510d90bca655286b449fda914c57",
+    "sizeBytes": 364064,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287281"
+  },
+  {
+    "cardId": "anchovy-ball-base",
+    "success": true,
+    "imageHash": "558ee1acfdfc55be7ba10acc544b38464c983a50",
+    "sizeBytes": 329563,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287297"
+  },
+  {
+    "cardId": "sardine-ball-stage2",
+    "success": true,
+    "imageHash": "884b44832a0f47ccb30d14c82cb003cada140a2c",
+    "sizeBytes": 357724,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287289"
+  },
+  {
+    "cardId": "anchovy-ball-stage1",
+    "success": true,
+    "imageHash": "d6808c4a80128a2ff16875e173d6a0b9a64c7fa4",
+    "sizeBytes": 362890,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287305"
+  },
+  {
+    "cardId": "silverside-ball-base",
+    "success": true,
+    "imageHash": "ec93f71bebf818629477db85b3092642da2e918e",
+    "sizeBytes": 330351,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287321"
+  },
+  {
+    "cardId": "anchovy-ball-stage2",
+    "success": true,
+    "imageHash": "f6f7cbf44c60a458795f274f4121b89d2266b397",
+    "sizeBytes": 349740,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287313"
+  },
+  {
+    "cardId": "herring-ball-base",
+    "success": true,
+    "imageHash": "87a87175b36f8fde9c3c2c3a40fedb08ab70ba6f",
+    "sizeBytes": 295619,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287345"
+  },
+  {
+    "cardId": "herring-ball-stage2",
+    "success": true,
+    "imageHash": "c7ff8f7a4042d4a48b5fecb4ec47f4a80082aee4",
+    "sizeBytes": 328439,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287361"
+  },
+  {
+    "cardId": "silverside-ball-stage1",
+    "success": true,
+    "imageHash": "5326d5f8c0ddb03f70b00f135044b3296df83744",
+    "sizeBytes": 363143,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287329"
+  },
+  {
+    "cardId": "herring-ball-stage1",
+    "success": true,
+    "imageHash": "4a73ed166d64334717ae2af331662e3778c11f3f",
+    "sizeBytes": 318817,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287353"
+  },
+  {
+    "cardId": "silverside-ball-stage2",
+    "success": true,
+    "imageHash": "b43fc77fd05f8dc8299bd88a6f3f7d1d3e524858",
+    "sizeBytes": 350510,
+    "contentType": "image/png",
+    "placedOnNodeId": "4091:287337"
+  }
+]

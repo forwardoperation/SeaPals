@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"uploads\": [\n    {\n      \"submitUrl\": \"https://mcp.figma.com/mcp/upload/7eea3dd0-858e-42dc-8769-44ef0fde84b4/submit?scaleMode=FILL&currentPageId=4025%3A79142\",\n      \"targetNodeId\": \"4093:24786\"\n    },\n    {\n      \"submitUrl\": \"https://mcp.figma.com/mcp/upload/7735ca6d-e2c0-4c8c-8dfe-9517bcc5884c/submit?scaleMode=FILL&currentPageId=4025%3A79142\",\n      \"targetNodeId\": \"4093:24797\"\n    }\n  ],\n  \"instructions\": \"Upload each asset by POSTing to the submitUrl. You can POST the upload URLs in parallel. You can use either format:\\n1. multipart/form-data with a 'file' field (PREFERRED — the filename from the upload is used as the layer name in Figma)\\n2. Raw bytes with the correct Content-Type header (e.g. image/png, image/jpeg)\\n\\nSupported types: image/png, image/jpeg, image/gif, image/webp, image/svg+xml. SVGs (image/svg+xml) are imported as editable vector node trees; nodeId, nodeIds, and scaleMode do not apply to them. Each URL is single-use and expires after 10 minutes. The response from each POST will contain the imageHash and placement details.\"\n}"
+    }
+  ],
+  "isError": false
+}

@@ -158,3 +158,11 @@ seapals-pa-sales-tax-*.csv
 
 # Private print masters, customer work tickets, manifests, and printer journals
 /.private/
+
+# Local artwork tooling and duplicate delivery bundles
+/artifacts/figma-water/trace-deps/
+**/__pycache__/
+*.pyc
+/artifacts/sea-realm-product-photos-2026-10-15.zip
+/artifacts/stapling-jig-2026-10-26/SeaRealm_Printable_Components_STL.zip
+/artifacts/stapling-jig-2026-10-26/SeaRealm_Stapling_Jig_Prototype.zip

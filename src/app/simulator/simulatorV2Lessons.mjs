@@ -400,9 +400,9 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       checkpoint("v2-collect-for-predator", ACTION.RP_COLLECTED, "Fund the planned plays", "Collect the RP saved and produced for this round.", [
         equals("round", 4),
         equals("details.collected", 5),
-        equals("details.bankBefore", 2),
-        equals("details.bankAfter", 7),
-        equals("details.cap", 9),
+        equals("details.bankBefore", 3),
+        equals("details.bankAfter", 8),
+        equals("details.cap", 8),
         equals("details.conditionId", "murky-water"),
       ]),
       drawCheckpoint({ id: "v2-draw-predator", title: "Draw the Predator", deckType: "pals" }),
@@ -464,13 +464,13 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       SIMULATOR_V2_LESSON_CONCEPTS.MULTI_ATTACK,
       SIMULATOR_V2_LESSON_CONCEPTS.TURN_PLANNING,
     ],
-    introducedCardIds: ["clownfish", "arrow-crab", "coral-reef", "brain-coral-stage-2", "hammerhead"],
+    introducedCardIds: ["clownfish", "cleaner-shrimp", "coral-reef", "brain-coral-stage-2", "hammerhead"],
     focusCardId: "coral-reef", attackCardId: "hammerhead", victoryTarget: 12,
     expectedDraws: {
       "v2-draw-hammerhead": { deckType: "pals", cardId: "hammerhead" },
     },
     seed: seed({
-      hand: ["clownfish", "arrow-crab", "coral-reef", "brain-coral-stage-2"],
+      hand: ["clownfish", "cleaner-shrimp", "coral-reef", "brain-coral-stage-2"],
       foundationDeck: [],
       palsDeck: ["hammerhead"],
       playerTableau: [
@@ -487,7 +487,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     }),
     checkpoints: [
       buildCheckpoint("v2-add-habitat-fish", "Add the second Reef Fish", "clownfish"),
-      buildCheckpoint("v2-add-habitat-invertebrate", "Add the second Reef Invertebrate", "arrow-crab"),
+      buildCheckpoint("v2-add-habitat-invertebrate", "Add the second Reef Invertebrate", "cleaner-shrimp"),
       buildCheckpoint("v2-play-coral-reef", "Establish Coral Reef", "coral-reef", { cardKind: "habitat", placement: "habitat" }),
       buildCheckpoint("v2-upgrade-apex-coral", "Open an Apex slot", "brain-coral-stage-2", { cardKind: "coral", placement: "foundation-upgrade" }),
       checkpoint("v2-save-for-apex", ACTION.TURN_ENDED, "Plan the Apex turn", "End the turn with a healthy Habitat and collect enough RP next round for Hammerhead."),
@@ -504,7 +504,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     ],
     buildCards: {
       "v2-add-habitat-fish": ["clownfish"],
-      "v2-add-habitat-invertebrate": ["arrow-crab"],
+      "v2-add-habitat-invertebrate": ["cleaner-shrimp"],
       "v2-play-coral-reef": ["coral-reef"],
       "v2-upgrade-apex-coral": ["brain-coral-stage-2"],
       "v2-play-apex": ["hammerhead"],
@@ -514,18 +514,18 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
         cardId: "clownfish", foundationCardId: "pillar-coral-base", slotClass: "fish", slotOrdinal: 0,
       },
       "v2-add-habitat-invertebrate": {
-        cardId: "arrow-crab", foundationCardId: "pillar-coral-base", slotClass: "invertebrate", slotOrdinal: 0,
+        cardId: "cleaner-shrimp", foundationCardId: "pillar-coral-base", slotClass: "invertebrate", slotOrdinal: 0,
       },
     },
   }),
   lesson({
     id: "support-strategies", moduleId: "support-tools", number: 4,
-    randomSeed: 0x5EA9400D,
+    randomSeed: 0x5EA9400E,
     title: "Turn Support into a combo", duration: "10 min", goalLabel: "Use three Supports and repeat an On Play ability",
     summary: "Search for a precise card, refresh your hand, and reuse Great Barracuda's Quick Strike.",
-    introduction: "In this lesson, you’ll learn three ways Support cards shape a turn: Coral Gardener searches for a precise Foundation, Dr. Evans exchanges a stale hand for seven new cards, and Spearfishing converts a creature into RP. Then Blue Crab will retrieve that creature so its On Play ability can fire again!",
+    introduction: "In this lesson, you’ll learn three ways Support cards shape a turn: Coral Gardener searches for a precise Foundation, Dr. Evans exchanges a stale hand for eight new cards, and Spearfishing converts a creature into RP. Then Blue Crab will retrieve that creature so its On Play ability can fire again!",
     completion: "You searched for and built a Foundation, watched Recycle refund an eaten Fish, cycled a stale hand, converted Great Barracuda into RP, and used Scavenge to replay Quick Strike.",
-    preVictoryMessage: "You used a search to choose a specific card, a hand cycle to draw fresh options, and Spearfishing plus Scavenge to replay an On Play attack. Recycle was different: it refunded RP when your Fish was eaten, but did not return the card. Read each Support's timing restriction; the three we used prevent another Support that turn. Also watch your decks: you lose if you cannot complete a required draw, not merely because a deck becomes empty.",
+    preVictoryMessage: "You used a search to choose a specific card, a hand cycle to draw fresh options, and Spearfishing plus Scavenge to replay an On Play attack. Recycle was different: it refunded RP when your Fish was eaten, but did not return the card. All three Supports in this lesson are Aides. You may play one Aide per turn; Items remain available after it. Also watch your decks: you lose if you cannot complete a required draw, not merely because a deck becomes empty.",
     knowledgeCheck: {
       prompt: "Spearfishing sends your barracuda to discard. How can you trigger its On Play Quick Strike again?",
       correctChoiceId: "recover-replay",
@@ -556,7 +556,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     seed: seed({
       hand: ["coral-gardener", "porcupine-fish", "coral-reef", "hammerhead"],
       foundationDeck: ["mustard-hill-coral-base"],
-      palsDeck: ["dr-evans", "spearfishing", "great-barracuda", "sea-urchin", "porcupine-fish", "coral-reef", "hammerhead", "clownfish", "arrow-crab"],
+      palsDeck: ["arrow-crab", "cleaner-wrasse", "sea-urchin", "coral-reef", "hammerhead", "spearfishing", "clownfish", "dr-evans", "porcupine-fish", "great-barracuda"],
       playerTableau: [
         tableau("brain-coral-stage-1", [["clownfish", "fish"], ["blue-crab", "invertebrate"]]),
       ],
@@ -574,7 +574,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
       },
       rp: 2,
       activeConditionId: "clear-water",
-      conditionDeck: ["coral-disease", "clear-water"],
+      conditionDeck: ["coral-disease", "abundant-sunlight"],
     }),
     expectedDraws: {
       "v2-draw-dr-evans": { deckType: "pals", cardId: "dr-evans" },
@@ -916,6 +916,7 @@ const CARD_NAMES = Object.freeze({
   "spanish-hogfish": "Spanish Hogfish",
   "great-barracuda": "Great Barracuda",
   "arrow-crab": "Arrow Crab",
+  "cleaner-shrimp": "Cleaner Shrimp",
   flounder: "Southern Flounder",
   "coral-gardener": "Coral Gardener",
   "dr-evans": "Dr. Evans",
@@ -1128,7 +1129,7 @@ function placementCopy(cardId) {
       action: "Choose the glowing Apex slot on Brain Coral.",
     };
   }
-  const slot = ["sea-urchin", "blue-crab", "arrow-crab"].includes(cardId)
+  const slot = ["sea-urchin", "blue-crab", "arrow-crab", "cleaner-shrimp"].includes(cardId)
     ? "Invertebrate"
     : cardId === "great-barracuda"
       ? "Predator"
@@ -1143,8 +1144,8 @@ function dragActionCopy(cardId, candidates, selected, current) {
   if (selected?.id === "apex-predators" && cardId === "clownfish") {
     return "Let’s bring this Habitat to life! Drag Clownfish from your hand into the highlighted Fish slot.";
   }
-  if (selected?.id === "apex-predators" && cardId === "arrow-crab") {
-    return "Great—your Fish count is ready! Drag Arrow Crab from your hand into the highlighted Invertebrate slot.";
+  if (selected?.id === "apex-predators" && cardId === "cleaner-shrimp") {
+    return "Great—your Fish count is ready! Drag Cleaner Shrimp from your hand into the highlighted Invertebrate slot.";
   }
   if (selected?.id === "apex-predators" && cardId === "coral-reef") {
     return "All the requirements are met! Select Coral Reef, then choose Play Card.";
@@ -1182,7 +1183,7 @@ function dragActionCopy(cardId, candidates, selected, current) {
   if (cardId === "hammerhead") {
     return "Drag Hammerhead from your hand into the highlighted Apex slot.";
   }
-  const slot = ["sea-urchin", "blue-crab", "arrow-crab"].includes(cardId)
+  const slot = ["sea-urchin", "blue-crab", "arrow-crab", "cleaner-shrimp"].includes(cardId)
     ? "Invertebrate"
     : cardId === "great-barracuda"
       ? "Predator"
@@ -1255,7 +1256,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const seaUrchinWasDefeated = Array.isArray(uiState.discardPileCardIds)
       && uiState.discardPileCardIds.includes("sea-urchin");
     const supportDrawMessage = expectedDraw?.cardId === "dr-evans"
-      ? "Blue Crab's Recycle just returned 1 RP when Clownfish was eaten. Dr. Evans is now on top of your Main Deck. Draw it to replace the familiar cards still in your hand with seven new options."
+      ? "Blue Crab's Recycle just returned 1 RP when Clownfish was eaten. Dr. Evans is now on top of your Main Deck. Draw it to replace the familiar cards still in your hand with eight new options."
       : "Dr. Evans refreshed your hand and left one card in the Main Deck. Draw Arrow Crab now; its 1 VP will finish the Support plan after the Barracuda combo."
     const openWaterDrawMessages = {
       "herring-ball-stage1": "Your four Base Schools now supply 60 School Density and produce enough RP for two upgrades. Draw Herring Ball Stage 1 from the Foundation Deck; its Momentum will find the second copy.",
@@ -1439,19 +1440,19 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       );
     }
     if (cardId === "dr-evans" && uiState.modal === "support-draw") {
-      const allocationReady = Number(uiState.drawSelected ?? 0) >= Number(uiState.drawTarget ?? 7);
+      const allocationReady = Number(uiState.drawSelected ?? 0) >= Number(uiState.drawTarget ?? 8);
       return help(
         allocationReady ? "confirm-support-draw" : "support-draw-controls",
-        "Dr. Evans discards every other card in your hand, then draws seven replacements. Eight cards remain in your Main Deck; choose seven now and leave one for the normal draw next turn.",
+        "Dr. Evans discards every other card in your hand, then draws eight replacements. Nine cards remain in your Main Deck; choose eight now and leave one for the normal draw next turn.",
         allocationReady
-          ? "Discard the stale hand and draw the seven selected cards."
-          : "Choose seven Main draws, leaving one card for next turn, then confirm.",
+          ? "Discard the stale hand and draw the eight selected cards."
+          : "Choose eight Main draws, leaving one card for next turn, then confirm.",
       );
     }
     if (cardId === "spearfishing" && uiState.eventOverlayType === "choose-spearfishing-target") {
       return help(
         "support-effect-choice",
-        "Spearfishing discards one of your Fish or Predators and returns its printed RP cost. The barracuda refunds 3 RP even though Clear Water made you pay 4 RP to play it. Its VP leaves your score until you replay it.",
+        "Spearfishing discards one of your Fish or Predators and returns its printed RP cost. The barracuda refunds its printed 3 RP cost. Its VP leaves your score until you replay it.",
         "Choose Great Barracuda.",
         { targetCardId: "great-barracuda" },
       );
@@ -1459,9 +1460,9 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const selectedCard = uiState.selectedHandCard === cardId
       && (uiState.handPopoverOpen || uiState.handDockSelectionOpen || uiState.modal === "hand");
     const message = cardId === "coral-gardener"
-      ? "Support cards normally resolve once and go to discard, unless their text says otherwise. Coral Gardener searches your personal decks for one Coral: you choose a specific card instead of taking a blind draw. Its printed restriction prevents another Support this turn; that limit is not a rule for every Support."
+      ? "Support cards normally resolve once and go to discard, unless their text says otherwise. Coral Gardener searches your personal decks for one Coral: you choose a specific card instead of taking a blind draw. Coral Gardener is an Aide. You may play only one Aide per turn; Items are still allowed afterward."
       : cardId === "dr-evans"
-        ? "Coral Gardener found a Coral, but imagine the rest of this hand no longer fits your plan. Dr. Evans discards the cards you are holding and replaces them with seven new cards. It is a powerful reset when hand quality matters more than keeping individual cards."
+        ? "Coral Gardener found a Coral, but imagine the rest of this hand no longer fits your plan. Dr. Evans discards the cards you are holding and replaces them with eight new cards. It is a powerful reset when hand quality matters more than keeping individual cards."
         : cardId === "spearfishing"
           ? "Spearfishing turns a Fish or Predator already on your reef into immediate RP equal to its printed cost. The creature and Support both go to discard, so the best target is one you can profitably recover or no longer need."
           : "Support cards normally resolve once and go to discard, unless their text says otherwise.";
@@ -1624,18 +1625,18 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     let message = conceptCopy(uiState, placementConcept(cardId), placementCopy(cardId).message);
     if (selected.id === "apex-predators" && cardId === "clownfish") {
       message = "A Habitat needs a living ecosystem, not just RP. Your four Reef Corals are ready, but Coral Reef still needs two Fish and two Invertebrates. Right now each creature count is one short. Give Clownfish the highlighted Fish slot to reach two Reef Fish.";
-    } else if (selected.id === "apex-predators" && cardId === "arrow-crab") {
-      message = "Great—your Fish count is ready! Sea Urchin is the only Reef Invertebrate so far. Add Arrow Crab to reach the second one; then your reef will meet Coral Reef's full 4 Coral, 2 Fish, 2 Invertebrate requirement.";
+    } else if (selected.id === "apex-predators" && cardId === "cleaner-shrimp") {
+      message = "Great—your Fish count is ready! Sea Urchin is the only Reef Invertebrate so far. Add Cleaner Shrimp to reach the second one; then your reef will meet Coral Reef's full 4 Coral, 2 Fish, 2 Invertebrate requirement.";
     } else if (selected.id === "apex-predators" && cardId === "coral-reef") {
       message = "All three Coral Reef counts are met! Four Reef Corals, two Reef Fish, and two Reef Invertebrates sustain this zero-RP Habitat and unlock the hammerhead. They stay in play; they are not sacrificed. If a count falls short at the end of your turn, the Habitat takes 10 HP damage.";
     } else if (selected.id === "support-strategies" && cardId === "mustard-hill-coral-base") {
       message = "Coral Gardener turned a Support card into the exact Foundation your plan needed. Build Mustard Hill Coral for 2 RP now. Its 2 RP production will help fund the later Barracuda combo.";
     } else if (selected.id === "support-strategies" && cardId === "sea-urchin") {
-      message = "Dr. Evans replaced the stale hand with seven new cards. Sea Urchin is the inexpensive first play: it costs 1 RP, scores 1 VP, and leaves enough RP for the combo that follows.";
+      message = "Dr. Evans replaced the stale hand with eight new cards. Sea Urchin is the inexpensive first play: it costs 1 RP, scores 1 VP, and leaves enough RP for the combo that follows.";
     } else if (selected.id === "support-strategies" && cardId === "great-barracuda") {
       message = current.id === "v2-replay-barracuda"
-        ? "Scavenge returned the barracuda to your hand. Pay its current 4 RP cost under Clear Water and replay it in the same Predator slot. Entering play again triggers Quick Strike again."
-        : "Clear Water makes Predators cost 1 extra RP, so the barracuda costs 4 RP now instead of its printed 3. Its Predator slot is ready. Quick Strike is On Play: its Bite begins immediately when it enters, with no separate Action cost.";
+        ? "Scavenge returned the barracuda to your hand. Pay its 3 RP cost and replay it in the same Predator slot. Entering play again triggers Quick Strike again."
+        : "Abundant Sunlight raises your bank cap to 10, so you can afford the full combo. The barracuda costs 3 RP. Its Predator slot is ready. Quick Strike is On Play: its Bite begins immediately when it enters, with no separate Action cost.";
     } else if (selected.id === "support-strategies" && cardId === "arrow-crab") {
       message = "The Support chain is complete. Arrow Crab costs the final 1 RP, fits Mustard Hill Coral's Invertebrate slot, and supplies the last VP needed to finish the lesson.";
     } else if (selected.id === "filter-feeder" && cardId === "herring-ball-base") {
@@ -1667,7 +1668,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     } else if (cardId === "porcupine-fish" && selected.id === "first-attack") {
       message = "Porcupine Fish is a Reef Fish, so it fits Brain Coral's open Fish slot. Play it for 2 RP. Once it is settled, we’ll learn how its Crunch Action chooses prey and how every faceoff die works.";
     } else if (cardId === "blue-crab" && selected.id === "first-attack") {
-      message = "Blue Crab's Eco Boost is Passive: it works automatically while the crab remains in your ecosystem. It raises your RP bank cap from 8 to 9. It creates room for more RP, but does not itself add RP to your bank.";
+      message = "Blue Crab costs 1 RP. Its Recycle passive works automatically: the first time one of your Fish is eaten each turn, collect half its printed RP cost, rounded up. Its Scavenge action can also recover the Sea Urchin that was just eaten.";
     } else if (cardId === "sea-urchin" && selected.id === "first-attack") {
       message = "Scavenge recovered Sea Urchin instead of attacking. Return it to Brain Coral now, and its Spines passive will again add 20 HP to that Coral.";
     } else if (cardId === "brain-coral-stage-1") {
@@ -1683,7 +1684,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     } else if (cardId === "ocean-sunfish") {
       message = selected.id === "filter-feeder"
         ? "Ocean Sunfish is the payoff for the whole ecosystem. Open Ocean satisfies its Habitat requirement, your four smaller creatures use 60 of 220 Density, and the remaining 160 can support its 150-Density requirement. Pay 8 RP to place it in open water, leaving 10 Density free and reaching 13 VP."
-        : "Ocean Sunfish costs 8 RP, needs Coral Reef or Open Ocean, and commits 150 School Density.";
+        : "Ocean Sunfish costs 8 RP, needs Open Ocean, and commits 150 School Density.";
     } else if (cardId === "hammerhead") {
       message = "The hammerhead costs 6 RP and needs both Coral Reef and an open Apex slot. A Reef Apex slot can house Reef Fish, Predators, or Apex creatures, but an Apex cannot use the smaller Fish or Predator slots. Stage 2 Brain Coral supplies the home you need.";
     } else if (cardId === "great-barracuda") {
@@ -1735,7 +1736,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       : selected.id === "support-strategies"
         ? current.id === "v2-pass-after-search"
           ? "End the turn now. The opponent will play Great Barracuda, and its Quick Strike can eat Clownfish. Watch Blue Crab's Recycle passive: because one of your Fish is eaten, it returns half of Clownfish's printed 2 RP cost, rounded up."
-          : "Dr. Evans discarded the stale cards and drew seven replacements, but its Support lock lasts for the rest of this turn. End now; the next turn resets that limit so Spearfishing can begin the combo."
+          : "Dr. Evans discarded the stale cards and drew eight replacements. You have used this turn's Aide; Items are still allowed. End now so you can play Spearfishing, another Aide, next turn."
       : selected.id === "filter-feeder"
         ? current.id === "v2-grow-school-bases"
           ? "Four Creature Schools now sit where Coral Foundations normally would. Together they provide 60 School Density and 4 RP of Foundation income. End the turn so both Herring Ball bases become eligible to upgrade."
@@ -1779,7 +1780,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
   if (current.actionType === ACTION.RP_COLLECTED && selected.id === "apex-predators") {
     return help(
       "rp-bank",
-      "Your four Corals are producing again, and Arrow Crab raises your RP bank limit. This next turn gives you enough RP to pay Hammerhead's 6 RP cost while Coral Reef and the Apex slot stay ready.",
+      "Your four Corals are producing again, and Cleaner Shrimp raises your RP bank limit. This next turn gives you enough RP to pay Hammerhead's 6 RP cost while Coral Reef and the Apex slot stay ready.",
       "Continue to draw Hammerhead from the Main Deck.",
     );
   }
@@ -1789,7 +1790,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       "rp-bank",
       firstSupportCollection
         ? "Recycle already returned 1 RP when Great Barracuda ate Clownfish. Now the new round adds its normal income. That refund is separate from Spearfishing: Recycle only triggers when one of your Fish is eaten."
-        : "A new turn ends Dr. Evans's printed restriction on playing another Support. Your bank can fund Sea Urchin, two 4-RP barracuda plays under Clear Water, and Scavenge for 2 RP, because Spearfishing returns the barracuda's printed 3 RP cost between plays.",
+        : "A new turn lets you play another Aide. Abundant Sunlight raises your bank cap to 10. Your bank can fund Sea Urchin, two 3-RP barracuda plays, Scavenge for 2 RP, and Arrow Crab, because Spearfishing returns the barracuda's printed 3 RP cost between plays.",
       firstSupportCollection
         ? "Continue to draw Dr. Evans from the Main Deck."
         : "Continue to draw Arrow Crab from the Main Deck.",

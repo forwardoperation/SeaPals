@@ -1,0 +1,477 @@
+{
+  "blender": "5.2.3 LTS",
+  "status": "PROTOTYPE - physical fit and print scaling unverified",
+  "bed_height_mm": 16.0,
+  "paper_inset_mm": [
+    3.174999999999997,
+    3.174999999999983
+  ],
+  "staple_centers_xy_mm": [
+    [
+      5.4186666667,
+      229.99699999999999
+    ],
+    [
+      5.4186666667,
+      45.59299999999999
+    ]
+  ],
+  "parts": [
+    {
+      "file": "tray_11.stl",
+      "print_size_mm": [
+        128.45,
+        153.7,
+        16.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 228482.761,
+      "connected_components": 1,
+      "notes": "Print upright. Butt seams; align with underside keys on a flat board. Glue keys after a dry fit."
+    },
+    {
+      "file": "tray_12.stl",
+      "print_size_mm": [
+        128.45,
+        153.7,
+        19.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 313713.096,
+      "connected_components": 1,
+      "notes": "Print upright. Butt seams; align with underside keys on a flat board. Glue keys after a dry fit."
+    },
+    {
+      "file": "tray_21.stl",
+      "print_size_mm": [
+        128.45,
+        153.7,
+        16.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 228563.662,
+      "connected_components": 1,
+      "notes": "Print upright. Butt seams; align with underside keys on a flat board. Glue keys after a dry fit."
+    },
+    {
+      "file": "tray_22.stl",
+      "print_size_mm": [
+        128.45,
+        153.7,
+        19.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 313887.033,
+      "connected_components": 1,
+      "notes": "Print upright. Butt seams; align with underside keys on a flat board. Glue keys after a dry fit."
+    },
+    {
+      "file": "dock_1_floor_1.stl",
+      "print_size_mm": [
+        108.0,
+        88.0,
+        4.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 37382.376,
+      "connected_components": 1,
+      "notes": "Print flat. Align with underside keys. Attach to the same flat board as the tray; hardware setup before seating paper."
+    },
+    {
+      "file": "dock_1_floor_2.stl",
+      "print_size_mm": [
+        108.0,
+        88.0,
+        4.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 37309.949,
+      "connected_components": 1,
+      "notes": "Print flat. Align with underside keys. Attach to the same flat board as the tray; hardware setup before seating paper."
+    },
+    {
+      "file": "dock_1_rail_lower.stl",
+      "print_size_mm": [
+        174.0,
+        16.65,
+        7.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 5566.8,
+      "connected_components": 1,
+      "notes": "M3 bolts, washers, nuts. Set gap to actual rigid base width plus sliding clearance. Do not guide the moving upper arm."
+    },
+    {
+      "file": "dock_1_rail_upper.stl",
+      "print_size_mm": [
+        174.0,
+        16.65,
+        7.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 5566.8,
+      "connected_components": 1,
+      "notes": "M3 bolts, washers, nuts. Set gap to actual rigid base width plus sliding clearance. Do not guide the moving upper arm."
+    },
+    {
+      "file": "dock_1_toe_stop.stl",
+      "print_size_mm": [
+        21.0,
+        70.0,
+        6.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 2950.5,
+      "connected_components": 1,
+      "notes": "Calibrate by actual staples on scrap. Nominal toe offset is an unmeasured placeholder; tune or regenerate."
+    },
+    {
+      "file": "loading_bridge_1.stl",
+      "print_size_mm": [
+        74.8,
+        87.6,
+        5.2
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 15638.239,
+      "connected_components": 1,
+      "notes": "Remove left after clamping the stack, before inserting stapler. Use supports under the loading surface or print on its long side."
+    },
+    {
+      "file": "dock_2_floor_1.stl",
+      "print_size_mm": [
+        108.0,
+        88.0,
+        4.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 37382.376,
+      "connected_components": 1,
+      "notes": "Print flat. Align with underside keys. Attach to the same flat board as the tray; hardware setup before seating paper."
+    },
+    {
+      "file": "dock_2_floor_2.stl",
+      "print_size_mm": [
+        108.0,
+        88.0,
+        4.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 37309.949,
+      "connected_components": 1,
+      "notes": "Print flat. Align with underside keys. Attach to the same flat board as the tray; hardware setup before seating paper."
+    },
+    {
+      "file": "dock_2_rail_lower.stl",
+      "print_size_mm": [
+        174.0,
+        16.65,
+        7.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 5566.8,
+      "connected_components": 1,
+      "notes": "M3 bolts, washers, nuts. Set gap to actual rigid base width plus sliding clearance. Do not guide the moving upper arm."
+    },
+    {
+      "file": "dock_2_rail_upper.stl",
+      "print_size_mm": [
+        174.0,
+        16.65,
+        7.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 5566.8,
+      "connected_components": 1,
+      "notes": "M3 bolts, washers, nuts. Set gap to actual rigid base width plus sliding clearance. Do not guide the moving upper arm."
+    },
+    {
+      "file": "dock_2_toe_stop.stl",
+      "print_size_mm": [
+        21.0,
+        70.0,
+        6.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 2950.5,
+      "connected_components": 1,
+      "notes": "Calibrate by actual staples on scrap. Nominal toe offset is an unmeasured placeholder; tune or regenerate."
+    },
+    {
+      "file": "loading_bridge_2.stl",
+      "print_size_mm": [
+        74.8,
+        87.6,
+        5.2
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 15638.239,
+      "connected_components": 1,
+      "notes": "Remove left after clamping the stack, before inserting stapler. Use supports under the loading surface or print on its long side."
+    },
+    {
+      "file": "glue_guide_11.stl",
+      "print_size_mm": [
+        135.0,
+        149.7,
+        4.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 7402.933,
+      "connected_components": 1,
+      "notes": "Print inverted with finger top surfaces on plate. Glue keyed splice plates outside paper. Insert to right track ends, bias toward top track wall. Deburr paper-contact edges."
+    },
+    {
+      "file": "glue_guide_12.stl",
+      "print_size_mm": [
+        90.0,
+        12.975,
+        4.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 2165.637,
+      "connected_components": 1,
+      "notes": "Print inverted with finger top surfaces on plate. Glue keyed splice plates outside paper. Insert to right track ends, bias toward top track wall. Deburr paper-contact edges."
+    },
+    {
+      "file": "glue_guide_21.stl",
+      "print_size_mm": [
+        135.0,
+        149.7,
+        4.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 7405.332,
+      "connected_components": 1,
+      "notes": "Print inverted with finger top surfaces on plate. Glue keyed splice plates outside paper. Insert to right track ends, bias toward top track wall. Deburr paper-contact edges."
+    },
+    {
+      "file": "glue_guide_22.stl",
+      "print_size_mm": [
+        90.0,
+        13.175,
+        4.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 2166.837,
+      "connected_components": 1,
+      "notes": "Print inverted with finger top surfaces on plate. Glue keyed splice plates outside paper. Insert to right track ends, bias toward top track wall. Deburr paper-contact edges."
+    },
+    {
+      "file": "guide_splice_1.stl",
+      "print_size_mm": [
+        24.0,
+        10.0,
+        6.8
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 777.199,
+      "connected_components": 1,
+      "notes": "Glue keyed plate across guide joint. Pegs stop 0.2 mm above track floor. Print flat plate face down, pegs upward; no installed guide screws."
+    },
+    {
+      "file": "guide_splice_2.stl",
+      "print_size_mm": [
+        24.0,
+        10.0,
+        6.8
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 777.199,
+      "connected_components": 1,
+      "notes": "Glue keyed plate across guide joint. Pegs stop 0.2 mm above track floor. Print flat plate face down, pegs upward; no installed guide screws."
+    },
+    {
+      "file": "guide_splice_3.stl",
+      "print_size_mm": [
+        10.0,
+        24.0,
+        6.8
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 777.199,
+      "connected_components": 1,
+      "notes": "Glue keyed plate across guide joint. Pegs stop 0.2 mm above track floor. Print flat plate face down, pegs upward; no installed guide screws."
+    },
+    {
+      "file": "hold_down_arm_1.stl",
+      "print_size_mm": [
+        58.9,
+        20.0,
+        38.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 8115.742,
+      "connected_components": 1,
+      "notes": "Print on side (export oriented). M4 nut in UNDERSIDE pocket and M4x30 thumbscrew. M3x25 foot bolts; backing board needs hardware relief holes."
+    },
+    {
+      "file": "pressure_pad_1.stl",
+      "print_size_mm": [
+        24.0,
+        20.0,
+        2.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 945.176,
+      "connected_components": 1,
+      "notes": "Loose pad under screw; add smooth protective tape. Tighten only enough to stop sheet movement."
+    },
+    {
+      "file": "hold_down_arm_2.stl",
+      "print_size_mm": [
+        58.9,
+        20.0,
+        38.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 8115.742,
+      "connected_components": 1,
+      "notes": "Print on side (export oriented). M4 nut in UNDERSIDE pocket and M4x30 thumbscrew. M3x25 foot bolts; backing board needs hardware relief holes."
+    },
+    {
+      "file": "pressure_pad_2.stl",
+      "print_size_mm": [
+        24.0,
+        20.0,
+        2.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 945.176,
+      "connected_components": 1,
+      "notes": "Loose pad under screw; add smooth protective tape. Tighten only enough to stop sheet movement."
+    },
+    {
+      "file": "alignment_key_1.stl",
+      "print_size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 413.952,
+      "connected_components": 1,
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board."
+    },
+    {
+      "file": "alignment_key_2.stl",
+      "print_size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 413.952,
+      "connected_components": 1,
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board."
+    },
+    {
+      "file": "alignment_key_3.stl",
+      "print_size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 413.952,
+      "connected_components": 1,
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board."
+    },
+    {
+      "file": "alignment_key_4.stl",
+      "print_size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 413.952,
+      "connected_components": 1,
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board."
+    },
+    {
+      "file": "alignment_key_5.stl",
+      "print_size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 413.952,
+      "connected_components": 1,
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board."
+    },
+    {
+      "file": "alignment_key_6.stl",
+      "print_size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 413.952,
+      "connected_components": 1,
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board."
+    },
+    {
+      "file": "alignment_key_7.stl",
+      "print_size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 413.952,
+      "connected_components": 1,
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board."
+    },
+    {
+      "file": "alignment_key_8.stl",
+      "print_size_mm": [
+        19.6,
+        9.6,
+        2.2
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 413.952,
+      "connected_components": 1,
+      "notes": "Loose underside seam key, 0.2 mm clearance per side. Dry fit then glue; back the completed fixture with a flat board."
+    },
+    {
+      "file": "fit_coupon_gap_38.4mm.stl",
+      "print_size_mm": [
+        46.4,
+        22.0,
+        8.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 3097.6,
+      "connected_components": 1,
+      "notes": "Try on rigid stapler base; choose clearance before printing large components. Channel is across STL X."
+    },
+    {
+      "file": "fit_coupon_gap_38.7mm.stl",
+      "print_size_mm": [
+        46.7,
+        22.0,
+        8.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 3110.8,
+      "connected_components": 1,
+      "notes": "Try on rigid stapler base; choose clearance before printing large components. Channel is across STL X."
+    },
+    {
+      "file": "fit_coupon_gap_39.1mm.stl",
+      "print_size_mm": [
+        47.1,
+        22.0,
+        8.0
+      ],
+      "non_manifold_edges": 0,
+      "signed_volume_mm3": 3128.4,
+      "connected_components": 1,
+      "notes": "Try on rigid stapler base; choose clearance before printing large components. Channel is across STL X."
+    }
+  ]
+}

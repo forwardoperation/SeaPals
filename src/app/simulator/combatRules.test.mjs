@@ -11,12 +11,12 @@ import {
   endFlashingAlarmTurn,
   getCloakDefenseBonus,
   getDarknessShroudDefenseBonus,
+  getKingOfCamouflageDefenseBonus,
   getFlashingAlarmAttackBonus,
   getFlashingAlarmAmount,
   getMassiveDefenseMode,
   getNightVisionAttackBonus,
   getRemainingAttackTargets,
-  getRovLightsAttackBonus,
   hasExplicitToxicImmunity,
   recordAttackResolution,
   resolveDefenseRoll,
@@ -42,10 +42,13 @@ test("Cloak keeps creatures targetable and grants a flat three defense", () => {
   assert.equal(getCloakDefenseBonus(similarlyNamedAction), 0);
 });
 
-test("ROV Lights adds two only when an attack targets a Deep creature", () => {
-  assert.equal(getRovLightsAttackBonus(true, { zone: "deep" }), 2);
-  assert.equal(getRovLightsAttackBonus(true, { zone: "reef" }), 0);
-  assert.equal(getRovLightsAttackBonus(false, { zone: "deep" }), 0);
+test("King of Camouflage requires Coral Reef and does not stack with duplicate habitats", () => {
+  const octopus = { passives: [{ name: "King of Camouflage", text: "If Coral Reef Habitat is in play, add +4 Defense to this Day Octopus.", effect: { amount: 4 } }] };
+  assert.equal(getKingOfCamouflageDefenseBonus(octopus, []), 0);
+  assert.equal(getKingOfCamouflageDefenseBonus(octopus, ["abyss", "open-ocean"]), 0);
+  assert.equal(getKingOfCamouflageDefenseBonus(octopus, ["coral-reef"]), 4);
+  assert.equal(getKingOfCamouflageDefenseBonus(octopus, ["coral-reef", "coral-reef"]), 4);
+  assert.equal(getKingOfCamouflageDefenseBonus({ passives: [] }, ["coral-reef"]), 0);
 });
 
 test("Night Vision keys off Deep in the target's name rather than its zone", () => {

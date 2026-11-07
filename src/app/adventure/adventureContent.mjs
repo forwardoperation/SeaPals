@@ -1,4 +1,5 @@
 import { ELVERSON_LAYERED_SCENE } from "./adventureElversonLayeredScene.mjs";
+import { getPrebuiltDeckById } from "../../data/decks/prebuiltDecks.js";
 import {
   ELVERSON_TOWN_PORTALS,
   ELVERSON_TOWN_PORTAL_BY_SCENE,
@@ -3264,7 +3265,7 @@ const conversations = [
         "That ecosystem is our first model for the exhibit. Next, we'll work with Jonah, Wyeth, Jordan, Caroline, and Harlan to study Elverson's shore and plan the real display responsibly.",
       ],
       starterPresentation: [
-        "Coral Garden grows a busy reef, Murky Water adapts to a changing estuary, and Blue Water follows life across the open ocean.",
+        "Coral Garden grows a busy reef, Murky Water protects its coral before striking with sharks, and Drop Off builds a strong reef economy to support its attackers.",
         "Every starter is a complete 60-card deck and can complete the whole aquarium lesson. Pick the strategy that sounds most fun to you.",
       ],
       starterConfirmed: [
@@ -3502,7 +3503,7 @@ const conversations = [
     lines: {
       intro: [
         "Hello! I'm Neri, and this little home doubles as a mangrove nursery station.",
-        "Young animals find food and shelter among roots and shallow water. My Murky Water deck works the same way—it builds options before committing. Shall we play a 10 VP duel?",
+        "Young animals find food and shelter among roots and shallow water. My Murky Water deck protects a growing coral reef before bringing in sharks and Barracudas. Shall we play a 10 VP duel?",
       ],
       rematch: [
         "Welcome back. The roots are busy, and my deck has a different route through the tide today.",
@@ -3613,11 +3614,11 @@ const conversations = [
     lines: {
       intro: [
         "Welcome in! I'm Kaiya, a route navigator. I compare forecasts, drifter tracks, and wildlife notices before I draw a working route.",
-        "My Blue Water deck also changes course as new information arrives. Shall we test your navigation in a 10 VP duel?",
+        "My Drop Off deck also changes course as new information arrives. Shall we test your navigation in a 10 VP duel?",
       ],
       rematch: [
         "Hello again. The current chart has changed since our last match, and so has my opening plan.",
-        "Would you like another 10 VP duel against my Blue Water deck?",
+        "Would you like another 10 VP duel against my Drop Off deck?",
       ],
       victory: [
         "Well navigated! You kept options open and adjusted to the board in front of you.",
@@ -4516,10 +4517,10 @@ const starterDecks = [
     habitat: "Coral Reef",
     color: "coral",
     tagline: "Grow a lively reef together.",
-    summary: "Build sturdy coral homes, connect reef neighbors, and turn a thriving community into VP.",
+    summary: getPrebuiltDeckById("coral-garden").description,
     playStyle: "Patient building and creature teamwork",
     difficulty: "beginner",
-    strengths: ["Reliable habitats", "Connected creature bonuses", "Steady VP growth"],
+    strengths: ["Coral upgrades", "Reef Fish searches", "Creature recovery"],
     watchFor: "Plan where each reef creature will live before spending RP.",
     metrics: { offense: 3, defense: 4, economy: 4, consistency: 5, tempo: 3 },
   },
@@ -4527,29 +4528,29 @@ const starterDecks = [
     id: "murky-water",
     deckId: "murky-water",
     name: "Murky Water",
-    habitat: "Estuary & Mangrove",
+    habitat: "Coral Reef",
     color: "mangrove",
-    tagline: "Adapt as the water changes.",
-    summary: "Use flexible estuary species, clever card movement, and changing conditions to stay one step ahead.",
-    playStyle: "Flexible choices and resource control",
+    tagline: "Protect your reef, then strike.",
+    summary: getPrebuiltDeckById("murky-water").description,
+    playStyle: "Reef defense and predator pressure",
     difficulty: "beginner",
-    strengths: ["Flexible responses", "Efficient RP use", "Strong recovery"],
-    watchFor: "Keep options in hand so you can answer the next change.",
+    strengths: ["Coral protection", "Shark and Barracuda attacks", "Card recovery"],
+    watchFor: "Establish Coral Reef to unlock the extra Bites on your Reef Sharks.",
     metrics: { offense: 3, defense: 3, economy: 5, consistency: 4, tempo: 4 },
   },
   {
     id: "blue-water",
     deckId: "blue-water",
-    name: "Blue Water",
-    habitat: "Open Ocean",
+    name: getPrebuiltDeckById("blue-water").name,
+    habitat: "Coral Reef",
     color: "blue",
-    tagline: "Move quickly with the current.",
-    summary: "Gather open-ocean travelers, draw into new opportunities, and press the advantage with fast attacks.",
-    playStyle: "Quick draws and active attacking",
+    tagline: "Build your reef and seize an opening.",
+    summary: getPrebuiltDeckById("blue-water").description,
+    playStyle: "Coral economy and disruptive attacks",
     difficulty: "beginner",
-    strengths: ["Fast starts", "Extra card access", "Direct pressure"],
-    watchFor: "Balance quick attacks with enough RP to rebuild.",
-    metrics: { offense: 5, defense: 3, economy: 3, consistency: 4, tempo: 5 },
+    strengths: ["Boulder Star upgrades", "Larger RP bank", "Hand disruption"],
+    watchFor: "Grow your coral income before committing to costly creatures and attacks.",
+    metrics: { offense: 4, defense: 3, economy: 4, consistency: 4, tempo: 3 },
   },
 ];
 

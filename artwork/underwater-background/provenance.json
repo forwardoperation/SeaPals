@@ -1,0 +1,21 @@
+{
+  "source": {
+    "figma_url": "https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx/Sea-Realm-Production?node-id=4212-6890",
+    "image_node": "4212:6891",
+    "reference_file": "reference-original.png"
+  },
+  "reconstruction": {
+    "tool": "Built-in image_gen",
+    "prompt": "Use case: precise-object-edit. Edit target: the provided underwater photograph. Remove the entire hammerhead shark, including every part of its head, body, dorsal and pectoral fins, and tail, and reconstruct the water surface and light rays seamlessly behind it. Output only the empty underwater background, 1536x1024 landscape 3:2. Preserve the existing photograph's composition, viewpoint, crop, rich blue and turquoise color grading, and all visible water texture as closely as possible. Keep the bright white/cyan sun opening near 28% width and 12% height, the dense sharp irregular curved surface ripples throughout the image, cobalt/ultramarine dark water on the right and bottom, and fine soft sunbeams fanning downward and left from the upper left light. Fill the shark region with equally detailed natural water ripples and rays that follow the surrounding curved perspective; no blurred patch, no ghost silhouette, no new focal object. Preserve existing water outside the shark. No animals, text, label, bubble objects, border, seabed, horizon, logos, or watermark. This cleaned photographic reference will be converted into true SVG vector paths, so retain fine crisp reflective detail.",
+    "output": "water-cleaned.png",
+    "note": "The source is flattened. Water originally hidden behind the shark is reconstructed, rather than recovered."
+  },
+  "vectorization": {
+    "tool": "VTracer 0.6.15",
+    "script": "vectorize.py",
+    "master": "underwater-background.svg",
+    "compact": "underwater-background-compact.svg",
+    "preview": "underwater-background-preview.png",
+    "note": "All artwork consists of filled vector paths. No embedded raster images, scripts, fonts, or external asset dependencies. The vector tracing preserves the visual composition with some simplification of photographic microtexture."
+  }
+}

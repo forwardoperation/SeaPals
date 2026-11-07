@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 1536 1024" fill="none">
+  <title>Soft shark shadow for the underwater background</title>
+  <defs>
+    <radialGradient id="body"><stop stop-color="#123e50" stop-opacity=".30"/><stop offset=".43" stop-color="#123e50" stop-opacity=".21"/><stop offset=".73" stop-color="#123e50" stop-opacity=".08"/><stop offset="1" stop-color="#123e50" stop-opacity="0"/></radialGradient>
+    <radialGradient id="tail"><stop stop-color="#123e50" stop-opacity=".16"/><stop offset=".5" stop-color="#123e50" stop-opacity=".09"/><stop offset="1" stop-color="#123e50" stop-opacity="0"/></radialGradient>
+    <radialGradient id="fin"><stop stop-color="#123e50" stop-opacity=".17"/><stop offset=".5" stop-color="#123e50" stop-opacity=".09"/><stop offset="1" stop-color="#123e50" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g id="Shark-cast-shadow">
+    <ellipse cx="826" cy="831" rx="537" ry="104" transform="rotate(11 826 831)" fill="url(#body)"/>
+    <ellipse cx="298" cy="724" rx="199" ry="48" transform="rotate(18 298 724)" fill="url(#tail)"/>
+    <ellipse cx="827" cy="887" rx="217" ry="53" transform="rotate(19 827 887)" fill="url(#fin)"/>
+  </g>
+</svg>

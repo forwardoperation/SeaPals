@@ -6,6 +6,8 @@ Reefbound uses the same V2 board in `src/app/simulator/Simulator.jsx` with its
 campaign tutorial checkpoints, deck snapshots, and duel-result callbacks.
 Difficulty changes decision policy and action budgets, never card legality or dice.
 
+The October 2026 [gallery audit](gallery-card-audit.md) updates both controllers. The AI observes one Aide per turn while retaining legal Item plays, searches for Deep Fish with ROV Lights, recovers only Supports with Recovery, and draws eight with Dr. Evans. Combat evaluation includes Venomous disadvantage, Social Hunter dolphin bonuses, and the revised Coral Reef conditions.
+
 | Difficulty | Permanent plays | Optional actions | Combat decisions |
 | --- | --- | --- | --- |
 | Easy | One primary play | One Support, one utility, one normal attack | Sensible target for the first profitable attacker |

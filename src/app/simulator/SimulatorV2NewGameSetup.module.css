@@ -233,6 +233,30 @@
   line-height: 1.45;
 }
 
+.deckDescription {
+  display: block;
+  margin-top: 0.75rem;
+  color: rgba(224, 251, 255, 0.82);
+  font-size: 0.82rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.simulationNote {
+  padding: 1rem;
+  border: 1px solid rgba(255, 210, 125, 0.35);
+  border-radius: 1rem;
+  background: rgba(111, 72, 15, 0.2);
+  color: #ffe7b8;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.simulationNote ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+}
+
 .form {
   position: relative;
   z-index: 1;

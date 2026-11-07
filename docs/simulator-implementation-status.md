@@ -5,6 +5,10 @@ This is the living audit and continuation checkpoint for the simulator. The rule
 truth. When those sources do not define a consequence, the simulator displays that
 limitation instead of inventing a rule.
 
+## October 2026 gallery synchronization
+
+See [gallery-card-audit.md](gallery-card-audit.md) for the 204-card audit, 52 updated playable definitions, preserved timing rulings, and 11 gallery-only designs. The [card reference](card-rules-reference.md) and [roster](creature-roster.md) now regenerate from canonical card data. Player and opponent resolution share the revised Venomous, Social Hunter, Support, Plenteous, and direct Coral-damage rules.
+
 ## Current priorities
 
 1. Complete the Coral Garden teaching path and opponent parity.
@@ -56,7 +60,7 @@ limitation instead of inventing a rule.
 - Coral Garden support and action mechanics including Coral Heal, Coral Cement,
   Recovery, Restocking, Dr. Evans, Scientist Jes, Remote Search, Fishing, Arrow Crab,
   Cleaner Shrimp, conditional Parrotfish damage, and Dolphin attack advantages.
-  Dr. Evans can split its seven draws, duplicate Restocking targets remain distinct,
+  Dr. Evans can split its eight draws, duplicate Restocking targets remain distinct,
   and recovered Foundation cards return to the Foundation deck. Green Sea Turtle's
   mandatory On Play Coral Heal also resolves for the automated opponent, targets the
   most damaged legal Coral, and never treats a Creature School as a Coral.
@@ -74,9 +78,9 @@ limitation instead of inventing a rule.
   controller identity remains on the card instance. The invaded controller can
   target and remove it with a successful legal attack or Spearfishing. Because
   Spearfishing targets a Fish or Predator physically on the acting player's reef,
-  an opponent-owned Lionfish is eligible. Lionfish has no Lost Zone
-  instruction, so a successful attack or Spearfishing sends it to its original
-  owner's discard pile. Spearfishing itself enters the acting player's discard
+  an opponent-owned Lionfish is eligible. Destruction sends Lionfish to its
+  original owner's Lost Zone; Spearfishing explicitly sends it to that owner's
+  discard pile. Spearfishing itself enters the acting player's discard
   pile, and awards the recovered RP only to that acting player.
   The maintained Invader ruling triggers at the start of the turn of the player
   whose ecosystem physically contains Lionfish, but resolves targets from the
@@ -88,13 +92,23 @@ limitation instead of inventing a rule.
   from the shared board supply up to the recipient's live bank cap, and reports
   both sources separately. Giant and Colossal Squid resolve a fresh Ensnare coin
   flip before every attack in a repeated On Play sequence for both controllers.
+- Day Octopus's Mimic lets the player and automated opponent copy an available
+  opposing creature Action for its printed 3 RP, with no additional donor RP
+  charge. Choices come from the live opposing ecosystem and are revalidated when
+  selected. On Play effects, passives, and recursive Mimic copying are excluded.
+  The Octopus remains the acting creature, inheriting the copied Action's
+  targeting, effects, repeated attacks, and cooldown. Mimic use is tracked once
+  per turn for each physical Octopus; canceling before commitment spends neither
+  RP nor its action use. Its current printed stats and King of Camouflage defense
+  bonus remain in effect.
 
 ## Known rule/data boundaries
 
 - Apex and Filter Feeder card data defines the printed destruction destination:
   when one of those creatures is destroyed in combat, the simulator moves it to
-  its owner's Lost Zone instead of discard. Lionfish has no such
-  instruction, so both destruction and Spearfishing send it to its owner's discard.
+  its owner's Lost Zone instead of discard. Lionfish also has that printed
+  destruction destination; Spearfishing is a discard effect and sends it to its
+  owner's discard pile.
 - Complex companion effects on an otherwise supported attack resolve the documented
   attack portion and explicitly identify the remainder as unsupported.
 - Several original card-art files remain absent from the repository. Every absent art

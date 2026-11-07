@@ -2,6 +2,9 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { flushSync } from "react-dom";
+import { suppressStunnedAbilityCards, abilityInstanceId, creatureAbilitiesAreStunned, stunCreatureAbilities, clearCreatureAbilityStuns, creatureAbilityCard, onPlayAttackIsAvailable, collectReefAbilityCreatures, getNeurotoxicDefenseFlips, getOpportunistTriggers } from "./reefAbilityRules.mjs";
+import { collectMimicChoices } from "./mimicRules.mjs";
 import Link from "next/link";
 import RulesChat from "@/components/rules/RulesChat";
 import BugReportDialog from "@/components/feedback/BugReportDialog";
@@ -81,12 +84,12 @@ import {
 import { DAMAGE_COUNTER_HP, addResourceWithinCap, applyDamage, calculateAttachedCardRpBonus, calculateAttachedCreatureDefenseBonus, calculateAttachedHostHealthBonus, calculateRpBankCap, calculateVictoryPoints, conditionPreventsCardPlay, createSeededRandom, determineVictoryResult, drawWithHandLimit, getDrawCountFromActions, getRequiredDrawShortfall, getResourceGainFromActions, halfCostRoundedUp, healMostDamagedCoral, isEcosystemConditionMet, moveFoundationDamageCounter, parseLegacyAttackText, parseLegacyUtilityText, preserveDamageOnUpgrade, reconcileContinuousHealth, redistributeOrphans, resolveBlueCrabRecycle, resolveOpposedRoll, rollDie } from "./gameRules.mjs";
 import { createHabitatInstance, evaluateHabitatComposition, getHabitatRequirementError, resolveEndOfTurnHabitatMaintenance } from "./habitatRules.mjs";
 import { createHandLimitChoice, resolveHandLimitChoice, selectAutomatedHandLimitDiscards } from "./handLimitRules.mjs";
-import { addCardsToHandWithLimit, canHostSpecialPlacement, createCreatureInstance, getOceanicApexSacrificeChoices, getPersonalDeckType, getRequiredOceanicPredatorCount, getSpecialPlacementHostTags, moveSlottedCreatureBetweenFoundations, placeCardInSpecialHost, removeCreatureInstances, resolveDestructionRecoveryWaves } from "./zoneRules.mjs";
-import { attackCanTargetCard, attackerHasDisadvantageFromMassive, beginFlashingAlarmTurn, canTargetInAttackSequence, createAttackSequence, createRegenerateDecision, endFlashingAlarmTurn, getCloakDefenseBonus, getDarknessShroudDefenseBonus, getFlashingAlarmAttackBonus, getNightVisionAttackBonus, getRemainingAttackTargets, getRovLightsAttackBonus, hasDefenseAdvantage, hasExplicitToxicImmunity, isToxicWhenConsumed, recordAttackResolution, resolveRegenerateDecision, resolveToxicConsumption, shouldSelfDiscardAfterConsume, triggerFlashingAlarm } from "./combatRules.mjs";
-import { consumeSchoolDensityConditionDiscount, getEffectiveSchoolDensityRequirement } from "./conditionRules.mjs";
+import { addCardsToHandWithLimit, canHostSpecialPlacement, createCreatureInstance, getOceanicApexSacrificeChoices, getPersonalDeckType, getRequiredOceanicPredatorCount, getSpecialPlacementHostTags, moveSlottedCreatureBetweenFoundations, placeCardInSpecialHost, removeCreatureInstances, resolveDestructionRecoveryWaves, resolvePlenteousDestruction } from "./zoneRules.mjs";
+import { attackCanTargetCard, attackerHasDisadvantageFromMassive, beginFlashingAlarmTurn, canTargetInAttackSequence, createAttackSequence, createRegenerateDecision, endFlashingAlarmTurn, getCloakDefenseBonus, getDarknessShroudDefenseBonus, getKingOfCamouflageDefenseBonus, getFlashingAlarmAttackBonus, getNightVisionAttackBonus, getRemainingAttackTargets, hasDefenseAdvantage, hasExplicitToxicImmunity, isToxicWhenConsumed, recordAttackResolution, resolveRegenerateDecision, resolveToxicConsumption, shouldSelfDiscardAfterConsume, triggerFlashingAlarm } from "./combatRules.mjs";
+import { consumeSchoolDensityConditionDiscount, drawConditionCard, getEffectiveSchoolDensityRequirement } from "./conditionRules.mjs";
 import { createSchoolDensityBucketState, getEcosystemSchoolDensityCommitted } from "./schoolDensityRules.mjs";
 import { getOpponentActionUseKey, markOpponentActionUsed, supportLocksFurtherPlays, wasOpponentActionUsedThisTurn } from "./opponentActionRules.mjs";
-import { estimateOpponentCombatOutcome, scoreOpponentCombatOutcome, selectOpponentCombatPlan } from "./opponentCombatRules.mjs";
+import { estimateOpponentCombatOutcome, getCombatDieOutcomes, scoreOpponentCombatOutcome, selectOpponentCombatPlan } from "./opponentCombatRules.mjs";
 import { getOpponentOwnedBoardCardIds, projectOpponentPermanentVp, selectOpponentFoundationEffectTarget } from "./opponentBoardEvaluation.mjs";
 import { OPPONENT_DIFFICULTY_OPTIONS, OpponentDifficulty, chooseOpponentPreferredDeck, getOpponentDifficultyProfile, limitOpponentOptionalActions, normalizeOpponentDifficulty, orderOpponentChoices, scaleOpponentThinkingDelay, selectOpponentChoice } from "./opponentDifficultyRules.mjs";
 import {
@@ -1420,7 +1423,7 @@ function getLionfishOwnedFishTargets(states, targetController) {
     const habitatIds = state?.habitats
       ?? (state?.habitatInstances ?? []).map((entry) => entry.cardId);
     const addTarget = (target) => {
-      const card = cardsById[target.cardId];
+      const card = creatureAbilityCard(cardsById[target.cardId], states[target.controller]?.creatureStatuses, target.instanceId);
       if (
         target.controller !== targetController
         || card?.category !== CardCategory.FISH
@@ -1528,6 +1531,7 @@ function collectTriggerableHostTurnLionfishInvaders(
     hostController,
   }).filter((invader) => (
     !excludedInvaders.has(invader.instanceId)
+    && !creatureAbilitiesAreStunned(states[invader.controller]?.creatureStatuses, invader.instanceId)
     && hasAnyLionfishInvaderTarget({ invader, targets: allLegalFishTargets })
   ));
 }
@@ -1842,7 +1846,7 @@ function resolveHostTurnLionfishInvaders({
       const combatRollPacket = combatRollPackets[invaderIndex] ?? null;
       const attackRoll = Number.isFinite(combatRollPacket?.attack)
         ? { total: Number(combatRollPacket.attack) }
-        : rollDie("D4-1", random);
+        : rollDie("D4", random);
       if (!school || !attackRoll) {
         const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult}, but the selected Creature School was no longer a legal target. The attack fizzled.`;
         events.push({
@@ -1867,7 +1871,12 @@ function resolveHostTurnLionfishInvaders({
       if (damageResult.destroyed) {
         const removal = removeLionfishBoardEntry(states, target);
         schoolRemoved = removal.removed;
-        if (removal.removed) routeLionfishDestroyedCard(states, target.controller, target.cardId);
+        if (removal.removed) {
+          if (cardHasPlenteous(target.card)) {
+            const recycled = resolvePlenteousDestruction([target.card], [target.cardId, ...states[target.controller].discardPile], states[target.controller].foundationDeck, random);
+            states[target.controller] = { ...states[target.controller], discardPile: recycled.discardPile, foundationDeck: recycled.foundationDeck };
+          } else routeLionfishDestroyedCard(states, target.controller, target.cardId);
+        }
       } else {
         const physicalState = states[target.physicalController];
         states[target.physicalController] = {
@@ -1878,9 +1887,9 @@ function resolveHostTurnLionfishInvaders({
         };
       }
       const schoolResult = damageResult.destroyed
-        ? `${target.card.name} was destroyed and went to its owner's ${destroyedCardGoesToLostZone(target.card) ? "Lost Zone" : "discard pile"}.`
+        ? `${target.card.name} was destroyed and went to its owner's ${cardHasPlenteous(target.card) ? "Foundation Deck (Plenteous)" : destroyedCardGoesToLostZone(target.card) ? "Lost Zone" : "discard pile"}.`
         : `${target.card.name} has ${damageResult.remainingHealth} HP remaining.`;
-      const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult} and automatically chose ${branchOwnerLabel} ${target.card.name}. Invader rolled ${attackRoll.total} (D4-1), dealing ${damage} damage to the Creature School. ${schoolResult}`;
+      const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult} and automatically chose ${branchOwnerLabel} ${target.card.name}. Invader rolled ${attackRoll.total} (D4), dealing ${damage} damage to the Creature School. ${schoolResult}`;
       events.push({
         type: "faceoff-result",
         sourceCardId: "lionfish",
@@ -1889,7 +1898,7 @@ function resolveHostTurnLionfishInvaders({
         analyticsEventId: globalThis.crypto?.randomUUID?.(),
         analyticsMetrics: [{ side: target.controller, metrics: { schoolDamage: Math.min(damageResult.appliedDamage, Math.max(0, Number(school.health ?? school.maxHealth) || 0)) } }],
         message,
-        attackDice: "D4-1",
+        attackDice: "D4",
         defenseDice: null,
         primaryAttackRoll: attackRoll.total,
         primaryDefenseRoll: null,
@@ -1899,7 +1908,7 @@ function resolveHostTurnLionfishInvaders({
           attack: {
             cardId: "lionfish",
             actionName: "Invader",
-            contributors: [{ id: "attack-roll", label: "Attack roll", value: attackRoll.total, kind: "roll", detail: "D4-1" }],
+            contributors: [{ id: "attack-roll", label: "Attack roll", value: attackRoll.total, kind: "roll", detail: "D4" }],
             total: attackRoll.total,
           },
           defense: null,
@@ -1965,7 +1974,7 @@ function resolveHostTurnLionfishInvaders({
           defense: { total: Number(combatRollPacket.defense) },
         }
       : null;
-    const opposed = stoppedPrimaryRolls ?? resolveOpposedRoll("D4-1", defenseDice, random);
+    const opposed = stoppedPrimaryRolls ?? resolveOpposedRoll("D4", defenseDice, random);
     if (!opposed.resolved) {
       const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult} and automatically chose ${target.card?.name ?? "a Fish"}, but its defense die could not be resolved. The attack fizzled.`;
       events.push({
@@ -1999,7 +2008,7 @@ function resolveHostTurnLionfishInvaders({
     const defenseAdvantage = hasDefenseAdvantage({ targetCard: target.card, statuses: defenseStatuses });
     const attackDisadvantage = attackerHasDisadvantageFromMassive(target.card);
     const resolutionRandom = combatRollPacket ? createCombatResolutionRandom(combatRollPacket) : random;
-    const secondAttackRoll = attackDisadvantage ? rollDie("D4-1", resolutionRandom) : null;
+    const secondAttackRoll = attackDisadvantage ? rollDie("D4", resolutionRandom) : null;
     const attackTotal = secondAttackRoll
       ? Math.min(opposed.attack.total, secondAttackRoll.total)
       : opposed.attack.total;
@@ -2028,6 +2037,7 @@ function resolveHostTurnLionfishInvaders({
       target.card,
       physicalTargetState.habitats ?? (physicalTargetState.habitatInstances ?? []).map((entry) => entry.cardId),
     );
+    const camouflageDefenseBonus = getKingOfCamouflageDefenseBonus(target.card, Object.values(states).flatMap((state) => state.habitats ?? (state.habitatInstances ?? []).map((entry) => entry.cardId)));
     const defenseTotal = Math.max(
       0,
       baseDefenseTotal
@@ -2035,7 +2045,8 @@ function resolveHostTurnLionfishInvaders({
         + Number(hostedDefenseRoll?.total ?? 0)
         + statusDefenseRolls.reduce((total, entry) => total + entry.roll.total, 0)
         + cloakDefenseBonus
-        + darknessShroudDefenseBonus,
+        + darknessShroudDefenseBonus
+        + camouflageDefenseBonus,
     );
     const defenseDetails = [
       secondDefenseRoll ? `defense advantage ${opposed.defense.total}/${secondDefenseRoll.total}` : null,
@@ -2044,6 +2055,7 @@ function resolveHostTurnLionfishInvaders({
       ...statusDefenseRolls.map((entry) => `+${entry.roll.total} action defense`),
       cloakDefenseBonus ? `+${cloakDefenseBonus} Cloak` : null,
       darknessShroudDefenseBonus ? `+${darknessShroudDefenseBonus} Darkness Shroud` : null,
+      camouflageDefenseBonus ? `+${camouflageDefenseBonus} King of Camouflage` : null,
     ].filter(Boolean);
     const attackerWins = attackTotal > defenseTotal;
     let combatDiscardCue = null;
@@ -2132,7 +2144,7 @@ function resolveHostTurnLionfishInvaders({
     if (nextFlashingAlarm !== targetOwnerState.flashingAlarmAttackBonus) {
       resolutionMessage += ` ${target.card.name}'s Flashing Alarm is primed for its controller's next turn.`;
     }
-    const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult} and automatically chose ${branchOwnerLabel} ${target.card.name}. Invader rolled ${attackTotal} (D4-1${secondAttackRoll ? `; Massive disadvantage ${opposed.attack.total}/${secondAttackRoll.total}` : ""}) against ${defenseTotal} (${defenseDice}${defenseDetails.length ? `; ${defenseDetails.join(", ")}` : ""}).${resolutionMessage}`;
+    const message = `${invaderOwnerLabel} invading Lionfish flipped ${coinResult} and automatically chose ${branchOwnerLabel} ${target.card.name}. Invader rolled ${attackTotal} (D4${secondAttackRoll ? `; defender disadvantage ${opposed.attack.total}/${secondAttackRoll.total}` : ""}) against ${defenseTotal} (${defenseDice}${defenseDetails.length ? `; ${defenseDetails.join(", ")}` : ""}).${resolutionMessage}`;
     events.push({
       type: "faceoff-result",
       sourceCardId: "lionfish",
@@ -2141,7 +2153,7 @@ function resolveHostTurnLionfishInvaders({
       analyticsEventId: globalThis.crypto?.randomUUID?.(),
       analyticsPassives,
       message,
-      attackDice: "D4-1",
+      attackDice: "D4",
       defenseDice,
       primaryAttackRoll: opposed.attack.total,
       primaryDefenseRoll: opposed.defense.total,
@@ -2157,8 +2169,8 @@ function resolveHostTurnLionfishInvaders({
             value: attackTotal,
             kind: "roll",
             detail: secondAttackRoll
-              ? `D4-1 · ${opposed.attack.total} / ${secondAttackRoll.total}, lower roll`
-              : "D4-1",
+              ? `D4 · ${opposed.attack.total} / ${secondAttackRoll.total}, lower roll`
+              : "D4",
           }],
           total: attackTotal,
         },
@@ -2184,6 +2196,7 @@ function resolveHostTurnLionfishInvaders({
             })),
             ...(cloakDefenseBonus ? [{ id: "cloak", label: "Cloak", value: cloakDefenseBonus }] : []),
             ...(darknessShroudDefenseBonus ? [{ id: "darkness-shroud", label: "Darkness Shroud", value: darknessShroudDefenseBonus }] : []),
+          ...(camouflageDefenseBonus ? [{ id: "king-of-camouflage", label: "King of Camouflage", value: camouflageDefenseBonus }] : []),
           ],
           total: defenseTotal,
         },
@@ -2536,6 +2549,8 @@ function getOnPlayOpponentDeckDiscard(card) {
 }
 
 function getOnPlaySupportBlock(card) {
+  const aideBlock = (card?.onPlay ?? []).find((ability) => ability?.effects?.some((effect) => effect.type === "blockOpponentAides"));
+  if (aideBlock) return { actionName: aideBlock.name, aidesOnly: true };
   const text = (card?.onPlay ?? []).map((ability) => typeof ability === "string" ? ability : ability?.text ?? "").find((ability) => /opponent cannot play support cards (?:on (?:their|its) )?next turn/i.test(ability));
   return text ? { actionName: text.split(":")[0]?.trim() || "On Play" } : null;
 }
@@ -2572,7 +2587,7 @@ function cardHasSchoolMomentum(card) {
 }
 
 function cardHasPlenteous(card) {
-  return (card?.passives ?? []).some((passive) => /plenteous:.*base krill bloom/i.test(typeof passive === "string" ? passive : passive?.text ?? ""));
+  return (card?.passives ?? []).some((passive) => /plenteous:.*instead of discarding.*shuffle.*deck/i.test(typeof passive === "string" ? passive : passive?.text ?? ""));
 }
 
 function cardHasAncientResilience(card) {
@@ -2803,7 +2818,7 @@ function getBasicAttackEffect(card) {
         actionName: action.name ?? effect.attackName ?? "Attack",
         text: action.text ?? effect.text ?? "",
         actionCost: Number(action.cost?.rp ?? 0),
-        skipNextTurn: /cannot (?:use|be performed).*next turn/i.test(action.text ?? ""),
+        skipNextTurn: action.cooldown?.duration === "yourNextTurn" || /cannot (?:use|be performed|be used).*next turn/i.test(action.text ?? ""),
         targetTags: effect.targetTags ?? effect.target?.tags ?? action.targetTags ?? [],
         unsupportedDetails: hasCompanionEffects
           ? "This action has additional effects that are not implemented; only its opposed attack resolved."
@@ -2820,7 +2835,7 @@ function getOnPlayAttackEffect(card) {
     const legacyAttack = parseLegacyAttackAction(ability);
     if (legacyAttack) return legacyAttack;
     if (typeof ability !== "object") continue;
-    const effect = (ability.effects ?? []).find((candidate) => candidate.type === EffectType.ATTACK && candidate.attackDice);
+    const effect = (ability.effects ?? []).find((candidate) => [EffectType.ATTACK, "conditionalAttack"].includes(candidate.type) && candidate.attackDice);
     if (effect) {
       const supportedCompanionTypes = new Set([EffectType.DAMAGE, EffectType.MODIFY_DEFENSE_ROLL, "grantAdvantage"]);
       return { ...effect, actionName: ability.name ?? effect.attackName ?? "On Play Attack", actionCost: 0, text: ability.text ?? effect.text ?? "", targetTags: effect.targetTags ?? ability.targetTags ?? [], conditionalModifiers: effect.conditionalModifiers ?? ability.conditionalModifiers ?? [], conditionalDefensePenalty: defenseModifier ? { amount: Math.abs(Number(defenseModifier.amount)), requiredCardId: defenseModifier.requires?.cardId ?? null } : null, unsupportedDetails: (ability.effects ?? []).some((candidate) => candidate !== effect && !supportedCompanionTypes.has(candidate.type)) ? "This On Play ability has additional effects that are not implemented; its attack resolved." : "" };
@@ -2834,6 +2849,7 @@ function getActionEffects(action) {
 }
 
 function actionIsOncePerTurn(action) {
+  if (action?.mimic) return true;
   return action?.oncePerTurn !== false && !/as often as you like/i.test(action?.text ?? "");
 }
 
@@ -2859,6 +2875,7 @@ function formatAttackTargetFamilies(attack) {
 function cardMatchesSearchCriteria(card, effect) {
   if (!card) return false;
   if (effect.targetCardId && effect.targetCardId !== card.id) return false;
+  if (effect.targetZone && effect.targetZone !== card.zone) return false;
   if (effect.targetKind && effect.targetKind !== card.kind) return false;
   if (effect.targetCategories?.length && !effect.targetCategories.includes(card.category)) return false;
   if (effect.targetTags?.length && !effect.targetTags.every((tag) => card.tags?.includes(tag))) return false;
@@ -2868,7 +2885,7 @@ function cardMatchesSearchCriteria(card, effect) {
 }
 
 function cardHasAttackAdvantage(card, targetCard, habitats = [], attack = null) {
-  if (attack?.advantage === true) return true;
+  if (attack?.advantage === true || (attack?.advantageAgainstCardId && attack.advantageAgainstCardId === targetCard?.id)) return true;
   return (card?.onPlay ?? []).some((ability) => {
     if (typeof ability === "string") return /(?:attacks? have|gain) advantage/i.test(ability) && (!/abyss/i.test(ability) || habitats.includes("abyss"));
     return (ability.effects ?? []).some((effect) => {
@@ -2880,7 +2897,7 @@ function cardHasAttackAdvantage(card, targetCard, habitats = [], attack = null) 
   });
 }
 
-function getAttackConditionalModifier(attacker, targetCard, habitats, friendlyCorals, friendlyOpenWater, attack, friendlyOrphans = [], { rollConditionalDie = rollDie } = {}) {
+function getAttackConditionalModifier(attacker, targetCard, habitats, friendlyCorals, friendlyOpenWater, attack, friendlyOrphans = [], { rollConditionalDie = rollDie, abilityState = null } = {}) {
   const text = attack?.text ?? "";
   let flat = Number(attack?.flatBonus ?? 0);
   const details = attack?.flatBonus ? [`+${attack.flatBonus} ${attack.flatBonusSource ?? "attack bonus"}`] : [];
@@ -2929,7 +2946,8 @@ function getAttackConditionalModifier(attacker, targetCard, habitats, friendlyCo
     flat += Number(namedTargetBonus[1]);
     details.push(`+${namedTargetBonus[1]} Man O' War target`);
   }
-  const friendlyCards = [...friendlyCorals.flatMap((foundation) => [cardsById[foundation.cardId], ...foundation.slots.flatMap((slot) => getSlotCardIds(slot).map((cardId) => cardsById[cardId]))]), ...(friendlyOpenWater ?? []).map((cardId) => cardsById[cardId]), ...(friendlyOrphans ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])].map((cardId) => cardsById[cardId]))].filter(Boolean);
+  let friendlyCards = [...friendlyCorals.flatMap((foundation) => [cardsById[foundation.cardId], ...foundation.slots.flatMap((slot) => getSlotCardIds(slot).map((cardId) => cardsById[cardId]))]), ...(friendlyOpenWater ?? []).map((cardId) => cardsById[cardId]), ...(friendlyOrphans ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])].map((cardId) => cardsById[cardId]))].filter(Boolean);
+  if (abilityState) friendlyCards = suppressStunnedAbilityCards(friendlyCards, { ...abilityState, corals: friendlyCorals, orphanCreatureInstances: friendlyOrphans }, cardsById);
   friendlyCards.forEach((card) => (card.passives ?? []).forEach((passive) => {
     const passiveText = typeof passive === "string" ? passive : passive?.text ?? "";
     const boost = passiveText.match(/all of your attacks have \+(\d+)/i);
@@ -2943,6 +2961,12 @@ function getAttackConditionalModifier(attacker, targetCard, habitats, friendlyCo
   const hasStructuredExtraDie = (attack?.conditionalModifiers ?? []).some((entry) => entry.modifier?.type === "addDiceToAttackRoll");
   const extraRoll = !hasStructuredExtraDie && habitats.includes("open-ocean") && extraDieMatch ? rollConditionalDie(extraDieMatch[1]) : null;
   if (extraRoll) { flat += extraRoll.total; details.push(`+${extraRoll.total} ${extraDieMatch[1]}`); }
+  if (attack?.ecosystemBonus) {
+    const { tag, amount } = attack.ecosystemBonus;
+    const count = friendlyCards.filter((card) => card.tags?.includes(tag)).length;
+    const bonus = count * Number(amount ?? 0);
+    if (bonus) { flat += bonus; details.push(`+${bonus} ${attack.actionName ?? "Social Hunter"}`); }
+  }
   const ecosystemCards = friendlyCards;
   (attack?.conditionalModifiers ?? []).forEach((entry) => {
     if (!isEcosystemConditionMet(entry.condition, habitats, ecosystemCards)) return;
@@ -2963,11 +2987,13 @@ function getAttackConditionalModifier(attacker, targetCard, habitats, friendlyCo
 }
 
 function getSupportedUtilityEffect(action) {
+  const mimic = getActionEffects(action).find((effect) => effect.type === "mimicAction");
+  if (mimic) return mimic;
   const actionText = typeof action === "string" ? action : action?.text ?? "";
   const cloakEffect = /cloak in darkness:.*choose one of your opponent'?s corals?.*stunn?ed/i.test(actionText)
     ? { type: EffectType.STUN_CORAL, target: { controller: "opponent", kind: CardKind.CORAL } }
     : null;
-  return parseLegacyUtilityAction(action) ?? cloakEffect ?? getActionEffects(action).find((effect) => effect.type === EffectType.DRAW_CARDS || effect.type === EffectType.SEARCH_DECK || effect.type === "reorderTopDeck" || effect.type === "grantNextOnPlayAttackBonus" || effect.type === "rollDiceForResource" || effect.type === EffectType.RECOVER_CARD_FROM_DISCARD || effect.type === "recoverCardFromDiscard" || effect.type === "discardThenSearchDeck" || effect.type === "discardThenDraw" || effect.type === "modifyDefenseRoll" || effect.type === EffectType.GRANT_DEFENSE_ADVANTAGE || effect.type === EffectType.STUN_CORAL || (effect.type === EffectType.FLIP_COIN && [EffectType.STUN_CORAL, EffectType.DAMAGE, EffectType.MODIFY_RP_GENERATION, "modifyRpGeneration"].includes(effect.onSuccess?.type))) ?? null;
+  return parseLegacyUtilityAction(action) ?? cloakEffect ?? getActionEffects(action).find((effect) => effect.type === EffectType.DRAW_CARDS || effect.type === EffectType.SEARCH_DECK || effect.type === "stunCreature" || effect.type === "reorderTopDeck" || effect.type === "grantNextOnPlayAttackBonus" || effect.type === "rollDiceForResource" || effect.type === EffectType.RECOVER_CARD_FROM_DISCARD || effect.type === "recoverCardFromDiscard" || effect.type === "discardThenSearchDeck" || effect.type === "discardThenDraw" || effect.type === "modifyDefenseRoll" || effect.type === EffectType.GRANT_DEFENSE_ADVANTAGE || effect.type === EffectType.STUN_CORAL || effect.type === EffectType.DAMAGE || (effect.type === EffectType.FLIP_COIN && [EffectType.STUN_CORAL, EffectType.DAMAGE, EffectType.MODIFY_RP_GENERATION, "modifyRpGeneration"].includes(effect.onSuccess?.type))) ?? null;
 }
 
 function supportExplicitlyLocksFurtherSupports(card) {
@@ -3920,30 +3946,30 @@ function conditionPreventsCoralIncome(card, activeCondition) {
   );
 }
 
-function getEcosystemStartTurnRp(playerCorals, activeCondition = null) {
+function getEcosystemStartTurnRp(playerCorals, activeCondition = null, abilityStatuses = {}) {
   return playerCorals.reduce((total, coral) => {
-    const coralCard = cardsById[coral.cardId];
+    const coralCard = creatureAbilityCard(cardsById[coral.cardId], abilityStatuses, `foundation:${coral.id}`);
     const baseCoralRp = coralIsStunned(coral) || conditionPreventsCoralIncome(coralCard, activeCondition) ? 0 : getCardStartTurnRp(coralCard);
     const coralRp = Math.max(0, baseCoralRp - Number(coral.rpPenaltyNextTurn ?? 0));
     const slottedRp = (coral.slots ?? []).reduce(
-      (slotTotal, slot) => slotTotal + (slot.invasiveOwner ? 0 : getCardStartTurnRp(cardsById[slot.cardId])),
+      (slotTotal, slot) => slotTotal + (slot.invasiveOwner ? 0 : getCardStartTurnRp(creatureAbilityCard(cardsById[slot.cardId], abilityStatuses, getLionfishSlotInstanceId(coral, slot)))),
       0,
     );
-    const attachedCardBonus = coralIsStunned(coral) ? 0 : calculateAttachedCardRpBonus(coral, cardsById);
+    const attachedCardBonus = coralIsStunned(coral) || coralCard?.abilitiesStunned ? 0 : calculateAttachedCardRpBonus(coral, cardsById);
     return total + coralRp + slottedRp + attachedCardBonus;
   }, 0);
 }
 
-function getEcosystemStartTurnRpSources(playerCorals, activeCondition = null) {
+function getEcosystemStartTurnRpSources(playerCorals, activeCondition = null, abilityStatuses = {}) {
   const sources = [{ key: "round-supply", amount: 1 }];
 
   playerCorals.forEach((coral) => {
-    const coralCard = cardsById[coral.cardId];
+    const coralCard = creatureAbilityCard(cardsById[coral.cardId], abilityStatuses, `foundation:${coral.id}`);
     const baseCoralRp = coralIsStunned(coral) || conditionPreventsCoralIncome(coralCard, activeCondition)
       ? 0
       : getCardStartTurnRp(coralCard);
     const coralRp = Math.max(0, baseCoralRp - Number(coral.rpPenaltyNextTurn ?? 0));
-    const attachedCardBonus = coralIsStunned(coral) ? 0 : calculateAttachedCardRpBonus(coral, cardsById);
+    const attachedCardBonus = coralIsStunned(coral) || coralCard?.abilitiesStunned ? 0 : calculateAttachedCardRpBonus(coral, cardsById);
     const foundationAmount = coralRp + attachedCardBonus;
     if (foundationAmount > 0) {
       sources.push({ key: `foundation:${coral.id}`, amount: foundationAmount });
@@ -3951,7 +3977,7 @@ function getEcosystemStartTurnRpSources(playerCorals, activeCondition = null) {
 
     (coral.slots ?? []).forEach((slot) => {
       if (slot.invasiveOwner) return;
-      const amount = getCardStartTurnRp(cardsById[slot.cardId]);
+      const amount = getCardStartTurnRp(creatureAbilityCard(cardsById[slot.cardId], abilityStatuses, getLionfishSlotInstanceId(coral, slot)));
       if (amount > 0) sources.push({ key: `slot:${slot.id}`, amount });
     });
   });
@@ -3967,9 +3993,8 @@ function getEcosystemCreatureCardIds(foundations = [], openWaterCreatures = [], 
   ];
 }
 
-function getParasiteRequestedRp(controllerFoundations, controllerOpenWater, controllerOrphans, opposingFoundations, opposingOpenWater, opposingOrphans) {
-  const controllerCardIds = getEcosystemCreatureCardIds(controllerFoundations, controllerOpenWater, controllerOrphans);
-  if (!controllerCardIds.includes("cookie-cutter-shark")) return 0;
+function getParasiteRequestedRp(controllerFoundations, controllerOpenWater, controllerOrphans, opposingFoundations, opposingOpenWater, opposingOrphans, abilityState = null) {
+  if (!ecosystemHasCard(controllerFoundations, controllerOpenWater, "cookie-cutter-shark", controllerOrphans, abilityState)) return 0;
   return getEcosystemCreatureCardIds(opposingFoundations, opposingOpenWater, opposingOrphans)
     .map((cardId) => cardsById[cardId])
     .filter((card) => [CardCategory.PREDATOR, CardCategory.APEX].includes(card?.category))
@@ -3990,16 +4015,30 @@ function describeParasiteTransfer(actorLabel, transfer) {
   return `${collected}${supply}${remainder}`;
 }
 
-function getEcosystemRpCap(corals, habitats = [], activeCondition = null) {
+function getEcosystemRpCap(corals, habitats = [], activeCondition = null, abilityState = null, opposingHabitats = []) {
   const coralCards = corals.flatMap((coral) => [
-    ...(coralIsStunned(coral) ? [] : [cardsById[coral.cardId]]),
+    ...(coralIsStunned(coral) ? [] : [creatureAbilityCard(cardsById[coral.cardId], abilityState?.creatureStatuses, `foundation:${coral.id}`)]),
     ...(coral.slots ?? []).flatMap((slot) => slot.invasiveOwner ? [] : [
-      cardsById[slot.cardId],
-      ...(slot.hostedCardIds ?? []).map((cardId) => cardsById[cardId]),
+      creatureAbilityCard(cardsById[slot.cardId], abilityState?.creatureStatuses, getLionfishSlotInstanceId(coral, slot)),
+      ...(slot.hostedCardIds ?? []).map((cardId, index) => creatureAbilityCard(cardsById[cardId], abilityState?.creatureStatuses, `hosted:${slot.id}:${index}`)),
     ]),
   ]);
-  const otherCards = habitats.map((cardId) => cardsById[cardId]);
-  return calculateRpBankCap([...coralCards, ...otherCards].filter(Boolean), activeCondition);
+  const suppressed = new Map();
+  if (abilityState?.creatureStatuses) {
+    for (const entry of collectReefAbilityCreatures({ player: { ...abilityState, corals: [] } }, cardsById)) {
+      if (entry.card.abilitiesStunned) suppressed.set(entry.cardId, (suppressed.get(entry.cardId) ?? 0) + 1);
+    }
+  }
+  const otherCards = habitats.map((cardId) => {
+    const card = cardsById[cardId];
+    if (!suppressed.get(cardId)) return card;
+    suppressed.set(cardId, suppressed.get(cardId) - 1);
+    return { ...card, passives: [] };
+  });
+  return calculateRpBankCap([...coralCards, ...otherCards].filter(Boolean), activeCondition, undefined, {
+    cardIdsInPlay: [...corals.flatMap((coral) => [coral.cardId, ...(coral.slots ?? []).flatMap(getSlotCardIds)]), ...habitats],
+    opposingCardIdsInPlay: opposingHabitats,
+  });
 }
 
 function getCardPlayCost(card, activeCondition = null) {
@@ -4046,12 +4085,23 @@ function applyAutomatedHandLimitToState(state, handLimit, context = {}, incoming
   };
 }
 
-function getOpposingPlayCostModifier(card, opposingCorals = [], opposingReefCreatures = [], opposingOrphans = []) {
-  const opposingCards = [
+function getOpposingPlayCostModifier(card, opposingCorals = [], opposingReefCreatures = [], opposingOrphans = [], abilityState = null) {
+  let opposingCards = [
     ...opposingReefCreatures.map((cardId) => cardsById[cardId]),
     ...opposingOrphans.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])].map((cardId) => cardsById[cardId])),
     ...opposingCorals.flatMap((foundation) => [cardsById[foundation.cardId], ...foundation.slots.flatMap((slot) => getSlotCardIds(slot).map((cardId) => cardsById[cardId]))]),
   ].filter(Boolean);
+  if (abilityState?.creatureStatuses) {
+    const suppressed = new Map();
+    for (const entry of collectReefAbilityCreatures({ player: { ...abilityState, corals: opposingCorals, orphanCreatureInstances: opposingOrphans } }, cardsById)) {
+      if (entry.card.abilitiesStunned) suppressed.set(entry.cardId, (suppressed.get(entry.cardId) ?? 0) + 1);
+    }
+    opposingCards = opposingCards.map((candidate) => {
+      if (!suppressed.get(candidate.id)) return candidate;
+      suppressed.set(candidate.id, suppressed.get(candidate.id) - 1);
+      return { ...candidate, passives: [] };
+    });
+  }
   return opposingCards.reduce((total, opposingCard) => total + (opposingCard.passives ?? []).reduce((passiveTotal, passive) => {
     const effect = typeof passive === "object" ? passive.effect : null;
     if (effect?.type !== EffectType.MODIFY_PLAY_COST || effect.targetPlayer !== "opponent") return passiveTotal;
@@ -4109,10 +4159,14 @@ function getEcosystemVictoryPoints(corals, habitats = [], reefCreatures = [], ow
     ...locallyOwnedOrphanIds,
     ...remotelyOwnedOrphanIds,
   ];
-  return calculateVictoryPoints(cardIds.map((cardId) => cardsById[cardId]), cardIds);
+  const activeCards = ownership?.abilityState
+    ? suppressStunnedAbilityCards(cardIds.map((cardId) => cardsById[cardId]), { ...ownership.abilityState, corals, orphanCreatureInstances: ownership.localOrphans ?? [] }, cardsById)
+    : cardIds.map((cardId) => cardsById[cardId]);
+  return calculateVictoryPoints(activeCards, cardIds);
 }
 
-function ecosystemHasCard(corals, reefCreatures, cardId, orphanCreatures = []) {
+function ecosystemHasCard(corals, reefCreatures, cardId, orphanCreatures = [], abilityState = null) {
+  if (abilityState) return collectReefAbilityCreatures({ player: { ...abilityState, corals, reefCreatures, orphanCreatureInstances: orphanCreatures }, opponent: { creatureStatuses: abilityState.creatureStatuses } }, cardsById).some((entry) => entry.cardId === cardId && !entry.card.abilitiesStunned);
   return (reefCreatures ?? []).includes(cardId)
     || orphanCreatures.some((entry) => entry.cardId === cardId || (entry.hostedCardIds ?? []).includes(cardId))
     || corals.some((coral) => coral.cardId === cardId || coral.slots.some((slot) => slot.cardId === cardId || (slot.hostedCardIds ?? []).includes(cardId)));
@@ -4125,18 +4179,19 @@ function getGlobalCoralHealthBonus(foundations) {
   }, 0), 0);
 }
 
-function reconcileGlobalCoralHealth(foundations, ecosystemCreatures = []) {
+function reconcileGlobalCoralHealth(foundations, ecosystemCreatures = [], abilityStatuses = {}) {
   const bonus = getGlobalCoralHealthBonus(foundations);
   const creatureSchools = foundations.filter((foundation) => isCreatureSchool(cardsById[foundation.cardId]));
   const territorialSources = [
     ...ecosystemCreatures.map((entry) => typeof entry === "string" ? { cardId: entry } : entry),
     ...foundations.flatMap((foundation) => foundation.slots.map((slot) => ({
       cardId: slot.cardId,
+      instanceId: getLionfishSlotInstanceId(foundation, slot),
       ...(Object.prototype.hasOwnProperty.call(slot, "territorialTargetFoundationId")
         ? { territorialTargetFoundationId: slot.territorialTargetFoundationId }
         : {}),
     }))),
-  ].filter((entry) => entry.cardId === "ocean-triggerfish");
+  ].filter((entry) => entry.cardId === "ocean-triggerfish" && !creatureAbilitiesAreStunned(abilityStatuses, entry.instanceId));
   const territorialBonuses = territorialSources.reduce((bonuses, source) => {
     const hasPersistedTarget = Object.prototype.hasOwnProperty.call(source, "territorialTargetFoundationId");
     const target = hasPersistedTarget
@@ -4150,7 +4205,7 @@ function reconcileGlobalCoralHealth(foundations, ecosystemCreatures = []) {
   const corals = foundations.map((foundation) => {
     const card = cardsById[foundation.cardId];
     if (card?.kind !== CardKind.CORAL && !isCreatureSchool(card)) return foundation;
-    const attachedBonus = calculateAttachedHostHealthBonus(foundation.slots.map((slot) => cardsById[slot.cardId]).filter(Boolean));
+    const attachedBonus = calculateAttachedHostHealthBonus(foundation.slots.map((slot) => creatureAbilityCard(cardsById[slot.cardId], abilityStatuses, getLionfishSlotInstanceId(foundation, slot))).filter(Boolean));
     const totalBonus = (card.kind === CardKind.CORAL ? bonus : 0) + attachedBonus + Number(territorialBonuses.get(foundation.id) ?? 0);
     const desiredMax = Math.max(0, Number(card.health ?? 0) + totalBonus);
     const currentMax = Number(foundation.maxHealth ?? card.health ?? 0);
@@ -4164,7 +4219,7 @@ function reconcileGlobalCoralHealth(foundations, ecosystemCreatures = []) {
   return { changed, destroyed, corals: corals.filter((foundation) => !destroyed.some((entry) => entry.id === foundation.id)) };
 }
 
-function reconcileFoundationHealthToFixedPoint(foundations = [], reefCreatures = [], orphanCreatures = []) {
+function reconcileFoundationHealthToFixedPoint(foundations = [], reefCreatures = [], orphanCreatures = [], abilityStatuses = {}) {
   let corals = foundations;
   let orphans = orphanCreatures;
   const destroyed = [];
@@ -4176,9 +4231,9 @@ function reconcileFoundationHealthToFixedPoint(foundations = [], reefCreatures =
     const allUnslottedCreatures = [
       ...reefCreatures,
       ...orphans,
-      ...orphans.flatMap((entry) => (entry.hostedCardIds ?? []).map((cardId) => ({ cardId }))),
+      ...orphans.flatMap((entry) => (entry.hostedCardIds ?? []).map((cardId, hostedIndex) => ({ cardId, instanceId: `orphan-hosted:${entry.instanceId}:${hostedIndex}` }))),
     ];
-    const result = reconcileGlobalCoralHealth(corals, allUnslottedCreatures);
+    const result = reconcileGlobalCoralHealth(corals, allUnslottedCreatures, abilityStatuses);
     if (!result.changed) break;
     changed = true;
     corals = result.corals;
@@ -4924,11 +4979,13 @@ export default function Simulator({
   const [pendingCreatureAction, setPendingCreatureAction] = useState(null);
   const [creatureStatuses, setCreatureStatuses] = useState({});
   const [poisonImmunityNextPredatorAttack, setPoisonImmunityNextPredatorAttack] = useState(false);
-  const [rovLightsActive, setRovLightsActive] = useState(false);
   const [nextOnPlayAttackBonus, setNextOnPlayAttackBonus] = useState(null);
   const [flashingAlarmAttackBonus, setFlashingAlarmAttackBonus] = useState(null);
   const [supportLockSourceId, setSupportLockSourceId] = useState(null);
   const [supportBlockedUntilRound, setSupportBlockedUntilRound] = useState(0);
+  const [aideBlockedUntilRound, setAideBlockedUntilRound] = useState(0);
+  const playerReefPostCombatRef = useRef(null);
+  const reefAbilityStatesRef = useRef(null);
   const [cardsBlockedFromPlayThisTurn, setCardsBlockedFromPlayThisTurn] = useState([]);
   const [attackContext, setAttackContext] = useState(null);
   const [searchContext, setSearchContext] = useState(null);
@@ -5040,7 +5097,10 @@ export default function Simulator({
   function trackSimulatorAbility(side, counter, cardId, abilityName, id = null) {
     const card = cardsById[cardId];
     const entries = card?.[counter] ?? [];
-    const entry = entries.find((candidate) => getActionName(candidate) === abilityName);
+    const entry = entries.find((candidate) => getActionName(candidate) === abilityName)
+      ?? (counter === "actions" && abilityName?.startsWith("Mimic — ")
+        ? entries.find((candidate) => getActionEffects(candidate).some((effect) => effect.type === "mimicAction"))
+        : null);
     // The published key always uses the catalog's name. Unsupported/synthetic
     // abilities are omitted and covered by the report's partial coverage flag.
     if (!entry) return;
@@ -5079,7 +5139,10 @@ export default function Simulator({
     ];
     const snapshot = createSimulatorAnalyticsSnapshot({
       foundations: foundations.map(({ id, cardId, health, maxHealth, statuses }) => ({ id, cardId, health, maxHealth, statuses })),
-      ecoBoost: cardIds.reduce((total, cardId) => total + getCardRpBankCapModifier(cardsById[cardId]), 0),
+      ecoBoost: cardIds.reduce((total, cardId) => total + getCardRpBankCapModifier(cardsById[cardId], {
+        cardIdsInPlay: cardIds,
+        opposingCardIdsInPlay: side === "player" ? opponent.habitats : playerHabitats,
+      }), 0),
       schoolDensity: createSchoolDensityBucketState(foundations, 0, cardsById).capacity,
       vp,
     });
@@ -5834,11 +5897,11 @@ export default function Simulator({
     clearRpSpendPresentation({ updateState: false });
   }, []);
 
-  function projectNormalizedPlayerState(projectedState) {
+  function projectNormalizedPlayerState(projectedState, opposingState = opponent) {
     const projectedCorals = projectedState.corals ?? playerCorals;
     const projectedReefInstances = projectedState.reefCreatureInstances ?? playerReefCreatureInstances;
     const projectedOrphans = projectedState.orphanCreatureInstances ?? playerOrphanCreatureInstances;
-    const healthResult = reconcileFoundationHealthToFixedPoint(projectedCorals, projectedReefInstances, projectedOrphans);
+    const healthResult = reconcileFoundationHealthToFixedPoint(projectedCorals, projectedReefInstances, projectedOrphans, projectedState.creatureStatuses ?? creatureStatuses);
     const projectedHabitatCardIds = projectedState.habitatInstances?.map((instance) => instance.cardId)
       ?? projectedState.habitats
       ?? playerHabitats;
@@ -5848,7 +5911,8 @@ export default function Simulator({
       ...healthResult.orphans.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
     ];
     const projectedRp = Number(projectedState.rp ?? rp);
-    const nextRp = Math.min(projectedRp, getEcosystemRpCap(healthResult.corals, projectedOtherCards, activeCondition));
+    const opposingHabitats = opposingState.habitatInstances?.map((instance) => instance.cardId) ?? opposingState.habitats ?? opponent.habitats;
+    const nextRp = Math.min(projectedRp, getEcosystemRpCap(healthResult.corals, projectedOtherCards, activeCondition, { ...projectedState, creatureStatuses: projectedState.creatureStatuses ?? creatureStatuses, reefCreatureInstances: projectedReefInstances, orphanCreatureInstances: healthResult.orphans }, opposingHabitats));
     if (!healthResult.changed && nextRp === projectedRp) return { state: projectedState, collateral: null };
     if (!healthResult.destroyed.length) return { state: { ...projectedState, corals: healthResult.corals, rp: nextRp }, collateral: null };
     const projectedHand = projectedState.hand ?? hand;
@@ -5872,22 +5936,23 @@ export default function Simulator({
     };
   }
 
-  function normalizeProjectedPlayerState(projectedState) {
-    return projectNormalizedPlayerState(projectedState).state;
+  function normalizeProjectedPlayerState(projectedState, opposingState) {
+    return projectNormalizedPlayerState(projectedState, opposingState).state;
   }
 
-  function projectNormalizedOpponentState(projectedState) {
-    const healthResult = reconcileFoundationHealthToFixedPoint(projectedState.corals ?? [], projectedState.reefCreatureInstances ?? projectedState.reefCreatures ?? [], projectedState.orphanCreatures ?? []);
+  function projectNormalizedOpponentState(projectedState, opposingState = { habitats: playerHabitats }) {
+    const healthResult = reconcileFoundationHealthToFixedPoint(projectedState.corals ?? [], projectedState.reefCreatureInstances ?? projectedState.reefCreatures ?? [], projectedState.orphanCreatures ?? [], projectedState.creatureStatuses);
     const opponentHabitatCardIds = projectedState.habitatInstances?.map((instance) => instance.cardId)
       ?? projectedState.habitats
       ?? [];
     const opponentOtherCards = [
       ...opponentHabitatCardIds,
-      ...(projectedState.reefCreatures ?? []),
+      ...(projectedState.reefCreatureInstances?.map((instance) => instance.cardId) ?? projectedState.reefCreatures ?? []),
       ...healthResult.orphans.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
     ];
     const projectedRp = Number(projectedState.rp ?? 0);
-    const nextRp = Math.min(projectedRp, getEcosystemRpCap(healthResult.corals, opponentOtherCards, activeCondition));
+    const opposingHabitats = opposingState.habitatInstances?.map((instance) => instance.cardId) ?? opposingState.habitats ?? playerHabitats;
+    const nextRp = Math.min(projectedRp, getEcosystemRpCap(healthResult.corals, opponentOtherCards, activeCondition, { ...projectedState, orphanCreatures: healthResult.orphans }, opposingHabitats));
     if (!healthResult.changed && nextRp === projectedRp) return { state: projectedState, collateral: null };
     if (!healthResult.destroyed.length) return { state: { ...projectedState, corals: healthResult.corals, rp: nextRp }, collateral: null };
     const handLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
@@ -5911,8 +5976,8 @@ export default function Simulator({
     };
   }
 
-  function normalizeProjectedOpponentState(projectedState) {
-    return projectNormalizedOpponentState(projectedState).state;
+  function normalizeProjectedOpponentState(projectedState, opposingState) {
+    return projectNormalizedOpponentState(projectedState, opposingState).state;
   }
 
   function getContinuousHealthCollapseMessage(collateral) {
@@ -5952,10 +6017,10 @@ export default function Simulator({
     };
   }
 
-  function setOpponent(update) {
+  function setOpponent(update, opposingState) {
     setOpponentState((current) => {
       const next = typeof update === "function" ? update(current) : update;
-      return normalizeProjectedOpponentState(reconcileOpponentInstances(current, next));
+      return normalizeProjectedOpponentState(reconcileOpponentInstances(current, next), opposingState);
     });
   }
 
@@ -6040,10 +6105,10 @@ export default function Simulator({
       : isStartOfTurn
         ? "Complete your mandatory draw before taking another action."
         : "End your actions, resolve the opponent turn, and begin the next round.";
-  const startTurnRp = getEcosystemStartTurnRp(playerCorals, activeCondition);
-  const playerRpCap = getEcosystemRpCap(playerCorals, [...playerHabitats, ...playerReefCreatures, ...getLocallyControlledOrphans(playerOrphanCreatures, "player").flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
-  const opponentRpCap = getEcosystemRpCap(opponent.corals, [...opponent.habitats, ...opponent.reefCreatures, ...getLocallyControlledOrphans(opponent.orphanCreatures, "opponent").flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
-  const playerVp = getEcosystemVictoryPoints(playerCorals, playerHabitats, playerReefCreatures, {
+  const startTurnRp = getEcosystemStartTurnRp(playerCorals, activeCondition, creatureStatuses);
+  const playerRpCap = getEcosystemRpCap(playerCorals, [...playerHabitats, ...playerReefCreatures, ...getLocallyControlledOrphans(playerOrphanCreatures, "player").flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition, { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances, orphanCreatureInstances: playerOrphanCreatures }, opponent.habitats);
+  const opponentRpCap = getEcosystemRpCap(opponent.corals, [...opponent.habitats, ...opponent.reefCreatures, ...getLocallyControlledOrphans(opponent.orphanCreatures, "opponent").flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition, opponent, playerHabitats);
+  const playerVp = getEcosystemVictoryPoints(playerCorals, playerHabitats, playerReefCreatures, { abilityState: { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances },
     controller: "player",
     localOrphans: playerOrphanCreatures,
     rivalCorals: opponent.corals,
@@ -6072,7 +6137,7 @@ export default function Simulator({
         ...(opponent.reefCreatureInstances ?? []).map((instance) => `reef:${instance.instanceId}`),
         ...(opponent.orphanCreatures ?? []).map((instance) => `orphan:${instance.instanceId}:${(instance.hostedCardIds ?? []).filter(Boolean).join(",")}`),
       ].join("|");
-  const opponentVp = getEcosystemVictoryPoints(opponentCorals, opponent.habitats, opponent.reefCreatures, {
+  const opponentVp = getEcosystemVictoryPoints(opponentCorals, opponent.habitats, opponent.reefCreatures, { abilityState: opponent,
     controller: "opponent",
     localOrphans: opponent.orphanCreatures,
     rivalCorals: playerCorals,
@@ -6296,6 +6361,7 @@ export default function Simulator({
   const mobileHandDragUsesEcosystemTarget = Boolean(
     mobileHandDragCard && !mobileHandDragUsesFoundationTarget && !mobileHandDragUsesSlotTarget
   );
+  reefAbilityStatesRef.current = getReefAbilityStates();
   const inspectedCardData = inspectedCard ? cardsById[inspectedCard.cardId] : null;
   const previewDrawChromeVisible = Boolean(
     previewExperience && compactDrawViewport && ["turn-draw", "draw-result"].includes(modal)
@@ -7251,6 +7317,7 @@ export default function Simulator({
         : opponentSchoolDensityState.byFoundationId[inspectedFoundation.id]) ?? null
     : null;
   const inspectedFoundationIsStunned = Boolean(inspectedFoundation && !coralCanUseOwnAbilities(inspectedFoundation));
+  const inspectedCreatureIsStunned = inspectedCard && !inspectedCard.reference && creatureAbilitiesAreStunned(inspectedCard.owner === "player" ? creatureStatuses : opponent.creatureStatuses, getInspectedCreatureInstanceId(inspectedCard));
   const inspectedActionKey = inspectedCreatureSlot ? getSlotActionKey(inspectedCreatureSlot) : inspectedCard?.slotId;
 
   useEffect(() => {
@@ -7371,7 +7438,13 @@ export default function Simulator({
       } else if (actionIsOncePerTurn(action) && usedThisTurn) {
         blockType = "used";
         blockReason = `${card.name} has already used ${actionName} this turn.`;
-      } else if ((effect.type === EffectType.STUN_CORAL || effect.type === EffectType.FLIP_COIN) && !opponentCoralCards.length) {
+      } else if (effect.type === "mimicAction" && turn < Number(actionCooldowns[utilityActionKey] ?? 0)) {
+        blockType = "cooldown";
+        blockReason = "The copied action cannot be used this turn.";
+      } else if (effect.type === "mimicAction" && !getPlayerMimicChoices(action).some((choice) => !choice.block)) {
+        blockType = "targets";
+        blockReason = "No opposing creature has an action Day Octopus can perform.";
+      } else if ((effect.type === EffectType.STUN_CORAL || effect.type === EffectType.DAMAGE || effect.type === EffectType.FLIP_COIN) && !opponentCoralCards.length) {
         blockType = "targets";
         blockReason = `${actionName} has no opponent coral to target.`;
       } else if (effect.type === "reorderTopDeck" && !foundationDeck.length && !palsDeck.length) {
@@ -8726,7 +8799,7 @@ export default function Simulator({
   }, [previewExperience, mobileReefSplit, tutorialBoardCardFocusActive, autoFitPlayerIncludesAllSlots]);
 
   useEffect(() => {
-    const result = reconcileFoundationHealthToFixedPoint(playerCorals, playerReefCreatureInstances, playerOrphanCreatures);
+    const result = reconcileFoundationHealthToFixedPoint(playerCorals, playerReefCreatureInstances, playerOrphanCreatures, creatureStatuses);
     if (!result.changed) return;
     setPlayerCorals(result.corals);
     if (result.destroyed.length) setPlayerOrphanCreatures(result.orphans);
@@ -8739,10 +8812,10 @@ export default function Simulator({
         : ` Fragment triggered but found no ${cardsById[trigger.targetCardId]?.name ?? "matching card"} to recover.`).join("");
       pushLog(`${result.destroyed.map((foundation) => cardsById[foundation.cardId]?.name).join(", ")} was destroyed when a continuous coral-health bonus ended. Its creatures filled compatible open slots; ${result.orphans.length} remain orphaned on your reef.${fragmentMessage}`);
     }
-  }, [playerCorals, playerReefCreatures]);
+  }, [playerCorals, playerReefCreatures, creatureStatuses]);
 
   useEffect(() => {
-    const result = reconcileFoundationHealthToFixedPoint(opponent.corals, opponent.reefCreatureInstances ?? opponent.reefCreatures, opponent.orphanCreatures);
+    const result = reconcileFoundationHealthToFixedPoint(opponent.corals, opponent.reefCreatureInstances ?? opponent.reefCreatures, opponent.orphanCreatures, opponent.creatureStatuses);
     if (!result.changed) return;
     setOpponent((current) => {
       if (!result.destroyed.length) return { ...current, corals: result.corals };
@@ -8751,12 +8824,13 @@ export default function Simulator({
       return { ...current, corals: result.corals, orphanCreatures: result.orphans, hand: triggerResult.hand, discardPile: triggerResult.discardPile };
     });
     if (result.destroyed.length) pushLog(`Opponent lost ${result.destroyed.map((foundation) => cardsById[foundation.cardId]?.name).join(", ")} when a continuous coral-health bonus ended.`);
-  }, [opponent.corals, opponent.reefCreatures]);
+  }, [opponent.corals, opponent.reefCreatures, opponent.creatureStatuses]);
 
   useEffect(() => {
     if (["setup", "opponent", "transition"].includes(gamePhase) || opponentThinking || eventOverlay?.opponentSequence || pendingEvents.some((event) => event.opponentSequence)) return;
     if (eventOverlay?.type === "choose-regenerate" || pendingEvents.some((event) => event.type === "choose-regenerate")) return;
     const eventRequiresResolution = Boolean(eventOverlay)
+      || pendingEvents.length > 0
       || String(eventOverlay?.type ?? "").startsWith("choose-")
       || ["onplay-target-prompt", "faceoff-ready", "school-attack-ready", EFFECT_ROLL_READY_TYPE].includes(eventOverlay?.type);
     if (playingCardId || attackContext || searchContext || pendingCreatureAction || faceoffRolling || consumedAttackFlight || combatResultCheckpoint || boardStatPresentationActive || eventRequiresResolution || effectRollRolling) return;
@@ -8955,7 +9029,7 @@ export default function Simulator({
   }, [modal]);
 
   function getPlayerCardPlayCost(card) {
-    return Math.max(0, getCardPlayCost(card, activeCondition) + getOpposingPlayCostModifier(card, opponentCorals, opponent.reefCreatures, opponent.orphanCreatures));
+    return Math.max(0, getCardPlayCost(card, activeCondition) + getOpposingPlayCostModifier(card, opponentCorals, opponent.reefCreatures, opponent.orphanCreatures, opponent));
   }
 
   function getPlayerSchoolDensityRequirement(card) {
@@ -9003,7 +9077,7 @@ export default function Simulator({
         corals,
         habitats,
         reefCreatureInstances.map((instance) => instance.cardId),
-        {
+        { abilityState: { creatureStatuses, reefCreatureInstances },
           controller: "player",
           localOrphans: orphanCreatureInstances,
           rivalCorals,
@@ -9155,7 +9229,8 @@ export default function Simulator({
     }
     if (card.kind === CardKind.SUPPORT) {
       if (round <= supportBlockedUntilRound) return `Echo Disruption prevents you from playing Support cards this turn.`;
-      if (supportLockSourceId) return `${cardsById[supportLockSourceId]?.name ?? "A Support card"} says you cannot play another Support card this turn.`;
+      if (card.supportType === "aide" && round <= aideBlockedUntilRound) return "Deadly Sighting prevents you from playing Aide cards this turn. Items are still available.";
+      if (supportLockSourceId && (cardsById[supportLockSourceId]?.supportType !== "aide" || card.supportType === "aide")) return cardsById[supportLockSourceId]?.supportType === "aide" ? "You may play only one Aide per turn." : `${cardsById[supportLockSourceId]?.name ?? "A Support card"} says you cannot play another Support card this turn.`;
       const supportCost = getPlayerCardPlayCost(card);
       if (rp < supportCost) return `Not enough RP — ${card.name} costs ${supportCost} RP.`;
       if (card.id === "spearfishing") {
@@ -9170,11 +9245,6 @@ export default function Simulator({
       if (card.id === "coral-heal") return playerCoralCards.some((coral) => (coral.statuses ?? []).length || Number(coral.rpPenaltyNextTurn ?? 0) > 0) ? "" : "Coral Heal needs one of your corals to have a removable status effect.";
       if (card.id === "robotic-survey" || card.id === "explorer-jordan") return foundationDeck.length || palsDeck.length ? "" : `${card.name} cannot inspect a deck because both personal decks are empty.`;
       if (card.id === "poison-heal") return poisonImmunityNextPredatorAttack ? "Poison Heal is already protecting your next attack." : "";
-      if (card.id === "rov-lights") {
-        if (rovLightsActive) return "ROV Lights is already active for this turn.";
-        const deepTargets = [...opponentCorals.flatMap((foundation) => foundation.slots.flatMap((slot) => getSlotCardIds(slot).map((cardId) => cardsById[cardId]))), ...(opponent.reefCreatures ?? []).map((cardId) => cardsById[cardId]), ...(opponent.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])].map((cardId) => cardsById[cardId]))].filter((target) => target?.zone === CreatureZone.DEEP);
-        return deepTargets.length ? "" : "ROV Lights needs an opponent Deep creature to target this turn.";
-      }
       if (card.id === "dr-evans") {
         return foundationDeck.length || palsDeck.length ? "" : "Dr. Evans cannot draw because both personal decks are empty.";
       }
@@ -9186,11 +9256,11 @@ export default function Simulator({
       if (card.id === "restocking") {
         const candidates = discardPile.filter((cardId) => {
           const candidate = cardsById[cardId];
-          return candidate?.kind === CardKind.CREATURE && candidate.category === CardCategory.FISH;
+          return candidate?.kind === CardKind.CREATURE;
         });
-        return candidates.length ? "" : "Restocking needs a Fish in your discard pile.";
+        return candidates.length ? "" : "Restocking needs a creature in your discard pile.";
       }
-      if (card.id === "recovery") return discardPile.length ? "" : "Recovery has no card to recover because your discard pile is empty.";
+      if (card.id === "recovery") return discardPile.some((id) => cardsById[id]?.kind === CardKind.SUPPORT) ? "" : "Recovery needs a Support card in your discard pile.";
       if (card.id === "ocean-jake") return lostZone.length ? "" : "Ocean Jake needs a card in your Lost Zone.";
       if (card.id === "scientist-jes") {
         const searchEffect = (card.effects ?? []).find((effect) => effect.type === EffectType.SEARCH_DECK);
@@ -9207,6 +9277,7 @@ export default function Simulator({
       const candidates = [...foundationDeck, ...palsDeck].filter((cardId) => {
         const candidate = cardsById[cardId];
         if (!candidate || candidate.kind !== searchEffect.targetKind) return false;
+        if (searchEffect.targetZone && candidate.zone !== searchEffect.targetZone) return false;
         if (searchEffect.targetCategories?.length && !searchEffect.targetCategories.includes(candidate.category)) return false;
         if (searchEffect.targetTags?.some((tag) => !candidate.tags?.includes(tag))) return false;
         if (searchEffect.excludeTags?.some((tag) => candidate.tags?.includes(tag))) return false;
@@ -9612,7 +9683,7 @@ export default function Simulator({
           onComplete: finishCombatResult,
         })
       : false;
-    checkpoint.commit?.();
+    flushSync(() => checkpoint.commit?.());
     if (!flightQueued) finishCombatResult();
   }
 
@@ -9676,12 +9747,12 @@ export default function Simulator({
         ...(slot.hostedCardIds ?? []).map((cardId, hostedIndex) => ({ cardId, slotId: getHostedTargetSlotId(slot.id, hostedIndex), instanceId: `hosted:${getHostedTargetSlotId(slot.id, hostedIndex)}`, controller: slot.controller })),
       ];
       return entries.filter((entry) => {
-        const targetCard = cardsById[entry.cardId];
+        const targetCard = creatureAbilityCard(cardsById[entry.cardId], opponentState.creatureStatuses, entry.instanceId);
         return entry.controller !== "player" && cardMatchesAttackTarget(targetCard, attack) && (!cardIsHiddenByAbyss(targetCard, opponentState.habitats) || canTargetHidden);
       }).map((entry) => ({ coralId: coral.id, slotId: entry.slotId, instanceId: entry.instanceId }));
     }));
     (opponentState.reefCreatureInstances ?? []).forEach((instance) => {
-      const targetCard = cardsById[instance.cardId];
+      const targetCard = creatureAbilityCard(cardsById[instance.cardId], opponentState.creatureStatuses, instance.instanceId);
       if (cardMatchesAttackTarget(targetCard, attack) && (!cardIsHiddenByAbyss(targetCard, opponentState.habitats) || canTargetHidden)) {
         targets.push({ coralId: "__reef__", slotId: `reef-${instance.instanceId}`, instanceId: instance.instanceId });
       }
@@ -9698,14 +9769,14 @@ export default function Simulator({
         }] : []),
       ];
       orphanTargets.forEach((entryTarget) => {
-        const targetCard = cardsById[entryTarget.cardId];
+        const targetCard = creatureAbilityCard(cardsById[entryTarget.cardId], opponentState.creatureStatuses, entryTarget.instanceId);
         if (cardMatchesAttackTarget(targetCard, attack) && (!cardIsHiddenByAbyss(targetCard, opponentState.habitats) || canTargetHidden)) {
           targets.push({ coralId: "__orphan__", slotId: entryTarget.slotId, instanceId: entryTarget.instanceId });
         }
       });
     });
     (opponentState.corals ?? []).forEach((foundation) => {
-      const targetCard = cardsById[foundation.cardId];
+      const targetCard = creatureAbilityCard(cardsById[foundation.cardId], opponentState.creatureStatuses, `foundation:${foundation.id}`);
       if (isCreatureSchool(targetCard) && cardMatchesAttackTarget(targetCard, attack)) {
         targets.push({ coralId: foundation.id, slotId: "__foundation__", instanceId: `foundation:${foundation.id}` });
       }
@@ -9749,10 +9820,11 @@ export default function Simulator({
 
   function commitPlayerAttackCost(context, attacker, attack) {
     if (context.costCommitted) return;
-    trackSimulatorAbility("player", context.onPlay ? "onPlay" : "actions", attacker.id, attack.actionName);
+    trackSimulatorAbility("player", context.triggered ? "passives" : context.onPlay ? "onPlay" : "actions", attacker.id, attack.actionName);
     const attackerActionKey = context.attackerActionKey ?? context.attackerSlotId;
-    if (!context.onPlay) setUsedAttackers((current) => current.includes(attackerActionKey) ? current : [...current, attackerActionKey]);
-    if (!context.onPlay && attack.skipNextTurn) setActionCooldowns((current) => ({ ...current, [attackerActionKey]: turn + 2 }));
+    if (context.mimicActionKey) setUsedCreatureActions((current) => current.includes(context.mimicActionKey) ? current : [...current, context.mimicActionKey]);
+    else if (!context.onPlay) setUsedAttackers((current) => current.includes(attackerActionKey) ? current : [...current, attackerActionKey]);
+    if (!context.onPlay && attack.skipNextTurn) setActionCooldowns((current) => ({ ...current, [context.mimicActionKey ?? attackerActionKey]: turn + 2 }));
     setRp((current) => Math.max(0, current - attack.actionCost), {
       spendAmount: attack.actionCost,
       cardInstanceId: context.attackerInstanceId ?? context.attackerSlotId,
@@ -9762,7 +9834,7 @@ export default function Simulator({
     if (poisonImmunityNextPredatorAttack) setPoisonImmunityNextPredatorAttack(false);
   }
 
-  function completePlayerAttackStep(targetInstanceId, resolution, { attackerSurvives = true, defenderCardId = null, invalidTargetInstanceIds = [], nextTargets = null } = {}) {
+  function completePlayerAttackStep(targetInstanceId, resolution, { attackerSurvives = true, defenderCardId = null, invalidTargetInstanceIds = [], nextTargets = null, attackerInstanceId = null } = {}) {
     const recorded = recordAttackResolution(attackContext?.sequence ?? createAttackSequence(1), { targetInstanceId, resolution });
     if (!recorded.accepted) {
       pushLog(recorded.error);
@@ -9782,8 +9854,14 @@ export default function Simulator({
       requiredCount: recorded.sequence.requiredAttacks,
       onPlay: Boolean(attackContext?.onPlay),
     }, { phase: "main" });
+    const resumeContext = continues ? { ...attackContext, attackerInstanceId: attackerInstanceId ?? attackContext.attackerInstanceId, sequence: recorded.sequence, targets: remainingTargets, allTargets: targetPool, costCommitted: true } : null;
+    playerReefPostCombatRef.current = {
+      attackerOwner: "player", attackerInstanceId: attackerInstanceId ?? attackContext?.attackerInstanceId,
+      targetInstanceId, success: ["destroyed", "removed-invader", "survived", "discarded"].includes(resolution.outcome) || (resolution.outcome === "damaged" && resolution.damage > 0),
+      legacyCounterSucceeded: Boolean(resolution.biteBack), resumeContext, afterAction: attackContext?.reefAfterAction,
+    };
     if (continues) {
-      setAttackContext({ ...attackContext, sequence: recorded.sequence, targets: remainingTargets, allTargets: targetPool, costCommitted: true });
+      setAttackContext(resumeContext);
     } else {
       setAttackContext(null);
       setInspectedCard(null);
@@ -9915,7 +9993,8 @@ export default function Simulator({
         : attackerOrphanIndex >= 0
           ? playerOrphanCreatures[attackerOrphanIndex]?.instanceId ?? null
           : null;
-    const attacker = cardsById[attackerCardId];
+    const attacker = creatureAbilityCard(cardsById[attackerCardId], creatureStatuses, attackerInstanceId);
+    if (attacker?.abilitiesStunned) { pushLog(`${attacker.name} cannot use abilities while Stunned.`); return false; }
     const academyBlock = getEmbeddedLessonBlock("attack", { cardId: attackerCardId }) || getAcademyActionBlock({
       route: scriptedFinishRoute,
       help: tutorialHelp,
@@ -9950,7 +10029,7 @@ export default function Simulator({
 
   function beginOnPlayAttack(card, coralId, slotId, reefIndex = -1, forcePending = false, opponentState = opponent, attackerInstanceId = null) {
     let attack = getOnPlayAttackEffect(card);
-    if (!attack) return false;
+    if (!onPlayAttackIsAvailable(attack, playerHabitats, opponentState.habitats)) return false;
     const ensnare = getOnPlayEnsnare(card);
     if (ensnare) {
       attack = { ...attack, ensnare: { actionName: ensnare.actionName, penalty: ensnare.penalty } };
@@ -10033,7 +10112,7 @@ export default function Simulator({
       orphanInstanceId: orphanEntry?.instanceId ?? null,
       hostCardId: orphanHostedTarget ? orphanEntry?.cardId : targetSlot?.cardId,
       hostedIndex,
-      card: cardsById[targetCardId],
+      card: creatureAbilityCard(cardsById[targetCardId], opponent.creatureStatuses, selectedTarget.instanceId),
       instanceId: selectedTarget.instanceId,
       targetsOwnInvader,
       targetsOwnOrphanInvader,
@@ -10080,7 +10159,7 @@ export default function Simulator({
             flashingAlarmAttackBonus: triggerFlashingAlarm(current.flashingAlarmAttackBonus, targetEntry.card),
           }));
         }
-        const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "avoided", abilityName: targetAvoidance.abilityName }, { defenderCardId: targetEntry.card.id });
+        const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "avoided", abilityName: targetAvoidance.abilityName }, { attackerInstanceId, defenderCardId: targetEntry.card.id });
         setFaceoffRolling(false);
         setFaceoffPreview(null);
         const message = `${targetEntry.card.name} used ${targetAvoidance.abilityName} and flipped ${coinResult}, so ${attacker.name}'s ${attack.actionName} failed before dice were rolled.${ensnareSummary}${flashingAlarmTriggerMessage}${getAttackSequenceContinuationMessage(sequenceResult)}`;
@@ -10118,12 +10197,11 @@ export default function Simulator({
       const attackRolls = [(() => {
         const first = stoppedRoll ? { total: stoppedRoll.attack } : rollDie(attack.attackDice, combatRandom);
         const second = useAdvantage || useDisadvantage ? rollDie(attack.attackDice, combatRandom) : null;
-        const modifier = getAttackConditionalModifier(attacker, { ...targetEntry.card, health: targetCoral.health, maxHealth: targetCoral.maxHealth }, playerHabitats, playerCorals, playerReefCreatures, attack, playerOrphanCreatures, { rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
+        const modifier = getAttackConditionalModifier(attacker, { ...targetEntry.card, health: targetCoral.health, maxHealth: targetCoral.maxHealth }, playerHabitats, playerCorals, playerReefCreatures, attack, playerOrphanCreatures, { abilityState: { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances }, rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
         const baseTotal = second ? (useAdvantage ? Math.max(first.total, second.total) : Math.min(first.total, second.total)) : first?.total;
         const rolledBonus = getRolledAttackBonus(attack, baseTotal, playerHabitats);
-        const rovLightsBonus = getRovLightsAttackBonus(rovLightsActive, targetEntry.card);
         return first ? {
-          total: baseTotal + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus,
+          total: baseTotal + modifier.flat + rolledBonus.flat + flashingAlarmBonus,
           primaryRoll: first.total,
           contributors: [
             {
@@ -10138,11 +10216,10 @@ export default function Simulator({
             ...combatContributorsFromDetails([
               ...modifier.details,
               rolledBonus.detail,
-              rovLightsBonus ? `+${rovLightsBonus} ROV Lights` : null,
               flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null,
             ].filter(Boolean)),
           ],
-          detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""}`,
+          detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""}`,
         } : null;
       })()].filter(Boolean);
       const rolledDamage = attackRolls.reduce((total, roll) => total + roll.total * 10, 0);
@@ -10153,7 +10230,7 @@ export default function Simulator({
       setFaceoffPreview(null);
       const orphanEntries = result.destroyed ? getOrphanEntriesFromFoundation(targetCoral) : [];
       const recyclesKrill = result.destroyed && cardHasPlenteous(targetEntry.card);
-      const availableKrill = targetEntry.card.id === "krill-bloom-base" ? "krill-bloom-base" : opponent.discardPile.includes("krill-bloom-base") ? "krill-bloom-base" : null;
+      const availableKrill = targetEntry.card.id;
       const recycleId = recyclesKrill ? availableKrill : null;
       const nextDiscard = result.destroyed ? [targetEntry.card.id, ...opponent.discardPile] : opponent.discardPile;
       const redistributed = result.destroyed
@@ -10168,9 +10245,9 @@ export default function Simulator({
         foundationDeck: recycleId ? shuffle([...opponent.foundationDeck, recycleId], nextGameplayRandom) : opponent.foundationDeck,
       }));
       const nextOpponentState = nextOpponentProjection.state;
-      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: result.destroyed ? "destroyed" : "damaged", damage: result.appliedDamage }, { defenderCardId: targetEntry.card.id, nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
+      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: result.destroyed ? "destroyed" : "damaged", damage: result.appliedDamage }, { attackerInstanceId, defenderCardId: targetEntry.card.id, nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
       const collapseMessage = getContinuousHealthCollapseMessage(nextOpponentProjection.collateral);
-      const message = `${attacker.name} rolled ${attackRolls.map((roll) => roll.detail).join(", ")} and dealt ${result.appliedDamage} damage to ${targetEntry.card.name}.${ensnareSummary}${result.destroyed ? " The Creature School was discarded and its creatures redistributed." : ` ${result.remainingHealth}/${targetCoral.maxHealth} HP remains.`}${recyclesKrill ? " Plenteous recycled a base Krill Bloom into the opponent's Foundation deck when available." : ""}${collapseMessage ? ` ${collapseMessage}` : ""}${flashingAlarmTriggerMessage}${getAttackSequenceContinuationMessage(sequenceResult)}`;
+      const message = `${attacker.name} rolled ${attackRolls.map((roll) => roll.detail).join(", ")} and dealt ${result.appliedDamage} damage to ${targetEntry.card.name}.${ensnareSummary}${result.destroyed ? " The Creature School left play and its creatures were redistributed." : ` ${result.remainingHealth}/${targetCoral.maxHealth} HP remains.`}${recyclesKrill ? " Plenteous shuffled the destroyed Krill card into the opponent's Foundation deck." : ""}${collapseMessage ? ` ${collapseMessage}` : ""}${flashingAlarmTriggerMessage}${getAttackSequenceContinuationMessage(sequenceResult)}`;
       pushLog(message);
       const resultOverlay = {
         type: "faceoff-result",
@@ -10256,14 +10333,14 @@ export default function Simulator({
     const hostedDefenseBonusDice = !defenseAdjustment.ignoresBonuses && targetEntry.hostedIndex >= 0 ? getHostedDefenseBonusDice(cardsById[targetEntry.hostCardId], targetEntry.card) : null;
     const cloakDefenseBonus = !defenseAdjustment.ignoresBonuses ? getCloakDefenseBonus(targetEntry.card) : 0;
     const darknessShroudDefenseBonus = !defenseAdjustment.ignoresBonuses ? getDarknessShroudDefenseBonus(targetEntry.card, opponent.habitats) : 0;
-    const rovLightsBonus = getRovLightsAttackBonus(rovLightsActive, targetEntry.card);
+    const camouflageDefenseBonus = !defenseAdjustment.ignoresBonuses ? getKingOfCamouflageDefenseBonus(targetEntry.card, [...playerHabitats, ...opponent.habitats]) : 0;
     if (!rollNow) {
       setEventOverlay({
         type: "faceoff-ready",
         sourceCardId: attacker.id,
         defenderCardId: targetEntry.card.id,
         title: `${attacker.name} vs ${targetEntry.card.name}`,
-        message: `${attacker.name} attacks with ${attack.attackDice}${useAttackAdvantage ? " and has advantage" : useAttackDisadvantage ? " and has disadvantage from Massive" : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage cancel)" : ""}${rovLightsBonus ? " +2 from ROV Lights" : ""}${flashingAlarmBonus ? ` +${flashingAlarmBonus} from Flashing Alarm` : ""}. ${targetEntry.card.name} defends with ${defenseDice}${defenseAdvantage ? " and has defense advantage" : ""}${activeOpponentDefenseStatuses.some((status) => status.type === "defenseBonusDice") ? " plus its active defensive bonus die" : ""}${cloakDefenseBonus ? ` +${cloakDefenseBonus} Cloak` : ""}${darknessShroudDefenseBonus ? ` +${darknessShroudDefenseBonus} Darkness Shroud` : ""}${attachedDefenseBonus ? ` +${attachedDefenseBonus} Shelter` : ""}${hostedDefenseBonusDice ? ` +${hostedDefenseBonusDice} Stinging Fortress` : ""}.`,
+        message: `${attacker.name} attacks with ${attack.attackDice}${useAttackAdvantage ? " and has advantage" : useAttackDisadvantage ? " and has disadvantage from the defender's passive" : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage cancel)" : ""}${flashingAlarmBonus ? ` +${flashingAlarmBonus} from Flashing Alarm` : ""}. ${targetEntry.card.name} defends with ${defenseDice}${defenseAdvantage ? " and has defense advantage" : ""}${activeOpponentDefenseStatuses.some((status) => status.type === "defenseBonusDice") ? " plus its active defensive bonus die" : ""}${cloakDefenseBonus ? ` +${cloakDefenseBonus} Cloak` : ""}${darknessShroudDefenseBonus ? ` +${darknessShroudDefenseBonus} Darkness Shroud` : ""}${camouflageDefenseBonus ? ` +${camouflageDefenseBonus} King of Camouflage` : ""}${attachedDefenseBonus ? ` +${attachedDefenseBonus} Shelter` : ""}${hostedDefenseBonusDice ? ` +${hostedDefenseBonusDice} Stinging Fortress` : ""}.`,
         targetCoralId,
         targetSlotId,
         attackDice: attack.attackDice,
@@ -10284,15 +10361,15 @@ export default function Simulator({
     const chosenAttackRoll = secondAttackRoll
       ? (useAttackAdvantage ? Math.max(result.attack.total, secondAttackRoll.total) : Math.min(result.attack.total, secondAttackRoll.total))
       : result.attack.total;
-    const modifier = getAttackConditionalModifier(attacker, targetEntry.card, playerHabitats, playerCorals, playerReefCreatures, attack, playerOrphanCreatures, { rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
+    const modifier = getAttackConditionalModifier(attacker, targetEntry.card, playerHabitats, playerCorals, playerReefCreatures, attack, playerOrphanCreatures, { abilityState: { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances }, rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
     const rolledBonus = getRolledAttackBonus(attack, chosenAttackRoll, playerHabitats);
-    let attackTotal = chosenAttackRoll + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus;
+    let attackTotal = chosenAttackRoll + modifier.flat + rolledBonus.flat + flashingAlarmBonus;
     const secondDefenseRoll = defenseAdvantage ? rollDie(defenseDice, combatRandom) : null;
     const chosenDefenseRoll = secondDefenseRoll ? Math.max(result.defense.total, secondDefenseRoll.total) : result.defense.total;
     const hostedDefenseRoll = hostedDefenseBonusDice ? rollDie(hostedDefenseBonusDice, combatRandom) : null;
     const statusDefenseRolls = (!defenseAdjustment.ignoresBonuses ? activeOpponentDefenseStatuses : []).filter((status) => status.type === "defenseBonusDice").map((status) => ({ status, roll: rollDie(status.dice, combatRandom) })).filter((entry) => entry.roll);
     const statusDefenseBonus = statusDefenseRolls.reduce((total, entry) => total + entry.roll.total, 0);
-    const defenseTotal = Math.max(0, chosenDefenseRoll + defenseAdjustment.flat + cloakDefenseBonus + darknessShroudDefenseBonus + attachedDefenseBonus + Number(hostedDefenseRoll?.total ?? 0) + statusDefenseBonus);
+    const defenseTotal = Math.max(0, chosenDefenseRoll + defenseAdjustment.flat + cloakDefenseBonus + darknessShroudDefenseBonus + camouflageDefenseBonus + attachedDefenseBonus + Number(hostedDefenseRoll?.total ?? 0) + statusDefenseBonus);
     let appliedAttackRoll = chosenAttackRoll;
     let appliedAttackRollDetail = secondAttackRoll
       ? `${attack.attackDice} · ${result.attack.total} / ${secondAttackRoll.total}, ${useAttackAdvantage ? "higher" : "lower"} roll`
@@ -10303,9 +10380,9 @@ export default function Simulator({
       const scatterFirst = rollDie(attack.attackDice, combatRandom);
       const scatterSecond = useAttackAdvantage || useAttackDisadvantage ? rollDie(attack.attackDice, combatRandom) : null;
       const scatterBase = scatterSecond ? (useAttackAdvantage ? Math.max(scatterFirst.total, scatterSecond.total) : Math.min(scatterFirst.total, scatterSecond.total)) : scatterFirst?.total ?? 0;
-      const scatterModifier = getAttackConditionalModifier(attacker, targetEntry.card, playerHabitats, playerCorals, playerReefCreatures, attack, playerOrphanCreatures, { rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
+      const scatterModifier = getAttackConditionalModifier(attacker, targetEntry.card, playerHabitats, playerCorals, playerReefCreatures, attack, playerOrphanCreatures, { abilityState: { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances }, rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
       const scatterRolledBonus = getRolledAttackBonus(attack, scatterBase, playerHabitats);
-      attackTotal = scatterBase + scatterModifier.flat + scatterRolledBonus.flat + rovLightsBonus + flashingAlarmBonus;
+      attackTotal = scatterBase + scatterModifier.flat + scatterRolledBonus.flat + flashingAlarmBonus;
       appliedAttackRoll = scatterBase;
       appliedAttackRollDetail = scatterSecond
         ? `${attack.attackDice} Scatter · ${scatterFirst.total} / ${scatterSecond.total}, ${useAttackAdvantage ? "higher" : "lower"} roll`
@@ -10322,7 +10399,6 @@ export default function Simulator({
           { id: "attack-roll", label: "Attack roll", value: appliedAttackRoll, kind: "roll", detail: appliedAttackRollDetail },
           ...combatContributorsFromDetails([
             ...appliedAttackDetails,
-            rovLightsBonus ? `+${rovLightsBonus} ROV Lights` : null,
             flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null,
           ].filter(Boolean)),
         ],
@@ -10343,6 +10419,7 @@ export default function Simulator({
           ...(defenseAdjustment.contributors ?? []),
           ...(cloakDefenseBonus ? [{ id: "cloak", label: "Cloak", value: cloakDefenseBonus }] : []),
           ...(darknessShroudDefenseBonus ? [{ id: "darkness-shroud", label: "Darkness Shroud", value: darknessShroudDefenseBonus }] : []),
+          ...(camouflageDefenseBonus ? [{ id: "king-of-camouflage", label: "King of Camouflage", value: camouflageDefenseBonus }] : []),
           ...(attachedDefenseBonus ? [{ id: "shelter", label: "Shelter", value: attachedDefenseBonus }] : []),
           ...(hostedDefenseRoll ? [{ id: "stinging-fortress", label: "Stinging Fortress", value: hostedDefenseRoll.total, detail: hostedDefenseBonusDice }] : []),
           ...statusDefenseRolls.map(({ status, roll }, index) => ({
@@ -10355,7 +10432,7 @@ export default function Simulator({
         total: defenseTotal,
       },
     };
-    const rolls = [`${attackTotal}${secondAttackRoll ? ` (${result.attack.total}/${secondAttackRoll.total} ${useAttackAdvantage ? "advantage" : "disadvantage"})` : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage canceled)" : ""}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""} vs ${defenseTotal}${secondDefenseRoll ? ` (${result.defense.total}/${secondDefenseRoll.total} defense advantage)` : ""}${defenseAdjustment.flat ? ` (${defenseAdjustment.flat} defense)` : ""}${cloakDefenseBonus ? ` (+${cloakDefenseBonus} Cloak)` : ""}${darknessShroudDefenseBonus ? ` (+${darknessShroudDefenseBonus} Darkness Shroud)` : ""}${attachedDefenseBonus ? ` (+${attachedDefenseBonus} Shelter)` : ""}${hostedDefenseRoll ? ` (+${hostedDefenseRoll.total} Stinging Fortress)` : ""}${statusDefenseRolls.length ? ` (${statusDefenseRolls.map((entry) => `+${entry.roll.total} ${entry.status.dice}`).join(", ")} action defense)` : ""}${scatterDetail}`];
+    const rolls = [`${attackTotal}${secondAttackRoll ? ` (${result.attack.total}/${secondAttackRoll.total} ${useAttackAdvantage ? "advantage" : "disadvantage"})` : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage canceled)" : ""}${modifier.details.length || rolledBonus.detail || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""} vs ${defenseTotal}${secondDefenseRoll ? ` (${result.defense.total}/${secondDefenseRoll.total} defense advantage)` : ""}${defenseAdjustment.flat ? ` (${defenseAdjustment.flat} defense)` : ""}${cloakDefenseBonus ? ` (+${cloakDefenseBonus} Cloak)` : ""}${darknessShroudDefenseBonus ? ` (+${darknessShroudDefenseBonus} Darkness Shroud)` : ""}${camouflageDefenseBonus ? ` (+${camouflageDefenseBonus} King of Camouflage)` : ""}${attachedDefenseBonus ? ` (+${attachedDefenseBonus} Shelter)` : ""}${hostedDefenseRoll ? ` (+${hostedDefenseRoll.total} Stinging Fortress)` : ""}${statusDefenseRolls.length ? ` (${statusDefenseRolls.map((entry) => `+${entry.roll.total} ${entry.status.dice}`).join(", ")} action defense)` : ""}${scatterDetail}`];
     commitPlayerAttackCost(attackContext, attacker, attack);
     setFaceoffRolling(false);
     setFaceoffPreview(null);
@@ -10410,12 +10487,12 @@ export default function Simulator({
           ...opponent.habitats,
           ...opponent.reefCreatures,
           ...opponentOwnedOrphans.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
-        ], activeCondition);
+        ], activeCondition, opponent, playerHabitats);
         const blueCrabRecycle = resolveBlueCrabRecycle({
           defeatedCardIsFish: targetEntry.card.category === CardCategory.FISH,
           defeatedCardIsCreatureSchool: isCreatureSchool(targetEntry.card),
           defeatedCardRpCost: targetEntry.card.cost?.rp,
-          controllerHasBlueCrab: ecosystemHasCard(opponent.corals, opponent.reefCreatures, "blue-crab", opponentOwnedOrphans),
+          controllerHasBlueCrab: ecosystemHasCard(opponent.corals, opponent.reefCreatures, "blue-crab", opponentOwnedOrphans, opponent),
           recycleUsedTurn: opponent.blueCrabRecycleUsedTurn,
           currentTurn: turn,
           currentRp: opponent.rp,
@@ -10430,6 +10507,7 @@ export default function Simulator({
           blueCrabRecycleUsedTurn: blueCrabRecycle.recycleUsedTurnAfter,
         };
         const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "removed-invader" }, {
+          attackerInstanceId,
           attackerSurvives: !attackerDiscardedAfterConsume,
           defenderCardId: targetEntry.card.id,
           nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState, nextPlayerCorals, nextPlayerOrphans),
@@ -10552,12 +10630,12 @@ export default function Simulator({
         ...nextOpponentState.habitats,
         ...nextOpponentState.reefCreatures,
         ...opponentOwnedOrphans.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
-      ], activeCondition);
+      ], activeCondition, nextOpponentState, playerHabitats);
       const blueCrabRecycle = resolveBlueCrabRecycle({
         defeatedCardIsFish: !defenderKept && targetEntry.card.category === CardCategory.FISH,
         defeatedCardIsCreatureSchool: isCreatureSchool(targetEntry.card),
         defeatedCardRpCost: targetEntry.card.cost?.rp,
-        controllerHasBlueCrab: ecosystemHasCard(nextOpponentState.corals, nextOpponentState.reefCreatures, "blue-crab", opponentOwnedOrphans),
+        controllerHasBlueCrab: ecosystemHasCard(nextOpponentState.corals, nextOpponentState.reefCreatures, "blue-crab", opponentOwnedOrphans, nextOpponentState),
         recycleUsedTurn: nextOpponentState.blueCrabRecycleUsedTurn,
         currentTurn: turn,
         currentRp: nextOpponentState.rp,
@@ -10588,7 +10666,7 @@ export default function Simulator({
           : " Opponent's Blue Crab triggered, but its RP bank was already at its cap."
         : "";
       const survivalMessage = resilienceTriggered ? ` Ancient Resilience kept ${targetEntry.card.name} in play and is now used for this game.` : regenerateTriggered ? ` The opponent automatically paid 1 RP for Regenerate to keep ${targetEntry.card.name} in play.` : destroyedCardGoesToLostZone(targetEntry.card) ? ` The destroyed defender was placed in the opponent's Lost Zone.` : ` The defender was discarded.`;
-      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: defenderKept ? "survived" : "discarded" }, { attackerSurvives: !attackerDiscardedAfterConsume, defenderCardId: targetEntry.card.id, nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
+      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: defenderKept ? "survived" : "discarded" }, { attackerInstanceId, attackerSurvives: !attackerDiscardedAfterConsume, defenderCardId: targetEntry.card.id, nextTargets: getPlayerAttackTargets(attacker, attack, nextOpponentState) });
       const collapseMessage = getContinuousHealthCollapseMessage(nextOpponentProjection.collateral);
       const matchupSentence = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}.`;
       const supplementalResultMessage = `${ensnareSummary}${defenderKept ? survivalMessage : ""}${toxicMessage}${selfDiscardMessage}${recycleMessage}${collapseMessage ? ` ${collapseMessage}` : ""}${flashingAlarmTriggerMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
@@ -10690,7 +10768,7 @@ export default function Simulator({
         ? playerOrphanCreatures[attackerOrphanIndex]?.instanceId
         : null;
       const counterMessage = counter?.resolved ? ` ${targetEntry.card.name} triggered Bite Back: ${counter.attack.total} vs ${counter.defense.total}.${counterSucceeded ? destroyedCardGoesToLostZone(attacker) ? ` ${attacker.name} was destroyed and placed in your Lost Zone.` : ` ${attacker.name} was discarded.` : ` ${attacker.name} defended successfully.`}` : "";
-      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "defended", biteBack: counterSucceeded }, { attackerSurvives: !counterSucceeded, defenderCardId: targetEntry.card.id });
+      const sequenceResult = completePlayerAttackStep(selectedTarget.instanceId, { outcome: "defended", biteBack: counterSucceeded }, { attackerInstanceId, attackerSurvives: !counterSucceeded, defenderCardId: targetEntry.card.id });
       const message = `${attacker.name} used ${attack.actionName} on ${targetEntry.card.name}: ${rolls.join(", ")}. The defender won.${ensnareSummary}${counterMessage}${flashingAlarmTriggerMessage}${attack.unsupportedDetails ? ` ${attack.unsupportedDetails}` : ""}${getAttackSequenceContinuationMessage(sequenceResult)}`;
       pushLog(message);
       const combatConsequences = counter?.resolved ? [{
@@ -10781,8 +10859,8 @@ export default function Simulator({
     const supportBlock = getOnPlaySupportBlock(card);
     if (!supportBlock) return false;
     trackSimulatorAbility("player", "onPlay", card.id, supportBlock.actionName);
-    setOpponent((current) => ({ ...current, supportBlockedUntilRound: round }));
-    const message = `${card.name} used ${supportBlock.actionName}. The opponent cannot play Support cards during its next turn.`;
+    setOpponent((current) => ({ ...current, [supportBlock.aidesOnly ? "aideBlockedUntilRound" : "supportBlockedUntilRound"]: round }));
+    const message = `${card.name} used ${supportBlock.actionName}. The opponent cannot play ${supportBlock.aidesOnly ? "Aide Support" : "Support"} cards during its next turn.`;
     pushLog(message);
     setEventOverlay({ type: "impact-result", sourceCardId: card.id, title: `Player's ${card.name} used ${supportBlock.actionName}`, message, success: true });
     return true;
@@ -10941,7 +11019,7 @@ export default function Simulator({
       ...playerHabitats,
       ...playerReefCreatures,
       ...playerOrphanCreatures.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
-    ], activeCondition);
+    ], activeCondition, { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances, orphanCreatureInstances: playerOrphanCreatures }, opponent.habitats);
     const rpAfterOnPlayGain = addResourceWithinCap(rpAfterCost, onPlayResourceGain, playerCapAfterPlacement);
     const actualOnPlayGain = rpAfterOnPlayGain - rpAfterCost;
     setHand((current) => removeOneCard(current, cardId));
@@ -12105,9 +12183,9 @@ export default function Simulator({
         label: event.rpSpend.label,
       });
     }
-    if (event?.opponentStateAfter) setOpponent(event.opponentStateAfter);
+    if (event?.opponentStateAfter) setOpponent(event.opponentStateAfter, event.playerStateAfter);
     if (event?.playerStateAfter) {
-      const next = normalizeProjectedPlayerState(event.playerStateAfter);
+      const next = normalizeProjectedPlayerState(event.playerStateAfter, event.opponentStateAfter ?? opponent);
       const has = (key) => Object.prototype.hasOwnProperty.call(next, key);
       if (has("corals")) setPlayerCorals(next.corals);
       if (has("reefCreatureInstances")) setPlayerReefCreatureInstances(next.reefCreatureInstances);
@@ -12119,6 +12197,7 @@ export default function Simulator({
       if (has("palsDeck")) setPalsDeck(next.palsDeck);
       if (has("rp")) setRp(next.rp);
       if (has("supportBlockedUntilRound")) setSupportBlockedUntilRound(next.supportBlockedUntilRound);
+      if (has("aideBlockedUntilRound")) setAideBlockedUntilRound(next.aideBlockedUntilRound);
       if (has("resilienceUsedCardIds")) setResilienceUsedCardIds(next.resilienceUsedCardIds);
       if (has("creatureStatuses")) setCreatureStatuses(next.creatureStatuses);
       if (has("blueCrabRecycleUsedTurn")) setBlueCrabRecycleUsedTurn(next.blueCrabRecycleUsedTurn);
@@ -12144,6 +12223,18 @@ export default function Simulator({
   }
 
   function continueAfterPresentedEvent(event, remainingEvents = []) {
+    if (event?.type === "faceoff-result" && playerReefPostCombatRef.current) {
+      const combat = playerReefPostCombatRef.current;
+      playerReefPostCombatRef.current = null;
+      setAttackContext(null);
+      const states = reefAbilityStatesRef.current;
+      const afterReactions = combat.afterAction
+        ? (next) => combat.afterAction(next.player, next.opponent)
+        : (next) => [{ type: "reef-resume-player", playerStateAfter: next.player, opponentStateAfter: next.opponent, resumeContext: combat.resumeContext, remainingEvents }];
+      const [first, ...rest] = createReefPostCombatEvents(states, combat, afterReactions);
+      presentQueuedEvent(first, rest);
+      return;
+    }
     if (event?.continueToEndTurn) {
       setEventOverlay(null);
       endTurn();
@@ -12319,12 +12410,39 @@ export default function Simulator({
 
     const present = () => {
       setOpponentThinking(false);
+      if (event.type === "reef-continuation") {
+        const [next, ...rest] = event.continueReef();
+        presentQueuedEvent(next, rest);
+        return;
+      }
+      if (event.type === "reef-player-reaction") {
+        commitEventState(event);
+        beginPlayerReefReaction(event);
+        return;
+      }
+      if (event.type === "reef-resume-player") {
+        commitEventState(event);
+        const states = { player: event.playerStateAfter, opponent: event.opponentStateAfter };
+        const survivingAttacker = event.resumeContext && collectReefAbilityCreatures(states, cardsById).some((entry) => entry.controller === "player" && entry.instanceId === event.resumeContext.attackerInstanceId);
+        if (survivingAttacker) {
+          const context = event.resumeContext;
+          const card = cardsById[context.attackerCardId];
+          const targets = getPlayerAttackTargets(card, context.attackOverride ?? getBasicAttackEffect(card), states.opponent, states.player.corals, states.player.orphanCreatureInstances);
+          const remainingTargets = getRemainingAttackTargets(context.sequence, targets);
+          setAttackContext(remainingTargets.length ? { ...context, targets: remainingTargets, allTargets: targets } : null);
+          setEventOverlay(null);
+        } else {
+          setAttackContext(null);
+          const [next, ...rest] = event.remainingEvents ?? [];
+          presentQueuedEvent(next, rest);
+        }
+        return;
+      }
       if (event.type === "live-lionfish-coin" && beginLiveLionfishCoinPresentation(event)) {
         return;
       }
       if (
-        compactTurnPresentationEnabled
-        && event.type === "opponent-toxic-coin"
+        event.type === "opponent-toxic-coin"
         && beginDeferredOpponentToxicCoinPresentation(event)
       ) {
         return;
@@ -12479,10 +12597,13 @@ export default function Simulator({
   }
 
   function drawNextCondition() {
-    const availableConditionIds = conditionCards.map((card) => card.id).filter((conditionId) => !persistentConditionIds.includes(conditionId));
-    const source = conditionDeck.length ? conditionDeck : shuffle(availableConditionIds, nextGameplayRandom);
-    const conditionId = source[0] ?? null;
-    setConditionDeck(source.slice(1));
+    const { conditionId, conditionDeck: remainingDeck } = drawConditionCard({
+      conditionDeck,
+      conditionIds: conditionCards.map((card) => card.id),
+      persistentConditionIds,
+      random: nextGameplayRandom,
+    });
+    setConditionDeck(remainingDeck);
     setActiveConditionId(conditionId);
     const condition = conditionId ? cardsById[conditionId] : null;
     if (condition?.tags?.includes("persistent")) {
@@ -12515,13 +12636,14 @@ export default function Simulator({
       palsDeck,
       rp,
       supportBlockedUntilRound,
+      aideBlockedUntilRound,
       resilienceUsedCardIds,
       creatureStatuses,
       blueCrabRecycleUsedTurn,
       flashingAlarmAttackBonus,
       poisonImmunityNextPredatorAttack,
       ...(playerStateOverride ?? {}),
-    });
+    }, opponentAtBoundary);
     const playerAtLionfishBoundary = skipLionfish
       ? playerAtBoundary
       : {
@@ -12535,7 +12657,7 @@ export default function Simulator({
       },
       "player",
     );
-    if (previewExperience && playerTriggerableInvaders.length) {
+    if (playerTriggerableInvaders.length) {
       const liveLionfishEvents = createLiveLionfishTurnEvents({
         playerState: playerAtLionfishBoundary,
         opponentState: opponentAtBoundary,
@@ -12572,25 +12694,26 @@ export default function Simulator({
           random: nextGameplayRandom,
         });
     const condition = reuseConditionId ? cardsById[reuseConditionId] : drawNextCondition();
-    const playerAtTurnStart = normalizeProjectedPlayerState(lionfishResolution.player);
+    const playerAtTurnStart = normalizeProjectedPlayerState(lionfishResolution.player, lionfishResolution.opponent);
     const opponentAtTurnStart = normalizeProjectedOpponentState(
       reconcileOpponentInstances(opponentAtBoundary, lionfishResolution.opponent),
+      playerAtTurnStart,
     );
     const playerCoralsAtTurnStart = playerAtTurnStart.corals;
     const playerReefInstancesAtTurnStart = playerAtTurnStart.reefCreatureInstances;
     const playerReefAtTurnStart = playerReefInstancesAtTurnStart.map((entry) => entry.cardId);
     const playerOrphansAtTurnStart = playerAtTurnStart.orphanCreatureInstances;
-    const ecosystemRp = getEcosystemStartTurnRp(playerCoralsAtTurnStart, condition);
+    const ecosystemRp = getEcosystemStartTurnRp(playerCoralsAtTurnStart, condition, playerAtTurnStart.creatureStatuses);
     const collectedRp = 1 + ecosystemRp;
-    const rpSources = getEcosystemStartTurnRpSources(playerCoralsAtTurnStart, condition);
-    const roundRpCap = getEcosystemRpCap(playerCoralsAtTurnStart, [...playerHabitats, ...playerReefAtTurnStart, ...playerOrphansAtTurnStart.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], condition);
+    const rpSources = getEcosystemStartTurnRpSources(playerCoralsAtTurnStart, condition, playerAtTurnStart.creatureStatuses);
+    const roundRpCap = getEcosystemRpCap(playerCoralsAtTurnStart, [...playerHabitats, ...playerReefAtTurnStart, ...playerOrphansAtTurnStart.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], condition, playerAtTurnStart, opponentAtTurnStart.habitats);
     const parasiteRequestedRp = getParasiteRequestedRp(
       playerCoralsAtTurnStart,
       playerReefAtTurnStart,
       playerOrphansAtTurnStart,
       opponentAtTurnStart.corals,
       opponentAtTurnStart.reefCreatures,
-      opponentAtTurnStart.orphanCreatures,
+      opponentAtTurnStart.orphanCreatures, playerAtTurnStart,
     );
     const parasiteTransfer = resolveParasiteCollection({
       requested: parasiteRequestedRp,
@@ -12669,6 +12792,7 @@ export default function Simulator({
     setFoundationDeck(playerAtTurnStart.foundationDeck);
     setPalsDeck(playerAtTurnStart.palsDeck);
     setSupportBlockedUntilRound(playerAtTurnStart.supportBlockedUntilRound);
+    setAideBlockedUntilRound(playerAtTurnStart.aideBlockedUntilRound ?? 0);
     setResilienceUsedCardIds(playerAtTurnStart.resilienceUsedCardIds);
     setBlueCrabRecycleUsedTurn(playerAtTurnStart.blueCrabRecycleUsedTurn);
     setFlashingAlarmAttackBonus(playerAtTurnStart.flashingAlarmAttackBonus);
@@ -12707,7 +12831,6 @@ export default function Simulator({
     setCreatureStatuses(Object.fromEntries(Object.entries(playerAtTurnStart.creatureStatuses).map(([slotId, statuses]) => [slotId, advanceTurn ? statuses.filter((status) => status.expiresTurn > nextPlayerTurn) : statuses]).filter(([, statuses]) => statuses.length)));
     setSupportLockSourceId(null);
     setCardsBlockedFromPlayThisTurn([]);
-    setRovLightsActive(false);
     setAttackContext(null);
     setSearchContext(null);
     setPlayError("");
@@ -13443,7 +13566,7 @@ export default function Simulator({
       ...playerHabitats,
       ...nextReefInstances.map((instance) => instance.cardId),
       ...nextOrphanInstances.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
-    ], activeCondition);
+    ], activeCondition, { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances, orphanCreatureInstances: playerOrphanCreatures }, opponent.habitats);
     const rpAfterOnPlayGain = addResourceWithinCap(rpAfterCost, onPlayResourceGain, playerCapAfterPlacement);
     const actualOnPlayGain = rpAfterOnPlayGain - rpAfterCost;
     setHand((current) => removeOneCard(current, card.id));
@@ -13708,23 +13831,6 @@ export default function Simulator({
         setEventOverlay({ type: "utility-result", sourceCardId: card.id, title: "Player used Poison Heal", message, success: true });
         return;
       }
-      if (card.id === "rov-lights") {
-        const playCost = getPlayerCardPlayCost(card);
-        setHand((current) => removeOneCard(current, card.id));
-        setDiscardPile((current) => [card.id, ...current]);
-        setRp((current) => Math.max(0, current - playCost), {
-          spendAmount: playCost,
-          sourceCardId: card.id,
-          label: card.name,
-        });
-        setRovLightsActive(true);
-        applyExplicitSupportLock(card);
-        setSelectedHandCard(null);
-        const message = "ROV Lights gives your attacks +2 when they target Deep creatures until your turn ends.";
-        pushLog(message);
-        setEventOverlay({ type: "utility-result", sourceCardId: card.id, title: "Player used ROV Lights", message, success: true });
-        return;
-      }
       if (card.id === "robotic-survey" || card.id === "explorer-jordan") {
         setSearchContext({ mode: "choose-inspection-deck", supportCardId: card.id, candidates: [] });
         setSelectedHandCard(null);
@@ -13733,9 +13839,10 @@ export default function Simulator({
         return;
       }
       if (card.id === "dr-evans") {
-        setSearchContext({ mode: "draw-seven", supportCardId: card.id, candidates: [] });
-        const target = Math.min(7, foundationDeck.length + palsDeck.length);
-        setTurnDrawSelection({ requested: 7, target, shortfall: getRequiredDrawShortfall(7, target), foundation: 0, pals: 0, mode: "dr-evans" });
+        setSearchContext({ mode: "refresh-hand", supportCardId: card.id, candidates: [] });
+        const requested = Number(card.effects.find((effect) => effect.type === EffectType.DRAW_CARDS)?.amount ?? 0);
+        const target = Math.min(requested, foundationDeck.length + palsDeck.length);
+        setTurnDrawSelection({ requested, target, shortfall: getRequiredDrawShortfall(requested, target), foundation: 0, pals: 0, mode: "dr-evans" });
         setModal("support-draw");
         setSelectedHandCard(null);
         setPlayError("");
@@ -13752,7 +13859,7 @@ export default function Simulator({
       if (card.id === "restocking") {
         const candidates = discardPile.filter((candidateId) => {
           const candidate = cardsById[candidateId];
-          return candidate?.kind === CardKind.CREATURE && candidate.category === CardCategory.FISH;
+          return candidate?.kind === CardKind.CREATURE;
         });
         setSearchContext({ mode: "restock", supportCardId: card.id, candidates, selectedIndices: [] });
         setModal("restock");
@@ -13761,55 +13868,10 @@ export default function Simulator({
         return;
       }
       if (card.id === "recovery") {
-        const cost = getPlayerCardPlayCost(card);
-        const recoveredCandidates = [...new Set(discardPile)];
-        const coinEffect = (card.effects ?? []).find((effect) => effect.type === EffectType.FLIP_COIN);
-        setHand((current) => removeOneCard(current, card.id));
-        setDiscardPile((current) => [card.id, ...current]);
-        setRp((current) => Math.max(0, current - cost), {
-          spendAmount: cost,
-          sourceCardId: card.id,
-          label: card.name,
-        });
-        applyExplicitSupportLock(card);
+        const candidates = [...new Set(discardPile.filter((id) => cardsById[id]?.kind === CardKind.SUPPORT))];
+        setSearchContext({ mode: "recover", supportCardId: card.id, candidates });
+        setModal("recover");
         setSelectedHandCard(null);
-        if (previewExperience) {
-          beginCardCoinFlipPresentation({
-            sourceCardId: card.id,
-            sourceCardName: card.name,
-            actionName: "Recover from Discard",
-            successResult: coinEffect?.successResult ?? "heads",
-            eyebrow: card.name,
-            title: `Flip for ${card.name}`,
-            message: "Tap anywhere to flip. Reef Fish counts as heads; blank counts as tails.",
-            outcomes: {
-              heads: {
-                title: "Heads! Recovery succeeded.",
-                message: "Choose one card that was already in your discard pile.",
-                continueLabel: "Choose a Card",
-              },
-              tails: {
-                title: "Tails. Recovery was discarded.",
-                message: "No card was recovered.",
-                continueLabel: "Continue",
-              },
-            },
-            continuation: {
-              type: "recover-from-discard",
-              supportCardId: card.id,
-              candidates: recoveredCandidates,
-            },
-          });
-          return;
-        }
-        if (nextGameplayRandom() < 0.5) {
-          setSearchContext({ mode: "recover", supportCardId: card.id, candidates: recoveredCandidates });
-          setModal("recover");
-          pushLog("Recovery coin flip: heads. Choose a card that was already in your discard pile.");
-        } else {
-          returnFromSupportFlowToBoard();
-          pushLog("Recovery coin flip: tails. No card was recovered, and Recovery was discarded.");
-        }
         return;
       }
       if (card.id === "scientist-jes") {
@@ -13824,6 +13886,7 @@ export default function Simulator({
       const candidates = [...new Set([...foundationDeck, ...palsDeck].filter((candidateId) => {
         const candidate = cardsById[candidateId];
         if (!candidate || candidate.kind !== searchEffect?.targetKind) return false;
+        if (searchEffect.targetZone && candidate.zone !== searchEffect.targetZone) return false;
         if (searchEffect.targetCategories?.length && !searchEffect.targetCategories.includes(candidate.category)) return false;
         if (searchEffect.targetTags?.some((tag) => !candidate.tags?.includes(tag))) return false;
         return !searchEffect.excludeTags?.some((tag) => candidate.tags?.includes(tag));
@@ -13902,7 +13965,7 @@ export default function Simulator({
 
   function applyExplicitSupportLock(card) {
     trackSimulatorAnalytics({ counter: "cards", key: card.id });
-    if (supportExplicitlyLocksFurtherSupports(card)) setSupportLockSourceId(card.id);
+    if (card.supportType === "aide" || supportExplicitlyLocksFurtherSupports(card)) setSupportLockSourceId(card.id);
     emitTutorialEvent(SIMULATOR_TUTORIAL_ACTION_TYPES.SUPPORT_PLAYED, {
       accepted: true,
       cardId: card.id,
@@ -14258,15 +14321,17 @@ export default function Simulator({
 
   function completeRecovery(cardId) {
     if (searchContext?.mode !== "recover" || !searchContext.candidates.includes(cardId) || !discardPile.includes(cardId)) return;
-    const handResult = applyCurrentHandLimit([cardId]);
-    if (handResult.cardsToHand.length) {
-      setDiscardPile((current) => cardId === searchContext.supportCardId ? removeLastCard(current, cardId) : removeOneCard(current, cardId));
-      setHand((current) => [...current, cardId]);
-    }
+    const supportCard = cardsById[searchContext.supportCardId];
+    const cost = getPlayerCardPlayCost(supportCard);
+    if (!supportCard || !hand.includes(supportCard.id) || rp < cost || cardsById[cardId]?.kind !== CardKind.SUPPORT) return;
+    const handResult = applyCurrentHandLimit([cardId], Math.max(0, hand.length - 1));
+    setDiscardPile((current) => [supportCard.id, ...removeOneCard(current, cardId), ...handResult.cardsToDiscard]);
+    setHand((current) => [...removeOneCard(current, supportCard.id), ...handResult.cardsToHand]);
+    setRp((current) => Math.max(0, current - cost), getPlayerRpSpendPresentation(supportCard));
+    applyExplicitSupportLock(supportCard);
     setSearchContext(null);
-    setModal(null);
-    setSelectedHandCard(handResult.cardsToHand.length ? cardId : null);
-    pushLog(`Recovery returned ${cardsById[cardId]?.name ?? cardId} from your discard pile to your hand.`);
+    returnFromSupportFlowToBoard(handResult.cardsToHand.length ? cardId : null);
+    pushLog(`Recovery spent ${cost} RP and recovered ${cardsById[cardId]?.name ?? cardId}.`);
   }
 
   function completeCoralHeal(coralId) {
@@ -14329,7 +14394,7 @@ export default function Simulator({
   }
 
   function beginPassiveCoralHeal(passive) {
-    if (!inspectedCardData || inspectedCard?.owner !== "player" || gamePhase !== "main") return;
+    if (!inspectedCardData || inspectedCard?.owner !== "player" || gamePhase !== "main" || inspectedCreatureIsStunned) return;
     const abilityFoundation = inspectedCard?.foundation ? playerCoralCards.find((coral) => coral.id === inspectedCard.coralId) : null;
     if (abilityFoundation && coralIsStunned(abilityFoundation)) {
       pushLog(`${inspectedCardData.name} cannot use its own passives while Stunned.`);
@@ -14628,7 +14693,7 @@ export default function Simulator({
   }
 
   function completeDrEvans() {
-    if (searchContext?.mode !== "draw-seven" || !turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target) return;
+    if (searchContext?.mode !== "refresh-hand" || !turnDrawSelection || turnDrawSelection.foundation + turnDrawSelection.pals !== turnDrawSelection.target) return;
     const supportCard = cardsById[searchContext.supportCardId];
     if (!supportCard || !hand.includes(supportCard.id)) return;
     const foundationCards = foundationDeck.slice(0, turnDrawSelection.foundation);
@@ -14650,14 +14715,14 @@ export default function Simulator({
     setTurnDrawSelection(null);
     setModal(null);
     setSelectedHandCard(null);
-    const message = `Dr. Evans discarded ${discardedHand.length} card(s) from your hand and drew ${foundationCards.length} from Foundation plus ${palsCards.length} from Main.${shortfall ? ` The mandatory seven-card draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so you lose by deck depletion.` : ""}`;
+    const message = `Dr. Evans discarded ${discardedHand.length} card(s) from your hand and drew ${foundationCards.length} from Foundation plus ${palsCards.length} from Main.${shortfall ? ` The mandatory eight-card draw was ${shortfall} card${shortfall === 1 ? "" : "s"} short, so you lose by deck depletion.` : ""}`;
     const revealed = drawnCards.map((cardId, index) => ({
       cardId,
       source: index < foundationCards.length ? "Foundation" : "Pals",
       discarded: index >= drawResult.cardsToHand.length,
     }));
     pushLog(message);
-    if (shortfall) setGameResult((current) => current ?? `Defeat: Dr. Evans required seven cards, but your personal decks contained only ${drawnCards.length}.`);
+    if (shortfall) setGameResult((current) => current ?? `Defeat: Dr. Evans required eight cards, but your personal decks contained only ${drawnCards.length}.`);
     setEventOverlay(null);
     setPendingHandArrivalFlight(shortfall > 0 ? null : {
       revealed,
@@ -14667,30 +14732,35 @@ export default function Simulator({
     });
   }
 
-  function getInspectedPlayerCardInstanceId(cardInspection = inspectedCard) {
-    if (!cardInspection || cardInspection.owner !== "player") return null;
+  function getInspectedCreatureInstanceId(cardInspection = inspectedCard) {
+    if (!cardInspection || cardInspection.reference) return null;
+    const corals = cardInspection.owner === "player" ? playerCorals : opponent.corals;
+    const reef = cardInspection.owner === "player" ? playerReefCreatureInstances : opponent.reefCreatureInstances ?? [];
+    const orphans = cardInspection.owner === "player" ? playerOrphanCreatures : opponent.orphanCreatures ?? [];
+    if (/^(?:hosted:|orphan-hosted:)/.test(cardInspection.slotId ?? "")) return abilityInstanceId(cardInspection.slotId);
     if (cardInspection.foundation && cardInspection.coralId) return `foundation:${cardInspection.coralId}`;
     if (cardInspection.habitatInstanceId) return `habitat:${cardInspection.habitatInstanceId}`;
-    if (cardInspection.hostedBySlotId) {
-      const hostedIndex = String(cardInspection.slotId ?? "").match(/:hosted:(\d+)$/)?.[1];
-      if (hostedIndex != null) return `hosted:${cardInspection.hostedBySlotId}:${hostedIndex}`;
-    }
     if (cardInspection.coralId) {
-      const coral = playerCorals.find((candidate) => candidate.id === cardInspection.coralId);
+      const coral = corals.find((candidate) => candidate.id === cardInspection.coralId);
       const slot = coral?.slots.find((candidate) => candidate.id === cardInspection.slotId);
       if (slot?.cardId) return getLionfishSlotInstanceId(coral, slot);
     }
     const reefIndex = String(cardInspection.slotId ?? "").startsWith("reef-")
-      ? findZoneIndexBySlotId(playerReefCreatureInstances, cardInspection.slotId, "reef-")
+      ? findZoneIndexBySlotId(reef, cardInspection.slotId, "reef-")
       : -1;
-    if (reefIndex >= 0) return playerReefCreatureInstances[reefIndex]?.instanceId ?? null;
+    if (reefIndex >= 0) return reef[reefIndex]?.instanceId ?? null;
     const orphanIndex = String(cardInspection.slotId ?? "").startsWith("orphan-")
-      ? findZoneIndexBySlotId(playerOrphanCreatures, cardInspection.slotId, "orphan-")
+      ? findZoneIndexBySlotId(orphans, cardInspection.slotId, "orphan-")
       : -1;
-    return orphanIndex >= 0 ? playerOrphanCreatures[orphanIndex]?.instanceId ?? null : null;
+    return orphanIndex >= 0 ? orphans[orphanIndex]?.instanceId ?? null : null;
+  }
+
+  function getInspectedPlayerCardInstanceId(cardInspection = inspectedCard) {
+    return cardInspection?.owner === "player" ? getInspectedCreatureInstanceId(cardInspection) : null;
   }
 
   function getPendingCreatureActionRpSpendPresentation(pendingAction, amount, details = {}) {
+    if (pendingAction?.action?.mimic?.skipNextTurn) setActionCooldowns((current) => ({ ...current, [pendingAction.actionKey]: turn + 2 }));
     trackSimulatorAbility("player", String(pendingAction?.actionKey ?? "").startsWith("onplay:") ? "onPlay" : "actions", pendingAction?.sourceCardId, pendingAction?.actionName ?? getActionName(pendingAction?.action));
     return getPlayerRpSpendPresentation(cardsById[pendingAction?.sourceCardId], amount, {
       ...details,
@@ -14698,19 +14768,167 @@ export default function Simulator({
     });
   }
 
-  function beginCreatureUtilityAction(action) {
-    if (!inspectedCard || inspectedCard.owner !== "player") return;
-    const sourceCard = cardsById[inspectedCard.cardId];
-    const sourceCardInstanceId = getInspectedPlayerCardInstanceId(inspectedCard);
-    if (inspectedFoundationIsStunned) {
+  function getReefAbilityStates() {
+    return {
+      player: { corals: playerCorals, reefCreatureInstances: playerReefCreatureInstances, orphanCreatureInstances: playerOrphanCreatures, habitats: playerHabitats, habitatInstances: playerHabitatInstances, creatureStatuses, hand, foundationDeck, palsDeck, discardPile, lostZone, rp, resilienceUsedCardIds, blueCrabRecycleUsedTurn, flashingAlarmAttackBonus, poisonImmunityNextPredatorAttack, supportBlockedUntilRound, aideBlockedUntilRound },
+      opponent,
+    };
+  }
+
+  function completeCreatureStun(instanceId) {
+    const pending = pendingCreatureAction;
+    if (pending?.effect?.type !== "stunCreature" || rp < pending.cost) return;
+    const target = collectReefAbilityCreatures(getReefAbilityStates(), cardsById).find((entry) => entry.instanceId === instanceId && entry.controller === "opponent");
+    if (!target || !pending.candidates.some((entry) => entry.instanceId === instanceId)) return;
+    setRp((current) => current - pending.cost, getPendingCreatureActionRpSpendPresentation(pending, pending.cost));
+    if (actionIsOncePerTurn(pending.action)) setUsedCreatureActions((current) => [...current, pending.actionKey]);
+    setOpponent((current) => ({ ...current, creatureStatuses: stunCreatureAbilities(current.creatureStatuses, instanceId, pending.sourceCardId) }));
+    setPendingCreatureAction(null);
+    const message = `${target.card.name} is Stunned and cannot use abilities through the end of its controller's next turn.`;
+    pushLog(message);
+    setEventOverlay({ type: "utility-result", sourceCardId: pending.sourceCardId, defenderCardId: target.cardId, title: "Stun Strike", message, success: true });
+  }
+
+  function createReefReactionEvents(states, reactions, afterReactions) {
+    const [reaction, ...remaining] = reactions;
+    if (!reaction) return afterReactions(states);
+    const creatures = collectReefAbilityCreatures(states, cardsById);
+    const source = creatures.find((entry) => entry.controller === reaction.controller && entry.instanceId === reaction.instanceId);
+    // A mandatory trigger cannot attack from discard, nor use a stunned card.
+    if (!source || source.card.abilitiesStunned) return createReefReactionEvents(states, remaining, afterReactions);
+    const afterAction = (playerState, opponentState) => createReefReactionEvents({ player: playerState, opponent: opponentState }, remaining, afterReactions);
+    const attack = { ...reaction.attack, triggered: true, actionCost: 0, repeat: 1 };
+    if (source.controller === "opponent") {
+      return createLiveOpponentAttackStepEvents({
+        playerState: states.player, opponentState: states.opponent,
+        onPlayAttack: { cardId: source.cardId, coralId: source.location === "slot" ? source.coralId : null, slotId: source.slotId, reefInstanceId: source.location === "reef" ? source.instanceId : null, orphanInstanceId: source.location === "orphan" ? source.instanceId : null, attack },
+        checkpointPrefix: `reaction-${source.instanceId}`,
+        afterAction,
+      });
+    }
+    return [{ type: "reef-player-reaction", sourceCardId: source.cardId, reaction: { ...source, attack }, playerStateAfter: states.player, opponentStateAfter: states.opponent, afterAction }];
+  }
+
+  function createReefPostCombatEvents(states, combat, afterReactions) {
+    const creatures = collectReefAbilityCreatures(states, cardsById);
+    const attacker = creatures.find((entry) => entry.controller === combat.attackerOwner && entry.instanceId === abilityInstanceId(combat.attackerInstanceId));
+    const defender = creatures.find((entry) => entry.instanceId === abilityInstanceId(combat.targetInstanceId));
+    const reactions = combat.success ? getOpportunistTriggers(creatures, combat.attackerOwner, combat.attackerInstanceId) : [];
+    if (!combat.success && defender) {
+      const counter = defender.card.passives?.find((passive) => passive.effect?.type === "counterattack");
+      if (counter && attacker && defender.controller !== combat.attackerOwner) reactions.push({ ...defender, attack: { type: "attack", attackDice: counter.effect.attackDice, actionName: counter.name, forcedTargetInstanceId: attacker.instanceId } });
+      if (combat.legacyCounterSucceeded) reactions.push(...getOpportunistTriggers(creatures, defender.controller, defender.instanceId));
+    }
+    const flips = !combat.success ? getNeurotoxicDefenseFlips(defender, attacker, creatures, nextGameplayRandom) : [];
+    if (!flips.length) return createReefReactionEvents(states, reactions, afterReactions);
+    const next = { player: cloneLionfishTurnControllerState(states.player, "player"), opponent: cloneLionfishTurnControllerState(states.opponent, "opponent") };
+    const events = [];
+    // Resolve hosted targets first, so removing a host cannot change the
+    // identity of another pending target.
+    for (const flip of [...flips].sort((a, b) => Number(b.target.hostedIndex >= 0) - Number(a.target.hostedIndex >= 0))) {
+      if (flip.result === "heads") {
+        const removed = removeLionfishBoardEntry(next, flip.target);
+        if (removed.removed) {
+          routeLionfishDestroyedCard(next, flip.target.controller, flip.target.cardId, { forceDiscard: true });
+          for (const cardId of removed.hostedCardIds) routeLionfishDestroyedCard(next, flip.target.controller, cardId, { forceDiscard: true });
+        }
+      }
+      const message = `${defender.card.name}'s Neurotoxic Defense: ${flip.result} for ${flip.target.card.name}${flip.result === "heads" ? "; discarded" : "; stays in play"}.`;
+      events.push({ type: "utility-result", title: "Neurotoxic Defense", sourceCardId: defender.cardId, defenderCardId: flip.target.cardId, message, logMessage: message, success: flip.result === "heads", playerStateAfter: next.player, opponentStateAfter: next.opponent, opponentCoinFlip: { result: flip.result, actionName: "Neurotoxic Defense", successResult: "heads", message }, opponentSequence: defender.controller === "opponent" });
+    }
+    // Continue lazily, after the coin results have been presented and committed.
+    return [...events, { type: "reef-continuation", continueReef: () => createReefReactionEvents(next, reactions, afterReactions) }];
+  }
+
+  function beginPlayerReefReaction(event) {
+    const { reaction, afterAction } = event;
+    const states = { player: event.playerStateAfter, opponent: event.opponentStateAfter };
+    const source = collectReefAbilityCreatures(states, cardsById).find((entry) => entry.instanceId === reaction.instanceId && entry.controller === "player");
+    if (!source || source.card.abilitiesStunned) {
+      const [next, ...rest] = afterAction(states.player, states.opponent);
+      presentQueuedEvent(next, rest);
+      return;
+    }
+    let targets = getPlayerAttackTargets(source.card, reaction.attack, states.opponent, states.player.corals, states.player.orphanCreatureInstances);
+    if (reaction.attack.forcedTargetInstanceId) targets = targets.filter((target) => abilityInstanceId(target.instanceId) === reaction.attack.forcedTargetInstanceId);
+    if (!targets.length) {
+      const [next, ...rest] = afterAction(states.player, states.opponent);
+      presentQueuedEvent(next, rest);
+      return;
+    }
+    const reefIndex = source.location === "reef" ? states.player.reefCreatureInstances.findIndex((entry) => entry.instanceId === source.instanceId) : -1;
+    const orphanIndex = source.location === "orphan" ? states.player.orphanCreatureInstances.findIndex((entry) => entry.instanceId === source.instanceId) : -1;
+    const context = createPlayerAttackContext({ attackerCoralId: source.location === "slot" ? source.coralId : null, attackerSlotId: source.location === "reef" ? `reef-${source.instanceId}` : source.location === "orphan" ? `orphan-${source.instanceId}` : source.slotId, attackerCardId: source.cardId, attackerInstanceId: source.instanceId, attackerReefIndex: reefIndex, attackerOrphanIndex: orphanIndex, attackOverride: reaction.attack, triggered: true, onPlay: true, reefAfterAction: afterAction }, source.card, reaction.attack, targets);
+    setAttackContext(context);
+    setEventOverlay(null);
+    pushLog(`${source.card.name}'s ${reaction.attack.actionName} triggered. Choose a highlighted target for its mandatory ${reaction.attack.attackDice} attack.`);
+  }
+
+
+  function getMimicChoices(controller, action, states = getReefAbilityStates()) {
+    const creatures = collectReefAbilityCreatures(states, cardsById).filter((entry) => {
+      const habitats = states[entry.controller]?.habitats ?? [];
+      return !cardIsHiddenByAbyss(entry.card, habitats);
+    });
+    return collectMimicChoices(creatures, controller, action, { getAttack: getBasicAttackEffect, getUtility: getSupportedUtilityEffect });
+  }
+
+  function getPlayerMimicChoices(action) {
+    const source = cardsById.octopus;
+    return getMimicChoices("player", action).map((choice) => ({
+      ...choice,
+      block: choice.attack
+        ? (getPlayerAttackTargets(source, choice.attack).length ? null : { reason: "No legal attack target." })
+        : getInspectedUtilitySpecificBlock(choice.action, choice.effect, choice.action.name),
+    }));
+  }
+
+  function completeMimicAction(choiceKey) {
+    const pending = pendingCreatureAction;
+    if (pending?.effect?.type !== "mimicAction" || gameResult || gamePhase !== "main" || attackContext || playingCardId || rp < pending.cost) return;
+    const states = getReefAbilityStates();
+    const source = collectReefAbilityCreatures(states, cardsById).find((entry) => entry.controller === "player" && entry.instanceId === pending.sourceCardInstanceId);
+    if (!source || source.card.abilitiesStunned || usedCreatureActions.includes(pending.actionKey) || turn < Number(actionCooldowns[pending.actionKey] ?? 0)) return;
+    const choice = getPlayerMimicChoices(pending.action).find((entry) => entry.key === choiceKey);
+    if (!choice || choice.block || !pending.candidates.some((entry) => entry.key === choiceKey)) return;
+    setPendingCreatureAction(null);
+    setEventOverlay(null);
+    if (choice.attack) {
+      const inspection = pending.mimicSourceInspection;
+      const context = createPlayerAttackContext({
+        attackerCoralId: inspection.coralId,
+        attackerSlotId: inspection.slotId,
+        attackerActionKey: pending.mimicSourceActionKey,
+        attackerCardId: source.cardId,
+        attackerInstanceId: source.instanceId,
+        attackerReefIndex: source.location === "reef" ? source.reefIndex : -1,
+        attackerOrphanIndex: source.location === "orphan" ? source.orphanIndex : -1,
+        attackOverride: choice.attack,
+        mimicActionKey: pending.actionKey,
+      }, source.card, choice.attack, getPlayerAttackTargets(source.card, choice.attack));
+      setAttackContext(context);
+      pushLog(`${source.card.name} will mimic ${choice.donorName}'s ${choice.action.mimic.donorActionName}. Choose a highlighted target; no RP is spent until the attack begins.`);
+      return;
+    }
+    beginCreatureUtilityAction(choice.action, { inspection: pending.mimicSourceInspection, actionKey: pending.mimicSourceActionKey });
+  }
+
+  function beginCreatureUtilityAction(action, sourceOverride = null) {
+    const inspection = sourceOverride?.inspection ?? inspectedCard;
+    if (!inspection || inspection.owner !== "player") return;
+    const sourceCard = cardsById[inspection.cardId];
+    const sourceCardInstanceId = getInspectedPlayerCardInstanceId(inspection);
+    if ((!sourceOverride && inspectedFoundationIsStunned) || creatureAbilitiesAreStunned(creatureStatuses, sourceCardInstanceId)) {
       pushLog(`${sourceCard?.name ?? "That Coral"} cannot use its own actions while Stunned.`);
       return;
     }
     const effect = getSupportedUtilityEffect(action);
     const actionName = getActionName(action);
-    const actionKey = `${inspectedActionKey}:${action.id ?? actionName}`;
+    const sourceActionKey = sourceOverride?.actionKey ?? inspectedActionKey;
+    const actionKey = `${sourceActionKey}:${action.id ?? actionName}`;
     const cost = getActionCost(action);
     if (!effect || gameResult || gamePhase !== "main" || attackContext || playingCardId || rp < cost || (actionIsOncePerTurn(action) && usedCreatureActions.includes(actionKey))) return;
+    if ((effect.type === "mimicAction" || action.mimic) && turn < Number(actionCooldowns[actionKey] ?? 0)) return;
     const academyBlock = getEmbeddedLessonBlock("utility", {
       cardId: sourceCard.id,
       actionId: action.id ?? null,
@@ -14728,23 +14946,40 @@ export default function Simulator({
       pushLog(academyBlock);
       return;
     }
-    if (effect.type === EffectType.STUN_CORAL) {
+    if (effect.type === "mimicAction") {
+      const candidates = getPlayerMimicChoices(action);
+      if (!candidates.some((choice) => !choice.block)) return;
+      setPendingCreatureAction({ action, effect, actionKey, cost, sourceCardId: sourceCard.id, sourceCardInstanceId, mimicSourceInspection: { ...inspection }, mimicSourceActionKey: sourceActionKey, candidates });
+      setInspectedCard(null);
+      setEventOverlay({ type: "choose-mimic-action", sourceCardId: sourceCard.id, title: "Choose an action to mimic", message: "Choose an opponent creature's action. Day Octopus performs it for 3 RP instead of its printed cost. Cancel before committing the copied action to spend nothing." });
+      return;
+    }
+    if (effect.type === "stunCreature") {
+      const candidates = collectReefAbilityCreatures(getReefAbilityStates(), cardsById).filter((entry) => entry.controller === "opponent" && !entry.card.abilitiesStunned && !cardIsHiddenByAbyss(entry.card, opponent.habitats));
+      if (!candidates.length) { pushLog(`${sourceCard.name} has no legal creature to stun.`); return; }
+      setPendingCreatureAction({ action, effect, actionKey, sourceCardId: sourceCard.id, sourceCardInstanceId, actionName, cost, candidates });
+      setInspectedCard(null);
+      setEventOverlay({ type: "choose-stun-creature", sourceCardId: sourceCard.id, title: "Stun Strike", message: "Choose an opponent's creature. Its abilities are unavailable through the end of the opponent's next turn." });
+      return;
+    }
+    if (effect.type === EffectType.STUN_CORAL || effect.type === EffectType.DAMAGE) {
       if (!opponentCoralCards.length) {
         pushLog(`${sourceCard.name}'s ${actionName} has no opponent coral to target.`);
         return;
       }
       setPendingCreatureAction({ action, effect, actionKey, sourceCardId: sourceCard.id, sourceCardInstanceId, actionName, cost, costCommitted: false, candidates: opponentCoralCards.map((coral) => coral.id) });
       setInspectedCard(null);
-      setEventOverlay({ type: "choose-coral-effect-target", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${actionName}`, message: `Choose an opponent coral to Stun. Cancel to spend no RP${actionIsOncePerTurn(action) ? " and preserve the once-per-turn action" : ""}.` });
+      setEventOverlay({ type: "choose-coral-effect-target", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${actionName}`, message: `Choose an opponent coral for ${actionName}. Cancel to spend no RP${actionIsOncePerTurn(action) ? " and preserve the once-per-turn action" : ""}.` });
       return;
     }
     if (effect.type === "grantNextOnPlayAttackBonus") {
       trackSimulatorAbility("player", "actions", sourceCard.id, actionName);
+      if (action.mimic?.skipNextTurn) setActionCooldowns((current) => ({ ...current, [actionKey]: turn + 2 }));
       setRp((current) => Math.max(0, current - cost), getPlayerRpSpendPresentation(sourceCard, cost, { cardInstanceId: sourceCardInstanceId }));
       if (actionIsOncePerTurn(action)) setUsedCreatureActions((current) => [...current, actionKey]);
       setNextOnPlayAttackBonus({ amount: Number(effect.amount ?? 0), sourceCardId: sourceCard.id, actionName });
       setInspectedCard(null);
-      const message = `${sourceCard.name}'s ${actionName} gives +${effect.amount} to your next On Play attack.`;
+      const message = `${sourceCard.name}'s ${actionName} gives +${effect.amount} to your next On Play attack this turn.`;
       pushLog(message);
       setEventOverlay({ type: "utility-result", sourceCardId: sourceCard.id, title: `Player's ${sourceCard.name} used ${actionName}`, message, success: true });
       return;
@@ -14856,6 +15091,7 @@ export default function Simulator({
         actionKey,
         actionCost: cost,
         oncePerTurn: actionIsOncePerTurn(action),
+        mimicCooldown: Boolean(action.mimic?.skipNextTurn),
         title: `${sourceCard.name} rolls ${String(effect.dice).toUpperCase()}`,
         message: `Tap to stop the ${String(effect.dice).toUpperCase()} and resolve ${actionName}.`,
       });
@@ -15163,7 +15399,7 @@ export default function Simulator({
     if (isTargetedCoinAction && previewExperience && !presentedOutcome) {
       const cost = commitCostAndActionUse();
       const effectMessage = effect.type === EffectType.DAMAGE
-        ? `${targetName} will take ${Number(effect.amount?.value ?? effect.amount ?? 0)} damage.`
+        ? `${targetName} will take ${effect.amount?.type === "dice" ? effect.amount.dice : Number(effect.amount?.value ?? effect.amount ?? 0)} HP damage (minimum 0).`
         : effect.type === EffectType.STUN_CORAL
           ? `${targetName} will be Stunned.`
           : effect.type === EffectType.MODIFY_RP_GENERATION || effect.type === "modifyRpGeneration"
@@ -15234,7 +15470,9 @@ export default function Simulator({
     }
     let message = "";
     if (effect.type === EffectType.DAMAGE) {
-      const amount = Number(effect.amount?.value ?? effect.amount ?? 0);
+      const amount = effect.amount?.type === "dice"
+          ? Math.max(0, (rollDie(effect.amount.dice, nextGameplayRandom)?.total ?? 0) * Number(effect.amount.multiplier ?? 1))
+          : Number(effect.amount?.value ?? effect.amount ?? 0);
       const result = applyDamage(target.health ?? target.maxHealth, amount);
       trackSimulatorAnalytics({ side: "opponent", metrics: { [isCreatureSchool(cardsById[target.cardId]) ? "schoolDamage" : "coralDamage"]: Math.min(result.appliedDamage, Number(target.health ?? target.maxHealth)) } });
       if (result.destroyed) {
@@ -15407,8 +15645,8 @@ export default function Simulator({
       playerVp,
       opponentVp,
       victoryTarget,
-      playerIncome: 1 + getEcosystemStartTurnRp(playerCorals, activeCondition),
-      opponentIncome: 1 + getEcosystemStartTurnRp(opponentState.corals, activeCondition),
+      playerIncome: 1 + getEcosystemStartTurnRp(playerCorals, activeCondition, creatureStatuses),
+      opponentIncome: 1 + getEcosystemStartTurnRp(opponentState.corals, activeCondition, opponentState.creatureStatuses),
       playerSchoolDensity: getSchoolDensity(playerCorals),
       opponentSchoolDensity: getSchoolDensity(opponentState.corals),
       playerBoardCards: getVisibleBoardCardCount(
@@ -15451,7 +15689,7 @@ export default function Simulator({
     ].some((target) => cardMatchesAttackTarget(cardsById[target.cardId], attack));
   }
 
-  function runOpponentSupports(opponentState) {
+  function runOpponentSupports(opponentState, opposingHabitats = playerHabitats) {
     if (opponentState.supportBlockedUntilRound >= round) return { state: opponentState, summaries: [], impacts: [], events: [], lost: false, lossSummary: "" };
     let next = opponentState;
     let reservedPlanState = null;
@@ -15488,7 +15726,7 @@ export default function Simulator({
           (upgradeTarget
             ? Number(cardsById[upgradeTarget.cardId]?.upgrade?.cost?.rp ?? candidate.cost?.rp ?? 0)
             : getCardPlayCost(candidate, activeCondition))
-            + getOpposingPlayCostModifier(candidate, playerCorals, playerReefCreatures, playerOrphanCreatures),
+            + getOpposingPlayCostModifier(candidate, playerCorals, playerReefCreatures, playerOrphanCreatures, { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances }),
         );
         if (playCost > state.rp) return [];
         let legal = false;
@@ -15635,18 +15873,17 @@ export default function Simulator({
           ));
         }
         if (candidate.id === "recovery") {
-          return next.discardPile.some(isUsefulRecovery);
+          return next.discardPile.some((id) => cardsById[id]?.kind === CardKind.SUPPORT && isUsefulRecovery(id));
         }
         if (candidate.id === "ocean-jake") return (next.lostZone ?? []).some(isUsefulRecovery);
         if (candidate.id === "restocking") {
-          return next.discardPile.some((cardId) => cardsById[cardId]?.category === CardCategory.FISH);
+          return next.discardPile.some((cardId) => cardsById[cardId]?.kind === CardKind.CREATURE);
         }
         if (candidate.id === "spearfishing") return hasCurrentSpearfishingTarget();
         if (["whirlpool", "super-whirlpool"].includes(candidate.id)) return playerCoralCards.length > 0;
         if (candidate.id === "poison-heal") return !next.poisonImmunityNextPredatorAttack;
-        if (candidate.id === "rov-lights") return !next.rovLightsActive;
         const drawEffect = (candidate.effects ?? []).find((effect) => effect.type === EffectType.DRAW_CARDS);
-        const requestedDraws = candidate.id === "dr-evans" ? 7 : Number(drawEffect?.amount ?? 0);
+        const requestedDraws = Number(drawEffect?.amount ?? 0);
         if (requestedDraws > next.palsDeck.length + next.foundationDeck.length) {
           return candidate.id === "scientist-jes"
             && [...next.palsDeck, ...next.foundationDeck].some((cardId) => (
@@ -15674,7 +15911,7 @@ export default function Simulator({
           (upgradeTarget
             ? Number(cardsById[upgradeTarget.cardId]?.upgrade?.cost?.rp ?? candidate.cost?.rp ?? 0)
             : getCardPlayCost(candidate, activeCondition))
-            + getOpposingPlayCostModifier(candidate, playerCorals, playerReefCreatures, playerOrphanCreatures),
+            + getOpposingPlayCostModifier(candidate, playerCorals, playerReefCreatures, playerOrphanCreatures, { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances }),
         );
         let meetsRequirements = !getConditionPlayRestriction(candidate, activeCondition)
           && !cardIsBlockedFromPlayThisTurn(next, candidate.id);
@@ -15788,7 +16025,7 @@ export default function Simulator({
       };
       for (const cardId of orderOpponentChoices(next.hand, opponentDifficulty, scoreSupport)) {
         const card = cardsById[cardId];
-        if (card?.kind !== CardKind.SUPPORT || cardIsBlockedFromPlayThisTurn(next, cardId) || getConditionPlayRestriction(card, activeCondition) || !supportIsImmediatelyUseful(card)) continue;
+        if (card?.kind !== CardKind.SUPPORT || (card.supportType === "aide" && (next.aidePlayedThisTurn || next.aideBlockedUntilRound >= round)) || cardIsBlockedFromPlayThisTurn(next, cardId) || getConditionPlayRestriction(card, activeCondition) || !supportIsImmediatelyUseful(card)) continue;
         const cost = getCardPlayCost(card, activeCondition);
         if (cost > next.rp) continue;
         const reservedHardPlayRp = getReservedHardPlayRp(next);
@@ -15808,7 +16045,7 @@ export default function Simulator({
         const requestedDraws = Number(effects.find((effect) => effect.type === EffectType.DRAW_CARDS)?.amount ?? 0);
         const canUseScientistJesDraw = card.id === "scientist-jes" && next.palsDeck.length + next.foundationDeck.length >= requestedDraws;
         const hasTopDeckCards = Boolean(next.palsDeck.length || next.foundationDeck.length);
-        const usable = hasSearchTarget || (chooseTopEffect && hasTopDeckCards) || (reorderEffect && hasTopDeckCards) || canUseScientistJesDraw || (card.id === "dr-evans" && next.hand.length <= 3) || (card.id === "coral-cement" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && coral.health < coral.maxHealth)) || (card.id === "coral-heal" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && (coral.statuses?.length || Number(coral.rpPenaltyNextTurn ?? 0) > 0))) || (card.id === "recovery" && next.discardPile.length) || (card.id === "ocean-jake" && (next.lostZone ?? []).length) || (card.id === "restocking" && next.discardPile.some((candidateId) => cardsById[candidateId]?.category === CardCategory.FISH)) || card.id === "poison-heal" || card.id === "rov-lights" || hasSpearfishingTarget || (["whirlpool", "super-whirlpool"].includes(card.id) && playerCoralCards.length);
+        const usable = hasSearchTarget || (chooseTopEffect && hasTopDeckCards) || (reorderEffect && hasTopDeckCards) || canUseScientistJesDraw || (card.id === "dr-evans" && next.hand.length <= 3) || (card.id === "coral-cement" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && coral.health < coral.maxHealth)) || (card.id === "coral-heal" && next.corals.some((coral) => cardsById[coral.cardId]?.kind === CardKind.CORAL && (coral.statuses?.length || Number(coral.rpPenaltyNextTurn ?? 0) > 0))) || (card.id === "recovery" && next.discardPile.length) || (card.id === "ocean-jake" && (next.lostZone ?? []).length) || (card.id === "restocking" && next.discardPile.some((candidateId) => cardsById[candidateId]?.kind === CardKind.CREATURE)) || card.id === "poison-heal" || hasSpearfishingTarget || (["whirlpool", "super-whirlpool"].includes(card.id) && playerCoralCards.length);
         if (usable) { chosen = { card, cost, effects, searchEffect, searchCandidates, chooseTopEffect, reorderEffect }; break; }
       }
       if (!chosen) break;
@@ -15816,6 +16053,7 @@ export default function Simulator({
       next = {
         ...next,
         hand: removeOneCard(next.hand, card.id),
+        aidePlayedThisTurn: next.aidePlayedThisTurn || card.supportType === "aide",
         discardPile: card.id === "ocean-jake" ? next.discardPile : [card.id, ...next.discardPile],
         rp: Math.max(0, next.rp - cost),
       };
@@ -15860,15 +16098,16 @@ export default function Simulator({
       if (card.id === "dr-evans") {
         const oldHand = next.hand;
         next = { ...next, hand: [], discardPile: [...oldHand, ...next.discardPile] };
+        const requested = Number(drawEffect?.amount ?? 0);
         let drawn = 0;
-        while (drawn < 7 && (next.palsDeck.length || next.foundationDeck.length)) {
+        while (drawn < requested && (next.palsDeck.length || next.foundationDeck.length)) {
           const deckKey = getSupportDrawDeck();
           next = { ...next, hand: [...next.hand, next[deckKey][0]], [deckKey]: next[deckKey].slice(1) };
           drawn += 1;
         }
         details.push(`discarded its hand and drew ${drawn}`);
-        const shortfall = getRequiredDrawShortfall(7, drawn);
-        if (shortfall) lossSummary = `Opponent's ${card.name} required a seven-card draw, but its personal decks contained only ${drawn}. The opponent loses by deck depletion.`;
+        const shortfall = getRequiredDrawShortfall(requested, drawn);
+        if (shortfall) lossSummary = `Opponent's ${card.name} required an eight-card draw, but its personal decks contained only ${drawn}. The opponent loses by deck depletion.`;
       } else if (drawEffect && (card.id !== "scientist-jes" || !scientistJesChoosesSearch)) {
         const requested = Math.max(0, Number(drawEffect.amount ?? 0));
         let drawn = 0;
@@ -15894,37 +16133,14 @@ export default function Simulator({
         }) };
         if (target) details.push(`removed all effects from ${cardsById[target.cardId]?.name}`);
       } else if (card.id === "recovery") {
-        const coin = nextGameplayRandom() < 0.5 ? "heads" : "tails";
-        if (coin === "heads") {
-          const playedRecoveryId = next.discardPile[0];
-          const recoverableDiscard = next.discardPile.slice(1);
-          const recoveredId = selectProductiveOpponentSearchTargets(recoverableDiscard, {
-            sourceCardId: card.id,
-            amount: 1,
-            isCandidateProductive: (cardId) => supportIsImmediatelyUseful(cardsById[cardId], card.id),
-            scoreCandidate: (cardId) => scoreSearchCandidate(cardId),
-          })[0];
-          if (recoveredId) next = { ...next, hand: [...next.hand, recoveredId], discardPile: [playedRecoveryId, ...removeOneCard(recoverableDiscard, recoveredId)] };
-          details.push(recoveredId ? `flipped heads and recovered ${cardsById[recoveredId]?.name}` : "flipped heads but had no other card to recover");
-          opponentCoinFlip = {
-            result: coin,
-            successResult: "heads",
-            success: true,
-            actionName: "Recover from Discard",
-            title: recoveredId ? "Heads — card recovered" : "Heads — nothing to recover",
-            message: recoveredId ? `Recovered ${cardsById[recoveredId]?.name}.` : "There was no eligible card to recover.",
-          };
-        } else {
-          details.push("flipped tails and recovered nothing");
-          opponentCoinFlip = {
-            result: coin,
-            successResult: "heads",
-            success: false,
-            actionName: "Recover from Discard",
-            title: "Tails — no recovery",
-            message: "No card was recovered.",
-          };
-        }
+        const recoverableDiscard = next.discardPile.slice(1).filter((id) => cardsById[id]?.kind === CardKind.SUPPORT);
+        const recoveredId = selectProductiveOpponentSearchTargets(recoverableDiscard, {
+          sourceCardId: card.id, amount: 1,
+          isCandidateProductive: (id) => supportIsImmediatelyUseful(cardsById[id], card.id),
+          scoreCandidate: (id) => scoreSearchCandidate(id),
+        })[0];
+        if (recoveredId) next = { ...next, hand: [...next.hand, recoveredId], discardPile: [card.id, ...removeOneCard(next.discardPile.slice(1), recoveredId)] };
+        details.push(recoveredId ? `recovered ${cardsById[recoveredId]?.name}` : "had no eligible Support to recover");
       } else if (card.id === "ocean-jake") {
         const recoveredId = selectProductiveOpponentSearchTargets(next.lostZone ?? [], {
           sourceCardId: card.id,
@@ -15948,11 +16164,11 @@ export default function Simulator({
           ? `recovered ${cardsById[recoveredId]?.name} from its Lost Zone; that card cannot be played this turn, and Ocean Jake moved to the Lost Zone`
           : `moved Ocean Jake to the Lost Zone${recoveredId ? `; it chose ${handResult.cardsToDiscard.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit` : ""}`);
       } else if (card.id === "restocking") {
-        const recoveredIds = orderOpponentChoices(next.discardPile.filter((cardId) => cardsById[cardId]?.category === CardCategory.FISH), opponentDifficulty, (cardId) => scoreSearchCandidate(cardId)).slice(0, 3);
+        const recoveredIds = orderOpponentChoices(next.discardPile.filter((cardId) => cardsById[cardId]?.kind === CardKind.CREATURE), opponentDifficulty, (cardId) => scoreSearchCandidate(cardId)).slice(0, 3);
         const recoveredFoundationIds = recoveredIds.filter((cardId) => getPersonalDeckType(cardsById[cardId]) === "foundation");
         const recoveredPalsIds = recoveredIds.filter((cardId) => getPersonalDeckType(cardsById[cardId]) === "pals");
         next = { ...next, discardPile: recoveredIds.reduce((pile, cardId) => removeOneCard(pile, cardId), next.discardPile), foundationDeck: shuffle([...next.foundationDeck, ...recoveredFoundationIds], nextGameplayRandom), palsDeck: shuffle([...next.palsDeck, ...recoveredPalsIds], nextGameplayRandom) };
-        details.push(`restocked ${recoveredIds.length} Fish`);
+        details.push(`restocked ${recoveredIds.length} creatures`);
       } else if (card.id === "spearfishing") {
         const spearfishingTargets = [
           ...next.corals.flatMap((coral) => coral.slots.filter((slot) => cardCanBeSpearfished(cardsById[slot.cardId], slot, "opponent")).map((slot) => ({ location: "slot", coralId: coral.id, slotId: slot.id, cardId: slot.cardId, hostedCardIds: [...(slot.hostedCardIds ?? [])], owner: getReefCardOwner(slot, "opponent") }))),
@@ -15965,7 +16181,7 @@ export default function Simulator({
         const targetId = target?.cardId;
         const recoveredRp = Number(cardsById[targetId]?.cost?.rp ?? 0);
         const removesPlayerInvader = target?.owner === "player";
-        const currentRpCap = getEcosystemRpCap(next.corals, [...next.habitats, ...next.reefCreatureInstances.map((entry) => entry.cardId), ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
+        const currentRpCap = getEcosystemRpCap(next.corals, [...next.habitats, ...next.reefCreatureInstances.map((entry) => entry.cardId), ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition, next, opposingHabitats);
         const invaderRemoval = removesPlayerInvader ? resolveSpearfishingInvaderRemoval({
           foundations: next.corals,
           orphanEntries: next.orphanCreatures,
@@ -15990,7 +16206,7 @@ export default function Simulator({
             ? [...next.orphanCreatures.filter((entry) => entry.instanceId !== target.instanceId), ...(target.hostedCardIds ?? []).filter(Boolean).map((cardId) => createCreatureInstance(cardId, createStableInstanceId(`opponent-orphan-${cardId}`)))]
           : [...(next.orphanCreatures ?? []), ...(target?.location === "slot" && !removesPlayerInvader ? target.hostedCardIds : []).filter(Boolean).map((cardId) => createCreatureInstance(cardId, createStableInstanceId(`opponent-orphan-${cardId}`)))];
         const nextReefInstances = target?.location === "reef" ? removeCreatureInstances(next.reefCreatureInstances, [target.instanceId]).instances : next.reefCreatureInstances;
-        next = { ...next, corals: nextCorals, orphanCreatures: nextOrphans, reefCreatureInstances: nextReefInstances, reefCreatures: nextReefInstances.map((entry) => entry.cardId), discardPile: removesPlayerInvader ? invaderRemoval.actorDiscardPile : [targetId, ...next.discardPile], rp: removesPlayerInvader ? invaderRemoval.actorRp : addResourceWithinCap(next.rp, recoveredRp, getEcosystemRpCap(nextCorals, [...next.habitats, ...nextReefInstances.map((entry) => entry.cardId), ...(nextOrphans ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition)) };
+        next = { ...next, corals: nextCorals, orphanCreatures: nextOrphans, reefCreatureInstances: nextReefInstances, reefCreatures: nextReefInstances.map((entry) => entry.cardId), discardPile: removesPlayerInvader ? invaderRemoval.actorDiscardPile : [targetId, ...next.discardPile], rp: removesPlayerInvader ? invaderRemoval.actorRp : addResourceWithinCap(next.rp, recoveredRp, getEcosystemRpCap(nextCorals, [...next.habitats, ...nextReefInstances.map((entry) => entry.cardId), ...(nextOrphans ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition, { ...next, reefCreatureInstances: nextReefInstances, orphanCreatures: nextOrphans }, opposingHabitats)) };
         if (removesPlayerInvader && invaderRemoval.success) impacts.push({ type: "spearfishing-owner-discard", sourceCardId: card.id, actionName: card.name, cardId: targetId });
         details.push(`discarded ${cardsById[targetId]?.name}${removesPlayerInvader ? " to its owner's discard pile" : ""} and recovered ${recoveredRp} RP`);
       } else if (card.id === "whirlpool" || card.id === "super-whirlpool") {
@@ -15998,7 +16214,7 @@ export default function Simulator({
         impacts.push({ sourceCardId: card.id, actionName: card.name, rpPenalty: amount });
         details.push(`made your first coral produce ${amount} less RP during its next collection`);
       } else if (card.id === "poison-heal") next = { ...next, poisonImmunityNextPredatorAttack: true };
-      else if (card.id === "rov-lights") next = { ...next, rovLightsActive: true };
+
       const handLimit = Number((activeCondition?.effects ?? []).find((effect) => effect.type === "setHandLimit")?.amount ?? Infinity);
       const handLimitResult = applyAutomatedHandLimitToState(next, handLimit, { round });
       next = handLimitResult.state;
@@ -16027,7 +16243,7 @@ export default function Simulator({
     return { state: reconcileOpponentInstances(opponentState, next), summaries, impacts, events, lost: Boolean(lossSummary), lossSummary };
   }
 
-  function runOpponentTurn(current, { startTurnAlreadyBegun = false } = {}) {
+  function runOpponentTurn(current, { startTurnAlreadyBegun = false, opposingHabitats = playerHabitats } = {}) {
     const startTurnCorals = current.corals.map((coral) => ({
       ...coral,
       statuses: (coral.statuses ?? []).map((status) => ({ ...status })),
@@ -16036,18 +16252,20 @@ export default function Simulator({
         hostedCardIds: [...(slot.hostedCardIds ?? [])],
       })),
     }));
-    const income = 1 + getEcosystemStartTurnRp(startTurnCorals, activeCondition);
-    const rpSources = getEcosystemStartTurnRpSources(startTurnCorals, activeCondition).map((source) => ({ ...source }));
+    const income = 1 + getEcosystemStartTurnRp(startTurnCorals, activeCondition, current.creatureStatuses);
+    const rpSources = getEcosystemStartTurnRpSources(startTurnCorals, activeCondition, current.creatureStatuses).map((source) => ({ ...source }));
     let next = {
       ...current,
       corals: startTurnCorals,
+      aidePlayedThisTurn: false,
+      nextOnPlayAttackBonus: null,
       cardsBlockedFromPlayThisTurn: [],
       creatureStatuses: Object.fromEntries(Object.entries(current.creatureStatuses ?? {}).map(([statusKey, statuses]) => [statusKey, statuses.filter((status) => Number(status.expiresTurn ?? Infinity) > turn)]).filter(([, statuses]) => statuses.length)),
       flashingAlarmAttackBonus: startTurnAlreadyBegun
         ? current.flashingAlarmAttackBonus
         : beginFlashingAlarmTurn(current.flashingAlarmAttackBonus),
     };
-    const collectionCap = getEcosystemRpCap(next.corals, [...next.habitats, ...next.reefCreatures, ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
+    const collectionCap = getEcosystemRpCap(next.corals, [...next.habitats, ...next.reefCreatures, ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition, next, opposingHabitats);
     const rpBeforeCollection = next.rp;
     const rpAfterCollection = addResourceWithinCap(rpBeforeCollection, income, collectionCap);
     const collectedIncome = Math.max(0, rpAfterCollection - Math.min(rpBeforeCollection, collectionCap));
@@ -16096,7 +16314,7 @@ export default function Simulator({
       const playCost = Math.max(
         0,
         getCardPlayCost(candidate, activeCondition)
-          + getOpposingPlayCostModifier(candidate, playerCorals, playerReefCreatures, playerOrphanCreatures),
+          + getOpposingPlayCostModifier(candidate, playerCorals, playerReefCreatures, playerOrphanCreatures, { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances }),
       );
       const immediateAttackCost = onPlayAttack ? 0 : Number(attack.actionCost ?? 0);
       const ecosystemCreatureIds = [
@@ -16230,7 +16448,7 @@ export default function Simulator({
     const startOfTurnState = reconcileOpponentInstances(current, next);
     const startOfTurnSummary = `${collectionSummary} Opponent drew ${drawSummaryText || "no cards"}.${handLimitSummary}`;
     const startOfTurnDetails = { ...startOfTurnCollection, drawn: drawnFrom.length, foundationDrawn: Number(drawSummary.Foundation ?? 0), palsDrawn: Number(drawSummary.Pals ?? 0), drawShortfall: 0, handLimitDiscarded: excessHandCards.length };
-    const supportResult = runOpponentSupports(next);
+    const supportResult = runOpponentSupports(next, opposingHabitats);
     next = supportResult.state;
     const supportSummary = supportResult.summaries.length ? ` ${supportResult.summaries.join(" ")}` : "";
     if (supportResult.lost) {
@@ -16253,7 +16471,7 @@ export default function Simulator({
     const getOpponentPlayCost = (card) => {
       const upgradeTarget = isFoundationCard(card) && Number(card.stage ?? 0) > 0 ? findUpgradeTarget(card) : null;
       const baseCost = upgradeTarget ? Number(cardsById[upgradeTarget.cardId]?.upgrade?.cost?.rp ?? card.cost?.rp ?? 0) : getCardPlayCost(card, activeCondition);
-      return Math.max(0, baseCost + getOpposingPlayCostModifier(card, playerCorals, playerReefCreatures, playerOrphanCreatures));
+      return Math.max(0, baseCost + getOpposingPlayCostModifier(card, playerCorals, playerReefCreatures, playerOrphanCreatures, { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances }));
     };
     const getOpponentSchoolDensityState = (opponentState) => {
       const committed = getEcosystemSchoolDensityCommitted({
@@ -16659,7 +16877,7 @@ export default function Simulator({
         ...next.habitats,
         ...next.reefCreatures,
         ...(next.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
-      ], activeCondition);
+      ], activeCondition, next, opposingHabitats);
       const rpBeforeGain = next.rp;
       const rpAfterGain = addResourceWithinCap(rpBeforeGain, onPlayResourceGain, cap);
       const actualGain = rpAfterGain - rpBeforeGain;
@@ -16749,6 +16967,7 @@ export default function Simulator({
       handLimitSummary += ` The opponent chose ${excess.map((cardId) => cardsById[cardId]?.name ?? cardId).join(" and ")} to discard at the hand limit.`;
     }
     let opponentOnPlayAttack = card.kind === CardKind.CREATURE ? getOnPlayAttackEffect(card) : null;
+    if (!onPlayAttackIsAvailable(opponentOnPlayAttack, next.habitats, playerHabitats)) opponentOnPlayAttack = null;
     let onPlayAttackBonusSummary = "";
     if (opponentOnPlayAttack && next.nextOnPlayAttackBonus) {
       const bonus = next.nextOnPlayAttackBonus;
@@ -16805,10 +17024,10 @@ export default function Simulator({
       );
       const safetyLimit = opponentDifficulty === OpponentDifficulty.HARD ? next.hand.length : Math.min(1, next.hand.length);
       for (let playIndex = 0; playIndex < safetyLimit; playIndex += 1) {
-        const currentVp = getEcosystemVictoryPoints(next.corals, next.habitats, next.reefCreatures, {
+        const currentVp = getEcosystemVictoryPoints(next.corals, next.habitats, next.reefCreatures, { abilityState: next,
           controller: "opponent", localOrphans: next.orphanCreatures, rivalCorals: playerCorals, rivalOrphans: playerOrphanCreatures,
         });
-        if (currentVp >= victoryTarget) break;
+        if (getResolvedVictoryResult(playerVp, currentVp)) break;
         const densityState = getOpponentSchoolDensityState(next);
         const reserveBeforePlay = getAttackRpReserve(next);
         const candidates = next.hand.filter((candidateId) => {
@@ -17090,7 +17309,9 @@ export default function Simulator({
       currentPlayerFoundations.filter((foundation) => cardsById[foundation.cardId]?.kind === CardKind.CORAL),
       {
         effect: effect?.type === EffectType.STUN_CORAL ? "stun" : effect?.type === EffectType.DAMAGE ? "damage" : "income",
-        amount: Number(effect?.amount?.value ?? effect?.amount ?? 0),
+        amount: effect?.amount?.type === "dice"
+          ? getCombatDieOutcomes(effect.amount.dice).reduce((sum, outcome) => sum + outcome.total * outcome.probability, 0) * Number(effect.amount.multiplier ?? 1)
+          : Number(effect?.amount?.value ?? effect?.amount ?? 0),
         cardsById,
         getIncome: (foundation) => getCardStartTurnRp(cardsById[foundation.cardId]),
         isStunned: coralIsStunned,
@@ -17119,13 +17340,6 @@ export default function Simulator({
         + (card?.actions?.length ?? 0) * 3
         - Number(card?.cost?.rp ?? 0);
     };
-    const commitAction = (state, actionKey, cost, oncePerTurn) => ({
-      ...state,
-      rp: Math.max(0, Number(state.rp ?? 0) - cost),
-      actionUses: oncePerTurn
-        ? markOpponentActionUsed(state.actionUses, actionKey, turn)
-        : state.actionUses,
-    });
     const applyPlayerCoralEffect = (effect, target, sourceCardId) => {
       if (!target || !effect) return { state: currentPlayerState, summary: "had no legal coral target", success: false };
       const targetCard = cardsById[target.cardId];
@@ -17156,7 +17370,9 @@ export default function Simulator({
         };
       }
       if (effect.type === EffectType.DAMAGE) {
-        const amount = Number(effect.amount?.value ?? effect.amount ?? 0);
+        const amount = effect.amount?.type === "dice"
+          ? Math.max(0, (rollDie(effect.amount.dice, nextGameplayRandom)?.total ?? 0) * Number(effect.amount.multiplier ?? 1))
+          : Number(effect.amount?.value ?? effect.amount ?? 0);
         const damage = applyDamage(target.health ?? target.maxHealth, amount);
         const analyticsMetrics = [{ side: "player", metrics: { coralDamage: Math.min(damage.appliedDamage, Math.max(0, Number(target.health ?? target.maxHealth) || 0)) } }];
         if (!damage.destroyed) {
@@ -17260,13 +17476,34 @@ export default function Simulator({
       }
     }
     for (const entry of entries) {
-      for (const [actionIndex, action] of (entry.card?.actions ?? []).entries()) {
+      if (creatureAbilitiesAreStunned(opponentState.creatureStatuses, entry.sourceCardInstanceId)) continue;
+      const availableActions = (entry.card?.actions ?? []).flatMap((action) => {
+        if (getSupportedUtilityEffect(action)?.type !== "mimicAction") return [action];
+        if (turn < Number(opponentState.actionCooldowns?.[entry.locationKey] ?? 0)) return [];
+        return getMimicChoices("opponent", action, { player: currentPlayerState, opponent: opponentState })
+          .filter((choice) => !choice.attack && choice.effect)
+          .map((choice) => choice.action);
+      });
+      for (const [actionIndex, action] of availableActions.entries()) {
         const effect = getSupportedUtilityEffect(action);
         const cost = getActionCost(action);
         const actionKey = getOpponentActionUseKey(entry.locationKey, action, actionIndex);
         const oncePerTurn = actionIsOncePerTurn(action);
         if (!effect || cost > opponentState.rp || (oncePerTurn && wasOpponentActionUsedThisTurn(opponentState.actionUses, actionKey, turn))) continue;
-        if (effect.type === EffectType.STUN_CORAL) {
+        const commitAction = (state, key, rpCost, usesTurn) => ({
+          ...state,
+          rp: Math.max(0, Number(state.rp ?? 0) - rpCost),
+          actionUses: usesTurn ? markOpponentActionUsed(state.actionUses, key, turn) : state.actionUses,
+          ...(action.mimic?.skipNextTurn ? { actionCooldowns: { ...state.actionCooldowns, [entry.locationKey]: turn + 2 } } : {}),
+        });
+        if (effect.type === "stunCreature") {
+          const target = collectReefAbilityCreatures({ player: currentPlayerState, opponent: opponentState }, cardsById)
+            .filter((candidate) => candidate.controller === "player" && !candidate.card.abilitiesStunned && !cardIsHiddenByAbyss(candidate.card, playerHabitats))
+            .sort((a, b) => ((b.card.actions?.length ?? 0) * 10 + (b.card.passives?.length ?? 0) * 4) - ((a.card.actions?.length ?? 0) * 10 + (a.card.passives?.length ?? 0) * 4))[0];
+          if (!target) continue;
+          return { state: commitAction(opponentState, actionKey, cost, oncePerTurn), playerState: { ...currentPlayerState, creatureStatuses: stunCreatureAbilities(currentPlayerState.creatureStatuses, target.instanceId, entry.card.id) }, sourceCardId: entry.card.id, sourceCardInstanceId: entry.sourceCardInstanceId, defenderCardId: target.cardId, actionName: getActionName(action), actionCost: cost, success: true, summary: `Opponent's ${entry.card.name} used Stun Strike for ${cost} RP. ${target.card.name} cannot use abilities through the end of your next turn.` };
+        }
+        if (effect.type === EffectType.STUN_CORAL || effect.type === EffectType.DAMAGE) {
           const target = selectCoralTarget(effect);
           if (!target) continue;
           const playerEffect = applyPlayerCoralEffect(effect, target, entry.card.id);
@@ -17340,7 +17577,7 @@ export default function Simulator({
         if (effect.type === "grantNextOnPlayAttackBonus") {
           if (opponentState.nextOnPlayAttackBonus) continue;
           const next = commitAction({ ...opponentState, nextOnPlayAttackBonus: { amount: Number(effect.amount ?? 0), sourceCardId: entry.card.id, actionName: getActionName(action) } }, actionKey, cost, oncePerTurn);
-          return { state: next, sourceCardId: entry.card.id, sourceCardInstanceId: entry.sourceCardInstanceId, actionName: getActionName(action), actionCost: cost, success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP; its next On Play attack gets +${Number(effect.amount ?? 0)}.` };
+          return { state: next, sourceCardId: entry.card.id, sourceCardInstanceId: entry.sourceCardInstanceId, actionName: getActionName(action), actionCost: cost, success: true, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} for ${cost} RP; its next On Play attack this turn gets +${Number(effect.amount ?? 0)}.` };
         }
         if (effect.type === "reorderTopDeck") {
           const deckKey = opponentState.palsDeck.length > 1 ? "palsDeck" : opponentState.foundationDeck.length > 1 ? "foundationDeck" : null;
@@ -17480,7 +17717,7 @@ export default function Simulator({
           if (!roll) continue;
           const success = (effect.successValues ?? []).includes(roll.total);
           const gained = success ? Number(effect.onSuccess?.amount ?? 0) : 0;
-          const cap = getEcosystemRpCap(opponentState.corals, [...opponentState.habitats, ...opponentState.reefCreatures, ...(opponentState.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
+          const cap = getEcosystemRpCap(opponentState.corals, [...opponentState.habitats, ...opponentState.reefCreatures, ...(opponentState.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition, opponentState, currentPlayerState?.habitatInstances?.map((instance) => instance.cardId) ?? currentPlayerState?.habitats ?? playerHabitats);
           const committed = commitAction(opponentState, actionKey, cost, oncePerTurn);
           const next = { ...committed, rp: addResourceWithinCap(committed.rp, gained, cap) };
           return { state: next, sourceCardId: entry.card.id, sourceCardInstanceId: entry.sourceCardInstanceId, actionName: getActionName(action), actionCost: cost, success, summary: `Opponent's ${entry.card.name} used ${getActionName(action)} and rolled ${roll.total} on ${effect.dice}.${success ? ` It gained ${gained} RP, up to its ${cap} RP cap.` : " It gained no RP."}` };
@@ -17503,6 +17740,7 @@ export default function Simulator({
     const availableActionCount = Math.max(1, creatureActionCount + foundationActionCount);
     const safetyLimit = limitOpponentOptionalActions(availableActionCount, opponentDifficulty, "utility");
     for (let index = 0; index < safetyLimit; index += 1) {
+      if (getProjectedVictoryResult(nextPlayer, nextOpponent)) break;
       const result = runOpponentUtilityAction(nextOpponent, nextPlayer);
       if (!result) break;
       nextOpponent = result.state;
@@ -17536,7 +17774,7 @@ export default function Simulator({
     const excludedTargets = new Set(excludedTargetInstanceIds);
     const attackerEntries = opponentState.corals.flatMap((coral) =>
       coral.slots.filter((slot) => {
-        if (slot.invasiveOwner === "player") return false;
+        if (slot.invasiveOwner === "player" || creatureAbilitiesAreStunned(opponentState.creatureStatuses, getLionfishSlotInstanceId(coral, slot))) return false;
         const isTriggeredAttacker = onPlayAttack?.coralId === coral.id && onPlayAttack?.slotId === slot.id && onPlayAttack?.cardId === slot.cardId;
         const attack = isTriggeredAttacker ? onPlayAttack.attack : onPlayAttack ? null : getBasicAttackEffect(cardsById[slot.cardId]);
         const locationKey = getSlotActionKey(slot);
@@ -17556,6 +17794,7 @@ export default function Simulator({
     );
     (opponentState.reefCreatures ?? []).forEach((cardId, reefIndex) => {
       const card = cardsById[cardId];
+      if (creatureAbilitiesAreStunned(opponentState.creatureStatuses, opponentState.reefCreatureInstances?.[reefIndex]?.instanceId)) return;
       const reefInstanceId = opponentState.reefCreatureInstances?.[reefIndex]?.instanceId;
       const isTriggeredAttacker = onPlayAttack?.cardId === cardId && (onPlayAttack?.reefInstanceId ? onPlayAttack.reefInstanceId === reefInstanceId : onPlayAttack?.reefIndex === reefIndex);
       const attack = isTriggeredAttacker ? onPlayAttack.attack : onPlayAttack ? null : getBasicAttackEffect(card);
@@ -17564,31 +17803,51 @@ export default function Simulator({
       if (attack && (actionCostAlreadyPaid || attack.actionCost <= opponentState.rp) && (onPlayAttack || turn >= Number(opponentState.actionCooldowns?.[stableSlotId] ?? 0)) && (onPlayAttack || actionCostAlreadyPaid || !wasOpponentActionUsedThisTurn(opponentState.actionUses, actionUseKey, turn))) attackerEntries.push({ coral: null, slot: null, reefIndex, instanceId: reefInstanceId, locationKey: stableSlotId, card, attack });
     });
     (opponentState.orphanCreatures ?? []).forEach((entry, orphanIndex) => {
-      if (!getLocallyControlledOrphans([entry], "opponent").length) return;
-      const card = cardsById[entry.cardId];
+      if (!getLocallyControlledOrphans([entry], "opponent").length || creatureAbilitiesAreStunned(opponentState.creatureStatuses, entry.instanceId)) return;
+      const card = creatureAbilityCard(cardsById[entry.cardId], controllerCreatureStatuses, entry.instanceId);
       const isTriggeredAttacker = onPlayAttack?.cardId === entry.cardId && (onPlayAttack?.orphanInstanceId ? onPlayAttack.orphanInstanceId === entry.instanceId : onPlayAttack?.orphanIndex === orphanIndex);
       const attack = isTriggeredAttacker ? onPlayAttack.attack : onPlayAttack ? null : getBasicAttackEffect(card);
       const stableSlotId = `orphan-${entry.instanceId ?? orphanIndex}`;
       const actionUseKey = attack ? getOpponentActionUseKey(stableSlotId, attack) : null;
       if (attack && (actionCostAlreadyPaid || attack.actionCost <= opponentState.rp) && (onPlayAttack || turn >= Number(opponentState.actionCooldowns?.[stableSlotId] ?? 0)) && (onPlayAttack || actionCostAlreadyPaid || !wasOpponentActionUsedThisTurn(opponentState.actionUses, actionUseKey, turn))) attackerEntries.push({ coral: null, slot: null, reefIndex: -1, orphanIndex, instanceId: entry.instanceId, locationKey: stableSlotId, card, attack });
     });
+    if (!onPlayAttack) {
+      const states = {
+        player: { ...controllerState, corals: currentPlayerCorals, reefCreatureInstances: currentPlayerReefInstances, orphanCreatureInstances: currentPlayerOrphans, creatureStatuses: controllerCreatureStatuses, habitats: controllerState.habitats ?? playerHabitats },
+        opponent: opponentState,
+      };
+      for (const source of collectReefAbilityCreatures(states, cardsById)) {
+        const mimicAction = source.card.actions?.find((action) => getActionEffects(action).some((effect) => effect.type === "mimicAction"));
+        if (source.controller !== "opponent" || source.card.abilitiesStunned || !mimicAction) continue;
+        const coral = source.location === "slot" ? opponentState.corals.find((entry) => entry.id === source.coralId) : null;
+        const slot = coral?.slots.find((entry) => entry.id === source.slotId) ?? null;
+        if (!["slot", "reef", "orphan"].includes(source.location)) continue;
+        const locationKey = slot ? getSlotActionKey(slot) : `${source.location}-${source.instanceId}`;
+        const actionKey = getOpponentActionUseKey(locationKey, mimicAction);
+        if (getActionCost(mimicAction) > opponentState.rp || wasOpponentActionUsedThisTurn(opponentState.actionUses, actionKey, turn) || turn < Number(opponentState.actionCooldowns?.[locationKey] ?? 0)) continue;
+        for (const choice of getMimicChoices("opponent", mimicAction, states)) {
+          if (!choice.attack) continue;
+          attackerEntries.push({ coral, slot, reefIndex: source.location === "reef" ? source.reefIndex : -1, orphanIndex: source.location === "orphan" ? source.orphanIndex : -1, instanceId: source.instanceId, locationKey, card: source.card, attack: choice.attack });
+        }
+      }
+    }
     const collectAvailableTargets = (candidateAttacker) => {
       const targetEntries = currentPlayerCorals.flatMap((coral) => coral.slots.flatMap((slot) => slot.invasiveOwner === "opponent" ? [] : [{ cardId: slot.cardId, hostedIndex: -1, instanceId: getSlotTargetInstanceId(slot) }, ...(slot.hostedCardIds ?? []).map((cardId, hostedIndex) => ({ cardId, hostedIndex, instanceId: `hosted:${getHostedTargetSlotId(slot.id, hostedIndex)}` }))].filter((entry) => {
-        const card = cardsById[entry.cardId];
+        const card = creatureAbilityCard(cardsById[entry.cardId], controllerCreatureStatuses, entry.instanceId);
         return cardMatchesAttackTarget(card, candidateAttacker.attack) && (!cardIsHiddenByAbyss(card, playerHabitats) || cardCanTargetHiddenByAbyss(candidateAttacker.card, candidateAttacker.attack));
-      }).map((entry) => ({ coral, slot, hostedIndex: entry.hostedIndex, card: cardsById[entry.cardId], instanceId: entry.instanceId }))));
+      }).map((entry) => ({ coral, slot, hostedIndex: entry.hostedIndex, card: creatureAbilityCard(cardsById[entry.cardId], controllerCreatureStatuses, entry.instanceId), instanceId: entry.instanceId }))));
       (currentPlayerReefCreatures ?? []).forEach((cardId, reefIndex) => {
-        const card = cardsById[cardId];
+        const card = creatureAbilityCard(cardsById[cardId], controllerCreatureStatuses, currentPlayerReefInstances[reefIndex]?.instanceId);
         if (cardMatchesAttackTarget(card, candidateAttacker.attack) && (!cardIsHiddenByAbyss(card, playerHabitats) || cardCanTargetHiddenByAbyss(candidateAttacker.card, candidateAttacker.attack))) targetEntries.push({ coral: null, slot: null, reefIndex, instanceId: currentPlayerReefInstances[reefIndex]?.instanceId, card });
       });
       (currentPlayerOrphans ?? []).forEach((entry, orphanIndex) => {
         if (entry.invasiveOwner === "opponent") return;
         const canTargetCard = (card) => cardMatchesAttackTarget(card, candidateAttacker.attack)
           && (!cardIsHiddenByAbyss(card, playerHabitats) || cardCanTargetHiddenByAbyss(candidateAttacker.card, candidateAttacker.attack));
-        const card = cardsById[entry.cardId];
+        const card = creatureAbilityCard(cardsById[entry.cardId], controllerCreatureStatuses, entry.instanceId);
         if (canTargetCard(card)) targetEntries.push({ coral: null, slot: null, reefIndex: -1, orphanIndex, hostedIndex: -1, orphanInstanceId: entry.instanceId, instanceId: entry.instanceId, card });
         (entry.hostedCardIds ?? []).forEach((hostedCardId, hostedIndex) => {
-          const hostedCard = cardsById[hostedCardId];
+          const hostedCard = creatureAbilityCard(cardsById[hostedCardId], controllerCreatureStatuses, `orphan-hosted:${entry.instanceId}:${hostedIndex}`);
           if (!hostedCardId || !canTargetCard(hostedCard)) return;
           const hostedSlotId = getOrphanHostedTargetSlotId(entry.instanceId ?? `legacy-${orphanIndex}`, hostedIndex);
           targetEntries.push({
@@ -17605,18 +17864,18 @@ export default function Simulator({
         });
       });
       currentPlayerCorals.forEach((foundation) => {
-        const card = cardsById[foundation.cardId];
+        const card = creatureAbilityCard(cardsById[foundation.cardId], controllerCreatureStatuses, `foundation:${foundation.id}`);
         if (isCreatureSchool(card) && cardMatchesAttackTarget(card, candidateAttacker.attack)) targetEntries.push({ coral: foundation, slot: null, school: true, card, instanceId: `foundation:${foundation.id}` });
       });
       getInvasiveCreatureTargets(opponentState.corals, "player").forEach((target) => {
-        const card = cardsById[target.cardId];
+        const card = creatureAbilityCard(cardsById[target.cardId], controllerCreatureStatuses, target.instanceId);
         if (!cardMatchesAttackTarget(card, candidateAttacker.attack)) return;
         const coral = opponentState.corals.find((foundation) => foundation.id === target.coralId);
         const slot = coral?.slots.find((candidate) => candidate.id === target.slotId);
         if (coral && slot) targetEntries.push({ coral, slot, card, instanceId: target.instanceId, onOpponentBoard: true });
       });
       getInvasiveOrphanTargets(opponentState.orphanCreatures, "player").forEach((target) => {
-        const card = cardsById[target.cardId];
+        const card = creatureAbilityCard(cardsById[target.cardId], controllerCreatureStatuses, target.instanceId);
         if (!cardMatchesAttackTarget(card, candidateAttacker.attack)) return;
         targetEntries.push({
           coral: null,
@@ -17646,7 +17905,7 @@ export default function Simulator({
     const attackThreatProfile = assessCurrentOpponentThreat(opponentState);
     const pairEvaluations = new Map();
     const evaluateCombatPair = (candidateAttacker, entry) => {
-      const pairKey = `${candidateAttacker.locationKey}:${entry.instanceId}`;
+      const pairKey = `${candidateAttacker.locationKey}:${candidateAttacker.attack.mimic?.choiceKey ?? ""}:${entry.instanceId}`;
       if (pairEvaluations.has(pairKey)) return pairEvaluations.get(pairKey);
       const printedVp = Number(entry.card?.victoryPoints?.value ?? entry.card?.victoryPoints ?? entry.card?.vp ?? 0);
       const income = getCardStartTurnRp(entry.card);
@@ -17674,7 +17933,7 @@ export default function Simulator({
       const defenseAdjustment = getDefenseAdjustment(candidateAttacker.attack, entry.card, opponentState.habitats);
       const defenseBonusDice = defenseAdjustment.ignoresBonuses ? [] : statuses.filter((status) => status.type === "defenseBonusDice").map((status) => status.dice);
       if (!defenseAdjustment.ignoresBonuses && entry.hostedIndex >= 0) {
-        const hostedDice = getHostedDefenseBonusDice(cardsById[entry.hostCardId ?? entry.slot?.cardId], entry.card);
+        const hostedDice = getHostedDefenseBonusDice(creatureAbilityCard(cardsById[entry.hostCardId ?? entry.slot?.cardId], controllerCreatureStatuses, entry.orphanInstanceId ?? entry.slot?.cardInstanceId), entry.card);
         if (hostedDice) defenseBonusDice.push(hostedDice);
       }
       // Collect conditional dice as distributions. Zero keeps the deterministic
@@ -17688,7 +17947,7 @@ export default function Simulator({
         opponentState.reefCreatures,
         candidateAttacker.attack,
         opponentState.orphanCreatures,
-        { rollConditionalDie: (expression) => { attackBonusDice.push(expression); return { total: 0 }; } },
+        { abilityState: opponentState, rollConditionalDie: (expression) => { attackBonusDice.push(expression); return { total: 0 }; } },
       );
       const resilience = !entry.school && !entry.onOpponentBoard && cardHasAncientResilience(entry.card) && !controllerResilienceUsedCardIds.includes(entry.instanceId);
       const regenerate = !entry.school && !entry.onOpponentBoard && createRegenerateDecision({
@@ -17701,7 +17960,7 @@ export default function Simulator({
         attackDice: candidateAttacker.attack.attackDice,
         attackAdvantage: cardHasAttackAdvantage(candidateAttacker.card, entry.card, opponentState.habitats, candidateAttacker.attack),
         attackDisadvantage: attackerHasDisadvantageFromMassive(entry.card),
-        attackFlat: modifier.flat + flashingAlarmBonus + getRovLightsAttackBonus(opponentState.rovLightsActive, entry.card),
+        attackFlat: modifier.flat + flashingAlarmBonus + 0,
         attackBonusDice,
         attackRollBonus: (roll) => getRolledAttackBonus(candidateAttacker.attack, roll, opponentState.habitats).flat,
         defenseDice: entry.card?.defense?.dice ?? entry.card?.defense,
@@ -17709,6 +17968,7 @@ export default function Simulator({
         defenseFlat: defenseAdjustment.flat + (defenseAdjustment.ignoresBonuses ? 0
           : getCloakDefenseBonus(entry.card)
             + getDarknessShroudDefenseBonus(entry.card, playerHabitats)
+            + getKingOfCamouflageDefenseBonus(entry.card, [...playerHabitats, ...opponentState.habitats])
             + (entry.coral && !coralIsStunned(entry.coral) ? calculateAttachedCreatureDefenseBonus(cardsById[entry.coral.cardId]) : 0)),
         defenseBonusDice,
         avoidanceProbability: getTargetAvoidance(entry.card) ? 0.5 : 0,
@@ -17775,11 +18035,12 @@ export default function Simulator({
     const combatPlan = selectOpponentCombatPlan(selectableAttackers, collectAvailableTargets, combatPlanOptions);
     const attackerEntry = combatPlan?.attacker ?? (onPlayAttack ? selectableAttackers[0] : null);
     if (!attackerEntry) return null;
-    const opponentAttackActionKey = onPlayAttack ? null : getOpponentActionUseKey(attackerEntry.locationKey, attackerEntry.attack);
-    const opponentCooldownKey = !onPlayAttack && attackerEntry.attack.skipNextTurn ? (attackerEntry.slot ? getSlotActionKey(attackerEntry.slot) : attackerEntry.orphanIndex >= 0 ? `orphan-${attackerEntry.instanceId ?? attackerEntry.orphanIndex}` : `reef-${attackerEntry.instanceId ?? attackerEntry.reefIndex}`) : null;
+    const opponentAttackActionKey = onPlayAttack && !attackerEntry.attack.mimic ? null : getOpponentActionUseKey(attackerEntry.locationKey, attackerEntry.attack);
+    const opponentCooldownKey = (!onPlayAttack || attackerEntry.attack.mimic) && attackerEntry.attack.skipNextTurn ? (attackerEntry.slot ? getSlotActionKey(attackerEntry.slot) : attackerEntry.orphanIndex >= 0 ? `orphan-${attackerEntry.instanceId ?? attackerEntry.orphanIndex}` : `reef-${attackerEntry.instanceId ?? attackerEntry.reefIndex}`) : null;
     const availableTargetEntries = collectAvailableTargets(attackerEntry);
+    if (onPlayAttack?.attack?.forcedTargetInstanceId && !availableTargetEntries.some((entry) => abilityInstanceId(entry.instanceId) === onPlayAttack.attack.forcedTargetInstanceId)) return null;
     const forcedTargetEntry = controllerState.forcedTargetInstanceId
-      ? availableTargetEntries.find((entry) => entry.instanceId === controllerState.forcedTargetInstanceId)
+      ? availableTargetEntries.find((entry) => abilityInstanceId(entry.instanceId) === abilityInstanceId(controllerState.forcedTargetInstanceId))
       : null;
     const targetEntry = forcedTargetEntry ?? combatPlan?.target ?? availableTargetEntries[0];
     if (!targetEntry) {
@@ -17885,12 +18146,11 @@ export default function Simulator({
           ? { total: Number(combatRollPacket.attack) }
           : rollDie(attackerEntry.attack.attackDice, combatRandom);
         const second = useAdvantage || useDisadvantage ? rollDie(attackerEntry.attack.attackDice, combatRandom) : null;
-        const modifier = getAttackConditionalModifier(attackerEntry.card, { ...targetEntry.card, health: targetEntry.coral.health, maxHealth: targetEntry.coral.maxHealth }, opponentState.habitats, opponentState.corals, opponentState.reefCreatures, attackerEntry.attack, opponentState.orphanCreatures, { rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
+        const modifier = getAttackConditionalModifier(attackerEntry.card, { ...targetEntry.card, health: targetEntry.coral.health, maxHealth: targetEntry.coral.maxHealth }, opponentState.habitats, opponentState.corals, opponentState.reefCreatures, attackerEntry.attack, opponentState.orphanCreatures, { abilityState: opponentState, rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
         const baseTotal = second ? (useAdvantage ? Math.max(first.total, second.total) : Math.min(first.total, second.total)) : first?.total;
         const rolledBonus = getRolledAttackBonus(attackerEntry.attack, baseTotal, opponentState.habitats);
-        const rovLightsBonus = getRovLightsAttackBonus(opponentState.rovLightsActive, targetEntry.card);
         return first ? {
-          total: baseTotal + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus,
+          total: baseTotal + modifier.flat + rolledBonus.flat + flashingAlarmBonus,
           primaryRoll: first.total,
           contributors: [
             {
@@ -17905,11 +18165,10 @@ export default function Simulator({
             ...combatContributorsFromDetails([
               ...modifier.details,
               rolledBonus.detail,
-              rovLightsBonus ? `+${rovLightsBonus} ROV Lights` : null,
               flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null,
             ].filter(Boolean)),
           ],
-          detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""}`,
+          detail: `${second ? `${first.total}/${second.total} ${useAdvantage ? "advantage" : "disadvantage"}` : `${first.total}${hasAdvantage && hasDisadvantage ? " (advantage and disadvantage canceled)" : ""}`}${modifier.details.length || rolledBonus.detail || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""}`,
         } : null;
       }).filter(Boolean);
       if (!rolls.length) return null;
@@ -17949,10 +18208,10 @@ export default function Simulator({
     const useAttackDisadvantage = attackDisadvantage && !attackAdvantage;
     const defenseAdvantage = hasDefenseAdvantage({ targetCard: targetEntry.card, statuses: activeDefenseStatuses, ignoreDefensiveBonuses: defenseAdjustment.ignoresBonuses });
     const attachedDefenseBonus = !defenseAdjustment.ignoresBonuses && targetEntry.coral && !coralIsStunned(targetEntry.coral) ? calculateAttachedCreatureDefenseBonus(cardsById[targetEntry.coral.cardId]) : 0;
-    const hostedDefenseBonusDice = !defenseAdjustment.ignoresBonuses && targetEntry.hostedIndex >= 0 ? getHostedDefenseBonusDice(cardsById[targetEntry.hostCardId ?? targetEntry.slot?.cardId], targetEntry.card) : null;
+    const hostedDefenseBonusDice = !defenseAdjustment.ignoresBonuses && targetEntry.hostedIndex >= 0 ? getHostedDefenseBonusDice(creatureAbilityCard(cardsById[targetEntry.hostCardId ?? targetEntry.slot?.cardId], controllerCreatureStatuses, targetEntry.orphanInstanceId ?? targetEntry.slot?.cardInstanceId), targetEntry.card) : null;
     const cloakDefenseBonus = !defenseAdjustment.ignoresBonuses ? getCloakDefenseBonus(targetEntry.card) : 0;
     const darknessShroudDefenseBonus = !defenseAdjustment.ignoresBonuses ? getDarknessShroudDefenseBonus(targetEntry.card, playerHabitats) : 0;
-    const rovLightsBonus = getRovLightsAttackBonus(opponentState.rovLightsActive, targetEntry.card);
+    const camouflageDefenseBonus = !defenseAdjustment.ignoresBonuses ? getKingOfCamouflageDefenseBonus(targetEntry.card, [...playerHabitats, ...opponentState.habitats]) : 0;
     let combatRollSummary = null;
     for (let index = 0; index < 1 && !attackerWins; index += 1) {
       const result = combatRollPacket
@@ -17971,7 +18230,7 @@ export default function Simulator({
       };
       const secondDefenseRoll = defenseAdvantage ? rollDie(defenseDice, combatRandom) : null;
       const chosenDefenseRoll = secondDefenseRoll ? Math.max(result.defense.total, secondDefenseRoll.total) : result.defense.total;
-      let defenseTotal = Math.max(0, chosenDefenseRoll + defenseAdjustment.flat + cloakDefenseBonus + darknessShroudDefenseBonus + attachedDefenseBonus);
+      let defenseTotal = Math.max(0, chosenDefenseRoll + defenseAdjustment.flat + cloakDefenseBonus + darknessShroudDefenseBonus + camouflageDefenseBonus + attachedDefenseBonus);
       const defenseContributors = [{
         id: "defense-roll",
         label: "Defense roll",
@@ -17991,6 +18250,10 @@ export default function Simulator({
       if (darknessShroudDefenseBonus) {
         rollDetails.push(`+${darknessShroudDefenseBonus} Darkness Shroud`);
         defenseContributors.push({ id: "darkness-shroud", label: "Darkness Shroud", value: darknessShroudDefenseBonus });
+      }
+      if (camouflageDefenseBonus) {
+        rollDetails.push(`+${camouflageDefenseBonus} King of Camouflage`);
+        defenseContributors.push({ id: "king-of-camouflage", label: "King of Camouflage", value: camouflageDefenseBonus });
       }
       if (attachedDefenseBonus) {
         rollDetails.push(`+${attachedDefenseBonus} Shelter`);
@@ -18016,10 +18279,10 @@ export default function Simulator({
         }
       });
       const advantageRoll = useAttackAdvantage || useAttackDisadvantage ? rollDie(attackerEntry.attack.attackDice, combatRandom) : null;
-      const modifier = getAttackConditionalModifier(attackerEntry.card, targetEntry.card, opponentState.habitats, opponentState.corals, opponentState.reefCreatures, attackerEntry.attack, opponentState.orphanCreatures, { rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
+      const modifier = getAttackConditionalModifier(attackerEntry.card, targetEntry.card, opponentState.habitats, opponentState.corals, opponentState.reefCreatures, attackerEntry.attack, opponentState.orphanCreatures, { abilityState: opponentState, rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
       const chosenAttackRoll = advantageRoll ? (useAttackAdvantage ? Math.max(result.attack.total, advantageRoll.total) : Math.min(result.attack.total, advantageRoll.total)) : result.attack.total;
       const rolledBonus = getRolledAttackBonus(attackerEntry.attack, chosenAttackRoll, opponentState.habitats);
-      let attackTotal = chosenAttackRoll + modifier.flat + rolledBonus.flat + rovLightsBonus + flashingAlarmBonus;
+      let attackTotal = chosenAttackRoll + modifier.flat + rolledBonus.flat + flashingAlarmBonus;
       let appliedAttackRoll = chosenAttackRoll;
       let appliedAttackRollDetail = advantageRoll
         ? `${attackerEntry.attack.attackDice} · ${result.attack.total} / ${advantageRoll.total}, ${useAttackAdvantage ? "higher" : "lower"} roll`
@@ -18030,9 +18293,9 @@ export default function Simulator({
         const scatterFirst = rollDie(attackerEntry.attack.attackDice, combatRandom);
         const scatterSecond = useAttackAdvantage || useAttackDisadvantage ? rollDie(attackerEntry.attack.attackDice, combatRandom) : null;
         const scatterBase = scatterSecond ? (useAttackAdvantage ? Math.max(scatterFirst.total, scatterSecond.total) : Math.min(scatterFirst.total, scatterSecond.total)) : scatterFirst?.total ?? 0;
-        const scatterModifier = getAttackConditionalModifier(attackerEntry.card, targetEntry.card, opponentState.habitats, opponentState.corals, opponentState.reefCreatures, attackerEntry.attack, opponentState.orphanCreatures, { rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
+        const scatterModifier = getAttackConditionalModifier(attackerEntry.card, targetEntry.card, opponentState.habitats, opponentState.corals, opponentState.reefCreatures, attackerEntry.attack, opponentState.orphanCreatures, { abilityState: opponentState, rollConditionalDie: (expression) => rollDie(expression, combatRandom) });
         const scatterRolledBonus = getRolledAttackBonus(attackerEntry.attack, scatterBase, opponentState.habitats);
-        attackTotal = scatterBase + scatterModifier.flat + scatterRolledBonus.flat + rovLightsBonus + flashingAlarmBonus;
+        attackTotal = scatterBase + scatterModifier.flat + scatterRolledBonus.flat + flashingAlarmBonus;
         appliedAttackRoll = scatterBase;
         appliedAttackRollDetail = scatterSecond
           ? `${attackerEntry.attack.attackDice} Scatter · ${scatterFirst.total} / ${scatterSecond.total}, ${useAttackAdvantage ? "higher" : "lower"} roll`
@@ -18044,7 +18307,6 @@ export default function Simulator({
         { id: "attack-roll", label: "Attack roll", value: appliedAttackRoll, kind: "roll", detail: appliedAttackRollDetail },
         ...combatContributorsFromDetails([
           ...appliedAttackDetails,
-          rovLightsBonus ? `+${rovLightsBonus} ROV Lights` : null,
           flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null,
         ].filter(Boolean)),
       ];
@@ -18066,7 +18328,7 @@ export default function Simulator({
           },
         },
       };
-      rolls.push(`${attackTotal}${advantageRoll ? ` (${result.attack.total}/${advantageRoll.total} ${useAttackAdvantage ? "advantage" : "disadvantage"})` : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage canceled)" : ""}${modifier.details.length || rolledBonus.detail || rovLightsBonus || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, rovLightsBonus ? "+2 ROV Lights" : null, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""} vs ${defenseTotal}${defenseAdjustment.flat ? ` (${defenseAdjustment.flat} defense)` : ""}${defenseAdjustment.ignoresBonuses ? " (defensive bonuses ignored)" : rollDetails.length ? ` (${rollDetails.join(", ")})` : ""}${scatterDetail}`);
+      rolls.push(`${attackTotal}${advantageRoll ? ` (${result.attack.total}/${advantageRoll.total} ${useAttackAdvantage ? "advantage" : "disadvantage"})` : attackAdvantage && attackDisadvantage ? " (advantage and disadvantage canceled)" : ""}${modifier.details.length || rolledBonus.detail || flashingAlarmBonus ? ` [${[...modifier.details, rolledBonus.detail, flashingAlarmBonus ? `+${flashingAlarmBonus} Flashing Alarm` : null].filter(Boolean).join(", ")}]` : ""} vs ${defenseTotal}${defenseAdjustment.flat ? ` (${defenseAdjustment.flat} defense)` : ""}${defenseAdjustment.ignoresBonuses ? " (defensive bonuses ignored)" : rollDetails.length ? ` (${rollDetails.join(", ")})` : ""}${scatterDetail}`);
       attackerWins = attackTotal > defenseTotal;
     }
     if (!attackerWins) {
@@ -18319,11 +18581,12 @@ export default function Simulator({
   }
 
   function runOpponentAttack(opponentState, currentPlayerCorals, currentPlayerReefEntries, currentPlayerOrphans, onPlayAttack = null, continuation = null, controllerState = {}, combatRollPacket = null) {
-    let workingOpponent = normalizeProjectedOpponentState(reconcileOpponentInstances(opponentState, opponentState));
+    let workingOpponent = normalizeProjectedOpponentState(reconcileOpponentInstances(opponentState, opponentState), controllerState);
+    const workingPlayerHabitats = controllerState.habitatInstances?.map((instance) => instance.cardId) ?? controllerState.habitats ?? playerHabitats;
     let workingCorals = currentPlayerCorals;
     let workingReefInstances = reconcileCreatureZone(currentPlayerReefEntries, currentPlayerReefEntries, "player-reef");
     let workingOrphans = reconcileCreatureZone(currentPlayerOrphans, currentPlayerOrphans, "player-orphan");
-    const normalizedOpeningBoard = reconcileFoundationHealthToFixedPoint(workingCorals, workingReefInstances, workingOrphans);
+    const normalizedOpeningBoard = reconcileFoundationHealthToFixedPoint(workingCorals, workingReefInstances, workingOrphans, controllerState.creatureStatuses ?? creatureStatuses);
     workingCorals = normalizedOpeningBoard.corals;
     workingOrphans = normalizedOpeningBoard.orphans;
     let workingControllerRp = Number(controllerState.rp ?? rp);
@@ -18379,6 +18642,7 @@ export default function Simulator({
       if (!step) break;
       step = {
         ...step,
+        triggeredAbilityName: attackForStep?.attack?.triggered ? attackForStep.attack.actionName : null,
         combatPlan: capturedCombatPlan
           ? { ...capturedCombatPlan, ensnareResult: ensnareForStep }
           : null,
@@ -18389,7 +18653,7 @@ export default function Simulator({
         step = { ...step, summary: `${ensnareMessage} ${step.summary}` };
       }
       if (attackNumber === 0 && !continuation) {
-        const attackEffect = onPlayAttack?.attack ?? getBasicAttackEffect(cardsById[step.attackerCardId]);
+        const attackEffect = capturedCombatPlan?.forcedAttack?.attack ?? onPlayAttack?.attack ?? getBasicAttackEffect(cardsById[step.attackerCardId]);
         requiredAttacks = getDynamicAttackRepeat(cardsById[step.attackerCardId], attackEffect, opponentState.corals, opponentState.reefCreatures, opponentState.habitats);
       }
       if (step.noLegalTarget && attackNumber > 0) break;
@@ -18397,7 +18661,7 @@ export default function Simulator({
       workingCorals = step.corals ?? workingCorals;
       workingReefInstances = step.reefCreatureInstances ?? reconcileCreatureZone(workingReefInstances, step.reefCreatures ?? workingReefInstances, "player-reef");
       workingOrphans = step.orphanCreatures ?? workingOrphans;
-      const normalizedPlayerBoard = reconcileFoundationHealthToFixedPoint(workingCorals, workingReefInstances, workingOrphans);
+      const normalizedPlayerBoard = reconcileFoundationHealthToFixedPoint(workingCorals, workingReefInstances, workingOrphans, controllerState.creatureStatuses ?? creatureStatuses);
       workingCorals = normalizedPlayerBoard.corals;
       workingOrphans = normalizedPlayerBoard.orphans;
       discardedCardIds.push(...(step.discardedCardIds ?? (step.discardedCardId ? [step.discardedCardId] : [])));
@@ -18413,8 +18677,8 @@ export default function Simulator({
       if (step.targetInstanceId) {
         workingOpponent = { ...workingOpponent, poisonImmunityNextPredatorAttack: false };
       }
-      workingOpponent = normalizeProjectedOpponentState(workingOpponent);
-      const playerRpCapAfterStep = getEcosystemRpCap(workingCorals, [...playerHabitats, ...workingReefInstances.map((instance) => instance.cardId), ...workingOrphans.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
+      workingOpponent = normalizeProjectedOpponentState(workingOpponent, controllerState);
+      const playerRpCapAfterStep = getEcosystemRpCap(workingCorals, [...workingPlayerHabitats, ...workingReefInstances.map((instance) => instance.cardId), ...workingOrphans.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition, { creatureStatuses: workingCreatureStatuses, reefCreatureInstances: workingReefInstances, orphanCreatureInstances: workingOrphans }, workingOpponent.habitats);
       const rpOverflowLost = Math.max(0, workingControllerRp - playerRpCapAfterStep);
       if (rpOverflowLost) {
         workingControllerRp = playerRpCapAfterStep;
@@ -18425,12 +18689,12 @@ export default function Simulator({
         defeatedCard
           && defeatedCard.category === CardCategory.FISH
           && !isCreatureSchool(defeatedCard)
-          && ecosystemHasCard(workingCorals, workingReefInstances.map((instance) => instance.cardId), "blue-crab", workingOrphans)
+          && ecosystemHasCard(workingCorals, workingReefInstances.map((instance) => instance.cardId), "blue-crab", workingOrphans, { creatureStatuses: workingCreatureStatuses, reefCreatureInstances: workingReefInstances })
           && workingBlueCrabRecycleUsedTurn !== turn
       );
       if (blueCrabCanRecycle) {
         const nominalRecoveredRp = halfCostRoundedUp(defeatedCard.cost?.rp);
-        const cap = getEcosystemRpCap(workingCorals, [...playerHabitats, ...workingReefInstances.map((instance) => instance.cardId), ...workingOrphans.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
+        const cap = getEcosystemRpCap(workingCorals, [...workingPlayerHabitats, ...workingReefInstances.map((instance) => instance.cardId), ...workingOrphans.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition, { creatureStatuses: workingCreatureStatuses, reefCreatureInstances: workingReefInstances, orphanCreatureInstances: workingOrphans }, workingOpponent.habitats);
         const rpBeforeRecycle = workingControllerRp;
         workingControllerRp = addResourceWithinCap(workingControllerRp, nominalRecoveredRp, cap);
         workingBlueCrabRecycleUsedTurn = turn;
@@ -18444,7 +18708,7 @@ export default function Simulator({
       }
       steps.push({ ...step, attackNumber: attackOffset + attackNumber + 1, requiredAttacks: attackOffset + requiredAttacks });
       if (step.pendingRegenerate) {
-        const attackEffect = onPlayAttack?.attack ?? getBasicAttackEffect(cardsById[step.attackerCardId]);
+        const attackEffect = capturedCombatPlan?.forcedAttack?.attack ?? onPlayAttack?.attack ?? getBasicAttackEffect(cardsById[step.attackerCardId]);
         const remainingAttacks = requiredAttacks - attackNumber - 1;
         step.pendingRegenerate = {
           ...step.pendingRegenerate,
@@ -18519,8 +18783,8 @@ export default function Simulator({
 
   function buildOpponentAttackEventSequence(attackResult, initialPlayerState, initialOpponentState, { actionCostAlreadyPaid = false } = {}) {
     if (!attackResult) return { events: [], playerState: initialPlayerState, opponentState: initialOpponentState, summary: "" };
-    let nextPlayer = normalizeProjectedPlayerState({ ...initialPlayerState });
-    let nextOpponent = normalizeProjectedOpponentState(reconcileOpponentInstances(initialOpponentState, initialOpponentState));
+    let nextPlayer = normalizeProjectedPlayerState({ ...initialPlayerState }, initialOpponentState);
+    let nextOpponent = normalizeProjectedOpponentState(reconcileOpponentInstances(initialOpponentState, initialOpponentState), nextPlayer);
     const events = [];
     const summaryParts = [];
     const steps = attackResult.steps ?? [attackResult];
@@ -18548,11 +18812,11 @@ export default function Simulator({
         } else {
           nextDiscardPile = [...discardedIds, ...nextDiscardPile];
         }
-        if (cardHasPlenteous(primaryDefeatedCard) && nextDiscardPile.includes("krill-bloom-base")) {
-          nextDiscardPile = removeOneCard(nextDiscardPile, "krill-bloom-base");
-          nextFoundationDeck = shuffle([...nextFoundationDeck, "krill-bloom-base"], nextGameplayRandom);
+        if (cardHasPlenteous(primaryDefeatedCard) && nextDiscardPile.includes(primaryDefeatedCard.id)) {
+          nextDiscardPile = removeOneCard(nextDiscardPile, primaryDefeatedCard.id);
+          nextFoundationDeck = shuffle([...nextFoundationDeck, primaryDefeatedCard.id], nextGameplayRandom);
           plenteousRecycled = true;
-          stepExtras.push("Plenteous recycled a base Krill Bloom into your Foundation deck.");
+          stepExtras.push("Plenteous recycled the destroyed Krill card into your Foundation deck.");
         }
       }
       if (step.playerRpCapOverflowLost) {
@@ -18569,9 +18833,9 @@ export default function Simulator({
         ...nextOrphanInstances.map((instance) => `orphan-${instance.instanceId}`),
       ]);
       const nextFlashingAlarmAttackBonus = step.targetInstanceId && !step.resolutionUnsupported
-        ? triggerFlashingAlarm(nextPlayer.flashingAlarmAttackBonus, cardsById[step.defenderCardId])
+        ? triggerFlashingAlarm(nextPlayer.flashingAlarmAttackBonus, creatureAbilityCard(cardsById[step.defenderCardId], nextPlayer.creatureStatuses, step.targetInstanceId))
         : nextPlayer.flashingAlarmAttackBonus;
-      if (nextFlashingAlarmAttackBonus !== nextPlayer.flashingAlarmAttackBonus) {
+      if (nextFlashingAlarmAttackBonus && nextFlashingAlarmAttackBonus !== nextPlayer.flashingAlarmAttackBonus) {
         stepExtras.push(`${cardsById[step.defenderCardId]?.name}'s Flashing Alarm will give you +${nextFlashingAlarmAttackBonus.amount} on every attack roll during your next turn.`);
       }
       nextPlayer = {
@@ -18588,9 +18852,9 @@ export default function Simulator({
         resilienceUsedCardIds: step.playerResilienceUsedCardId
           ? [...new Set([...nextPlayer.resilienceUsedCardIds, step.playerResilienceUsedCardId])]
           : nextPlayer.resilienceUsedCardIds,
-        creatureStatuses: Object.fromEntries(Object.entries(nextPlayer.creatureStatuses).filter(([slotId]) => occupiedSlotIds.has(slotId))),
+        creatureStatuses: Object.fromEntries(Object.entries(nextPlayer.creatureStatuses).filter(([slotId]) => slotId.startsWith("ability:") || occupiedSlotIds.has(slotId))),
       };
-      const playerProjection = projectNormalizedPlayerState(nextPlayer);
+      const playerProjection = projectNormalizedPlayerState(nextPlayer, nextOpponent);
       nextPlayer = playerProjection.state;
       const playerCollateral = playerProjection.collateral;
 
@@ -18601,7 +18865,7 @@ export default function Simulator({
       ]);
       nextPlayer = {
         ...nextPlayer,
-        creatureStatuses: Object.fromEntries(Object.entries(nextPlayer.creatureStatuses).filter(([slotId]) => normalizedOccupiedSlotIds.has(slotId))),
+        creatureStatuses: Object.fromEntries(Object.entries(nextPlayer.creatureStatuses).filter(([slotId]) => slotId.startsWith("ability:") || normalizedOccupiedSlotIds.has(slotId))),
       };
 
       nextOpponent = reconcileOpponentInstances(nextOpponent, {
@@ -18632,7 +18896,7 @@ export default function Simulator({
       if (step.targetInstanceId) {
         nextOpponent = { ...nextOpponent, poisonImmunityNextPredatorAttack: false };
       }
-      const opponentProjection = projectNormalizedOpponentState({ ...nextOpponent, rovLightsActive: false });
+      const opponentProjection = projectNormalizedOpponentState({ ...nextOpponent, rovLightsActive: false }, nextPlayer);
       nextOpponent = opponentProjection.state;
       const opponentCollateral = opponentProjection.collateral;
       const attackSpendAmount = stepIndex === 0 && !actionCostAlreadyPaid
@@ -18666,9 +18930,9 @@ export default function Simulator({
           : [],
         analyticsAbility: stepIndex === 0 && !actionCostAlreadyPaid && !step.noLegalTarget && !step.resolutionUnsupported
           ? {
-              counter: attackResult.opponentAttackActionKey ? "actions" : "onPlay",
+              counter: step.triggeredAbilityName ? "passives" : attackResult.opponentAttackActionKey ? "actions" : "onPlay",
               cardId: step.attackerCardId,
-              name: step.combatBreakdown?.attack?.actionName
+              name: step.triggeredAbilityName ?? step.combatBreakdown?.attack?.actionName
                 ?? (attackResult.opponentAttackActionKey
                   ? getBasicAttackEffect(cardsById[step.attackerCardId])?.actionName
                   : getOnPlayAttackEffect(cardsById[step.attackerCardId])?.actionName),
@@ -18827,8 +19091,8 @@ export default function Simulator({
   }
 
   function runOpponentNormalAttackActions(opponentState, currentPlayerState, combatRollPacket = null) {
-    let nextOpponent = normalizeProjectedOpponentState(opponentState);
-    let nextPlayer = normalizeProjectedPlayerState(currentPlayerState);
+    let nextOpponent = normalizeProjectedOpponentState(opponentState, currentPlayerState);
+    let nextPlayer = normalizeProjectedPlayerState(currentPlayerState, nextOpponent);
     const events = [];
     const summaries = [];
     let firstAttack = null;
@@ -18843,6 +19107,7 @@ export default function Simulator({
       : availableCreatureCount;
 
     for (let attackIndex = 0; attackIndex < safetyLimit; attackIndex += 1) {
+      if (getProjectedVictoryResult(nextPlayer, nextOpponent)) break;
       const attack = runOpponentAttack(
         nextOpponent,
         nextPlayer.corals,
@@ -18891,7 +19156,7 @@ export default function Simulator({
 
     if (attackFirst) {
       const attacks = runOpponentNormalAttackActions(opponentState, currentPlayerState, combatRollPacket);
-      const utilities = attacks.hasPendingRegenerate
+      const utilities = attacks.hasPendingRegenerate || getProjectedVictoryResult(attacks.playerState, attacks.opponentState)
         ? emptyUtilities(attacks.opponentState, attacks.playerState)
         : runOpponentUtilityActions(attacks.opponentState, attacks.playerState);
       return {
@@ -18933,6 +19198,32 @@ export default function Simulator({
     };
   }
 
+  function getProjectedVictoryResult(playerState, opponentState) {
+    const playerVp = getEcosystemVictoryPoints(
+      playerState.corals,
+      playerState.habitats ?? playerHabitats,
+      playerState.reefCreatureInstances.map((instance) => instance.cardId),
+      { abilityState: playerState,
+        controller: "player",
+        localOrphans: playerState.orphanCreatureInstances,
+        rivalCorals: opponentState.corals,
+        rivalOrphans: opponentState.orphanCreatures,
+      },
+    );
+    const opponentVp = getEcosystemVictoryPoints(
+      opponentState.corals,
+      opponentState.habitats,
+      opponentState.reefCreatures,
+      { abilityState: opponentState,
+        controller: "opponent",
+        localOrphans: opponentState.orphanCreatures,
+        rivalCorals: playerState.corals,
+        rivalOrphans: playerState.orphanCreatureInstances,
+      },
+    );
+    return getResolvedVictoryResult(playerVp, opponentVp);
+  }
+
   function buildLiveOpponentTurnCompletionEvents({
     playerState,
     opponentState,
@@ -18940,11 +19231,13 @@ export default function Simulator({
     openingTurn = false,
     opponentLost = false,
   }) {
-    const finalPlayerState = normalizeProjectedPlayerState(playerState);
+    const finalPlayerState = normalizeProjectedPlayerState(playerState, opponentState);
     const opponentStateWithInstances = normalizeProjectedOpponentState(
       reconcileOpponentInstances(opponentState, opponentState),
+      finalPlayerState,
     );
-    const habitatMaintenance = opponentLost
+    const resolvedVictory = getProjectedVictoryResult(finalPlayerState, opponentStateWithInstances);
+    const habitatMaintenance = opponentLost || resolvedVictory
       ? {
           habitats: opponentStateWithInstances.habitatInstances,
           destroyedHabitats: [],
@@ -18962,6 +19255,7 @@ export default function Simulator({
     let finalOpponentState = {
       ...opponentStateWithInstances,
       flashingAlarmAttackBonus: endFlashingAlarmTurn(opponentStateWithInstances.flashingAlarmAttackBonus),
+      nextOnPlayAttackBonus: null,
     };
     const maintenanceEvents = [];
     habitatMaintenance.events.forEach((event) => {
@@ -19009,12 +19303,12 @@ export default function Simulator({
     const stunRecoverySummary = stunRecovery.recoveredFoundationIds.length
       ? `${stunRecovery.recoveredFoundationIds.length} opponent Coral${stunRecovery.recoveredFoundationIds.length === 1 ? "" : "s"} recovered from Stunned at the end of its turn.`
       : "";
-    finalOpponentState = { ...finalOpponentState, corals: stunRecovery.foundations };
+    finalOpponentState = { ...finalOpponentState, corals: stunRecovery.foundations, creatureStatuses: clearCreatureAbilityStuns(finalOpponentState.creatureStatuses) };
     const finalPlayerVp = getEcosystemVictoryPoints(
       finalPlayerState.corals,
       playerHabitats,
       finalPlayerState.reefCreatureInstances.map((instance) => instance.cardId),
-      {
+      { abilityState: finalPlayerState,
         controller: "player",
         localOrphans: finalPlayerState.orphanCreatureInstances,
         rivalCorals: finalOpponentState.corals,
@@ -19025,14 +19319,14 @@ export default function Simulator({
       finalOpponentState.corals,
       finalOpponentState.habitats,
       finalOpponentState.reefCreatures,
-      {
+      { abilityState: finalOpponentState,
         controller: "opponent",
         localOrphans: finalOpponentState.orphanCreatures,
         rivalCorals: finalPlayerState.corals,
         rivalOrphans: finalPlayerState.orphanCreatureInstances,
       },
     );
-    const victoryResult = getResolvedVictoryResult(finalPlayerVp, finalOpponentVp);
+    const victoryResult = resolvedVictory ?? getResolvedVictoryResult(finalPlayerVp, finalOpponentVp);
     const summary = [
       ...summaryParts,
       ...maintenanceEvents.map((event) => event.message),
@@ -19067,8 +19361,8 @@ export default function Simulator({
     forcedCoinResult = null,
     onComplete,
   }) {
-    const normalizedPlayerState = normalizeProjectedPlayerState(playerState);
-    const normalizedOpponentState = normalizeProjectedOpponentState(opponentState);
+    const normalizedPlayerState = normalizeProjectedPlayerState(playerState, opponentState);
+    const normalizedOpponentState = normalizeProjectedOpponentState(opponentState, normalizedPlayerState);
     const normalizedStates = {
       player: normalizedPlayerState,
       opponent: normalizedOpponentState,
@@ -19157,16 +19451,18 @@ export default function Simulator({
     ];
     const decorateResultEvent = (event, nextPlayerState, nextOpponentState) => ({
       ...event,
-      playerStateAfter: normalizeProjectedPlayerState(nextPlayerState),
+      playerStateAfter: normalizeProjectedPlayerState(nextPlayerState, nextOpponentState),
       opponentStateAfter: normalizeProjectedOpponentState(
         reconcileOpponentInstances(normalizedOpponentState, nextOpponentState),
+        nextPlayerState,
       ),
       opponentSequence: true,
     });
     const continueAfterResolution = (resolution) => {
-      const nextPlayerState = normalizeProjectedPlayerState(resolution.player);
+      const nextPlayerState = normalizeProjectedPlayerState(resolution.player, resolution.opponent);
       const nextOpponentState = normalizeProjectedOpponentState(
         reconcileOpponentInstances(normalizedOpponentState, resolution.opponent),
+        nextPlayerState,
       );
       const resultEvent = decorateResultEvent(
         resolution.events?.[0] ?? plannedEvent,
@@ -19179,15 +19475,11 @@ export default function Simulator({
       ].filter(Boolean);
       return [
         ...(resultEvent ? [resultEvent] : []),
-        ...createLiveLionfishTurnEvents({
-          playerState: nextPlayerState,
-          opponentState: nextOpponentState,
-          hostController,
-          checkpointPrefix,
-          processedInvaderInstanceIds: nextProcessedInvaders,
-          summaryParts: nextSummaryParts,
-          onComplete,
-        }),
+        ...createReefPostCombatEvents(
+          { player: nextPlayerState, opponent: nextOpponentState },
+          { attackerOwner: plan?.invaderController, attackerInstanceId: plan?.invaderInstanceId, targetInstanceId: plan?.targetInstanceId, success: Boolean(resultEvent?.attackerWins) },
+          (states) => createLiveLionfishTurnEvents({ playerState: states.player, opponentState: states.opponent, hostController, checkpointPrefix, processedInvaderInstanceIds: nextProcessedInvaders, summaryParts: nextSummaryParts, onComplete }),
+        ),
       ];
     };
 
@@ -19249,8 +19541,8 @@ export default function Simulator({
     checkpointPrefix = "opponent-combat",
     afterAction,
   }) {
-    const normalizedPlayerState = normalizeProjectedPlayerState(playerState);
-    const normalizedOpponentState = normalizeProjectedOpponentState(opponentState);
+    const normalizedPlayerState = normalizeProjectedPlayerState(playerState, opponentState);
+    const normalizedOpponentState = normalizeProjectedOpponentState(opponentState, normalizedPlayerState);
     const attackForStep = continuation?.forcedAttack ?? onPlayAttack;
     const runSingleStep = (packet = null, forcedCombatPlan = null, planCombatOnly = false) => runOpponentAttack(
       normalizedOpponentState,
@@ -19266,7 +19558,7 @@ export default function Simulator({
         resilienceUsedCardIds: normalizedPlayerState.resilienceUsedCardIds,
         maxAttackSteps: 1,
         deferToxicResolution: true,
-        forcedTargetInstanceId: forcedCombatPlan?.targetInstanceId ?? null,
+        forcedTargetInstanceId: forcedCombatPlan?.targetInstanceId ?? attackForStep?.attack?.forcedTargetInstanceId ?? null,
         forcedAvoidanceCoinResult: forcedCombatPlan?.avoidanceCoinResult ?? null,
         forcedEnsnareResult: forcedCombatPlan?.ensnareResult ?? null,
         planCombatOnly,
@@ -19355,7 +19647,7 @@ export default function Simulator({
           const continuationAfterResolvedStep = resolvedAttack.nextContinuation
             ?? resolvedStep.pendingRegenerate?.continuation
             ?? null;
-          const continueAfterResolvedStep = ({
+          const resumeAfterReactions = ({
             nextPlayerState,
             nextOpponentState,
             nextSummaryParts,
@@ -19378,6 +19670,11 @@ export default function Simulator({
               { attackOccurred: true },
             );
           };
+          const continueAfterResolvedStep = (next) => createReefPostCombatEvents(
+            { player: next.nextPlayerState, opponent: next.nextOpponentState },
+            { attackerOwner: "opponent", attackerInstanceId: resolvedStep.attackerInstanceId ?? plannedCombat.attackerInstanceId, targetInstanceId: resolvedStep.targetInstanceId, success: Boolean(resolvedStep.attackerWins), legacyCounterSucceeded: Boolean(resolvedStep.counterSucceeded) },
+            (states) => resumeAfterReactions({ ...next, nextPlayerState: states.player, nextOpponentState: states.opponent, attackerDiscarded: next.attackerDiscarded || !collectReefAbilityCreatures(states, cardsById).some((entry) => entry.controller === "opponent" && entry.instanceId === (resolvedStep.attackerInstanceId ?? plannedCombat.attackerInstanceId)) }),
+          );
           if (resolvedStep.pendingRegenerate) {
             resolvedStep.pendingRegenerate = {
               ...resolvedStep.pendingRegenerate,
@@ -19482,8 +19779,8 @@ export default function Simulator({
   }) {
     const threatProfile = assessCurrentOpponentThreat(opponentState);
     const attackFirst = shouldOpponentAttackBeforeUtility(opponentDifficulty, threatProfile.level);
-    let startingOpponentState = normalizeProjectedOpponentState(opponentState);
-    let startingPlayerState = normalizeProjectedPlayerState(playerState);
+    let startingOpponentState = normalizeProjectedOpponentState(opponentState, playerState);
+    let startingPlayerState = normalizeProjectedPlayerState(playerState, startingOpponentState);
     let leadingEvents = [];
     let leadingSummaryParts = [...summaryParts];
     if (!attackFirst) {
@@ -19539,6 +19836,14 @@ export default function Simulator({
       ];
     };
     const buildAttackAtIndex = (attackIndex, nextPlayerState, nextOpponentState, nextSummaryParts) => {
+      if (getProjectedVictoryResult(nextPlayerState, nextOpponentState)) {
+        return buildLiveOpponentTurnCompletionEvents({
+          playerState: nextPlayerState,
+          opponentState: nextOpponentState,
+          summaryParts: nextSummaryParts,
+          openingTurn,
+        });
+      }
       if (attackIndex >= attackLimit) {
         return finishNormalActions(nextPlayerState, nextOpponentState, nextSummaryParts);
       }
@@ -19584,18 +19889,7 @@ export default function Simulator({
       });
     }
     if (!onPlayAttack?.attack) {
-      const opponentVp = getEcosystemVictoryPoints(
-        opponentState.corals,
-        opponentState.habitats,
-        opponentState.reefCreatures,
-        {
-          controller: "opponent",
-          localOrphans: opponentState.orphanCreatures,
-          rivalCorals: playerState.corals,
-          rivalOrphans: playerState.orphanCreatureInstances,
-        },
-      );
-      if (opponentVp >= victoryTarget) {
+      if (getProjectedVictoryResult(playerState, opponentState)) {
         return buildLiveOpponentTurnCompletionEvents({
           playerState,
           opponentState,
@@ -19617,18 +19911,7 @@ export default function Simulator({
       summaryParts,
       checkpointPrefix: `opponent-on-play-${round}`,
       afterAction: (nextPlayerState, nextOpponentState, nextSummaryParts) => {
-        const opponentVp = getEcosystemVictoryPoints(
-          nextOpponentState.corals,
-          nextOpponentState.habitats,
-          nextOpponentState.reefCreatures,
-          {
-            controller: "opponent",
-            localOrphans: nextOpponentState.orphanCreatures,
-            rivalCorals: nextPlayerState.corals,
-            rivalOrphans: nextPlayerState.orphanCreatureInstances,
-          },
-        );
-        if (opponentVp >= victoryTarget) {
+        if (getProjectedVictoryResult(nextPlayerState, nextOpponentState)) {
           return buildLiveOpponentTurnCompletionEvents({
             playerState: nextPlayerState,
             opponentState: nextOpponentState,
@@ -19665,11 +19948,14 @@ export default function Simulator({
         })();
     const hasPendingRegenerate = Boolean(normalResult.hasPendingRegenerate);
     const opponentLostAfterUtility = Boolean(normalResult.lost);
-    const finalPlayerState = normalizeProjectedPlayerState(normalResult.playerState);
+    const finalPlayerState = normalizeProjectedPlayerState(normalResult.playerState, normalResult.opponentState);
     const opponentStateWithInstances = normalizeProjectedOpponentState(
       reconcileOpponentInstances(resume.opponentState, normalResult.opponentState),
+      finalPlayerState,
     );
-    const habitatMaintenance = hasPendingRegenerate || opponentLostAfterUtility
+    const victoryBeforeMaintenance = !hasPendingRegenerate
+      && getProjectedVictoryResult(finalPlayerState, opponentStateWithInstances);
+    const habitatMaintenance = hasPendingRegenerate || opponentLostAfterUtility || victoryBeforeMaintenance
       ? {
           habitats: opponentStateWithInstances.habitatInstances,
           destroyedHabitats: [],
@@ -19689,6 +19975,7 @@ export default function Simulator({
       : {
           ...opponentStateWithInstances,
           flashingAlarmAttackBonus: endFlashingAlarmTurn(opponentStateWithInstances.flashingAlarmAttackBonus),
+          nextOnPlayAttackBonus: null,
         };
     const maintenanceEvents = [];
     habitatMaintenance.events.forEach((event) => {
@@ -19736,13 +20023,13 @@ export default function Simulator({
     const stunRecoverySummary = stunRecovery.recoveredFoundationIds.length
       ? `${stunRecovery.recoveredFoundationIds.length} opponent Coral${stunRecovery.recoveredFoundationIds.length === 1 ? "" : "s"} recovered from Stunned at the end of its turn.`
       : "";
-    finalOpponentState = { ...finalOpponentState, corals: stunRecovery.foundations };
+    finalOpponentState = { ...finalOpponentState, corals: stunRecovery.foundations, creatureStatuses: clearCreatureAbilityStuns(finalOpponentState.creatureStatuses) };
 
     const finalPlayerVp = getEcosystemVictoryPoints(
       finalPlayerState.corals,
       playerHabitats,
       finalPlayerState.reefCreatureInstances.map((instance) => instance.cardId),
-      {
+      { abilityState: finalPlayerState,
         controller: "player",
         localOrphans: finalPlayerState.orphanCreatureInstances,
         rivalCorals: finalOpponentState.corals,
@@ -19753,7 +20040,7 @@ export default function Simulator({
       finalOpponentState.corals,
       finalOpponentState.habitats,
       finalOpponentState.reefCreatures,
-      {
+      { abilityState: finalOpponentState,
         controller: "opponent",
         localOrphans: finalOpponentState.orphanCreatures,
         rivalCorals: finalPlayerState.corals,
@@ -19762,7 +20049,7 @@ export default function Simulator({
     );
     const victoryResult = hasPendingRegenerate
       ? null
-      : getResolvedVictoryResult(finalPlayerVp, finalOpponentVp);
+      : victoryBeforeMaintenance || getResolvedVictoryResult(finalPlayerVp, finalOpponentVp);
     const summary = [
       resume.summaryPrefix,
       normalResult.summary,
@@ -19797,7 +20084,7 @@ export default function Simulator({
     if (eventOverlay?.type !== "choose-regenerate" || !pending) return;
     const resolution = resolveRegenerateDecision(pending.decision, choice);
     if (!resolution.resolved) return;
-    const defender = cardsById[pending.toxicSourceCardId];
+    const defender = creatureAbilityCard(cardsById[pending.toxicSourceCardId], creatureStatuses, pending.targetInstanceId);
     if (resolution.keepDefender) trackSimulatorAbility("player", "passives", defender?.id, "Regenerate");
     const attacker = cardsById[pending.attackerCardId];
     const targetLocation = pending.targetLocation ?? {};
@@ -19884,12 +20171,12 @@ export default function Simulator({
         nextOpponent = { ...nextOpponent, discardPile: [attacker.id, ...nextOpponent.discardPile] };
       }
 
-      const recycleKrill = cardHasPlenteous(defender) && nextPlayerDiscardPile.includes("krill-bloom-base");
+      const recycleKrill = cardHasPlenteous(defender) && nextPlayerDiscardPile.includes(defender.id);
       if (recycleKrill) {
         recycledKrill = true;
-        nextPlayerDiscardPile = removeOneCard(nextPlayerDiscardPile, "krill-bloom-base");
-        nextPlayerFoundationDeck = shuffle([...nextPlayerFoundationDeck, "krill-bloom-base"], nextGameplayRandom);
-        recycleMessage += " Plenteous recycled a base Krill Bloom into your Foundation deck.";
+        nextPlayerDiscardPile = removeOneCard(nextPlayerDiscardPile, defender.id);
+        nextPlayerFoundationDeck = shuffle([...nextPlayerFoundationDeck, defender.id], nextGameplayRandom);
+        recycleMessage += " Plenteous recycled the destroyed Krill card into your Foundation deck.";
       }
       const stateBeforeBlueCrabProjection = projectNormalizedPlayerState({
         corals: nextPlayerCorals,
@@ -19902,6 +20189,7 @@ export default function Simulator({
         palsDeck,
         rp: nextPlayerRp,
         supportBlockedUntilRound,
+        aideBlockedUntilRound,
         resilienceUsedCardIds,
         creatureStatuses,
         blueCrabRecycleUsedTurn: nextBlueCrabRecycleUsedTurn,
@@ -19920,11 +20208,11 @@ export default function Simulator({
       if (overflowLost) recycleMessage += ` Your RP bank cap fell and ${overflowLost} excess RP was returned before Blue Crab resolved.`;
       const blueCrabCanRecycle = defender?.category === CardCategory.FISH
         && !isCreatureSchool(defender)
-        && ecosystemHasCard(nextPlayerCorals, nextPlayerReefInstances.map((instance) => instance.cardId), "blue-crab", nextPlayerOrphans)
+        && ecosystemHasCard(nextPlayerCorals, nextPlayerReefInstances.map((instance) => instance.cardId), "blue-crab", nextPlayerOrphans, { creatureStatuses, reefCreatureInstances: nextPlayerReefInstances })
         && nextBlueCrabRecycleUsedTurn !== turn;
       if (blueCrabCanRecycle) {
         const nominalRecoveredRp = halfCostRoundedUp(defender.cost?.rp);
-        const cap = getEcosystemRpCap(nextPlayerCorals, [...playerHabitats, ...nextPlayerReefInstances.map((instance) => instance.cardId), ...nextPlayerOrphans.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition);
+        const cap = getEcosystemRpCap(nextPlayerCorals, [...playerHabitats, ...nextPlayerReefInstances.map((instance) => instance.cardId), ...nextPlayerOrphans.flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])])], activeCondition, { creatureStatuses, reefCreatureInstances: playerReefCreatureInstances, orphanCreatureInstances: playerOrphanCreatures }, nextOpponent.habitats);
         const rpBeforeRecycle = nextPlayerRp;
         nextPlayerRp = addResourceWithinCap(nextPlayerRp, nominalRecoveredRp, cap);
         const actualRecoveredRp = nextPlayerRp - rpBeforeRecycle;
@@ -19952,16 +20240,17 @@ export default function Simulator({
       palsDeck,
       rp: nextPlayerRp,
       supportBlockedUntilRound,
+      aideBlockedUntilRound,
       resilienceUsedCardIds,
-      creatureStatuses: Object.fromEntries(Object.entries(creatureStatuses).filter(([slotId]) => occupiedSlotIds.has(slotId))),
+      creatureStatuses: Object.fromEntries(Object.entries(creatureStatuses).filter(([slotId]) => slotId.startsWith("ability:") || occupiedSlotIds.has(slotId))),
       blueCrabRecycleUsedTurn: nextBlueCrabRecycleUsedTurn,
       flashingAlarmAttackBonus,
     });
-    const choiceOpponentProjection = projectNormalizedOpponentState(reconcileOpponentInstances(opponent, nextOpponent));
+    const choiceOpponentProjection = projectNormalizedOpponentState(reconcileOpponentInstances(opponent, nextOpponent), choicePlayerState);
     const choiceOpponentState = choiceOpponentProjection.state;
     regenerateOpponentCollateral = choiceOpponentProjection.collateral;
 
-    const liveCombatResume = previewExperience && typeof pending.liveResume === "function";
+    const liveCombatResume = typeof pending.liveResume === "function";
     const continuation = !liveCombatResume && !attackerDiscardedAfterConsume ? pending.continuation : null;
     let continuationResult = continuation ? runOpponentAttack(
       choiceOpponentState,
@@ -19984,20 +20273,11 @@ export default function Simulator({
       ? buildOpponentAttackEventSequence(continuationResult, choicePlayerState, choiceOpponentState, { actionCostAlreadyPaid: true })
       : { events: [], playerState: choicePlayerState, opponentState: choiceOpponentState, summary: "" };
     const onPlayContinuationHasPendingRegenerate = onPlayContinuationResolution.events.some((event) => event.type === "choose-regenerate");
-    const opponentVpAfterOnPlayContinuation = getEcosystemVictoryPoints(
-      onPlayContinuationResolution.opponentState.corals,
-      onPlayContinuationResolution.opponentState.habitats,
-      onPlayContinuationResolution.opponentState.reefCreatures,
-      {
-        controller: "opponent",
-        localOrphans: onPlayContinuationResolution.opponentState.orphanCreatures,
-        rivalCorals: onPlayContinuationResolution.playerState.corals,
-        rivalOrphans: onPlayContinuationResolution.playerState.orphanCreatureInstances,
-      },
-    );
+    const victoryAfterOnPlayContinuation = !onPlayContinuationHasPendingRegenerate
+      && getProjectedVictoryResult(onPlayContinuationResolution.playerState, onPlayContinuationResolution.opponentState);
     const normalActionsAfterOnPlay = !liveCombatResume && pending.resumeNormalActionsAfterOnPlay
       && !onPlayContinuationHasPendingRegenerate
-      && opponentVpAfterOnPlayContinuation < victoryTarget
+      && !victoryAfterOnPlayContinuation
         ? runOpponentNormalActions(onPlayContinuationResolution.opponentState, onPlayContinuationResolution.playerState)
         : null;
     const continuationResolution = {
@@ -20009,13 +20289,16 @@ export default function Simulator({
     const remainingRegenerate = continuationResolution.events.some((event) => event.type === "choose-regenerate");
     const opponentLostAfterFollowup = Boolean(normalActionsAfterOnPlay?.lost);
     const maintenanceEvents = [];
-    let finalOpponentState = normalizeProjectedOpponentState(continuationResolution.opponentState);
+    let finalOpponentState = normalizeProjectedOpponentState(continuationResolution.opponentState, continuationResolution.playerState);
+    const victoryBeforeMaintenance = !remainingRegenerate
+      && getProjectedVictoryResult(continuationResolution.playerState, finalOpponentState);
     if (!remainingRegenerate) {
       finalOpponentState = {
         ...finalOpponentState,
         flashingAlarmAttackBonus: endFlashingAlarmTurn(finalOpponentState.flashingAlarmAttackBonus),
+        nextOnPlayAttackBonus: null,
       };
-      if (!opponentLostAfterFollowup) {
+      if (!opponentLostAfterFollowup && !victoryBeforeMaintenance) {
         const maintenance = resolveEndOfTurnHabitatMaintenance(finalOpponentState.habitatInstances, {
           cardsInPlay: getCardsInPlayForComposition(finalOpponentState.corals, finalOpponentState.reefCreatures, finalOpponentState.orphanCreatures),
           cardLookup: cardsById,
@@ -20044,7 +20327,7 @@ export default function Simulator({
     const opponentStunRecoverySummary = opponentStunRecovery.recoveredFoundationIds.length
       ? `${opponentStunRecovery.recoveredFoundationIds.length} opponent Coral${opponentStunRecovery.recoveredFoundationIds.length === 1 ? "" : "s"} recovered from Stunned at the end of its turn.`
       : "";
-    finalOpponentState = { ...finalOpponentState, corals: opponentStunRecovery.foundations };
+    finalOpponentState = { ...finalOpponentState, corals: opponentStunRecovery.foundations, creatureStatuses: remainingRegenerate ? finalOpponentState.creatureStatuses : clearCreatureAbilityStuns(finalOpponentState.creatureStatuses) };
 
     const message = resolution.keepDefender
       ? `You chose Regenerate and paid ${resolution.rpCost} RP. ${defender.name} remains in play.`
@@ -20128,25 +20411,25 @@ export default function Simulator({
       } else setEventOverlay(regenerateResultEvent);
       return;
     }
-    const postChoicePlayerState = normalizeProjectedPlayerState(continuationResolution.playerState);
+    const postChoicePlayerState = normalizeProjectedPlayerState(continuationResolution.playerState, finalOpponentState);
     const postChoicePlayerVp = getEcosystemVictoryPoints(
       postChoicePlayerState.corals,
       playerHabitats,
       postChoicePlayerState.reefCreatureInstances.map((instance) => instance.cardId),
-      {
+      { abilityState: postChoicePlayerState,
         controller: "player",
         localOrphans: postChoicePlayerState.orphanCreatureInstances,
         rivalCorals: finalOpponentState.corals,
         rivalOrphans: finalOpponentState.orphanCreatures,
       },
     );
-    const postChoiceOpponentVp = getEcosystemVictoryPoints(finalOpponentState.corals, finalOpponentState.habitats, finalOpponentState.reefCreatures, {
+    const postChoiceOpponentVp = getEcosystemVictoryPoints(finalOpponentState.corals, finalOpponentState.habitats, finalOpponentState.reefCreatures, { abilityState: finalOpponentState,
       controller: "opponent",
       localOrphans: finalOpponentState.orphanCreatures,
       rivalCorals: postChoicePlayerState.corals,
       rivalOrphans: postChoicePlayerState.orphanCreatureInstances,
     });
-    const postChoiceVictoryResult = remainingRegenerate ? null : getResolvedVictoryResult(postChoicePlayerVp, postChoiceOpponentVp);
+    const postChoiceVictoryResult = remainingRegenerate ? null : victoryBeforeMaintenance || getResolvedVictoryResult(postChoicePlayerVp, postChoiceOpponentVp);
     const postChoiceGameResult = opponentLostAfterFollowup
       ? "Victory: the opponent could not complete a required draw from its personal decks."
       : postChoiceVictoryResult?.message ?? null;
@@ -20235,6 +20518,7 @@ export default function Simulator({
       ? 350
       : Math.min(5200, 1100 + boardComplexity * 140 + (endgameDecision ? 1400 : 0));
     const habitatMaintenance = resolvePlayerEndOfTurnHabitats();
+    setCreatureStatuses((current) => clearCreatureAbilityStuns(current));
     const stunRecovery = clearStunnedFromFoundationsAtControllerTurnEnd(playerCorals);
     const stunRecoveryMessage = stunRecovery.recoveredFoundationIds.length
       ? `${stunRecovery.recoveredFoundationIds.length} Stunned Coral${stunRecovery.recoveredFoundationIds.length === 1 ? "" : "s"} recovered at the end of your turn and can produce RP, use abilities, and upgrade normally next turn.`
@@ -20247,6 +20531,7 @@ export default function Simulator({
       accepted: true,
     }, { phase: "main" });
     setFlashingAlarmAttackBonus((current) => endFlashingAlarmTurn(current));
+    setNextOnPlayAttackBonus(null);
     if (stunRecovery.recoveredFoundationIds.length) {
       setPlayerCorals((current) => clearStunnedFromFoundationsAtControllerTurnEnd(current).foundations);
     }
@@ -20310,6 +20595,7 @@ export default function Simulator({
       palsDeck,
       rp,
       supportBlockedUntilRound,
+      aideBlockedUntilRound,
       resilienceUsedCardIds,
       creatureStatuses,
       blueCrabRecycleUsedTurn,
@@ -20331,7 +20617,7 @@ export default function Simulator({
       },
       "opponent",
     );
-    if (previewExperience && opponentTriggerableInvaders.length) {
+    if (opponentTriggerableInvaders.length) {
       const liveLionfishEvents = createLiveLionfishTurnEvents({
         playerState: stagedPlayerState,
         opponentState: opponentAtLionfishBoundary,
@@ -20364,9 +20650,10 @@ export default function Simulator({
           transactionScope: `lionfish-opponent-turn-${round}`,
           random: nextGameplayRandom,
         });
-    stagedPlayerState = normalizeProjectedPlayerState(lionfishResolution.player);
+    stagedPlayerState = normalizeProjectedPlayerState(lionfishResolution.player, lionfishResolution.opponent);
     const opponentAtTurnStart = normalizeProjectedOpponentState(
       reconcileOpponentInstances(opponentAtLionfishBoundary, lionfishResolution.opponent),
+      stagedPlayerState,
     );
     const lionfishTurnEvents = lionfishResolution.events.map((event) => ({
       ...event,
@@ -20381,13 +20668,13 @@ export default function Simulator({
       opponentAtTurnStart.orphanCreatures,
       stagedPlayerState.corals,
       stagedPlayerState.reefCreatureInstances.map((entry) => entry.cardId),
-      stagedPlayerState.orphanCreatureInstances,
+      stagedPlayerState.orphanCreatureInstances, opponentAtTurnStart,
     );
     const opponentStartCap = getEcosystemRpCap(opponentAtTurnStart.corals, [
       ...opponentAtTurnStart.habitats,
       ...opponentAtTurnStart.reefCreatures,
       ...(opponentAtTurnStart.orphanCreatures ?? []).flatMap((entry) => [entry.cardId, ...(entry.hostedCardIds ?? [])]),
-    ], activeCondition);
+    ], activeCondition, opponentAtTurnStart, stagedPlayerState.habitatInstances?.map((instance) => instance.cardId) ?? stagedPlayerState.habitats ?? playerHabitats);
     const opponentParasiteTransfer = resolveParasiteCollection({
       requested: opponentParasiteRequestedRp,
       opposingRp: stagedPlayerState.rp,
@@ -20401,20 +20688,11 @@ export default function Simulator({
     const playerStateAfterOpponentParasite = opponentParasiteRequestedRp
       ? stagePlayerState({ rp: opponentParasiteTransfer.sourceAfter })
       : stagedPlayerState;
-    const opponentResult = runOpponentTurn(opponentForTurn, { startTurnAlreadyBegun: true });
-    const opponentStateAfterPlay = normalizeProjectedOpponentState(reconcileOpponentInstances(opponentAtTurnStart, opponentResult.state));
-    const opponentVpAfterPlay = getEcosystemVictoryPoints(
-      opponentStateAfterPlay.corals,
-      opponentStateAfterPlay.habitats,
-      opponentStateAfterPlay.reefCreatures,
-      {
-        controller: "opponent",
-        localOrphans: opponentStateAfterPlay.orphanCreatures,
-        rivalCorals: stagedPlayerState.corals,
-        rivalOrphans: stagedPlayerState.orphanCreatureInstances,
-      },
-    );
-    const opponentReachedVictoryOnPlay = opponentVpAfterPlay >= victoryTarget;
+    const opponentResult = runOpponentTurn(opponentForTurn, {
+      startTurnAlreadyBegun: true,
+      opposingHabitats: stagedPlayerState.habitatInstances?.map((instance) => instance.cardId) ?? stagedPlayerState.habitats ?? playerHabitats,
+    });
+    const opponentStateAfterPlay = normalizeProjectedOpponentState(reconcileOpponentInstances(opponentAtTurnStart, opponentResult.state), stagedPlayerState);
     if (opponentParasiteRequestedRp) {
       turnEvents.push({
         type: "opponent-impact",
@@ -20423,7 +20701,7 @@ export default function Simulator({
         message: opponentParasiteMessage,
         success: opponentParasiteTransfer.collected > 0,
         playerStateAfter: playerStateAfterOpponentParasite,
-        opponentStateAfter: normalizeProjectedOpponentState(reconcileOpponentInstances(opponentAtTurnStart, opponentForTurn)),
+        opponentStateAfter: normalizeProjectedOpponentState(reconcileOpponentInstances(opponentAtTurnStart, opponentForTurn), stagedPlayerState),
         logMessage: opponentParasiteMessage,
       });
     }
@@ -20466,7 +20744,7 @@ export default function Simulator({
       : stagedPlayerState;
     playerCoralsAfterSupports = playerStateAfterInvasion.corals;
     const playerStateAfterSupportBlock = opponentResult.supportBlock
-      ? stagePlayerState({ supportBlockedUntilRound: round + 1 })
+      ? stagePlayerState({ [opponentResult.supportBlock.aidesOnly ? "aideBlockedUntilRound" : "supportBlockedUntilRound"]: round + 1 })
       : stagedPlayerState;
     let playerStateAfterDeckDiscard = stagedPlayerState;
     if (opponentDeckDiscardIds.length) {
@@ -20506,7 +20784,8 @@ export default function Simulator({
     }
     const playerCoralsAfterDamage = playerStateAfterCoralDamage.corals ?? playerCoralsAfterSupports;
     const playerStateBeforeCombat = stagedPlayerState;
-    const opponentOnPlayAttack = previewExperience || opponentResult.lost || !opponentResult.onPlayAttack?.attack ? null : runOpponentAttack(
+    const liveReefCombat = previewExperience || collectReefAbilityCreatures({ player: stagedPlayerState, opponent: opponentStateAfterPlay }, cardsById).some((entry) => entry.card.passives?.some((passive) => ["opportunist", "counterattack", "neurotoxicDefense"].includes(passive.effect?.type)));
+    const opponentOnPlayAttack = liveReefCombat || opponentResult.lost || !opponentResult.onPlayAttack?.attack ? null : runOpponentAttack(
       opponentStateAfterPlay,
       playerCoralsAfterDamage,
       playerStateAfterCoralDamage.reefCreatureInstances,
@@ -20528,21 +20807,9 @@ export default function Simulator({
     const opponentStateAfterOnPlayAttack = opponentOnPlayAttackResolution.opponentState;
     const playerStateAfterOnPlayAttack = opponentOnPlayAttackResolution.playerState;
     const onPlayHasPendingRegenerate = opponentOnPlayAttackResolution.events.some((event) => event.type === "choose-regenerate");
-    const opponentVpAfterMandatoryResolution = getEcosystemVictoryPoints(
-      opponentStateAfterOnPlayAttack.corals,
-      opponentStateAfterOnPlayAttack.habitats,
-      opponentStateAfterOnPlayAttack.reefCreatures,
-      {
-        controller: "opponent",
-        localOrphans: opponentStateAfterOnPlayAttack.orphanCreatures,
-        rivalCorals: playerStateAfterOnPlayAttack.corals,
-        rivalOrphans: playerStateAfterOnPlayAttack.orphanCreatureInstances,
-      },
-    );
-    const opponentVictoryAfterMandatoryResolution = !onPlayHasPendingRegenerate
-      && opponentReachedVictoryOnPlay
-      && opponentVpAfterMandatoryResolution >= victoryTarget;
-    const opponentNormalActions = previewExperience || opponentResult.lost || onPlayHasPendingRegenerate || opponentVictoryAfterMandatoryResolution
+    const victoryAfterMandatoryResolution = !onPlayHasPendingRegenerate
+      && getProjectedVictoryResult(playerStateAfterOnPlayAttack, opponentStateAfterOnPlayAttack);
+    const opponentNormalActions = liveReefCombat || opponentResult.lost || onPlayHasPendingRegenerate || victoryAfterMandatoryResolution
       ? null
       : runOpponentNormalActions(opponentStateAfterOnPlayAttack, playerStateAfterOnPlayAttack);
     if (opponentNormalActions) stagePlayerState(opponentNormalActions.playerState);
@@ -20555,10 +20822,11 @@ export default function Simulator({
     };
     const opponentNormalEvents = opponentNormalActions?.events ?? [];
     const opponentStateAfterAttack = opponentAttackResolution.opponentState;
-    const opponentStateWithInstances = normalizeProjectedOpponentState(reconcileOpponentInstances(opponent, opponentStateAfterAttack));
-    const opponentVictoryLocked = !opponentLostAfterUtility && opponentVictoryAfterMandatoryResolution;
+    const opponentStateWithInstances = normalizeProjectedOpponentState(reconcileOpponentInstances(opponent, opponentStateAfterAttack), opponentAttackResolution.playerState);
     const hasPendingRegenerate = opponentAttackResolution.events.some((event) => event.type === "choose-regenerate");
-    const opponentHabitatMaintenance = hasPendingRegenerate || opponentLostAfterUtility || opponentVictoryLocked ? {
+    const victoryBeforeMaintenance = !hasPendingRegenerate
+      && getProjectedVictoryResult(opponentAttackResolution.playerState, opponentStateWithInstances);
+    const opponentHabitatMaintenance = hasPendingRegenerate || opponentLostAfterUtility || victoryBeforeMaintenance ? {
       habitats: opponentStateWithInstances.habitatInstances,
       destroyedHabitats: [],
       events: [],
@@ -20572,6 +20840,7 @@ export default function Simulator({
       : {
           ...opponentStateWithInstances,
           flashingAlarmAttackBonus: endFlashingAlarmTurn(opponentStateWithInstances.flashingAlarmAttackBonus),
+          nextOnPlayAttackBonus: null,
         };
     const habitatTurnEvents = [];
     opponentHabitatMaintenance.events.forEach((event) => {
@@ -20603,7 +20872,7 @@ export default function Simulator({
     const opponentStunRecoverySummary = opponentStunRecovery.recoveredFoundationIds.length
       ? `${opponentStunRecovery.recoveredFoundationIds.length} opponent Coral${opponentStunRecovery.recoveredFoundationIds.length === 1 ? "" : "s"} recovered from Stunned at the end of its turn.`
       : "";
-    finalOpponentState = { ...finalOpponentState, corals: opponentStunRecovery.foundations };
+    finalOpponentState = { ...finalOpponentState, corals: opponentStunRecovery.foundations, creatureStatuses: hasPendingRegenerate ? finalOpponentState.creatureStatuses : clearCreatureAbilityStuns(finalOpponentState.creatureStatuses) };
 
     const supportImpactEvents = supportImpactStages.map(({ impact, playerStateAfter }) => {
       if (impact.type === "spearfishing-owner-discard") {
@@ -20674,7 +20943,7 @@ export default function Simulator({
       });
     });
     if (opponentResult.supportBlock) {
-      const message = `Opponent's ${opponentResult.damageSourceName} used ${opponentResult.supportBlock.actionName}. You cannot play Support cards during your next turn.`;
+      const message = `Opponent's ${opponentResult.damageSourceName} used ${opponentResult.supportBlock.actionName}. You cannot play ${opponentResult.supportBlock.aidesOnly ? "Aide Support" : "Support"} cards during your next turn.`;
       turnEvents.push({ type: "opponent-impact", sourceCardId: opponentResult.damageSourceCardId, title: `Opponent's ${opponentResult.damageSourceName} used ${opponentResult.supportBlock.actionName}`, message, success: true, playerStateAfter: playerStateAfterSupportBlock, logMessage: message });
     }
     if (opponentDeckDiscardIds.length) {
@@ -20707,7 +20976,7 @@ export default function Simulator({
       });
       if (collapseEvent) turnEvents.push(collapseEvent);
     }
-    if (previewExperience) {
+    if (liveReefCombat) {
       const liveCombatEvents = createLiveOpponentTurnCombatEvents({
         opponentState: opponentStateAfterPlay,
         playerState: playerStateBeforeCombat,
@@ -20733,25 +21002,25 @@ export default function Simulator({
     turnEvents.push(...opponentNormalEvents);
     const opponentSummary = [...lionfishSummaryParts, opponentParasiteMessage, opponentResult.summary, coralDamageResult?.summary, getContinuousHealthCollapseMessage(coralDamageCollateral), opponentAttackResolution.summary, ...habitatTurnEvents.map((event) => event.message), opponentStunRecoverySummary].filter(Boolean).join(" ");
     turnEvents.push(...habitatTurnEvents);
-    const normalizedFinalPlayerState = normalizeProjectedPlayerState(stagedPlayerState);
+    const normalizedFinalPlayerState = normalizeProjectedPlayerState(stagedPlayerState, finalOpponentState);
     const finalPlayerVp = getEcosystemVictoryPoints(
       normalizedFinalPlayerState.corals,
       playerHabitats,
       normalizedFinalPlayerState.reefCreatureInstances.map((instance) => instance.cardId),
-      {
+      { abilityState: normalizedFinalPlayerState,
         controller: "player",
         localOrphans: normalizedFinalPlayerState.orphanCreatureInstances,
         rivalCorals: finalOpponentState.corals,
         rivalOrphans: finalOpponentState.orphanCreatures,
       },
     );
-    const finalOpponentVp = getEcosystemVictoryPoints(finalOpponentState.corals, finalOpponentState.habitats, finalOpponentState.reefCreatures, {
+    const finalOpponentVp = getEcosystemVictoryPoints(finalOpponentState.corals, finalOpponentState.habitats, finalOpponentState.reefCreatures, { abilityState: finalOpponentState,
       controller: "opponent",
       localOrphans: finalOpponentState.orphanCreatures,
       rivalCorals: normalizedFinalPlayerState.corals,
       rivalOrphans: normalizedFinalPlayerState.orphanCreatureInstances,
     });
-    const stagedVictoryResult = hasPendingRegenerate ? null : getResolvedVictoryResult(finalPlayerVp, finalOpponentVp);
+    const stagedVictoryResult = hasPendingRegenerate ? null : victoryBeforeMaintenance || getResolvedVictoryResult(finalPlayerVp, finalOpponentVp);
     turnEvents.push({
       type: "turn-transition",
       title: "Your Turn",
@@ -20761,7 +21030,7 @@ export default function Simulator({
       startOpeningPlayerTurnAfterClose: openingOpponentTurn,
       playerStateAfter: normalizedFinalPlayerState,
       opponentStateAfter: finalOpponentState,
-      gameResultAfter: opponentLostAfterUtility ? "Victory: the opponent could not complete a required draw from its personal decks." : opponentVictoryLocked ? `Defeat: the opponent was first to reach ${victoryTarget} VP.` : stagedVictoryResult?.message ?? null,
+      gameResultAfter: opponentLostAfterUtility ? "Victory: the opponent could not complete a required draw from its personal decks." : stagedVictoryResult?.message ?? null,
     });
     queueEvents(
       turnEvents.map((event) => ({ ...event, opponentSequence: true })),
@@ -21095,11 +21364,11 @@ export default function Simulator({
       usedCreatureActions,
       creatureStatuses,
       poisonImmunityNextPredatorAttack,
-      rovLightsActive,
       nextOnPlayAttackBonus,
       flashingAlarmAttackBonus,
       supportLockSourceId,
       supportBlockedUntilRound,
+      aideBlockedUntilRound,
       cardsBlockedFromPlayThisTurn,
       gameplayRandomState,
       simulatorAnalytics: simulatorAnalyticsRef.current,
@@ -21198,11 +21467,11 @@ export default function Simulator({
     setUsedCreatureActions(saved.usedCreatureActions ?? []);
     setCreatureStatuses(saved.creatureStatuses ?? {});
     setPoisonImmunityNextPredatorAttack(Boolean(saved.poisonImmunityNextPredatorAttack));
-    setRovLightsActive(Boolean(saved.rovLightsActive));
     setNextOnPlayAttackBonus(saved.nextOnPlayAttackBonus ?? null);
     setFlashingAlarmAttackBonus(saved.flashingAlarmAttackBonus ?? null);
     setSupportLockSourceId(saved.supportLockSourceId ?? null);
     setSupportBlockedUntilRound(Number(saved.supportBlockedUntilRound) || 0);
+    setAideBlockedUntilRound(Number(saved.aideBlockedUntilRound) || 0);
     setCardsBlockedFromPlayThisTurn(saved.cardsBlockedFromPlayThisTurn ?? []);
     replaceGameplayRandomState(saved.gameplayRandomState ?? createSimulatorRandomStream(
       (Math.trunc(Number(checkpoint?.savedAt) || 0) ^ 0xA511E9B3) >>> 0,
@@ -21379,12 +21648,13 @@ export default function Simulator({
     setActionCooldowns({});
     setSupportLockSourceId(null);
     setSupportBlockedUntilRound(0);
+    setAideBlockedUntilRound(0);
+    playerReefPostCombatRef.current = null;
     setCardsBlockedFromPlayThisTurn([]);
     setUsedCreatureActions([]);
     setPendingCreatureAction(null);
     setCreatureStatuses({});
     setPoisonImmunityNextPredatorAttack(false);
-    setRovLightsActive(false);
     setNextOnPlayAttackBonus(null);
     setFlashingAlarmAttackBonus(null);
     setAttackContext(null);
@@ -21601,7 +21871,7 @@ export default function Simulator({
     ? getSearchTargetNouns(modalCards, searchContext?.effect)
     : null;
 
-  const modalTitle = modal === "hand" ? "Your Hand" : modal === "discard" ? "Discard Pile" : modal === "opponent-discard" ? "Opponent Discard Pile" : modal === "opponent-lost" ? "Opponent Lost Zone" : modal === "search" ? "Search Your Decks" : modal === "recover" ? "Recover a Card" : modal === "lost-recover" ? "Recover from the Lost Zone" : modal === "coral-target" ? "Choose a Coral" : modal === "restock" ? "Choose Up to Three Fish" : modal === "support-draw" ? "Choose Dr. Evans' Cards" : modal === "turn-draw" ? "Choose Your Cards" : modal === "draw-result" ? "Cards Drawn" : "Lost Zone";
+  const modalTitle = modal === "hand" ? "Your Hand" : modal === "discard" ? "Discard Pile" : modal === "opponent-discard" ? "Opponent Discard Pile" : modal === "opponent-lost" ? "Opponent Lost Zone" : modal === "search" ? "Search Your Decks" : modal === "recover" ? "Recover a Card" : modal === "lost-recover" ? "Recover from the Lost Zone" : modal === "coral-target" ? "Choose a Coral" : modal === "restock" ? "Choose Up to Three Creatures" : modal === "support-draw" ? "Choose Dr. Evans' Cards" : modal === "turn-draw" ? "Choose Your Cards" : modal === "draw-result" ? "Cards Drawn" : "Lost Zone";
   const isDarkZoneModal = Boolean(modal);
   const fullPageModalOpen = Boolean(modal && !compactTurnSequence && (!previewDrawTrayEnabled || !["turn-draw", "draw-result"].includes(modal)));
   const resumeHydrationPending = simulatorResumeEnabled && !resumeCheckpointReady;
@@ -21718,6 +21988,11 @@ export default function Simulator({
     && !resumeCheckpoint
   );
   const boardInteractionOverlayActive = boardFaceoffActive || openingCoinBoardActive || cardCoinBoardActive || conditionDetailEvent || compactDialogEvent || boardStatPresentationActive || embeddedLessonPrimerActive || Boolean(pendingHandArrivalFlight) || mobileDrawFlights.length > 0 || Boolean(combatResultCheckpoint) || Boolean(consumedAttackFlight) || Boolean(resumeCheckpoint) || v2NewGameSetupActive;
+  const showTiedVictoryStatus = !gameResult && gamePhase === "main"
+    && playerVp === opponentVp && playerVp >= victoryTarget
+    && !eventOverlay && !pendingEvents.length && !opponentThinking
+    && !playingCardId && !attackContext && !searchContext && !pendingCreatureAction
+    && !boardInteractionOverlayActive && !faceoffRolling && !effectRollRolling;
   const v2TopChromeHidden = Boolean(previewExperience && (
     fullPageModalOpen
     || mobileHudPanel
@@ -22013,7 +22288,10 @@ export default function Simulator({
         reason: `${actionName} is printed on this card, but its interactive resolution is not implemented yet.`,
       };
     }
-    if ((effect.type === EffectType.STUN_CORAL || effect.type === EffectType.FLIP_COIN) && !opponentCoralCards.length) {
+    if (effect.type === "mimicAction" && !getPlayerMimicChoices(action).some((choice) => !choice.block)) {
+      return { blockType: "targets", status: "No action to copy", reason: "No opposing creature has an available action that Day Octopus can perform." };
+    }
+    if ((effect.type === EffectType.STUN_CORAL || effect.type === EffectType.DAMAGE || effect.type === EffectType.FLIP_COIN) && !opponentCoralCards.length) {
       return {
         blockType: "targets",
         status: "No valid targets",
@@ -22105,7 +22383,7 @@ export default function Simulator({
       || eventOverlay
       || opponentThinking
     );
-    const sourceStunned = Boolean(inspectedCard.foundation && inspectedFoundationIsStunned);
+    const sourceStunned = Boolean(inspectedCreatureIsStunned || (inspectedCard.foundation && inspectedFoundationIsStunned));
     const getTutorialSpecificBlock = (actionKey, target) => {
       const reason = getAcademyActionBlock({
         route: scriptedFinishRoute,
@@ -22263,6 +22541,7 @@ export default function Simulator({
         actionName,
         actionCost: cost,
         usedThisTurn: actionIsOncePerTurn(action) && usedCreatureActions.includes(actionKey),
+        cooldownUntil: utilityEffect?.type === "mimicAction" ? Number(actionCooldowns[actionKey] ?? 0) : 0,
         specificBlock: tutorialBlock ?? getInspectedUtilitySpecificBlock(action, utilityEffect, actionName),
       });
       proxies.push({
@@ -22326,6 +22605,7 @@ export default function Simulator({
       if (readyEvent.oncePerTurn && readyEvent.actionKey) {
         setUsedCreatureActions((current) => current.includes(readyEvent.actionKey) ? current : [...current, readyEvent.actionKey]);
       }
+      if (readyEvent.mimicCooldown && readyEvent.actionKey) setActionCooldowns((current) => ({ ...current, [readyEvent.actionKey]: turn + 2 }));
       const message = `${readyEvent.sourceCardName} rolled ${outcome.roll} on ${readyEvent.dice}.${outcome.success ? ` Gained ${outcome.reward} RP.` : " The action did not succeed."}`;
       pushLog(message);
       setEventOverlay({
@@ -26604,9 +26884,9 @@ export default function Simulator({
                     : "Play cards, use abilities, and make legal attacks in any order before ending your turn."}
               </div>
               {poisonImmunityNextPredatorAttack ? <div className="mt-2 inline-flex rounded-full border border-emerald-300 bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-900">Poison Heal: next attack ignores Toxic</div> : null}
-              {rovLightsActive ? <div className="ml-2 mt-2 inline-flex rounded-full border border-cyan-300 bg-cyan-100 px-3 py-1 text-xs font-black text-cyan-900">ROV Lights: +2 attack against Deep creatures</div> : null}
               {nextOnPlayAttackBonus ? <div className="ml-2 mt-2 inline-flex rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-black text-amber-900">{cardsById[nextOnPlayAttackBonus.sourceCardId]?.name}: +{nextOnPlayAttackBonus.amount} next On Play attack</div> : null}
               {flashingAlarmAttackBonus ? <div className="ml-2 mt-2 inline-flex rounded-full border border-fuchsia-300 bg-fuchsia-100 px-3 py-1 text-xs font-black text-fuchsia-900">Flashing Alarm: +{flashingAlarmAttackBonus.amount} {flashingAlarmAttackBonus.phase === "active" ? "all attacks this turn" : "all attacks next turn"}</div> : null}
+              {round > 0 && round <= aideBlockedUntilRound ? <div className="ml-2 mt-2 inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-black text-violet-900">Deadly Sighting: Aides unavailable this turn</div> : null}
               {round > 0 && round <= supportBlockedUntilRound ? <div className="ml-2 mt-2 inline-flex rounded-full border border-rose-300 bg-rose-100 px-3 py-1 text-xs font-black text-rose-900">Echo Disruption: Support cards unavailable this turn</div> : null}
             </div>
             <div className="rounded-xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-violet-50 shadow-inner">
@@ -26832,6 +27112,7 @@ export default function Simulator({
             </div>
           ) : null}
 
+          {showTiedVictoryStatus ? <p role="status" className="mb-2 rounded-xl border border-amber-300/25 bg-amber-400/10 px-3 py-2 text-center text-xs font-semibold text-amber-100">Tied at {playerVp} VP. Play continues until one player leads with at least {victoryTarget} VP.</p> : null}
           {!previewExperience ? <div className="seapals-board-tabs mb-2 grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-slate-950/55 p-1 xl:hidden" aria-label="Choose ecosystem to view">
             <button type="button" data-tutorial-coach-anchor="player-board-tab" aria-pressed={mobileBoardView === "player"} onClick={() => setMobileBoardView("player")} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition ${mobileBoardView === "player" ? "bg-emerald-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>Your Reef</button>
             <button type="button" data-tutorial-coach-anchor="opponent-board-tab" aria-pressed={mobileBoardView === "opponent"} onClick={() => setMobileBoardView("opponent")} disabled={Boolean(playingCardId)} title={playingCardId ? "Finish placing this card in Your Reef first." : undefined} className={`rounded-lg px-3 py-2 text-xs font-black uppercase tracking-wider transition disabled:cursor-not-allowed disabled:opacity-40 ${mobileBoardView === "opponent" ? "bg-rose-400 text-slate-950 shadow-lg" : "text-slate-300 hover:bg-white/5"}`}>{opponentHudLabel}{opponentThinking ? " • Thinking" : ""}</button>
@@ -27978,7 +28259,7 @@ export default function Simulator({
 
           <div className={`mt-2 flex items-center justify-between rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-3 py-2${tutorialTargetClass("rp-bank")}`} data-tutorial-target="rp-bank"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-300/40 bg-slate-950/40 text-xl font-black text-emerald-200">{rp}</div><div><div className="text-[10px] font-black uppercase tracking-wider text-emerald-300">RP Bank</div><div className="text-sm font-bold text-white">{rp}/{playerRpCap} available</div></div></div><div className="text-right text-xs leading-tight text-emerald-100/60">Next collection<br />+1{startTurnRp > 0 ? ` + ${startTurnRp}` : ""} RP</div></div>
           <div className={`mt-2 grid grid-cols-2 gap-2${tutorialTargetClass("zones")}`} data-tutorial-target="zones"><button type="button" onClick={() => setModal("discard")} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-slate-200 transition hover:border-cyan-300/35 hover:bg-cyan-300/10"><span><span className="mr-2 text-cyan-300">↺</span>Discard</span><strong className="rounded-full bg-slate-950/60 px-2 py-0.5 text-cyan-200">{discardPile.length}</strong></button><button type="button" onClick={() => setModal("lost")} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-bold text-slate-200 transition hover:border-violet-300/35 hover:bg-violet-300/10"><span><span className="mr-2 text-violet-300">◇</span>Lost</span><strong className="rounded-full bg-slate-950/60 px-2 py-0.5 text-violet-200">{lostZone.length}</strong></button></div>
-          {poisonImmunityNextPredatorAttack || rovLightsActive || nextOnPlayAttackBonus || flashingAlarmAttackBonus || (round > 0 && round <= supportBlockedUntilRound) ? <div className="mt-2 flex flex-wrap gap-1">{poisonImmunityNextPredatorAttack ? <span className="rounded-full bg-emerald-400/15 px-2 py-1 text-[9px] font-bold text-emerald-200">Poison immune</span> : null}{rovLightsActive ? <span className="rounded-full bg-cyan-400/15 px-2 py-1 text-[9px] font-bold text-cyan-200">ROV lights</span> : null}{nextOnPlayAttackBonus ? <span className="rounded-full bg-amber-400/15 px-2 py-1 text-[9px] font-bold text-amber-200">+{nextOnPlayAttackBonus.amount} next attack</span> : null}{flashingAlarmAttackBonus ? <span className="rounded-full bg-fuchsia-400/15 px-2 py-1 text-[9px] font-bold text-fuchsia-200">Flashing Alarm +{flashingAlarmAttackBonus.amount} {flashingAlarmAttackBonus.phase === "active" ? "this turn" : "next turn"}</span> : null}{round > 0 && round <= supportBlockedUntilRound ? <span className="rounded-full bg-rose-400/15 px-2 py-1 text-[9px] font-bold text-rose-200">Support locked</span> : null}</div> : null}
+          {poisonImmunityNextPredatorAttack || nextOnPlayAttackBonus || flashingAlarmAttackBonus || (round > 0 && round <= supportBlockedUntilRound) || (round > 0 && round <= aideBlockedUntilRound) ? <div className="mt-2 flex flex-wrap gap-1">{poisonImmunityNextPredatorAttack ? <span className="rounded-full bg-emerald-400/15 px-2 py-1 text-[9px] font-bold text-emerald-200">Poison immune</span> : null}{nextOnPlayAttackBonus ? <span className="rounded-full bg-amber-400/15 px-2 py-1 text-[9px] font-bold text-amber-200">+{nextOnPlayAttackBonus.amount} next attack</span> : null}{flashingAlarmAttackBonus ? <span className="rounded-full bg-fuchsia-400/15 px-2 py-1 text-[9px] font-bold text-fuchsia-200">Flashing Alarm +{flashingAlarmAttackBonus.amount} {flashingAlarmAttackBonus.phase === "active" ? "this turn" : "next turn"}</span> : null}{round > 0 && round <= supportBlockedUntilRound ? <span className="rounded-full bg-rose-400/15 px-2 py-1 text-[9px] font-bold text-rose-200">Support locked</span> : null}{round > 0 && round <= aideBlockedUntilRound ? <span className="rounded-full bg-violet-400/15 px-2 py-1 text-[9px] font-bold text-violet-200">Aides locked</span> : null}</div> : null}
 
           <section className={`mt-3 flex min-h-48 flex-1 flex-col overflow-hidden rounded-xl border border-cyan-300/20 bg-slate-950/35 p-2${tutorialTargetClass("hand")}`} aria-label="Your hand card list" data-tutorial-target="hand">
             <div className="flex items-center justify-between px-1 pb-2"><div><h3 className="text-sm font-black uppercase tracking-[0.16em] text-cyan-200">Your hand</h3><p className="text-xs text-slate-400">Click a card for details</p></div><span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-cyan-400/10 px-2 text-sm font-black text-cyan-200" aria-label={`${hand.length} cards in hand`}>{hand.length}</span></div>
@@ -28105,6 +28386,12 @@ export default function Simulator({
               {inspectedCardData.defense ? <span className="rounded-full bg-indigo-400/15 px-3 py-1 text-indigo-200">Defense {inspectedCardData.defense?.dice ?? inspectedCardData.defense}</span> : null}
               {Number(inspectedCardData.victoryPoints ?? 0) > 0 ? <span className="rounded-full bg-amber-400/15 px-3 py-1 text-amber-200">{inspectedCardData.victoryPoints} VP</span> : null}
             </div>
+            {inspectedCardData.simulationWarnings?.length ? (
+              <div className="mt-4 rounded-2xl border border-amber-300/30 bg-amber-400/10 p-3 text-sm text-amber-100">
+                <strong className="block">Digital card effects</strong>
+                {inspectedCardData.simulationWarnings.map((warning) => <p key={warning}>{warning}</p>)}
+              </div>
+            ) : null}
             {inspectedFoundation ? (
               <div className="mt-4">
                 <FoundationVitals
@@ -28124,6 +28411,7 @@ export default function Simulator({
                 ))}
               </div>
             ) : null}
+            {inspectedCreatureIsStunned ? <p className="mt-3 rounded-xl bg-violet-400/15 p-3 text-sm text-violet-100">Stunned: this creature cannot use abilities through the end of {inspectedCard.owner === "player" ? "your" : "the opponent's"} next turn.</p> : null}
             {inspectedCardData.text ? <p className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-relaxed text-slate-300">{inspectedCardData.text}</p> : null}
             {(inspectedCardData.passives ?? []).length ? (
               <section className="mt-5">
@@ -28192,13 +28480,13 @@ export default function Simulator({
                       {!previewExperience && inspectedCard.owner === "player" && utilityEffect ? (
                         <button
                           type="button"
-                          disabled={gamePhase !== "main" || rp < cost || alreadyUsed || inspectedFoundationIsStunned}
+                          disabled={gamePhase !== "main" || rp < cost || alreadyUsed || inspectedFoundationIsStunned || inspectedCreatureIsStunned || (utilityEffect.type === "mimicAction" && (turn < Number(actionCooldowns[actionKey] ?? 0) || !getPlayerMimicChoices(action).some((choice) => !choice.block)))}
                           onClick={() => beginCreatureUtilityAction(action)}
                           className={`mt-3 w-full rounded-full bg-cyan-600 px-4 py-2 font-bold text-white disabled:bg-slate-400${tutorialActionTargetClass(actionKey)}`}
                           data-tutorial-target="utility-action-button"
                           data-tutorial-action-key={actionKey}
                         >
-                          {inspectedFoundationIsStunned ? `${actionName} Unavailable While Stunned` : alreadyUsed ? `${actionName} Used This Turn` : `Use ${actionName} (${cost} RP)`}
+                          {inspectedFoundationIsStunned || inspectedCreatureIsStunned ? `${actionName} Unavailable While Stunned` : alreadyUsed ? `${actionName} Used This Turn` : `Use ${actionName} (${cost} RP)`}
                         </button>
                       ) : null}
                       {inspectedCard.owner === "player" && !utilityEffect && !parseLegacyAttackAction(action) && !getActionEffects(action).some((effect) => effect.type === EffectType.ATTACK) ? <div className="mt-2 rounded-xl bg-amber-400/10 px-3 py-2 text-xs font-semibold text-amber-200">This action is not implemented yet.</div> : null}
@@ -28213,7 +28501,7 @@ export default function Simulator({
             {!previewExperience && inspectedCard.owner === "player" && getBasicAttackEffect(inspectedCardData) ? (
               <button
                 type="button"
-                disabled={gamePhase !== "main" || usedAttackers.includes(inspectedActionKey) || turn < Number(actionCooldowns[inspectedActionKey] ?? 0) || rp < getBasicAttackEffect(inspectedCardData).actionCost}
+                disabled={inspectedCreatureIsStunned || gamePhase !== "main" || usedAttackers.includes(inspectedActionKey) || turn < Number(actionCooldowns[inspectedActionKey] ?? 0) || rp < getBasicAttackEffect(inspectedCardData).actionCost}
                 onClick={() => {
                   if (attackWithCreature(inspectedCard.coralId, inspectedCard.slotId)) {
                     setInspectedCard(null);
@@ -29567,6 +29855,26 @@ export default function Simulator({
                     })}
                     <button type="button" onClick={() => { setSearchContext(null); setEventOverlay(null); returnFromSupportFlowToBoard(); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Spearfishing</button>
                   </div>
+                ) : eventOverlay.type === "choose-mimic-action" ? (
+                  <div className="mt-6 max-h-[30rem] space-y-3 overflow-y-auto">
+                    {(pendingCreatureAction?.candidates ?? []).map((choice) => (
+                      <button key={choice.key} type="button" disabled={Boolean(choice.block)} onClick={() => completeMimicAction(choice.key)} className="flex w-full items-center gap-3 rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 p-3 text-left hover:bg-cyan-400/25 disabled:cursor-not-allowed disabled:opacity-40">
+                        <img src={cardsById[choice.donorCardId]?.image} alt={choice.donorName} className="h-28 w-20 rounded-xl bg-white object-contain" />
+                        <span><strong className="block">{choice.donorName} — {choice.action.mimic.donorActionName}</strong><span className="block text-sm text-cyan-100">{choice.attack ? `${choice.attack.attackDice} attack · ` : ""}3 RP · Day Octopus performs this action</span><span className="mt-1 block text-sm text-slate-200">{choice.block?.reason ?? choice.action.text}</span></span>
+                      </button>
+                    ))}
+                    <button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="w-full rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Mimic</button>
+                  </div>
+                ) : eventOverlay.type === "choose-stun-creature" ? (
+                  <div className="mt-6 max-h-80 space-y-2 overflow-y-auto">
+                    {(pendingCreatureAction?.candidates ?? []).map((candidate, index) => (
+                      <button key={candidate.instanceId} type="button" onClick={() => completeCreatureStun(candidate.instanceId)} className="flex w-full items-center gap-3 rounded-2xl border-2 border-violet-400 bg-violet-400/10 p-3 text-left hover:bg-violet-400/25">
+                        <img src={candidate.card.image} alt={candidate.card.name} className="h-24 w-16 rounded-lg bg-white object-contain" />
+                        <span><strong className="block">{candidate.card.name}</strong><span className="text-sm text-violet-200">{candidate.location === "slot" ? `On ${cardsById[(candidate.physicalController === "player" ? playerCorals : opponent.corals).find((coral) => coral.id === candidate.coralId)?.cardId]?.name ?? "coral"}` : candidate.location} ? Creature {index + 1}</span></span>
+                      </button>
+                    ))}
+                    <button type="button" onClick={() => { setPendingCreatureAction(null); setEventOverlay(null); }} className="rounded-full border border-slate-500 px-5 py-2 text-sm font-bold">Cancel Action</button>
+                  </div>
                 ) : eventOverlay.type === "choose-friendly-creature" ? (
                   <div className="mt-6 max-h-80 space-y-2 overflow-y-auto">
                     {(pendingCreatureAction?.candidates ?? []).map((candidate) => {
@@ -29833,13 +30141,13 @@ export default function Simulator({
                     : modal === "search"
                     ? `${cardsById[searchContext?.supportCardId]?.name ?? "Support"} · Nothing is spent until you confirm a choice.`
                     : modal === "recover"
-                    ? "Heads! Choose one card that was in your discard pile before Recovery resolved."
+                    ? "Choose a Support card from your discard pile. Recovery costs 2 RP when you confirm; cancel to spend nothing."
                     : modal === "lost-recover"
                     ? "Choose a Lost card to return to your hand. You can inspect each card before choosing; the recovered card cannot be played this turn, and Ocean Jake moves to the Lost Zone after use."
                     : modal === "coral-target"
                     ? "Choose a damaged coral to heal. You may cancel without spending the Support card."
                     : modal === "restock"
-                    ? "Select one to three Fish. Creature Schools return to Foundation; other Fish return to Main."
+                    ? "Select up to three Creatures. Creature Schools return to Foundation; other Creatures return to Main."
                     : modal === "support-draw"
                     ? "Split the replacement draw between your Foundation and Main decks. Your current hand is discarded only after you confirm."
                     : modal === "turn-draw"
@@ -29860,7 +30168,7 @@ export default function Simulator({
                   data-compact-search-control={modal === "search" ? true : undefined}
                   autoFocus={(modal === "recover" && !modalCards.length) || (modal === "search" && !modalCards.length)}
                   onClick={() => {
-                    if (modal === "search" || modal === "lost-recover" || modal === "coral-target" || modal === "restock" || modal === "support-draw") cancelSupportSearch();
+                    if (modal === "search" || modal === "recover" || modal === "lost-recover" || modal === "coral-target" || modal === "restock" || modal === "support-draw") cancelSupportSearch();
                     else {
                       if (modal === "recover") setSearchContext(null);
                       if (modal === "draw-result") {

@@ -3,6 +3,7 @@ import Link from "next/link";
 import AskFinnButton from "./AskFinnButton";
 import Faq from "./Faq";
 import InstructionsNav from "./InstructionsNav";
+import { FIRST_PLAYER_RULE, CONDITIONS_DECK_RULE, SIMULTANEOUS_VICTORY_RULE, TABLETOP_PROCEDURES } from "@/data/rules/tabletopProcedures.mjs";
 
 export const metadata = {
   title: "How to Play SeaRealm | Beginner Guide & Complete Rules",
@@ -10,9 +11,6 @@ export const metadata = {
     "Learn SeaRealm TCG through guided interactive simulator lessons, then use the complete rules, examples, glossary, and FAQ as a reference.",
   alternates: { canonical: "/instructions" },
 };
-
-const fullRulesUrl =
-  "https://docs.google.com/document/d/1k7GxLQC_imLxc6d9n_dxsq0CqQtJ0lPzwARsrBNLifA/edit?tab=t.0";
 
 const iconBase = "/images/icons";
 
@@ -30,7 +28,7 @@ const turnSteps = [
     name: "Collect",
     prompt: "How much RP do I gain?",
     description:
-      "Gain 1 RP, then add the RP produced by your active Foundations. Apply modifiers and discard RP above your current bank cap.",
+      "Gain 1 RP plus the RP produced by your active Foundations. Apply card and Condition modifiers. You can normally keep up to 8 RP; discard any extra unless an effect changes your cap.",
     color: "border-amber-300/35 bg-amber-950/20 text-amber-100",
   },
   {
@@ -38,7 +36,7 @@ const turnSteps = [
     name: "Build",
     prompt: "What can I add to my ocean?",
     description:
-      "Spend RP to play legal cards, upgrade Foundations, and use paid Actions. A card's Actions are available the turn it enters your ecosystem unless its text says otherwise. Meet every requirement before paying the cost.",
+      "Play cards, upgrade Foundations, and use Actions. Check requirements, then pay the costs. You may play up to 1 Aide per turn and any number of Items. New cards can use their Actions right away unless their text says otherwise.",
     color: "border-emerald-300/30 bg-emerald-950/15 text-emerald-100",
   },
   {
@@ -68,14 +66,14 @@ const glossary = [
   ["Defense", "The target's roll against a normal attack. A tied total means the defender stays in play."],
   ["School Density", "Oceanic capacity supplied by Creature Schools. Density requirements add together and stay committed while those creatures remain in play."],
   ["Discard", "Cards that are spent, discarded, or destroyed unless another rule gives them a different destination."],
-  ["Lost Zone", "Where destroyed Apex and Filter Feeder cards go instead of the discard pile."],
+  ["Lost Zone", "A separate area for destroyed Apex, Filter Feeders, and any other card whose text sends it there, such as Lionfish. These cards are no longer in play."],
 ];
 
 const faqQuestions = [
   {
     question: "What do we need for a first game?",
     answer:
-      "SeaRealm is for 2–4 players. Each player needs a legal 60-card deck separated into a Foundation Deck and a Main Deck. Share one Conditions Deck, and gather RP counters, damage or HP counters, and the dice named on your cards (D4, D6, D8, D10, D12, and D20).",
+      "SeaRealm is for 2–4 players. Each player needs a legal 60-card deck separated into a Foundation Deck and a Main Deck. Share one Conditions Deck, and gather RP counters, damage or HP counters, a coin, and the dice named on your cards (D4, D6, D8, D10, D12, and D20).",
   },
   {
     question: "Should beginners play to 10 VP or 30 VP?",
@@ -83,9 +81,21 @@ const faqQuestions = [
       "Use 10 VP for a learning game and 30 VP for the recommended full game. Agree on the target before setup. In either version, only VP currently in play counts.",
   },
   {
+    question: "Who goes first?",
+    answer: FIRST_PLAYER_RULE.text,
+  },
+  {
+    question: "What happens when the Conditions Deck runs out?",
+    answer: CONDITIONS_DECK_RULE.text,
+  },
+  {
+    question: "What if players reach the VP target at the same time?",
+    answer: SIMULTANEOUS_VICTORY_RULE.text,
+  },
+  {
     question: "What are the four steps of a turn?",
     answer:
-      "The canonical order is Choose, Collect, Build, then Attack, followed by end-of-turn maintenance. The simulator automates collection before it shows the deck-choice prompt, so its first two prompts may appear in the opposite visual order.",
+      "At the table, follow Choose, Collect, Build, then Attack, followed by end-of-turn effects. The simulator collects RP before its draw prompt and lets you build and attack in one combined action phase. Use the tabletop order when playing with physical cards.",
   },
   {
     question: "Which deck do I draw from?",
@@ -118,6 +128,11 @@ const faqQuestions = [
       "The defender wins a tie and stays in play. A normal attack succeeds only when the final attack total is higher than the final defense total.",
   },
   {
+    question: "Can a Deep creature attack a Reef or Oceanic creature?",
+    answer:
+      "Yes, if its attack icons allow that target family and all printed restrictions are met. Habitat matching controls where a creature is placed; it does not automatically limit its attacks to that habitat. An attack that explicitly targets only Deep creatures cannot hit Reef or Oceanic creatures. A Predator target icon allows Predators, not Fish or Apex, unless those families are also listed.",
+  },
+  {
     question: "What does ×2, ×3, or ×4 on an attack mean?",
     answer:
       "It is the attack count. Resolve that many separate attacks, each with its own legal target and rolls. The same physical target cannot be selected twice during that repeated sequence.",
@@ -135,12 +150,17 @@ const faqQuestions = [
   {
     question: "Which cards go to the Lost Zone when destroyed?",
     answer:
-      "Destroyed Apex and Filter Feeder cards go to their owner's Lost Zone instead of the discard pile. Lionfish has no Lost Zone instruction, so destroying it or discarding it with Spearfishing returns it to its original owner's discard pile. Other discard effects still use discard unless they explicitly name the Lost Zone.",
+      "Destroyed Apex and Filter Feeder cards go to their owner's Lost Zone instead of the discard pile. Destroying Lionfish sends it to its original owner's Lost Zone. Spearfishing explicitly discards it to its original owner's discard pile. Other discard effects still use discard unless they explicitly name the Lost Zone.",
   },
   {
     question: "When does Lionfish's Invader trigger, and whose Fish can it attack?",
     answer:
       "Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish. Targets stay relative to the Lionfish owner: heads attacks a Fish controlled by that owner's opponent, normally the ecosystem holder; tails attacks another Fish controlled by the Lionfish owner. The triggering Lionfish is excluded. If the rolled branch has no legal Fish, the attack fizzles instead of switching branches.",
+  },
+  {
+    question: "How many Aides and Items can I play in a turn?",
+    answer:
+      "You may play up to 1 Aide per turn and any number of Items, including after an Aide. You still need to pay each card's cost and follow any active restrictions. Aides and Items are both Support cards.",
   },
   {
     question: "Do Support cards stay in play?",
@@ -170,7 +190,7 @@ const faqQuestions = [
   {
     question: "What if a card and this guide seem to disagree?",
     answer:
-      "Follow the more specific printed card text when it clearly creates an exception to a general rule. If the printed effect is incomplete or the timing is not defined, do not invent an extra effect—check the current rules document or ask Finn for the latest grounded answer.",
+      "Follow the more specific printed card text when it clearly creates an exception to a general rule. For help with a card or timing question, check this page's Complete rules section or ask Finn. If the rules leave a situation unresolved, agree on a ruling together before continuing.",
   },
 ];
 
@@ -192,11 +212,12 @@ function SectionHeading({ number, title, children }) {
   );
 }
 
-function RuleDetails({ title, summary, children, open = false }) {
+function RuleDetails({ id, title, summary, children, open = false }) {
   return (
     <details
+      id={id}
       open={open}
-      className="group border-b border-white/15 open:border-cyan-200/40"
+      className="group scroll-mt-24 border-b border-white/15 open:border-cyan-200/40"
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-5 px-5 py-4 [&::-webkit-details-marker]:hidden md:px-6 md:py-5">
         <div>
@@ -278,8 +299,8 @@ export default function InstructionsPage() {
             </p>
             <p className="mt-4 text-xl font-bold leading-8 text-white md:text-2xl md:leading-9">
               Build an ocean ecosystem with Foundations and Pals. Cards in your
-              ecosystem earn Victory Points, and the first player to reach 10 VP wins
-              a learning game.
+              ecosystem earn Victory Points. Aim for 10 VP in a learning game,
+              or 30 VP in a full game.
             </p>
             <p className="mt-5 border-t border-white/10 pt-4 text-sm leading-6 text-cyan-100">
               Each turn, choose a deck, collect RP, play cards, and attack. Learn the
@@ -301,8 +322,8 @@ export default function InstructionsPage() {
 
             <div className="mt-7 grid gap-4 sm:grid-cols-2">
               {[
-                ["VP", "Your score", "VP only counts while the card is in your ecosystem."],
-                ["RP", "Your spending money", "Use RP to play cards and pay Action costs."],
+                ["VP", "Victory Points: your score", "VP only counts while the card is in your ecosystem."],
+                ["RP", "Resource Points: your spending money", "Use RP to play cards and pay Action costs."],
                 ["Foundation", "Your ocean's base", "Coral and Creature Schools help support what you can play."],
                 ["Pals", "The creatures you play", "Fish, Predators, Apex, Invertebrates, and Filter Feeders."],
               ].map(([term, label, description], index) => (
@@ -363,7 +384,12 @@ export default function InstructionsPage() {
               <div className="border-t border-cyan-200/25 py-6 text-white md:py-8">
                 <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-300">The winning rule</p>
                 <p className="mt-3 text-2xl font-black leading-9 md:text-3xl">
-                  Be the first player to reach the target with VP currently in play.
+                  Reach the VP target and lead the table with points currently in play.
+                </p>
+                <p className="mt-3 text-sm leading-6 text-cyan-100/90">
+                  Finish resolving the play or effect first. If players reach the
+                  target together, the highest VP wins. An equal lead means play
+                  continues until one player leads at or above the target.
                 </p>
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
                   <div className="border-t border-white/15 py-4">
@@ -416,6 +442,10 @@ export default function InstructionsPage() {
                 ))}
               </div>
 
+              <p className="mt-4 text-sm leading-6 text-cyan-100/90">
+                The <strong>Main Deck</strong> is also called the <strong>Pals Deck</strong> on some cards and in the simulator. Both names mean the same pile.
+              </p>
+
               <div className="mt-5 rounded-2xl border border-cyan-200/20 bg-cyan-950/15 p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-100">Simple table map</p>
                 <div className="mt-4 grid gap-3 text-center text-xs font-bold uppercase tracking-[0.12em] text-cyan-50 sm:grid-cols-[0.7fr_1.6fr_0.7fr]">
@@ -438,7 +468,7 @@ export default function InstructionsPage() {
                   <CheckItem>One legal deck per player, separated into two piles</CheckItem>
                   <CheckItem>One shared Conditions Deck</CheckItem>
                   <CheckItem>RP counters plus damage or HP counters</CheckItem>
-                  <CheckItem>D4, D6, D8, D10, D12, and D20 dice as cards require</CheckItem>
+                  <CheckItem>A coin; a D20 for 3–4 players; and the dice named on your cards</CheckItem>
                 </ul>
               </div>
 
@@ -446,11 +476,12 @@ export default function InstructionsPage() {
                 <h3 className="text-xl font-bold">Opening setup, in order</h3>
                 <ol className="mt-5 space-y-4 text-sm leading-6 text-cyan-50">
                   {[
+                    "Choose the first player using the coin toss or dice rule below.",
                     "Draw 4 cards from your Foundation Deck.",
                     "Draw 4 cards from your Main Deck. You now have 8 cards.",
                     "Place 3 RP in your RP bank.",
-                    "Spend setup RP to play a valid base Foundation.",
-                    "If your Foundation hand cannot play one, redraw that Foundation hand.",
+                    "Check your Foundation hand for a base Foundation you can play with 3 RP. If you cannot play one, redraw that Foundation hand.",
+                    "Pay the starting Foundation's RP cost and place it in your ecosystem.",
                     "Once everyone has a starting Foundation, begin round one.",
                   ].map((step, index) => (
                     <li key={step} className="flex gap-3">
@@ -465,7 +496,7 @@ export default function InstructionsPage() {
             </div>
 
             <p className="mt-4 border-l-2 border-amber-300/50 bg-amber-950/20 px-5 py-4 text-sm leading-6 text-amber-100">
-              <strong>For a first game:</strong> use a Base Coral or base Creature School as the starting Foundation, and choose the first player by agreement. The current rules do not prescribe a first-player method.
+              <strong>Who goes first?</strong> {FIRST_PLAYER_RULE.text}
             </p>
           </section>
 
@@ -492,12 +523,24 @@ export default function InstructionsPage() {
               ))}
             </ol>
 
+            <div className="mt-5 border-l-2 border-amber-300/50 bg-amber-950/20 p-5">
+              <h3 className="font-bold text-amber-100">Before you pass the turn</h3>
+              <p className="mt-2 text-sm leading-6 text-amber-100/90">
+                Resolve end-of-turn effects and check any Habitat cards you have in
+                play. Coral Reef, Open Ocean, and Abyss each lose 10 HP if their
+                required mix of cards is missing.
+                Then the next player takes a turn. After everyone has taken a turn,
+                start the next round with a new shared Condition.
+              </p>
+            </div>
+
             <div data-rules-ignore className="mt-5 border-t border-cyan-200/25 py-5">
               <h3 className="font-bold text-white">Playing in the simulator?</h3>
               <p className="mt-2 text-sm leading-6 text-cyan-100/90">
-                The canonical rule order is Choose → Collect → Build → Attack. The
-                simulator currently automates collection before it presents the
-                deck-choice prompt; it is handling those start-of-turn jobs for you.
+                At the table, follow Choose → Collect → Build → Attack. The
+                simulator collects RP before the draw prompt, then lets you play
+                cards, use abilities, and attack in one combined action phase.
+                When you play with physical cards, finish Build before Attack.
               </p>
             </div>
           </section>
@@ -513,6 +556,11 @@ export default function InstructionsPage() {
                 <h3 className="text-xl font-bold">Start of round: reveal a Condition</h3>
                 <p className="mt-2 text-sm leading-6 text-violet-100">
                   Read it aloud and apply its printed effect to everyone for the stated duration.
+                </p>
+                <p className="mt-2 text-sm leading-6 text-violet-100">
+                  If the Conditions Deck is empty, shuffle its discarded cards into
+                  a new deck. Keep persistent Conditions aside, with used benefits
+                  still marked as used.
                 </p>
               </div>
               <div className="grid gap-0 md:grid-cols-2">
@@ -738,6 +786,10 @@ export default function InstructionsPage() {
                     <p className="mt-2 text-4xl font-black text-white">5</p>
                   </div>
                 </div>
+                <p className="mt-3 text-center text-sm leading-6 text-cyan-100/90">
+                  <strong className="text-white">7 beats 5: the attack succeeds.</strong>{" "}
+                  If both totals were 5, the defender would stay in play.
+                </p>
               </div>
             </div>
 
@@ -748,8 +800,9 @@ export default function InstructionsPage() {
                   <h3 className="text-lg font-bold text-amber-100">Creature Schools take damage</h3>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-amber-100/90">
-                  They do not roll Defense. Damage equals the attack roll ×10. Discard
-                  the School when it reaches 0 HP.
+                  Attacks that can target Fish can target Creature Schools, subject
+                  to the attack&apos;s other restrictions. Schools do not roll Defense.
+                  Damage equals the attack roll ×10. Discard the School at 0 HP.
                 </p>
               </div>
               <div className="border-l-2 border-rose-300/50 bg-rose-950/20 p-6">
@@ -765,10 +818,10 @@ export default function InstructionsPage() {
           <section id="advanced" className="scroll-mt-24">
             <div className="border-t border-cyan-200/25 py-6 text-white md:py-9">
               <p data-rules-ignore className="text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">Complete reference</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Advanced rules and edge cases</h2>
+              <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Complete rules: look up a situation</h2>
               <p className="mt-4 max-w-3xl text-base leading-7 text-cyan-100/90 md:text-lg">
-                This is the currently documented general rules layer. Open only the
-                topic you need. A card’s more specific printed text wins when it
+                Open the topic you need when a question comes up. A card’s more
+                specific printed text wins when it
                 clearly creates an exception.
               </p>
             </div>
@@ -790,7 +843,7 @@ export default function InstructionsPage() {
 
               <RuleDetails
                 title="Coral, Foundations, damage, and destruction"
-                summary="Upgrades preserve damage; weaknesses suppress production; VP leaves with the card"
+                summary="Upgrades, Stunned Coral, weaknesses, and creatures displaced by destruction"
               >
                 <ul className="space-y-2">
                   <li>• Upgrade only to the next printed stage during Build. Meet its requirement, pay its RP cost, and place it over the current card.</li>
@@ -798,7 +851,8 @@ export default function InstructionsPage() {
                   <li>• A Coral normally upgrades only once per turn.</li>
                   <li>• When a Condition matches a Coral weakness, that Coral does not produce RP for the round. The weakness alone does not remove or damage it.</li>
                   <li>• A destroyed Foundation leaves play for discard and its VP immediately stops counting.</li>
-                  <li>• The current knowledge base says occupants should move to compatible empty slots when possible. Because cleanup for creatures with no legal slot is not fully ruled, use the latest official ruling for that edge case.</li>
+                  <li>• Move creatures from a destroyed Foundation into compatible empty slots when possible. Creatures with no legal slot remain displaced until a compatible slot becomes available or another rule moves them.</li>
+                  <li>• A <strong>Stunned</strong> Coral produces no RP, cannot use its own Actions or Passives, and cannot be upgraded through the end of its controller&apos;s next turn. Coral Heal removes Stunned early because it removes all effects from the chosen Coral.</li>
                 </ul>
               </RuleDetails>
 
@@ -818,6 +872,12 @@ export default function InstructionsPage() {
                   <li>• Thresher Shark requires 3 Oceanic Fish. Its Stun Strike adds +2 when the attack roll is 4 or higher; that bonus does not require Open Ocean.</li>
                   <li>• Sardine Run and Krill Bloom can reduce the next qualifying School Density requirement once per player as printed.</li>
                 </ul>
+                <p className="mt-4 border-l-2 border-cyan-200/30 bg-cyan-950/20 p-4 text-cyan-100">
+                  <strong>Density example:</strong> your Schools supply 100 Density.
+                  A creature requiring 70 leaves 30 available for other creatures.
+                  When that creature leaves play, its 70 becomes available again,
+                  as long as your Schools still supply the same capacity.
+                </p>
               </RuleDetails>
 
               <RuleDetails
@@ -829,7 +889,7 @@ export default function InstructionsPage() {
                   <li>• An <strong>On Play</strong> ability resolves when a card is successfully played. It does not repeat each turn.</li>
                   <li>• An <strong>Action</strong> is chosen at its printed timing: pay its cost, choose legal targets, and resolve its instructions in order.</li>
                   <li>• <strong>Special Rules</strong> has no universal effect. Apply the exact text on that card.</li>
-                  <li>• A Support normally resolves and goes to discard unless it explicitly remains in play.</li>
+                  <li>• A Support normally resolves and goes to discard unless it explicitly remains in play. You may play one Aide per turn and any number of Items, including after an Aide.</li>
                   <li>• Search the named deck or zone for a matching card, reveal or move it as instructed, and shuffle when required. Recovery moves an eligible card from discard to its stated destination.</li>
                   <li>• Moving a physical card does not reset its identity or a once-per-turn use that belongs to it.</li>
                 </ul>
@@ -842,7 +902,7 @@ export default function InstructionsPage() {
                 <ul className="space-y-2">
                   <li>• When an <strong>Apex</strong> or <strong>Filter Feeder</strong> is destroyed, place that physical card in its owner's Lost Zone instead of the discard pile.</li>
                   <li>• A card in the Lost Zone is no longer in play, so its VP and in-play abilities stop applying immediately.</li>
-                  <li>• Lionfish has no Lost Zone instruction, so destroying it or discarding it with Spearfishing returns the Lionfish to its original owner's discard pile.</li>
+                  <li>• Destroying Lionfish sends it to its original owner's Lost Zone. Spearfishing explicitly discards it to its original owner's discard pile.</li>
                   <li>• An Apex or Filter Feeder discarded as a cost, sacrifice, hand-limit overflow, or card effect goes to discard unless that instruction explicitly names the Lost Zone.</li>
                   <li>• Other destroyed cards go to discard unless their own printed text gives them another destination.</li>
                 </ul>
@@ -855,7 +915,7 @@ export default function InstructionsPage() {
                 <ul className="space-y-2">
                   <li>• Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish.</li>
                   <li>• Ownership does not change when Lionfish invades another ecosystem. Resolve “opponent” and “your own” from the Lionfish owner's perspective.</li>
-                  <li>• On heads, perform the D4-1 attack against a Fish controlled by the Lionfish owner's opponent, normally the ecosystem holder. On tails, attack another Fish controlled by the Lionfish owner.</li>
+                  <li>• On heads, perform the D4 attack against a Fish controlled by the Lionfish owner's opponent, normally the ecosystem holder. On tails, attack another Fish controlled by the Lionfish owner.</li>
                   <li>• The triggering Lionfish is not a legal target. Flip before choosing a target; if the rolled branch has no legal Fish, that attack fizzles and you do not switch branches.</li>
                 </ul>
               </RuleDetails>
@@ -868,7 +928,7 @@ export default function InstructionsPage() {
                   <li>• D4, D6, D8, D10, D12, and D20 name dice with that many sides. Apply a written + or − after rolling; modified totals cannot fall below 0.</li>
                   <li>• <strong>Advantage</strong> rolls twice and keeps the higher result. <strong>Disadvantage</strong> rolls twice and keeps the lower result.</li>
                   <li>• <strong>Toxic When Eaten</strong> triggers only when a creature successfully consumes that Toxic card, unless explicit immunity or protection applies.</li>
-                  <li>• <strong>Regenerate</strong> is optional. After a successful attack, the controller may pay the printed RP to keep that creature in play.</li>
+                  <li>• <strong>Regenerate</strong> is optional. When a creature with Regenerate is successfully attacked, its controller may pay the printed RP cost to keep it in play.</li>
                   <li>• <strong>Cloak</strong> does not make a creature untargetable; current Cloak cards grant their printed +3 Defense benefit.</li>
                   <li>• <strong>Transparency</strong> checks the attack’s printed die size, not the modified result.</li>
                   <li>• <strong>Massive</strong> is not identical on every card. Read whether that card changes the attack roll or Defense roll.</li>
@@ -881,11 +941,11 @@ export default function InstructionsPage() {
               >
                 <ul className="space-y-2">
                   <li>• Habitat cards are played from the Main Deck and remain as independent cards in the ecosystem. Each physical copy tracks its own HP and effects.</li>
-                  <li>• Every current Habitat has 40 HP. Check each copy at the end of its controller&apos;s turn; a copy whose full composition is not met takes 10 HP of damage and is destroyed at 0 HP.</li>
+                  <li>• Coral Reef, Open Ocean, and Abyss each have 40 HP. Check each copy at the end of its controller&apos;s turn; a copy whose full composition is not met takes 10 damage and is destroyed at 0 HP. Follow other Habitats&apos; own printed rules.</li>
                   <li>• Coral Reef requires 4 Reef Corals, 2 Reef Fish, and 2 Reef Invertebrates.</li>
                   <li>• Open Ocean requires 4 Creature Schools, 2 Oceanic Fish, and 2 Oceanic Invertebrates.</li>
                   <li>• Abyss requires 4 Deep Corals, 2 Deep Fish, and 2 Deep Invertebrates.</li>
-                  <li>• Open Ocean and Abyss enable their related strategies. Deep-targeting restrictions still apply; a similar tag does not make a Reef creature Deep.</li>
+                  <li>• Open Ocean and Abyss enable their related strategies. A Deep creature can attack targets in other habitats when its target icons allow it; only an explicit Deep-only restriction limits it to Deep targets.</li>
                   <li>• Hosted or attached cards are legal only when printed text permits the host, tag, and capacity. The hosted card keeps its own physical identity.</li>
                   <li>• A hosted card moves with its primary host only when the applicable rule says it does.</li>
                   <li>• Continuous HP bonuses raise current and maximum HP while active without erasing damage. Removing the bonus reduces both; a card at 0 HP is destroyed.</li>
@@ -906,35 +966,18 @@ export default function InstructionsPage() {
                 </ul>
               </RuleDetails>
 
-              <RuleDetails
-                title="Current rulings boundaries"
-                summary="What the published rules do not yet define—do not invent extra effects"
-              >
-                <p>
-                  The current source set does not prescribe a first-player method, a
-                  complete Conditions Deck exhaustion procedure, or an exact tiebreaker
-                  when players reach identical VP simultaneously. Agree on a neutral
-                  method before play or check the latest official ruling.
-                </p>
-                <p className="mt-3">
-                  A Stunned Coral produces no RP, cannot use its own actions or
-                  passives, and cannot be upgraded through the end of its controller's
-                  next turn. Coral Heal removes Stunned early because it removes all
-                  effects from the chosen Coral. The Lost Zone is defined above for
-                  destroyed Apex and Filter Feeder cards.
-                </p>
-              </RuleDetails>
+              {TABLETOP_PROCEDURES.map((rule) => (
+                <RuleDetails
+                  key={rule.id}
+                  id={rule.sourceHref.split("#")[1]}
+                  title={rule.title}
+                  summary={rule.summary}
+                >
+                  <p>{rule.text}</p>
+                </RuleDetails>
+              ))}
             </div>
 
-            <div className="mt-6 flex flex-col items-start justify-between gap-4 border-y border-cyan-200/25 py-6 sm:flex-row sm:items-center">
-              <div>
-                <h3 className="text-lg font-bold text-white">Need the working source document?</h3>
-                <p className="mt-1 text-sm leading-6 text-cyan-100/90">Use it for card-specific comparisons and the latest wording.</p>
-              </div>
-              <a href={fullRulesUrl} target="_blank" rel="noreferrer" className="shrink-0 rounded-full bg-cyan-700 px-5 py-3 text-sm font-bold text-white hover:bg-cyan-800">
-                Open full rules document ↗
-              </a>
-            </div>
           </section>
 
           <section id="glossary" className="scroll-mt-24">

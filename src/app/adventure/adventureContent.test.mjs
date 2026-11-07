@@ -1500,7 +1500,7 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
   const expectedDeckResidents = new Map([
     ["henry", ["coral-home", "Age 8 · Disruption Player"]],
     ["reef-house-charlie", ["coral-home", "Age 10 · Stinging Fortress Player"]],
-    ["reef-house-danny", ["coral-home", "Age 12 · Blue Water Player"]],
+    ["reef-house-danny", ["coral-home", "Age 12 · Drop Off Player"]],
     ["jack", ["coral-home", "Murky Water Player"]],
     ["landon", ["deep-home", "Age 10 · The Abyss Player"]],
     ["oliver", ["deep-home", "Age 11 · Deep Waters Player"]],
@@ -1510,7 +1510,7 @@ test("Elverson doors, challengers, mentor, conversations, and encounters cross-r
     ["william", ["elverson-hybrid-home", "Murky Water's Revenge Player"]],
     ["hybrid-house-olivia", ["elverson-hybrid-home", "Whirlpool Player"]],
     ["hybrid-house-alyssa", ["elverson-hybrid-home", "Coral Ledge Player"]],
-    ["hybrid-house-henry", ["elverson-hybrid-home", "Drop Off Player"]],
+    ["hybrid-house-henry", ["elverson-hybrid-home", "Drop Off Hybrid Player"]],
   ]);
   for (const [npcId, [sceneId, title]] of expectedDeckResidents) {
     const resident = resolveAdventureNpc(npcId);

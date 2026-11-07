@@ -1,0 +1,18 @@
+[
+  {
+    "cardId": "sea-urchin",
+    "success": true,
+    "imageHash": "f341466f2906fd6b525d26e3eff5c91b45fcb02e",
+    "sizeBytes": 297090,
+    "contentType": "image/png",
+    "placedOnNodeId": "4093:24797"
+  },
+  {
+    "cardId": "frogfish",
+    "success": true,
+    "imageHash": "ec325d14a8dfb6671741f4b4dcfbbfc64f797932",
+    "sizeBytes": 317354,
+    "contentType": "image/png",
+    "placedOnNodeId": "4093:24786"
+  }
+]

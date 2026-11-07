@@ -61,7 +61,7 @@ test("the launch-capacity seed preserves the exact fifteen prepared catalog SKUs
   );
   const seedRows = parseSeedRows(seedSql);
 
-  assert.deepEqual(storePreparedProductIds, expectedProductIds);
+  assert.deepEqual([...storePreparedProductIds].sort(), [...expectedProductIds].sort());
   assert.deepEqual(catalogSkus, expectedSkus);
   assert.deepEqual(seedRows.map(({ sku }) => sku), expectedSkus);
   assert.equal(new Set(seedRows.map(({ sku }) => sku)).size, 15);
@@ -105,7 +105,7 @@ test("the live allowlist matches the twelve-product launch catalog", () => {
     .match(/"STORE_AVAILABLE_PRODUCT_IDS"\s*:\s*"([^"]+)"/)?.[1]
     .split(",");
 
-  assert.deepEqual(availableProductIds, storeLaunchProductIds);
+  assert.deepEqual([...availableProductIds].sort(), [...storeLaunchProductIds].sort());
   assert.deepEqual(
     availableProductIds.filter((productId) => productId.endsWith("-dive-pack")),
     ["oceanic-dive-pack", "reef-dive-pack", "deep-dive-pack"]

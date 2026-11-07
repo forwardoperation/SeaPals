@@ -1,0 +1,202 @@
+[
+  {
+    "cardId": "humpback-whale",
+    "beforeHash": "2a0c6318cc5e",
+    "contentHash": "ccc1cd886f37",
+    "wasPrerelease": true,
+    "prerelease": false,
+    "nodeId": "379:7745"
+  },
+  {
+    "cardId": "oceanic-manta-ray",
+    "beforeHash": "278e30c5ce40",
+    "contentHash": "95ddcbd59a1a",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "241:1612"
+  },
+  {
+    "cardId": "ocean-sunfish",
+    "beforeHash": "4f99daa90334",
+    "contentHash": "853f05739229",
+    "wasPrerelease": true,
+    "prerelease": false,
+    "nodeId": "379:7747"
+  },
+  {
+    "cardId": "whale-shark",
+    "beforeHash": "b595f57d06a6",
+    "contentHash": "a14c2da0e2c1",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "379:7748"
+  },
+  {
+    "cardId": "blue-whale",
+    "beforeHash": "15503cdb4e1b",
+    "contentHash": "39a0a4916b6e",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "379:7744"
+  },
+  {
+    "cardId": "basking-shark",
+    "beforeHash": "7b0aee35da30",
+    "contentHash": "9d605e874e14",
+    "wasPrerelease": true,
+    "prerelease": false,
+    "nodeId": "2253:9730"
+  },
+  {
+    "cardId": "megamouth-shark",
+    "beforeHash": "de9013479c6f",
+    "contentHash": "ff388002b5e1",
+    "wasPrerelease": true,
+    "prerelease": true,
+    "nodeId": "2253:9925"
+  },
+  {
+    "cardId": "manta-ray",
+    "beforeHash": "d3a305308988",
+    "contentHash": "cd03d32f9774",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "3402:607522"
+  },
+  {
+    "cardId": "hammerhead",
+    "beforeHash": "41697bf09cbd",
+    "contentHash": "7d1931fcb455",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "241:1125"
+  },
+  {
+    "cardId": "great-white",
+    "beforeHash": "838771dc9ca4",
+    "contentHash": "c46f3afb045c",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "241:1124"
+  },
+  {
+    "cardId": "bull-shark",
+    "beforeHash": "b2538a558e6b",
+    "contentHash": "c81739b746ef",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "241:1126"
+  },
+  {
+    "cardId": "tiger-shark",
+    "beforeHash": "bd741fb59263",
+    "contentHash": "cc423fbe3c13",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "241:1127"
+  },
+  {
+    "cardId": "killer-whale-oceanic",
+    "beforeHash": "429ec3870f40",
+    "contentHash": "4145cb9fd10f",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "745:139304"
+  },
+  {
+    "cardId": "pilot-whale-oceanic",
+    "beforeHash": "b02a72ba1efc",
+    "contentHash": "ac3035ae9e51",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "745:139301"
+  },
+  {
+    "cardId": "bottlenose-dolphin",
+    "beforeHash": "0ce884deea00",
+    "contentHash": "73a20abca914",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "745:139303"
+  },
+  {
+    "cardId": "giant-squid",
+    "beforeHash": "135ecbd196a4",
+    "contentHash": "226100cbc5bb",
+    "wasPrerelease": true,
+    "prerelease": true,
+    "nodeId": "1811:12856"
+  },
+  {
+    "cardId": "colossal-squid",
+    "beforeHash": "f08841ef8870",
+    "contentHash": "95dfecd8625d",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "1811:13424"
+  },
+  {
+    "cardId": "greenland-shark",
+    "beforeHash": "0c4349be142a",
+    "contentHash": "bfa46a853b33",
+    "wasPrerelease": true,
+    "prerelease": true,
+    "nodeId": "1811:14431"
+  },
+  {
+    "cardId": "giant-phantom-jelly",
+    "beforeHash": "f04cdce0d2a3",
+    "contentHash": "6a58a7955440",
+    "wasPrerelease": true,
+    "prerelease": true,
+    "nodeId": "1811:14449"
+  },
+  {
+    "cardId": "sperm-whale",
+    "beforeHash": "64367b27a25a",
+    "contentHash": "3807923734b5",
+    "wasPrerelease": true,
+    "prerelease": true,
+    "nodeId": "2249:52164"
+  },
+  {
+    "cardId": "shortfin-mako-shark",
+    "beforeHash": "d498913423f9",
+    "contentHash": "b146ce968797",
+    "wasPrerelease": true,
+    "prerelease": true,
+    "nodeId": "2285:38220"
+  },
+  {
+    "cardId": "black-marlin",
+    "beforeHash": "c194e96783ba",
+    "contentHash": "eb99a01fa567",
+    "wasPrerelease": true,
+    "prerelease": true,
+    "nodeId": "2259:30144"
+  },
+  {
+    "cardId": "swordfish",
+    "beforeHash": "01980f11319b",
+    "contentHash": "bd67c2542f50",
+    "wasPrerelease": true,
+    "prerelease": true,
+    "nodeId": "2259:30491"
+  },
+  {
+    "cardId": "bluefin-tuna",
+    "beforeHash": "93ebae711818",
+    "contentHash": "825eb696ea03",
+    "wasPrerelease": true,
+    "prerelease": true,
+    "nodeId": "2260:30509"
+  },
+  {
+    "cardId": "octopus",
+    "beforeHash": "3bf58530cef8",
+    "contentHash": "585b4c72f9ea",
+    "wasPrerelease": false,
+    "prerelease": false,
+    "nodeId": "746:146691"
+  }
+]

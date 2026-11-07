@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { ADVENTURE_CONTENT } from "../../app/adventure/adventureContent.mjs";
+import { getDeckSimulationWarnings } from "./deckSimulationWarnings.mjs";
 
 const require = createRequire(import.meta.url);
 const { createJiti } = require("jiti");
@@ -35,46 +36,92 @@ const { validateGameDeck } = jiti(
 
 const starterDeckIds = ["coral-garden", "murky-water", "blue-water"];
 
+test("revised decks preserve exact printed creature identities and legacy saved-card IDs", () => {
+  const dropOff = prebuiltDecks.find((deck) => deck.id === "blue-water");
+  assert.equal(dropOff.name, "Drop Off");
+  assert.equal(dropOff.cards.find((entry) => entry.cardId === "winter-flounder")?.quantity, 3);
+  assert.equal(cardsById["winter-flounder"].onPlay[0].effects[0].attackDice, "D4-1");
+  assert.deepEqual(cardsById["winter-flounder"].onPlay[0].effects[0].target.categories, ["invertebrate"]);
+  assert.equal(cardsById["spotfin-butterflyfish"].passives[0].effect.amount, 1);
+  assert.ok(cardsById["twinspot-butterflyfish"]);
+  assert.ok(cardsById.boxfish);
+  for (const deck of prebuiltDecks) {
+    assert.ok(!deck.cards.some((entry) => ["boxfish", "twinspot-butterflyfish"].includes(entry.cardId)));
+  }
+});
+
+test("every revised retail deck supports its printed effects in digital matches", () => {
+  for (const deck of prebuiltDecks) {
+    assert.deepEqual(getDeckSimulationWarnings(deck, cardsById), [], deck.name);
+    assert.deepEqual(getDeckSimulationWarnings({ cards: Object.fromEntries(deck.cards.map(({ cardId, quantity }) => [cardId, quantity])) }, cardsById), [], deck.name);
+  }
+});
+
 const expectedOpenOceanManifest = [
   { cardId: "cast-net", quantity: 2 },
   { cardId: "deep-sea-fishing", quantity: 2 },
   { cardId: "fishing", quantity: 2 },
-  { cardId: "spearfishing", quantity: 1 },
-  { cardId: "scientist-jes", quantity: 1 },
-  { cardId: "crab-trap", quantity: 1 },
   { cardId: "remote-search", quantity: 3 },
-  { cardId: "capt-dani", quantity: 1 },
-  { cardId: "ocean-jake", quantity: 1 },
-  { cardId: "blue-sea-dragon", quantity: 1 },
+  { cardId: "spearfishing", quantity: 2 },
+  { cardId: "crab-trap", quantity: 2 },
+  { cardId: "scientist-jes", quantity: 1 },
+  { cardId: "dr-evans", quantity: 1 },
   { cardId: "sardine-ball-base", quantity: 4 },
   { cardId: "sardine-ball-stage1", quantity: 2 },
-  { cardId: "sardine-ball-stage2", quantity: 1 },
   { cardId: "herring-ball-base", quantity: 4 },
-  { cardId: "herring-ball-stage1", quantity: 3 },
+  { cardId: "sardine-ball-stage2", quantity: 2 },
+  { cardId: "remora", quantity: 1 },
   { cardId: "herring-ball-stage2", quantity: 2 },
+  { cardId: "herring-ball-stage1", quantity: 3 },
   { cardId: "halfbeak", quantity: 3 },
-  { cardId: "frigate-tuna", quantity: 1 },
-  { cardId: "bonito-tuna", quantity: 1 },
-  { cardId: "ocean-triggerfish", quantity: 1 },
   { cardId: "bluefin-tuna-juvenile", quantity: 1 },
-  { cardId: "man-o-war", quantity: 2 },
-  { cardId: "flying-fish", quantity: 1 },
+  { cardId: "ocean-triggerfish", quantity: 1 },
+  { cardId: "frigate-tuna", quantity: 1 },
+  { cardId: "bonito-tuna", quantity: 2 },
   { cardId: "pompano", quantity: 1 },
-  { cardId: "market-squid", quantity: 2 },
-  { cardId: "mahi-mahi", quantity: 1 },
-  { cardId: "lookdown", quantity: 1 },
-  { cardId: "remora", quantity: 2 },
-  { cardId: "loggerhead-sea-turtle", quantity: 2 },
-  { cardId: "thresher-shark", quantity: 1 },
-  { cardId: "sailfish", quantity: 1 },
-  { cardId: "silky-shark", quantity: 1 },
-  { cardId: "yellowfin-tuna", quantity: 1 },
+  { cardId: "mahi-mahi", quantity: 3 },
+  { cardId: "market-squid", quantity: 3 },
+  { cardId: "man-o-war", quantity: 2 },
+  { cardId: "blue-sea-dragon", quantity: 2 },
+  { cardId: "oceanic-manta-ray", quantity: 1 },
   { cardId: "killer-whale-oceanic", quantity: 1 },
-  { cardId: "shortfin-mako-shark", quantity: 1 },
-  { cardId: "bluefin-tuna", quantity: 1 },
-  { cardId: "swordfish", quantity: 1 },
-  { cardId: "blue-whale", quantity: 1 },
+  { cardId: "yellowfin-tuna", quantity: 1 },
   { cardId: "open-ocean", quantity: 1 },
+  { cardId: "silky-shark", quantity: 1 },
+  { cardId: "sailfish", quantity: 1 },
+  { cardId: "loggerhead-sea-turtle", quantity: 2 },
+];
+
+const expectedDarknessShroudManifest = [
+  { cardId: "abyss", quantity: 1 },
+  { cardId: "chimera", quantity: 2 },
+  { cardId: "giant-squid", quantity: 1 },
+  { cardId: "goblin-shark", quantity: 2 },
+  { cardId: "cookie-cutter-shark", quantity: 2 },
+  { cardId: "giant-red-shrimp", quantity: 2 },
+  { cardId: "giant-isopod", quantity: 2 },
+  { cardId: "deep-cucumber", quantity: 2 },
+  { cardId: "deep-sea-jelly", quantity: 2 },
+  { cardId: "fangtooth-fish", quantity: 2 },
+  { cardId: "vampire-squid", quantity: 2 },
+  { cardId: "humpback-anglerfish", quantity: 2 },
+  { cardId: "black-swallower", quantity: 2 },
+  { cardId: "bristlemouth", quantity: 2 },
+  { cardId: "barrel-eye-fish", quantity: 2 },
+  { cardId: "owlfish", quantity: 2 },
+  { cardId: "fishing", quantity: 1 },
+  { cardId: "dr-evans", quantity: 2 },
+  { cardId: "deep-sea-fishing", quantity: 2 },
+  { cardId: "remote-search", quantity: 3 },
+  { cardId: "coral-gardener", quantity: 2 },
+  { cardId: "crab-trap", quantity: 2 },
+  { cardId: "bamboo_coral_base", quantity: 4 },
+  { cardId: "bamboo_coral_stage1", quantity: 2 },
+  { cardId: "bamboo_coral_stage2", quantity: 2 },
+  { cardId: "scientist-jes", quantity: 2 },
+  { cardId: "deep_mushroom_base", quantity: 4 },
+  { cardId: "deep_mushroom_stage1", quantity: 2 },
+  { cardId: "deep_mushroom_stage2", quantity: 2 },
 ];
 
 test("White Grunt matches its printed Creature School data", () => {
@@ -109,7 +156,7 @@ test("White Grunt matches its printed Creature School data", () => {
   });
 });
 
-for (const deckId of starterDeckIds) {
+for (const deckId of prebuiltDecks.map((deck) => deck.id)) {
   test(`${deckId} is a resolved, legal 60-card game deck`, () => {
     const deck = prebuiltDecks.find((candidate) => candidate.id === deckId);
 
@@ -142,13 +189,15 @@ for (const deckId of starterDeckIds) {
   });
 }
 
-test("Open Ocean matches the revised 60-card physical deck", () => {
-  const deck = prebuiltDecks.find(
-    (candidate) => candidate.id === "open-ocean-hunt"
-  );
+for (const [deckId, expectedManifest] of [
+  ["open-ocean-hunt", expectedOpenOceanManifest],
+  ["darkness-shroud", expectedDarknessShroudManifest],
+]) test(`${deckId} matches the October 5 Figma print sheets`, () => {
+  const deck = prebuiltDecks.find((candidate) => candidate.id === deckId);
 
   assert.ok(deck);
-  assert.deepEqual(deck.cards, expectedOpenOceanManifest);
+  const byCardId = (entries) => [...entries].sort((left, right) => left.cardId.localeCompare(right.cardId));
+  assert.deepEqual(byCardId(deck.cards), byCardId(expectedManifest));
   assert.equal(
     deck.cards.reduce((total, entry) => total + entry.quantity, 0),
     60

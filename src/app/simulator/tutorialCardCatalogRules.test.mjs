@@ -41,6 +41,7 @@ const EXPECTED_MULTI_RULE_CARD_IDS = [
   "krill-bloom-base",
   "krill-bloom-stage1",
   "lionfish",
+  "man-o-war",
   "pilot-whale-oceanic",
   "sardine-ball-stage1",
   "shortfin-mako-shark",
@@ -212,7 +213,7 @@ test("card-specific tours follow the order printed on Blue Sea Dragon and Giant 
   const blueSeaDragonSegments = getRuleTour(blueSeaDragon);
   assert.deepEqual(
     blueSeaDragonSegments.map((segment) => segment.title),
-    ["Requirement", "Passive: EcoBoost", "Passive: Toxic", "Action: Munch"],
+    ["Requirement", "Passive: EcoBoost", "Passive: Venomous", "Action: Munch"],
   );
   assert.deepEqual(
     blueSeaDragonSegments.map((segment) => segment.focus),

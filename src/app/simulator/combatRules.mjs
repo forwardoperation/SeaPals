@@ -24,6 +24,16 @@ export function getDarknessShroudDefenseBonus(card, habitatCardIds = []) {
   return Math.max(0, Number(amount ?? 0));
 }
 
+export function getKingOfCamouflageDefenseBonus(card, habitatCardIds = []) {
+  if (!habitatCardIds.includes("coral-reef")) return 0;
+  const rule = (card?.passives ?? []).find((passive) =>
+    /king of camouflage/i.test(passiveText(passive))
+  );
+  const amount = passiveEffect(rule)?.amount
+    ?? passiveText(rule).match(/\+(\d+)\s*defen[cs]e/i)?.[1];
+  return Math.max(0, Number(amount ?? 0));
+}
+
 /**
  * Cloak is a defensive keyword, not a targeting restriction. Future cards
  * carrying Cloak stay legal attack targets and receive a flat +3 defense.
@@ -35,10 +45,6 @@ export function getCloakDefenseBonus(card) {
     .map(passiveText)
     .some((text) => /^cloak(?:\s*:|\b)/i.test(String(text).trim()));
   return hasCloak ? 3 : 0;
-}
-
-export function getRovLightsAttackBonus(isActive, targetCard) {
-  return isActive && targetCard?.zone === "deep" ? 2 : 0;
 }
 
 export function getNightVisionAttackBonus(attackerCard, targetCard) {
@@ -172,7 +178,10 @@ export function hasDefenseAdvantage({ targetCard, statuses = [], ignoreDefensive
 }
 
 export function attackerHasDisadvantageFromMassive(targetCard) {
-  return getMassiveDefenseMode(targetCard) === "attackDisadvantage";
+  return getMassiveDefenseMode(targetCard) === "attackDisadvantage"
+    || (targetCard?.passives ?? []).some((passive) =>
+      passiveEffect(passive)?.type === "attackDisadvantage"
+      || /\battackers have disadvantage\b/i.test(passiveText(passive)));
 }
 
 /**

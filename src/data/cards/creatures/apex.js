@@ -287,26 +287,24 @@ const reefApexCards = [
       {
         id: "echo-locate",
         name: "Echo Locate",
+        text: "Draw three cards.",
         effects: [{ type: "drawCards", amount: 3 }],
       },
       {
-        id: "savvy-hunter",
-        name: "Savvy Hunter",
+        id: "social-hunter",
+        name: "Social Hunter",
+        text: "Perform a D10 attack targeting an Apex, Predator, or Fish. Add +2 for each dolphin in your ecosystem.",
         effects: [
           {
             type: "attack",
             attackDice: "D10",
+            ecosystemBonus: { tag: "dolphin", amount: 2 },
             target: {
               controller: "opponent",
               kind: CardKind.CREATURE,
               categories: [CardCategory.APEX, CardCategory.PREDATOR, CardCategory.FISH],
               zone: Zone.OPPONENT_REEF,
             },
-          },
-          {
-            type: "grantAdvantage",
-            targetCategories: [CardCategory.FISH],
-            duration: "thisCard",
           },
         ],
       },

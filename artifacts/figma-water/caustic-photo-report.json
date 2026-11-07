@@ -1,0 +1,47 @@
+{
+  "bytes": 559600,
+  "bands": [
+    {
+      "threshold": 2,
+      "vertices": 7864,
+      "contours": 421,
+      "layers": 5
+    },
+    {
+      "threshold": 4,
+      "vertices": 7052,
+      "contours": 398,
+      "layers": 4
+    },
+    {
+      "threshold": 7,
+      "vertices": 5689,
+      "contours": 369,
+      "layers": 3
+    },
+    {
+      "threshold": 11,
+      "vertices": 4118,
+      "contours": 377,
+      "layers": 3
+    },
+    {
+      "threshold": 16,
+      "vertices": 2687,
+      "contours": 312,
+      "layers": 2
+    },
+    {
+      "threshold": 23,
+      "vertices": 1570,
+      "contours": 206,
+      "layers": 1
+    },
+    {
+      "threshold": 32,
+      "vertices": 778,
+      "contours": 131,
+      "layers": 1
+    }
+  ]
+}

@@ -4,7 +4,10 @@
  * concise so both deterministic retrieval and the browser-local model can use
  * them as grounded context.
  */
+import { TABLETOP_PROCEDURES } from "../data/rules/tabletopProcedures.mjs";
+
 export const SIMULATOR_RULES = [
+  ...TABLETOP_PROCEDURES,
   {
     title: "How many players can play and recommended VP targets",
     text: "SeaRealm is designed for 2 to 4 players. A recommended full game uses a 30 VP target, while a quick game can use 10 VP. Players should agree on the target before play begins.",
@@ -107,7 +110,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Victory Points",
-    text: "VP count toward winning only while cards are currently in your ecosystem, including any conditional bonuses whose requirements are satisfied. If a VP card leaves play or its condition stops being true, remove those points. Reaching the agreed target wins. If multiple players reach it simultaneously, compare current VP totals and consult the latest official ruling if those totals are exactly tied.",
+    text: "VP count toward winning only while cards are currently in your ecosystem, including any conditional bonuses whose requirements are satisfied. If a VP card leaves play or its condition stops being true, remove those points. After resolving a play or effect, a player at or above the agreed target wins if they have the highest current VP outright. If the highest totals are tied at or above the target, keep playing in the normal turn order until someone has a sole lead at or above the target.",
   },
   {
     title: "Hand limits and overflow",
@@ -115,7 +118,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Support cards",
-    text: "Support cards resolve their printed effects, such as healing, drawing, searching, recovering, changing RP, or modifying the next play or attack. Unless a Support explicitly remains in play, it goes to discard after resolving. A Support that explicitly locks further Support play prevents additional Support cards for its stated duration.",
+    text: "Support cards resolve their printed effects, such as healing, drawing, searching, recovering, changing RP, or modifying the next play or attack. Unless a Support explicitly remains in play, it goes to discard after resolving. Supports are Aides or Items. You may play only one Aide per turn. You may play any number of Items, including after an Aide, subject to their costs and other active restrictions.",
   },
   {
     title: "Searching and recovering cards",
@@ -135,7 +138,7 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Massive, advantage, and disadvantage",
-    text: "Read the exact Massive text on the card. Some Massive creatures cause attacks against them to roll with disadvantage; others roll their defense with advantage. Defensive advantage rolls twice and uses the higher defense result. Effects that ignore defensive bonuses also suppress applicable advantage bonuses.",
+    text: "Venomous gives attackers disadvantage: roll twice and keep the lower attack. It is separate from Toxic and does not trigger a coin flip when eaten. Read the exact Massive text on the card. Some Massive creatures cause attacks against them to roll with disadvantage; others roll their defense with advantage. Defensive advantage rolls twice and uses the higher defense result. Effects that ignore defensive bonuses also suppress applicable advantage bonuses.",
   },
   {
     title: "Cloak and Transparency",
@@ -179,11 +182,11 @@ export const SIMULATOR_RULES = [
   },
   {
     title: "Lost Zone",
-    text: "If an Apex or Filter Feeder is destroyed, its rules send that physical card to its owner's Lost Zone instead of the discard pile. It leaves play and its VP stops counting. Cards of other classes go to discard when destroyed unless their own printed text explicitly names another destination. Lionfish has no Lost Zone instruction, so both a successful destruction and Spearfishing return it to its original owner's discard pile.",
+    text: "If an Apex or Filter Feeder is destroyed, its rules send that physical card to its owner's Lost Zone instead of the discard pile. It leaves play and its VP stops counting. Cards of other classes go to discard when destroyed unless their own printed text explicitly names another destination. Destroying Lionfish sends it to its original owner's Lost Zone. Spearfishing explicitly discards it, so that effect sends it to its original owner's discard pile.",
   },
   {
     title: "Invader",
-    text: "Lionfish's Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish. Flip first. Targets are determined from the Lionfish owner's perspective: heads performs the D4-1 attack against a Fish controlled by that owner's opponent, normally the ecosystem holder; tails attacks another Fish controlled by the Lionfish owner. The triggering Lionfish is excluded. If the rolled branch has no legal Fish, the attack fizzles; do not switch to the other branch.",
+    text: "Lionfish's Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish. Flip first. Targets are determined from the Lionfish owner's perspective: heads performs the D4 attack against a Fish controlled by that owner's opponent, normally the ecosystem holder; tails attacks another Fish controlled by the Lionfish owner. The triggering Lionfish is excluded. If the rolled branch has no legal Fish, the attack fizzles; do not switch to the other branch.",
   },
   {
     title: "Stunned boundary",

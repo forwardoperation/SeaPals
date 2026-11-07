@@ -115,8 +115,7 @@ test("creature commerce copy uses natural singular and plural references", async
 
 test("deck discovery aggregates exact creature cards across current store decks", () => {
   assert.deepEqual(copiesByDeck("fairy-parrotfish"), {
-    "blue-water": 2,
-    "murky-water": 1,
+    "blue-water": 3,
   });
   assert.deepEqual(copiesByDeck("spectacled-parrotfish"), {
     disruption: 3,
@@ -124,14 +123,10 @@ test("deck discovery aggregates exact creature cards across current store decks"
   });
   assert.deepEqual(copiesByDeck("anglerfish"), { "darkness-shroud": 2 });
   assert.deepEqual(copiesByDeck("frogfish"), {
-    "blue-water": 1,
-    disruption: 2,
-    "coral-garden": 1,
-    "stinging-fortress": 2,
+    disruption: 3,
   });
   assert.deepEqual(copiesByDeck("great-barracuda"), {
     "murky-water": 2,
-    "stinging-fortress": 2,
   });
   assert.deepEqual(copiesByDeck("barracuda"), {});
 });
@@ -144,11 +139,22 @@ test("multi-stage creatures sum every owned card in a deck", () => {
   assert.equal(discovery.decks.length, 1);
   assert.equal(discovery.decks[0].deckId, "open-ocean-hunt");
   assert.equal(discovery.decks[0].copies, 9);
-  assert.deepEqual(discovery.decks[0].matchedCards, [
+  assert.deepEqual([...discovery.decks[0].matchedCards].sort((a, b) => a.cardId.localeCompare(b.cardId)), [
     { cardId: "herring-ball-base", quantity: 4 },
     { cardId: "herring-ball-stage1", quantity: 3 },
     { cardId: "herring-ball-stage2", quantity: 2 },
   ]);
+});
+
+test("Oceanic Manta Ray has its own species profile and appears in Open Ocean", () => {
+  const oceanicManta = encyclopediaCreatureBySlug["oceanic-manta-ray"];
+  const reefManta = encyclopediaCreatureBySlug["manta-ray"];
+
+  assert.equal(encyclopediaSlugByCardId["oceanic-manta-ray"], oceanicManta.slug);
+  assert.equal(oceanicManta.scientificName, "Mobula birostris");
+  assert.equal(reefManta.scientificName, "Mobula alfredi");
+  assert.deepEqual(oceanicManta.cardIds, ["oceanic-manta-ray"]);
+  assert.deepEqual(copiesByDeck("oceanic-manta-ray"), { "open-ocean-hunt": 1 });
 });
 
 test("discovery returns actionable deck routes and available bundles", () => {

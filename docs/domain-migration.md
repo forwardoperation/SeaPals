@@ -116,6 +116,15 @@ that directory.
 
 ### Remaining cutover and rollout work
 
+**October 3 reminder closeout:** The one-time October 2 heartbeat fired again.
+Reviewed this checkpoint and `unpaid-checkout-check.json`: the expiration,
+signed delivery, one replay, released reservation, and 10/0 inventory baseline
+were already verified on October 2 at 11:52 UTC. No second replay or new checkout
+was performed, and these are historical verification results, not a fresh
+October 3 inventory reading. Paused `verify-searealm-checkout-expiration` to
+prevent further duplicate runs. The later paid/refund tests, owner cross-browser
+save check, and permanent canonical cutover are also complete as recorded above.
+
 1. Search Console opened without any verified website in the signed-in Google
    account. A SeaRealm domain property is prepared but unverified; owner approval
    for DNS verification of both domains is pending. Submit the new sitemap and

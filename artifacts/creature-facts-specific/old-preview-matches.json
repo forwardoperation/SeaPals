@@ -1,0 +1,237 @@
+[
+  {
+    "id": "chimera",
+    "found": "artifacts/creature-facts/chimera.download.png",
+    "expected": "6a40e17e3467"
+  },
+  {
+    "id": "frilled-shark",
+    "found": "artifacts/creature-facts/frilled-shark.download.png",
+    "expected": "f3950a68290a"
+  },
+  {
+    "id": "silky-shark",
+    "found": "artifacts/creature-facts/silky-shark.download.png",
+    "expected": "5a9e3d67d3de"
+  },
+  {
+    "id": "nurse-shark",
+    "found": "artifacts/creature-facts/nurse-shark.download.png",
+    "expected": "8b21deeca94c"
+  },
+  {
+    "id": "sea-urchin",
+    "found": "artifacts/creature-facts/sea-urchin.inline.png",
+    "expected": "8ed64997e570"
+  },
+  {
+    "id": "anemone",
+    "found": "artifacts/creature-facts/anemone.download.png",
+    "expected": "42e377f95405"
+  },
+  {
+    "id": "arrow-crab",
+    "found": "artifacts/creature-facts/arrow-crab.download.png",
+    "expected": "5a9b739eb076"
+  },
+  {
+    "id": "mantis-shrimp",
+    "found": "artifacts/creature-facts/mantis-shrimp.download.png",
+    "expected": "f099f03a8899"
+  },
+  {
+    "id": "leather-starfish",
+    "found": "artifacts/creature-facts/leather-starfish.download.png",
+    "expected": "f10790612af3"
+  },
+  {
+    "id": "cleaner-shrimp",
+    "found": "artifacts/creature-facts/cleaner-shrimp.download.png",
+    "expected": "85dc36ad2373"
+  },
+  {
+    "id": "giant-triton",
+    "found": "artifacts/creature-facts/giant-triton.download.png",
+    "expected": "2112969163a6"
+  },
+  {
+    "id": "octopus",
+    "found": "artifacts/creature-facts/octopus.download.png",
+    "expected": "f567180d3cad"
+  },
+  {
+    "id": "oysters",
+    "found": "artifacts/creature-facts/oysters.download.png",
+    "expected": "95781e3349af"
+  },
+  {
+    "id": "deep-cucumber",
+    "found": "artifacts/creature-facts/deep-cucumber.download.png",
+    "expected": "2112e457701e"
+  },
+  {
+    "id": "brittlestar",
+    "found": "artifacts/creature-facts/brittlestar.download.png",
+    "expected": "07b320173d39"
+  },
+  {
+    "id": "vampire-squid",
+    "found": "artifacts/creature-facts/vampire-squid.download.png",
+    "expected": "53c8df84bee7"
+  },
+  {
+    "id": "giant-isopod",
+    "found": "artifacts/creature-facts/giant-isopod.download.png",
+    "expected": "dd0287fe46aa"
+  },
+  {
+    "id": "giant-tube-worm",
+    "found": "artifacts/creature-facts/giant-tube-worm.download.png",
+    "expected": "5a816a7b14e9"
+  },
+  {
+    "id": "peacock-squid",
+    "found": "artifacts/creature-facts/peacock-squid.download.png",
+    "expected": "637a9f94daba"
+  },
+  {
+    "id": "man-o-war",
+    "found": "artifacts/creature-facts/man-o-war.download.png",
+    "expected": "f6b4bd6038c0"
+  },
+  {
+    "id": "market-squid",
+    "found": "artifacts/creature-facts/market-squid.download.png",
+    "expected": "ab36506f52c7"
+  },
+  {
+    "id": "box-jellyfish",
+    "found": "artifacts/creature-facts/box-jellyfish.download.png",
+    "expected": "00df1791f088"
+  },
+  {
+    "id": "fairy-parrotfish",
+    "found": "artifacts/creature-facts/fairy-parrotfish.download.png",
+    "expected": "9947e4a4f027"
+  },
+  {
+    "id": "longhorn-cowfish",
+    "found": "artifacts/creature-facts/longhorn-cowfish.download.png",
+    "expected": "4303d5977c40"
+  },
+  {
+    "id": "frogfish",
+    "found": "artifacts/creature-facts/frogfish.inline.png",
+    "expected": "12a123693e93"
+  },
+  {
+    "id": "pacific-grenadier",
+    "found": "artifacts/creature-facts/pacific-grenadier.inline.png",
+    "expected": "56080386d078"
+  },
+  {
+    "id": "humpback-anglerfish",
+    "found": "artifacts/creature-facts/humpback-anglerfish.inline.png",
+    "expected": "a4dde16c3ac6"
+  },
+  {
+    "id": "fangtooth-fish",
+    "found": "artifacts/creature-facts/fangtooth-fish.inline.png",
+    "expected": "57bf24e77179"
+  },
+  {
+    "id": "black-swallower",
+    "found": "artifacts/creature-facts/black-swallower.inline.png",
+    "expected": "88ca7ba0a5cb"
+  },
+  {
+    "id": "tripod-fish",
+    "found": "artifacts/creature-facts/tripod-fish.inline.png",
+    "expected": "9851b530d3a8"
+  },
+  {
+    "id": "halfbeak",
+    "found": "artifacts/creature-facts/halfbeak.inline.png",
+    "expected": "a43fe69854b6"
+  },
+  {
+    "id": "needlefish",
+    "found": "artifacts/creature-facts/needlefish.inline.png",
+    "expected": "5ad073533981"
+  },
+  {
+    "id": "krill-bloom-base",
+    "found": "artifacts/creature-facts/krill-bloom-base.inline.png",
+    "expected": "e96069f9a7d7"
+  },
+  {
+    "id": "krill-bloom-stage1",
+    "found": "artifacts/creature-facts/krill-bloom-stage1.inline.png",
+    "expected": "a9898cdb355d"
+  },
+  {
+    "id": "krill-bloom-stage2",
+    "found": "artifacts/creature-facts/krill-bloom-stage2.inline.png",
+    "expected": "b44fa36f4fb2"
+  },
+  {
+    "id": "sardine-ball-base",
+    "found": "artifacts/creature-facts/sardine-ball-base.inline.png",
+    "expected": "52996a2eae45"
+  },
+  {
+    "id": "sardine-ball-stage1",
+    "found": "artifacts/creature-facts/sardine-ball-stage1.inline.png",
+    "expected": "0e8d20ab6468"
+  },
+  {
+    "id": "sardine-ball-stage2",
+    "found": "artifacts/creature-facts/sardine-ball-stage2.inline.png",
+    "expected": "aac39a0843f1"
+  },
+  {
+    "id": "anchovy-ball-base",
+    "found": "artifacts/creature-facts/anchovy-ball-base.inline.png",
+    "expected": "e0506c8b9e1b"
+  },
+  {
+    "id": "anchovy-ball-stage1",
+    "found": "artifacts/creature-facts/anchovy-ball-stage1.inline.png",
+    "expected": "929fb904d201"
+  },
+  {
+    "id": "anchovy-ball-stage2",
+    "found": "artifacts/creature-facts/anchovy-ball-stage2.inline.png",
+    "expected": "ede1a4af6389"
+  },
+  {
+    "id": "silverside-ball-base",
+    "found": "artifacts/creature-facts/silverside-ball-base.inline.png",
+    "expected": "c853e70264ad"
+  },
+  {
+    "id": "silverside-ball-stage1",
+    "found": "artifacts/creature-facts/silverside-ball-stage1.inline.png",
+    "expected": "e629e7213711"
+  },
+  {
+    "id": "silverside-ball-stage2",
+    "found": "artifacts/creature-facts/silverside-ball-stage2.inline.png",
+    "expected": "ca05bba8607d"
+  },
+  {
+    "id": "herring-ball-base",
+    "found": "artifacts/creature-facts/herring-ball-base.inline.png",
+    "expected": "6041f965ed42"
+  },
+  {
+    "id": "herring-ball-stage1",
+    "found": "artifacts/creature-facts/herring-ball-stage1.inline.png",
+    "expected": "711a9d08bdad"
+  },
+  {
+    "id": "herring-ball-stage2",
+    "found": "artifacts/creature-facts/herring-ball-stage2.inline.png",
+    "expected": "f94204b28e97"
+  }
+]

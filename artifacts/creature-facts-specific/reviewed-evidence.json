@@ -1,0 +1,710 @@
+[
+  [
+    "chimera",
+    "Chimaera monstrosa",
+    "Rabbitfish",
+    {
+      "family": "Chimaeridae",
+      "length": "4’ 11”",
+      "weight": "5.5lbs",
+      "region": "NE Atlantic",
+      "description": "The rabbitfish is a chimaera with a cartilage skeleton, a long tapering tail, and permanent tooth plates for crushing shellfish."
+    },
+    "Reported maximum length 150 cm and weight 2.5 kg; the rabbitfish is the representative species.",
+    [
+      "https://www.fishbase.se/Summary/SpeciesSummary.php?id=2503&lang=english"
+    ]
+  ],
+  [
+    "frilled-shark",
+    "Chlamydoselachus anguineus",
+    null,
+    {
+      "length": "6’ 3”",
+      "weight": "28lbs"
+    },
+    "Research-trawl sample of females: up to 190 cm and 12,600 g. Rounded upper reference values, not a matched individual.",
+    [
+      "https://www.sciencedirect.com/science/article/abs/pii/S096706372600097X"
+    ]
+  ],
+  [
+    "silky-shark",
+    "Carcharhinus falciformis",
+    null,
+    {
+      "weight": "760lbs"
+    },
+    "Published maximum mass 346 kg, rounded to 760 lb.",
+    [
+      "https://iotc.org/sites/default/files/documents/2022/08/IOTC-2022-WPEB18-13_Biological_information_for_most_commonly_shark_species_caught_in_tuna_fisheries.pdf"
+    ]
+  ],
+  [
+    "nurse-shark",
+    "Ginglymostoma cirratum",
+    null,
+    {
+      "weight": "240lbs"
+    },
+    "FishBase maximum published mass 109.6 kg; rounded to 240 lb.",
+    [
+      "https://fishbase.se/summary/2532"
+    ]
+  ],
+  [
+    "sea-urchin",
+    "Diadema antillarum",
+    null,
+    {
+      "lengthLabel": "Test diameter",
+      "length": "3”",
+      "weight": "~160g"
+    },
+    "Luo-Ascorbe (2004), Table 6: monthly mean wet body masses 140.7–176.8 g in 6.1–8 cm test-diameter animals. Reference adult test diameter about 3 in and weight about 160 g; excludes spine length from the size measurement.",
+    [
+      "https://rediberoamericanaequinodermos.com/wp-content/uploads/2015/09/Luo-Ascorbe-2004-Diadema-La-Parguera-UPR-MSc.pdf"
+    ]
+  ],
+  [
+    "anemone",
+    "Radianthus magnifica",
+    "Magnificent anemone",
+    {
+      "family": "Stichodactylidae",
+      "lengthLabel": "Disc width",
+      "length": "16”",
+      "weight": "~350g",
+      "region": "Indo-Pacific",
+      "description": "The magnificent anemone anchors to reef rock with a sticky foot. Its stinging tentacles catch prey and shelter several species of anemonefish."
+    },
+    "Typical oral disc 30–50 cm; 16 in is a rounded reference within that range. A 357 g Heteractis magnifica specimen was used in the settlement-cue study; weight is a specimen reference, not a species mean. Accepted name Radianthus magnifica.",
+    [
+      "https://animaldiversity.org/accounts/Heteractis_magnifica/",
+      "https://www.researchgate.net/publication/229831601_Ontogenetic_changes_in_responses_to_settlement_cues_by_Anemonefish"
+    ]
+  ],
+  [
+    "arrow-crab",
+    "Stenorhynchus seticornis",
+    null,
+    {
+      "weight": "~2g"
+    },
+    "SEAMAP 2012 summer shrimp/groundfish survey Table 2: 247 individuals, aggregate mass 0.5 kg; 500/247 = 2.02 g per sampled crab. Approximate survey mean, not a mass measured for the maximum 9.5-in span.",
+    [
+      "https://www.gsmfc.org/publications/GSMFC%20Number%20237.pdf"
+    ]
+  ],
+  [
+    "mantis-shrimp",
+    "Odontodactylus scyllarus",
+    "Peacock mantis shrimp",
+    {
+      "family": "Odontodactylidae",
+      "length": "7”",
+      "weight": "90g",
+      "region": "Indo-Pacific",
+      "description": "Peacock mantis shrimp smash hard-shelled prey with club-like limbs. Their rapid strikes create cavitation bubbles that collapse in a second impact."
+    },
+    "The Cousteau Society lists 10–18 cm length and up to 90 g. Rounded upper size reference.",
+    [
+      "https://www.cousteau.org/species/peacock-mantis-shrimp/",
+      "https://journals.biologists.com/jeb/article/208/19/3655/15838/Extreme-impact-and-cavitation-forces-of-a"
+    ]
+  ],
+  [
+    "leather-starfish",
+    "Dermasterias imbricata",
+    null,
+    {
+      "weight": "~75g"
+    },
+    "Prince William Sound ecosystem report estimates average wet weight about 75 g (T. Dean data). Sample/population reference, not the weight of a maximum-size star.",
+    [
+      "https://epub.sub.uni-hamburg.de/epub/volltexte/2011/12286/pdf/7_4.pdf"
+    ]
+  ],
+  [
+    "cleaner-shrimp",
+    "Lysmata amboinensis",
+    null,
+    {
+      "length": "1.7”",
+      "weight": "~2.2g"
+    },
+    "Choi/Choe 2018 experiment: 336 animals, mean length 42.8 ± 2.3 mm and mean mass 2.23 ± 0.15 g.",
+    [
+      "https://marinelab.kmou.ac.kr/NFUpload/nfupload_down.php?name=JCB_38%284%29+475-482.pdf&tmp_name=20180804201347.4500.5.0"
+    ]
+  ],
+  [
+    "giant-triton",
+    "Charonia tritonis",
+    null,
+    {
+      "length": "11.3”",
+      "weight": "~5.7lbs"
+    },
+    "Frontiers 2022 study: average shell length 28.7 cm, average live whole weight 2.57 kg. Includes shell.",
+    [
+      "https://www.frontiersin.org/journals/marine-science/articles/10.3389/fmars.2022.1066750/full"
+    ]
+  ],
+  [
+    "octopus",
+    "Hapalochlaena lunulata",
+    "Greater blue-ringed octopus",
+    {
+      "family": "Octopodidae",
+      "lengthLabel": "Span",
+      "length": "8”",
+      "weight": "100g",
+      "region": "Indo-Pacific",
+      "description": "Greater blue-ringed octopuses flash vivid blue rings when threatened. These small reef hunters use potent venom to subdue crabs and other prey."
+    },
+    "Artwork has yellow skin and conspicuous blue rings. ADW: arm spread to 20 cm, mass range 10–100 g. Uses upper reference values.",
+    [
+      "https://animaldiversity.org/accounts/Hapalochlaena_lunulata/"
+    ]
+  ],
+  [
+    "oysters",
+    "Crassostrea virginica",
+    "Eastern oyster",
+    {
+      "lengthLabel": "Shell length",
+      "length": "2.4”",
+      "weight": "~48g",
+      "region": "W. Atlantic",
+      "description": "Eastern oysters filter plankton from coastal water. Their rough shells grow together into reefs that shelter fish, crabs, and other small animals."
+    },
+    "2025 breeding-population study of 3,653 oysters: mean shell length 6.19 cm, mean whole weight 47.50 g. Rounded paired means; weight includes shell.",
+    [
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC12542368/"
+    ]
+  ],
+  [
+    "deep-cucumber",
+    "Enypniastes eximia",
+    "Swimming sea cucumber",
+    {
+      "family": "Pelagothuriidae",
+      "length": "5.2”",
+      "weight": "~285g",
+      "description": "The swimming sea cucumber feeds on seafloor sediment, then swims with a webbed veil. Its transparent body reveals the coiled gut inside."
+    },
+    "Bailey et al. 1994 Table 1: 58 animals, mean longitudinal length 131.6 mm and mean wet mass 284.9 g.",
+    [
+      "https://www.polarpelagic.com/wp-content/uploads/2016/05/Bailey-et-al-1994.pdf"
+    ]
+  ],
+  [
+    "brittlestar",
+    "Ophiothrix fragilis",
+    "Common brittle star",
+    {
+      "family": "Ophiotrichidae",
+      "lengthLabel": "Disc width",
+      "length": "0.6”",
+      "weight": "~3g",
+      "region": "E. Atlantic",
+      "description": "Common brittle stars raise their spiny arms to catch food particles from passing water. A lost arm can regrow after a narrow escape."
+    },
+    "Blanchet-Aurigny et al. 2012: O. fragilis with 1.5-cm discs. Figure 2 (upper panel) shows mean wet masses roughly 2.5–3.3 g for most sampling points. Rounded reference ~3 g; graph visually verified. Disc diameter excludes arms.",
+    [
+      "https://doi.org/10.1016/j.jembe.2012.05.013",
+      "https://ars.els-cdn.com/content/image/1-s2.0-S0022098112001785-gr2.jpg"
+    ]
+  ],
+  [
+    "vampire-squid",
+    "Vampyroteuthis infernalis",
+    null,
+    {
+      "weight": "~250g"
+    },
+    "Vampire blood (1999) experimental specimens explicitly had estimated weight 250 g each. A published estimate, not a species maximum.",
+    [
+      "https://www.researchgate.net/publication/227277529_Vampire_blood_Respiratory_physiology_of_the_vampire_squid_Cephalopoda_Vampyromorpha_in_relation_to_the_oxygen_minimum_layer"
+    ]
+  ],
+  [
+    "giant-isopod",
+    "Bathynomus giganteus",
+    null,
+    {
+      "length": "14”",
+      "weight": "2.4lbs",
+      "region": "W. Atlantic"
+    },
+    "Exuma Sound experiment: length range 17.6–35.8 cm and mass 181–1,097 g; rounded upper sample references.",
+    [
+      "https://www.sciencedirect.com/science/article/abs/pii/S0967063716303739"
+    ]
+  ],
+  [
+    "giant-tube-worm",
+    "Riftia pachyptila",
+    null,
+    {
+      "lengthLabel": "Tube length",
+      "weight": "650g"
+    },
+    "Sizing Ocean Giants cites Fisher et al. (1988): large worms reach 650 g wet body mass. Existing 8-ft measure refers to tube length, now labeled explicitly; weight excludes tube.",
+    [
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC4304853/"
+    ]
+  ],
+  [
+    "peacock-squid",
+    "Taonius borealis",
+    "Boreal glass squid",
+    {
+      "lengthLabel": "Mantle length",
+      "length": "15.3”",
+      "weight": "~170g",
+      "region": "N. Pacific",
+      "description": "Boreal glass squid have transparent bodies and large eyes. Light organs beneath the eyes help conceal their silhouettes in the dim ocean."
+    },
+    "2018 fatty-acid prey study: two T. borealis, mean mantle length 38.8 cm and mean whole mass 168.45 g.",
+    [
+      "https://doi.org/10.3389/fmars.2018.00430.s005"
+    ]
+  ],
+  [
+    "man-o-war",
+    "Physalia physalis",
+    null,
+    {
+      "weight": "~3g"
+    },
+    "Molina-Ramírez et al. 2015 Table I: geometric mean wet colony mass 2.78 g for 18 sampled colonies. This is a small-colony reference, independent of the long tentacle-length reference; not maximum species weight.",
+    [
+      "https://pdfs.semanticscholar.org/4b2a/6b18d778b8cea128d1e2560eb5e30895e3bc.pdf"
+    ]
+  ],
+  [
+    "market-squid",
+    "Doryteuthis opalescens",
+    null,
+    {
+      "weight": "148g"
+    },
+    "SeaLifeBase maximum published whole mass 148 g; NOAA confirms total length to 12 in, including arms.",
+    [
+      "https://www.sealifebase.ca/summary/Doryteuthis-opalescens",
+      "https://www.fisheries.noaa.gov/species/california-market-squid"
+    ]
+  ],
+  [
+    "box-jellyfish",
+    "Chironex fleckeri",
+    null,
+    {
+      "weight": "4.4lbs"
+    },
+    "ADW reports maximum mass 2 kg. Rounded to 4.4 lb.",
+    [
+      "https://animaldiversity.org/accounts/Chironex_fleckeri/"
+    ]
+  ],
+  [
+    "fairy-parrotfish",
+    "Scarus prasiognathos",
+    "Singapore parrotfish",
+    {
+      "length": "20”",
+      "weight": "~4.1lbs",
+      "region": "Indo-Pacific",
+      "description": "Singapore parrotfish graze reef surfaces with fused, beak-like teeth. Terminal-phase fish have a distinctive green throat and brightly edged scales."
+    },
+    "Representative chosen for green throat and colorful scale edges. FishBase Bayesian W(g)=0.01122×L(cm)^3.06 at 50.8 cm; about 1.86 kg, rounded 4.1 lb. This is a model estimate based on genus/body shape.",
+    [
+      "https://fishbase.se/summary/Scarus-prasiognathos.html"
+    ]
+  ],
+  [
+    "longhorn-cowfish",
+    "Lactoria cornuta",
+    null,
+    {
+      "length": "10”",
+      "weight": "~180g",
+      "lengthLabel": "Fork length"
+    },
+    "Kulbicki et al. (2005) measured fork length. Species LWR a=0.0065, b=3.168 (15 fish, 20.5–30 cm); W=0.0065×25.4^3.168 =183.4 g. A 10-in fork-length reference within the sample range, rounded to ~180 g.",
+    [
+      "https://horizon.documentation.ird.fr/exl-doc/pleins_textes/divers16-09/010067956.pdf"
+    ]
+  ],
+  [
+    "frogfish",
+    "Antennarius commerson",
+    "Giant frogfish",
+    {
+      "length": "12”",
+      "weight": "~660g",
+      "region": "Indo-Pacific",
+      "description": "Giant frogfish blend into sponges and reef growth, then lure prey with a modified fin spine. An expanding mouth pulls the victim in with a sudden gulp."
+    },
+    "FishBase Bayesian W(g)=0.02692×L(cm)^2.96 at 30.48 cm. Rounded model estimate based on family/body shape.",
+    [
+      "https://www.fishbase.se/summary/Antennarius_commerson.html"
+    ]
+  ],
+  [
+    "pacific-grenadier",
+    "Coryphaenoides acrolepis",
+    null,
+    {
+      "length": "3’ 5”",
+      "weight": "6.6lbs"
+    },
+    "FishBase maximum total length 104 cm and maximum published mass 3.0 kg; rounded upper reference values.",
+    [
+      "https://www.fishbase.se/summary/Coryphaenoides-acrolepis"
+    ]
+  ],
+  [
+    "humpback-anglerfish",
+    "Melanocetus johnsonii",
+    null,
+    {
+      "weight": "~120g"
+    },
+    "FishBase Bayesian W(g)=0.01995×L(cm)^3.01 at 17.78 cm (7-in female). Body-shape model estimate, not a measured adult maximum.",
+    [
+      "https://www.fishbase.se/summary/Melanocetus_johnsonii.html"
+    ]
+  ],
+  [
+    "fangtooth-fish",
+    "Anoplogaster cornuta",
+    null,
+    {
+      "weight": "~120g"
+    },
+    "FishBase Bayesian W(g)=0.01995×L(cm)^3.01 at 17.78 cm. Body-shape model estimate.",
+    [
+      "https://fishbase.org/summary/2308"
+    ]
+  ],
+  [
+    "black-swallower",
+    "Chiasmodon niger",
+    null,
+    {
+      "weight": "~70g"
+    },
+    "FishBase Bayesian W(g)=0.00389×L(cm)^3.12 at 22.86 cm. Body-shape model estimate, excludes a distended stomach full of prey.",
+    [
+      "https://fishbase.org/summary/10192"
+    ]
+  ],
+  [
+    "tripod-fish",
+    "Bathypterois grallator",
+    null,
+    {
+      "weight": "~440g"
+    },
+    "FishBase Bayesian W(g)=0.00490×L(cm)^3.03 at 43.18 cm. Family/body-shape model estimate.",
+    [
+      "https://www.fishbase.se/summary/9136"
+    ]
+  ],
+  [
+    "halfbeak",
+    "Hemiramphus brasiliensis",
+    "Ballyhoo halfbeak",
+    {
+      "length": "8.4”",
+      "weight": "~46g",
+      "region": "W. Atlantic",
+      "description": "Ballyhoo halfbeaks swim near the surface with a long lower jaw and a short upper jaw. They feed on drifting plants and small animals."
+    },
+    "Primary study n=432: mean TL 21.26 cm, mean whole mass 46.07 g. Rounded paired sample means.",
+    [
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC4248363/"
+    ]
+  ],
+  [
+    "needlefish",
+    "Tylosurus crocodilus",
+    "Hound needlefish",
+    {
+      "length": "4’ 11”",
+      "weight": "14lbs",
+      "description": "Hound needlefish hunt near the surface with long jaws lined with sharp teeth. They chase small fish and may leap clear of the water."
+    },
+    "FishBase maximum total length 150 cm and maximum published weight 6.4 kg; rounded upper reference values.",
+    [
+      "https://www.fishbase.se/summary/977"
+    ]
+  ],
+  [
+    "krill-bloom-base",
+    "Euphausia superba",
+    "Antarctic krill",
+    {
+      "family": "Euphausiidae",
+      "lengthLabel": "Length",
+      "length": "2”",
+      "weight": "~1g",
+      "region": "Southern Ocean",
+      "description": "Antarctic krill gather in dense swarms that feed whales, seals, and penguins. Length and weight describe one krill."
+    },
+    "NOAA reference: average lengths 4–6 cm and weights 0.7–1.2 g. Rounded individual reference, identical across school stages.",
+    [
+      "https://repository.library.noaa.gov/view/noaa/9667/noaa_9667_DS1.pdf"
+    ]
+  ],
+  [
+    "krill-bloom-stage1",
+    "Euphausia superba",
+    "Antarctic krill",
+    {
+      "family": "Euphausiidae",
+      "lengthLabel": "Length",
+      "length": "2”",
+      "weight": "~1g",
+      "region": "Southern Ocean",
+      "description": "Antarctic krill gather in dense swarms that feed whales, seals, and penguins. Length and weight describe one krill."
+    },
+    "NOAA reference: average lengths 4–6 cm and weights 0.7–1.2 g. Rounded individual reference, identical across school stages.",
+    [
+      "https://repository.library.noaa.gov/view/noaa/9667/noaa_9667_DS1.pdf"
+    ]
+  ],
+  [
+    "krill-bloom-stage2",
+    "Euphausia superba",
+    "Antarctic krill",
+    {
+      "family": "Euphausiidae",
+      "lengthLabel": "Length",
+      "length": "2”",
+      "weight": "~1g",
+      "region": "Southern Ocean",
+      "description": "Antarctic krill gather in dense swarms that feed whales, seals, and penguins. Length and weight describe one krill."
+    },
+    "NOAA reference: average lengths 4–6 cm and weights 0.7–1.2 g. Rounded individual reference, identical across school stages.",
+    [
+      "https://repository.library.noaa.gov/view/noaa/9667/noaa_9667_DS1.pdf"
+    ]
+  ],
+  [
+    "sardine-ball-base",
+    "Sardinops sagax",
+    "Pacific sardine",
+    {
+      "family": "Alosidae",
+      "lengthLabel": "Length",
+      "length": "10”",
+      "weight": "~180g",
+      "region": "NE Pacific",
+      "description": "Pacific sardines form dense schools and feed on plankton. Length and weight describe one fish, not the entire school."
+    },
+    "FishBase Bayesian W(g)=0.00776×L(cm)^3.10 at 25.4 cm =175.7 g. Rounded model estimate; family Alosidae verified against WoRMS.",
+    [
+      "https://www.fishbase.org/summary/1477",
+      "https://www.fisheries.noaa.gov/species/pacific-sardine"
+    ]
+  ],
+  [
+    "sardine-ball-stage1",
+    "Sardinops sagax",
+    "Pacific sardine",
+    {
+      "family": "Alosidae",
+      "lengthLabel": "Length",
+      "length": "10”",
+      "weight": "~180g",
+      "region": "NE Pacific",
+      "description": "Pacific sardines form dense schools and feed on plankton. Length and weight describe one fish, not the entire school."
+    },
+    "FishBase Bayesian W(g)=0.00776×L(cm)^3.10 at 25.4 cm =175.7 g. Rounded model estimate; family Alosidae verified against WoRMS.",
+    [
+      "https://www.fishbase.org/summary/1477",
+      "https://www.fisheries.noaa.gov/species/pacific-sardine"
+    ]
+  ],
+  [
+    "sardine-ball-stage2",
+    "Sardinops sagax",
+    "Pacific sardine",
+    {
+      "family": "Alosidae",
+      "lengthLabel": "Length",
+      "length": "10”",
+      "weight": "~180g",
+      "region": "NE Pacific",
+      "description": "Pacific sardines form dense schools and feed on plankton. Length and weight describe one fish, not the entire school."
+    },
+    "FishBase Bayesian W(g)=0.00776×L(cm)^3.10 at 25.4 cm =175.7 g. Rounded model estimate; family Alosidae verified against WoRMS.",
+    [
+      "https://www.fishbase.org/summary/1477",
+      "https://www.fisheries.noaa.gov/species/pacific-sardine"
+    ]
+  ],
+  [
+    "anchovy-ball-base",
+    "Engraulis mordax",
+    "Northern anchovy",
+    {
+      "family": "Engraulidae",
+      "lengthLabel": "Length",
+      "length": "6”",
+      "weight": "~24g",
+      "region": "NE Pacific",
+      "description": "Northern anchovies feed on plankton and school together near the coast. Length and weight describe one fish."
+    },
+    "FishBase Bayesian W(g)=0.00550×L(cm)^3.08 at 15.24 cm =24.2 g; species/genus model. Individual reference across stages.",
+    [
+      "https://www.fishbase.org/summary/1664",
+      "https://www.fisheries.noaa.gov/species/northern-anchovy"
+    ]
+  ],
+  [
+    "anchovy-ball-stage1",
+    "Engraulis mordax",
+    "Northern anchovy",
+    {
+      "family": "Engraulidae",
+      "lengthLabel": "Length",
+      "length": "6”",
+      "weight": "~24g",
+      "region": "NE Pacific",
+      "description": "Northern anchovies feed on plankton and school together near the coast. Length and weight describe one fish."
+    },
+    "FishBase Bayesian W(g)=0.00550×L(cm)^3.08 at 15.24 cm =24.2 g; species/genus model. Individual reference across stages.",
+    [
+      "https://www.fishbase.org/summary/1664",
+      "https://www.fisheries.noaa.gov/species/northern-anchovy"
+    ]
+  ],
+  [
+    "anchovy-ball-stage2",
+    "Engraulis mordax",
+    "Northern anchovy",
+    {
+      "family": "Engraulidae",
+      "lengthLabel": "Length",
+      "length": "6”",
+      "weight": "~24g",
+      "region": "NE Pacific",
+      "description": "Northern anchovies feed on plankton and school together near the coast. Length and weight describe one fish."
+    },
+    "FishBase Bayesian W(g)=0.00550×L(cm)^3.08 at 15.24 cm =24.2 g; species/genus model. Individual reference across stages.",
+    [
+      "https://www.fishbase.org/summary/1664",
+      "https://www.fisheries.noaa.gov/species/northern-anchovy"
+    ]
+  ],
+  [
+    "silverside-ball-base",
+    "Menidia menidia",
+    "Atlantic silverside",
+    {
+      "family": "Atherinopsidae",
+      "lengthLabel": "Length",
+      "length": "4”",
+      "weight": "~7g",
+      "region": "W. Atlantic",
+      "description": "Atlantic silversides form shimmering schools in shallow coastal water. Length and weight describe one fish."
+    },
+    "FishBase Bayesian W(g)=0.00537×L(cm)^3.07 at 10.16 cm =6.62 g; rounded individual model estimate.",
+    [
+      "https://www.fishbase.org/summary/Menidia_menidia.html"
+    ]
+  ],
+  [
+    "silverside-ball-stage1",
+    "Menidia menidia",
+    "Atlantic silverside",
+    {
+      "family": "Atherinopsidae",
+      "lengthLabel": "Length",
+      "length": "4”",
+      "weight": "~7g",
+      "region": "W. Atlantic",
+      "description": "Atlantic silversides form shimmering schools in shallow coastal water. Length and weight describe one fish."
+    },
+    "FishBase Bayesian W(g)=0.00537×L(cm)^3.07 at 10.16 cm =6.62 g; rounded individual model estimate.",
+    [
+      "https://www.fishbase.org/summary/Menidia_menidia.html"
+    ]
+  ],
+  [
+    "silverside-ball-stage2",
+    "Menidia menidia",
+    "Atlantic silverside",
+    {
+      "family": "Atherinopsidae",
+      "lengthLabel": "Length",
+      "length": "4”",
+      "weight": "~7g",
+      "region": "W. Atlantic",
+      "description": "Atlantic silversides form shimmering schools in shallow coastal water. Length and weight describe one fish."
+    },
+    "FishBase Bayesian W(g)=0.00537×L(cm)^3.07 at 10.16 cm =6.62 g; rounded individual model estimate.",
+    [
+      "https://www.fishbase.org/summary/Menidia_menidia.html"
+    ]
+  ],
+  [
+    "herring-ball-base",
+    "Clupea harengus",
+    "Atlantic herring",
+    {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "14”",
+      "weight": "~350g",
+      "region": "N. Atlantic",
+      "description": "Atlantic herring travel in schools between feeding and spawning grounds. Length and weight describe one fish."
+    },
+    "NOAA length to 14 in. FishBase Bayesian W(g)=0.00550×L(cm)^3.10 at 35.56 cm =353.5 g; rounded individual model estimate.",
+    [
+      "https://www.fishbase.org/summary/24",
+      "https://www.fisheries.noaa.gov/species/atlantic-herring"
+    ]
+  ],
+  [
+    "herring-ball-stage1",
+    "Clupea harengus",
+    "Atlantic herring",
+    {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "14”",
+      "weight": "~350g",
+      "region": "N. Atlantic",
+      "description": "Atlantic herring travel in schools between feeding and spawning grounds. Length and weight describe one fish."
+    },
+    "NOAA length to 14 in. FishBase Bayesian W(g)=0.00550×L(cm)^3.10 at 35.56 cm =353.5 g; rounded individual model estimate.",
+    [
+      "https://www.fishbase.org/summary/24",
+      "https://www.fisheries.noaa.gov/species/atlantic-herring"
+    ]
+  ],
+  [
+    "herring-ball-stage2",
+    "Clupea harengus",
+    "Atlantic herring",
+    {
+      "family": "Clupeidae",
+      "lengthLabel": "Length",
+      "length": "14”",
+      "weight": "~350g",
+      "region": "N. Atlantic",
+      "description": "Atlantic herring travel in schools between feeding and spawning grounds. Length and weight describe one fish."
+    },
+    "NOAA length to 14 in. FishBase Bayesian W(g)=0.00550×L(cm)^3.10 at 35.56 cm =353.5 g; rounded individual model estimate.",
+    [
+      "https://www.fishbase.org/summary/24",
+      "https://www.fisheries.noaa.gov/species/atlantic-herring"
+    ]
+  ]
+]

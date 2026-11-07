@@ -1,0 +1,28 @@
+{
+  "width": 1288,
+  "height": 766,
+  "viewBox": "0 0 1288 766",
+  "paths": 6287,
+  "bytes": 2462776,
+  "embedded_images": 0,
+  "external_references": 0,
+  "foreground_regions_excluded": 4,
+  "foreground_rock_included": true,
+  "source_image": "reference.png",
+  "source_contours": "foreground-contours.json",
+  "trace_settings": {
+    "colormode": "color",
+    "hierarchical": "stacked",
+    "mode": "spline",
+    "filter_speckle": 2,
+    "color_precision": 8,
+    "layer_difference": 2,
+    "corner_threshold": 75,
+    "length_threshold": 3.5,
+    "max_iterations": 10,
+    "splice_threshold": 45,
+    "path_precision": 2
+  },
+  "seconds": 1.06,
+  "note": "Only visible environment is traced; excluded foreground stays transparent."
+}

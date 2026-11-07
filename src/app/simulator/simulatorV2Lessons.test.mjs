@@ -160,7 +160,7 @@ test("each concept has one teaching owner and the first two lessons own their ex
   assert.equal(firstAttack.contract.checkpoints[0].actionType, "card-drawn", "Lesson 2 begins at the start-of-turn draw");
   assert.equal(firstAttack.contract.checkpoints[1].actionType, "card-built", "the drawn attacker is played before combat teaching");
   assert.equal(firstAttack.contract.checkpoints[2].actionType, "attack-resolved", "the player's attack follows setup and the primer");
-  const { contract, progress } = observe("apex-predators", [build("fairy-parrotfish"), build("arrow-crab")]);
+  const { contract, progress } = observe("apex-predators", [build("fairy-parrotfish"), build("cleaner-shrimp")]);
   assert.equal(
     getSimulatorTutorialCurrentCheckpoint(contract, progress).actionType,
     "card-built",
@@ -718,7 +718,7 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
   assert.equal(attackCanTargetCard(hogfish, quickStrikeAttack), true);
   assert.equal(attackCanTargetCard(barracuda, quickStrikeAttack), true, "Bite can target Predators");
   assert.equal(attackCanTargetCard(seaUrchin, quickStrikeAttack), false, "Bite cannot target Invertebrates");
-  assert.equal(ecoBoost.effect.amount, 1, "Blue Crab's passive raises the next round's bank cap without an action");
+  assert.equal(ecoBoost, undefined, "Blue Crab no longer raises the RP cap");
   assert.equal(scavenge.cost.rp, 2);
   assert.deepEqual(scavenge.effect, { type: "recoverCardFromDiscard", controller: "you", destination: "hand", amount: 1 });
   assert.equal(selected.abilityCardId, blueCrab.id);
@@ -748,7 +748,7 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
   assert.equal(bankAfterOpeningPlayAndCrunch, 1, "playing Porcupine Fish and using Crunch preserve the prior downstream economy");
   const roundThreeBank = addResourceWithinCap(bankAfterOpeningPlayAndCrunch, income(openingReef), 8);
   assert.equal(roundThreeBank, 6);
-  assert.equal(roundThreeBank - blueCrab.cost.rp - scavenge.cost.rp, 2);
+  assert.equal(roundThreeBank - blueCrab.cost.rp - scavenge.cost.rp, 3);
   const plannedReef = materializeTableau([
     {
       foundationCardId: "brain-coral-stage-1",
@@ -760,10 +760,10 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
     { foundationCardId: "mustard-hill-coral-base", placements: [] },
   ]);
   assert.equal(calculateVictoryPoints(allCardsInPlay(plannedReef)), 3);
-  assert.equal(calculateRpBankCap(allCardsInPlay(plannedReef), cardsById["murky-water"]), 9);
-  const roundFourBank = addResourceWithinCap(2, income(plannedReef), 9);
-  assert.equal(roundFourBank, 7);
-  assert.equal(roundFourBank - seaUrchin.cost.rp - (barracuda.cost.rp + murkyDiscount.amount), 4);
+  assert.equal(calculateRpBankCap(allCardsInPlay(plannedReef), cardsById["murky-water"]), 8);
+  const roundFourBank = addResourceWithinCap(3, income(plannedReef), 8);
+  assert.equal(roundFourBank, 8);
+  assert.equal(roundFourBank - seaUrchin.cost.rp - (barracuda.cost.rp + murkyDiscount.amount), 5);
   const completedReef = materializeTableau([
     {
       foundationCardId: "brain-coral-stage-1",
@@ -869,7 +869,7 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
     actionType: "rp-collected",
     phase: "draw",
     round: 4,
-    details: { collected: 5, bankBefore: 2, bankAfter: 7, cap: 9, conditionId: "murky-water" },
+    details: { collected: 5, bankBefore: 3, bankAfter: 8, cap: 8, conditionId: "murky-water" },
   };
   const predatorDraw = { actionType: "card-drawn", phase: "draw", details: { count: 1, palsCount: 1 } };
   const predatorResolved = {
@@ -955,29 +955,27 @@ test("lesson four chains Coral Gardener, Dr. Evans, Spearfishing, and Blue Crab 
   assert.equal(coralGardener.kind, CardKind.SUPPORT);
   assert.equal(drEvans.kind, CardKind.SUPPORT);
   assert.equal(spearfishing.kind, CardKind.SUPPORT);
-  assert.equal(coralGardener.locksFurtherSupportsThisTurn, true);
-  assert.equal(drEvans.locksFurtherSupportsThisTurn, true);
-  assert.equal(spearfishing.locksFurtherSupportsThisTurn, true);
+  assert.equal(coralGardener.supportType, "aide");
+  assert.equal(drEvans.supportType, "aide");
+  assert.equal(spearfishing.supportType, "aide");
   assert.equal(gardenerSearch.targetKind, CardKind.CORAL);
   assert.equal(gardenerSearch.destination, "hand");
-  assert.equal(evansDraw.amount, 7);
+  assert.equal(evansDraw.amount, 8);
   assert.deepEqual(fishingMove.target.categories, ["fish", "predator"]);
   assert.equal(fishingMove.then.amountSource, "cardCost");
   assert.equal(scavenge.effect.type, "recoverCardFromDiscard");
-  const clearWaterSurcharge = cardsById["clear-water"].effects.find((effect) => (
-    effect.type === "modifyPlayCost"
-    && effect.targetCategories.includes(barracuda.category)
-  ));
-  assert.equal(clearWaterSurcharge.amount, 1);
+  const finalCondition = cardsById[selected.seed.conditionDeck.at(-1)];
+  assert.equal(finalCondition.id, "abundant-sunlight");
+  assert.equal(calculateRpBankCap([blueCrab], finalCondition), 10);
   assert.equal(
     cardsById["sea-urchin"].cost.rp
-      + barracuda.cost.rp + clearWaterSurcharge.amount
+      + barracuda.cost.rp
       - barracuda.cost.rp
       + scavenge.cost.rp
-      + barracuda.cost.rp + clearWaterSurcharge.amount
+      + barracuda.cost.rp
       + cardsById["arrow-crab"].cost.rp,
-    9,
-    "the final bank exactly funds both Clear Water Barracuda plays after Spearfishing's printed-cost refund",
+    7,
+    "the combo fits the revised bank after Spearfishing's printed-cost refund",
   );
   assert.equal(selected.seed.hand[0], coralGardener.id);
   assert.ok(selected.seed.foundationDeck.includes(searchedCoralId), "Coral Gardener can find the authored search target");
@@ -995,13 +993,13 @@ test("lesson four chains Coral Gardener, Dr. Evans, Spearfishing, and Blue Crab 
   const deckAfterEvansDraw = shuffledSupportDeck.slice();
   deckAfterEvansDraw.splice(deckAfterEvansDraw.indexOf(drEvans.id), 1);
   assert.deepEqual(
-    deckAfterEvansDraw.slice(7),
+    deckAfterEvansDraw.slice(8),
     ["arrow-crab"],
-    "after Dr. Evans draws seven, Arrow Crab must remain as the authored final draw",
+    "after Dr. Evans draws eight, Arrow Crab must remain as the authored final draw",
   );
-  assert.ok(deckAfterEvansDraw.slice(0, 7).includes("sea-urchin"));
-  assert.ok(deckAfterEvansDraw.slice(0, 7).includes(barracuda.id));
-  assert.ok(deckAfterEvansDraw.slice(0, 7).includes(spearfishing.id));
+  assert.ok(deckAfterEvansDraw.slice(0, 8).includes("sea-urchin"));
+  assert.ok(deckAfterEvansDraw.slice(0, 8).includes(barracuda.id));
+  assert.ok(deckAfterEvansDraw.slice(0, 8).includes(spearfishing.id));
   const recycleFaceoff = createCombatRollPacket(barracuda.onPlay[0].effects[0].attackDice, cardsById.clownfish.defense.dice, nextSupportRandom);
   assert.ok(
     recycleFaceoff.attack > recycleFaceoff.defense,
@@ -1057,7 +1055,7 @@ test("lesson four chains Coral Gardener, Dr. Evans, Spearfishing, and Blue Crab 
     eventOverlayType: "choose-spearfishing-target",
   });
   assert.equal(spearfishingHelp.targetCardId, barracuda.id);
-  assert.match(spearfishingHelp.message, /discards.*printed RP cost.*refunds 3 RP.*Clear Water.*pay 4 RP/is);
+  assert.match(spearfishingHelp.message, /discards.*printed RP cost.*refunds its printed 3 RP cost/is);
   const scavengeStep = selected.contract.checkpoints.find(({ id }) => id === "v2-scavenge-barracuda");
   const scavengeHelp = getSimulatorV2LessonHelp(selected, scavengeStep, {
     gamePhase: "main",
@@ -1195,7 +1193,8 @@ test("lesson five builds a bare open-water food web from 0 Density to Ocean Sunf
   );
   assert.equal(openOcean.kind, CardKind.HABITAT);
   assert.equal(openOcean.cost.rp, 0);
-  assert.match(getHabitatRequirementError(sunfish, []), /Open Ocean or Coral Reef/);
+  assert.equal(getHabitatRequirementError(sunfish, []), "Ocean Sunfish requires Open Ocean in your ecosystem.");
+  assert.equal(getHabitatRequirementError(sunfish, ["coral-reef"]), "Ocean Sunfish requires Open Ocean in your ecosystem.");
   assert.equal(getHabitatRequirementError(sunfish, [openOcean.id]), "");
   assert.equal(calculateVictoryPoints(openWaterCreatures) + sunfish.victoryPoints, selected.victoryTarget);
   assert.deepEqual(
@@ -1324,7 +1323,7 @@ test("the Apex lesson completes a Coral Reef Habitat before upgrading, funding, 
   const startingCards = allCardsInPlay(foundations);
   const habitat = cardsById["coral-reef"];
   const clownfish = cardsById.clownfish;
-  const arrowCrab = cardsById["arrow-crab"];
+  const arrowCrab = cardsById["cleaner-shrimp"];
   const upgrade = cardsById["brain-coral-stage-2"];
   const hammerhead = cardsById.hammerhead;
   const apexSlot = upgrade.slots.find((slot) => slot.slotClass === "apex");
@@ -1342,7 +1341,7 @@ test("the Apex lesson completes a Coral Reef Habitat before upgrading, funding, 
   });
   assert.equal(evaluateCoralReefComposition([...startingCards, clownfish]).valid, false, "a second Fish alone does not satisfy Habitat composition");
   assert.equal(evaluateCoralReefComposition([...startingCards, clownfish, arrowCrab]).valid, true);
-  assert.equal(calculateRpBankCap([...startingCards, clownfish, arrowCrab]), 9, "Arrow Crab's passive expands the RP bank before the costly Apex turn");
+  assert.equal(calculateRpBankCap([...startingCards, clownfish, arrowCrab]), 9, "Cleaner Shrimp's passive expands the RP bank before the costly Apex turn");
   assert.equal(clownfish.cost.rp + arrowCrab.cost.rp + upgrade.cost.rp, selected.seed.rp);
   assert.deepEqual(getSimulatorV2ExpectedDraw(selected, "v2-draw-hammerhead"), { deckType: "pals", cardId: hammerhead.id });
   const fishTarget = getSimulatorV2LessonPlacementTarget(selected, "v2-add-habitat-fish", clownfish.id);
@@ -1935,7 +1934,7 @@ test("live coaching follows hand, placement, draw confirmation, result and activ
   const upgradeStep = first.contract.checkpoints.find(({ id }) => id === "v2-upgrade-first-coral");
   assert.match(getSimulatorV2LessonHelp(first, upgradeStep, { hand: ["brain-coral-stage-1"] }).action, /10 to 20 HP.*40 total.*1 to 2 RP.*Predator slot.*another Invertebrate slot/s);
   const passiveStep = attack.contract.checkpoints.find(({ id }) => id === "v2-place-passive");
-  assert.match(getSimulatorV2LessonHelp(attack, passiveStep, { hand: ["blue-crab"] }).message, /Eco Boost is Passive.*automatically.*RP bank cap from 8 to 9.*does not itself add RP/s);
+  assert.match(getSimulatorV2LessonHelp(attack, passiveStep, { hand: ["blue-crab"] }).message, /Recycle passive works automatically.*Fish is eaten.*half its printed RP cost.*rounded up/s);
   const recoveryStep = attack.contract.checkpoints.find(({ id }) => id === "v2-recover-sea-urchin");
   const recoveryHelp = getSimulatorV2LessonHelp(attack, recoveryStep, {});
   assert.equal(recoveryHelp.target, "player-board");
@@ -2063,34 +2062,34 @@ test("later lessons direct familiar actions without repeating their introductory
 test("Apex coaching points to the Habitat prerequisites before inviting an Apex play", () => {
   const selected = getSimulatorV2Lesson("apex-predators");
   const steps = selected.contract.checkpoints;
-  const fish = getSimulatorV2LessonHelp(selected, steps[0], { hand: ["clownfish", "arrow-crab", "coral-reef"] });
+  const fish = getSimulatorV2LessonHelp(selected, steps[0], { hand: ["clownfish", "cleaner-shrimp", "coral-reef"] });
   assert.equal(fish.targetCardId, "clownfish");
-  const invertebrate = getSimulatorV2LessonHelp(selected, steps[1], { hand: ["arrow-crab", "coral-reef"] });
-  assert.equal(invertebrate.targetCardId, "arrow-crab");
+  const invertebrate = getSimulatorV2LessonHelp(selected, steps[1], { hand: ["cleaner-shrimp", "coral-reef"] });
+  assert.equal(invertebrate.targetCardId, "cleaner-shrimp");
   const habitat = getSimulatorV2LessonHelp(selected, steps[2], { hand: ["coral-reef"] });
   assert.equal(habitat.targetCardId, "coral-reef");
   assert.match(habitat.message, /four.*Coral.*two.*Fish.*two.*Invertebrate|4.*Coral.*2.*Fish.*2.*Invertebrate/is);
 });
 
-test("Arrow Crab guidance matches its Invertebrate class in both drag and click placement flows", () => {
-  const arrowCrab = cardsById["arrow-crab"];
-  assert.equal(arrowCrab.category, "invertebrate");
-  for (const [lessonId, checkpointId] of [
-    ["apex-predators", "v2-add-habitat-invertebrate"],
-    ["support-strategies", "v2-play-final-arrow-crab"],
+test("Cleaner Shrimp guidance matches its Invertebrate class in both drag and click placement flows", () => {
+  for (const [lessonId, checkpointId, cardId] of [
+    ["apex-predators", "v2-add-habitat-invertebrate", "cleaner-shrimp"],
+    ["support-strategies", "v2-play-final-arrow-crab", "arrow-crab"],
   ]) {
+    const arrowCrab = cardsById[cardId];
+    assert.equal(arrowCrab.category, "invertebrate");
     const lesson = getSimulatorV2Lesson(lessonId);
     const checkpoint = lesson.contract.checkpoints.find(({ id }) => id === checkpointId);
     const handHelp = getSimulatorV2LessonHelp(lesson, checkpoint, { gamePhase: "main", hand: [arrowCrab.id] });
     assert.equal(handHelp.target, "hand");
     assert.equal(handHelp.targetCardId, arrowCrab.id);
     assert.equal(handHelp.interaction, "drag");
-    assert.match(handHelp.action, /Drag Arrow Crab.*Invertebrate slot/i);
+    assert.match(handHelp.action, /Drag (?:Cleaner Shrimp|Arrow Crab).*Invertebrate slot/i);
     assert.doesNotMatch(handHelp.action, /(?:highlighted|glowing|compatible) Fish slot/i);
 
     const placementHelp = getSimulatorV2LessonHelp(lesson, checkpoint, { gamePhase: "main", playingCardId: arrowCrab.id });
     assert.equal(placementHelp.target, "placement");
-    assert.match(placementHelp.message, /Arrow Crab.*compatible Invertebrate slot/i);
+    assert.match(placementHelp.message, /(?:Cleaner Shrimp|Arrow Crab).*compatible Invertebrate slot/i);
     assert.match(placementHelp.action, /glowing Invertebrate slot/i);
     assert.doesNotMatch(`${placementHelp.message} ${placementHelp.action}`, /Fish slot/i);
     const target = getSimulatorV2LessonPlacementTarget(lesson, checkpointId, arrowCrab.id);
@@ -2113,25 +2112,25 @@ test("Barracuda coaching separates its condition-adjusted play price from Spearf
   const attack = help("first-attack", "v2-place-predator", { hand: [barracuda.id] });
   assert.match(attack.message, /Murky Water.*printed 3 RP cost to 2 RP/i);
   const firstPlay = help("support-strategies", "v2-play-first-barracuda", { hand: [barracuda.id] });
-  assert.match(firstPlay.message, /Clear Water.*1 extra RP.*costs 4 RP.*printed 3/i);
+  assert.match(firstPlay.message, /Abundant Sunlight.*bank cap to 10.*costs 3 RP/i);
   const replay = help("support-strategies", "v2-replay-barracuda", { hand: [barracuda.id] });
-  assert.match(replay.message, /current 4 RP cost under Clear Water.*triggers Quick Strike again/i);
+  assert.match(replay.message, /3 RP cost.*triggers Quick Strike again/i);
   const refund = help("support-strategies", "v2-cash-in-barracuda", { eventOverlayType: "choose-spearfishing-target" });
   assert.equal(cardsById.spearfishing.effects.find((effect) => effect.type === "moveCard").then.amountSource, "cardCost");
-  assert.match(refund.message, /printed RP cost.*refunds 3 RP.*pay 4 RP.*VP leaves your score/i);
+  assert.match(refund.message, /printed RP cost.*refunds its printed 3 RP cost.*VP leaves your score/i);
 });
 
 test("Support restrictions are taught as printed card rules rather than a global one-Support limit", () => {
   const lesson = getSimulatorV2Lesson("support-strategies");
   for (const cardId of ["coral-gardener", "dr-evans", "spearfishing"]) {
-    assert.equal(cardsById[cardId].locksFurtherSupportsThisTurn, true);
+    assert.equal(cardsById[cardId].supportType, "aide");
   }
   assert.notEqual(cardsById["coral-heal"].locksFurtherSupportsThisTurn, true, "not every Support locks later Supports");
   const gardenerHelp = getSimulatorV2LessonHelp(lesson, lesson.contract.checkpoints[0], { hand: ["coral-gardener"] });
-  assert.match(gardenerHelp.message, /printed restriction prevents another Support this turn.*not a rule for every Support/i);
+  assert.match(gardenerHelp.message, /one Aide per turn.*Items are still allowed/i);
   const newTurn = lesson.contract.checkpoints.find(({ id }) => id === "v2-collect-for-combo");
-  assert.match(getSimulatorV2LessonHelp(lesson, newTurn, {}).message, /new turn ends Dr\. Evans's printed restriction/i);
-  assert.match(lesson.preVictoryMessage, /Read each Support's timing restriction.*three we used prevent another Support that turn/i);
+  assert.match(getSimulatorV2LessonHelp(lesson, newTurn, {}).message, /new turn lets you play another Aide/i);
+  assert.match(lesson.preVictoryMessage, /three Supports.*Aides.*one Aide per turn.*Items remain available/i);
 });
 
 test("hand play guidance teaches the real upward drag and matching drop destination while preserving click placement fallback", () => {

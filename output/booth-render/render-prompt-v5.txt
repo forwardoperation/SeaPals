@@ -1,0 +1,19 @@
+Use case: precise-object-edit / print-artwork compositing.
+
+Edit image1, the existing SeaRealm isometric booth rendering. Replace ONLY the printed artwork on the centered rear tension-fabric backdrop with a faithful perspective-mapped reproduction of image2, the user's supplied flat backdrop artwork. Image2 is the exact artwork source, NOT loose inspiration. Preserve the complete composition of image2 as one continuous printed graphic mapped onto the existing physical backdrop.
+
+Precise reference2 composition in normalized panel coordinates:
+- Bright pale-blue sky occupying top roughly0–26%, sun atupperleft aroundx27%,y10%.
+- White SeaRealm script with its blue wave underline centered in sky aroundx50%,y10%, broad logo fromroughlyx29%to71%, matching reference2's proportions, style and white/graydrop-shadow. Small TM at its upperright.
+- White uppercase "TRADING CARD GAME" centered directly below logo aroundy20%.
+- Choppy realistic dark-blue ocean surface enters atabouty18%onleft and dips toaroundy27%atright, exactly the reference's asymmetric wave profile. Preserve sparkly leftsunreflection, blueunderwaterlightshafts and smoothdeepnavygradient below.
+- Humpback whale in the LOWER MIDDLE underwater region, head to LEFT and tailtoRIGHT. Reference whale boundingbox is roughlyx33%to79%,y48%to76%, with its long pectoralflipper angled downandright. It is well separated BELOW the waterline. Preserve the exact reference2whale appearance, markings, pose, lighting, size relative to panel, and its position. Do not push the whale to the upperright to avoid furniture.
+- Exact white bolditalic sentence "Have You Walked In The Recesses Of The Deep?" centered as ONE longline nearbottom, aroundy88%, spanningapproximatelyx13%to87%. It is large, runs acrossmost ofthebackdrop width, and is not a small caption confined to the right. Match the supplied typography/capitalization. Keep adequate bottommargin.
+- Ignore only the reference screenshot's tiny dark outer border. Do not add any new illustration, logos, slogans, patterns or extra typography.
+
+CRITICAL OCCLUSION:
+The existing illuminated central glass cabinet stands in FRONT of the backdrop. It may naturally obscure part of the whale or bottom sentence. This is correct. Keep printed artwork in its original source positions behind it. Never shift the whale or slogan sideways to keep it fully visible. Never draw printed whale/text over foreground cabinet. Map reference2's entire graphic to the frame first, then respect real foreground occlusion.
+
+Keep the original booth's centered backdrop frame in EXACTLY the same position, dimensions,8footmaximumheight, roundedcorners and perspective. Preserve modest realistic fabric/lighting but do not add dramatic hotspots that alter reference2colors. Do not crop out sky, bottom text, or sides of reference2. The full reference2 art should occupy the full printable rectangular face.
+
+All other image1 content MUST REMAIN UNCHANGED: camera and crop,20x10footfootprint, blue carpet, leftdemo table withfourchairs, lefttouchscreens, centerilluminatedglasscabinet, lowblackdrapes, rearrightcheckout and3footstaffclearance, P2shelf,4x3queue, frontrightlockablestorage with doors facing INWARD and smooth branded outsidepanel, productsontop, allcallouts, annotations, dimensions, neighborwireframes, furniturepositions andoveralllighting. This is only a backdrop print replacement, not a redesign of the booth. Output the full booth render with this faithful corrected backdrop.

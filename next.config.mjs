@@ -7,6 +7,15 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  async redirects() {
+    return [
+      {
+        source: "/encyclopedia/octopus",
+        destination: "/encyclopedia/day-octopus",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

@@ -1,0 +1,101 @@
+{
+  "verifiedAt": "2026-10-04T17:06:13.752Z",
+  "origin": "https://searealm.com",
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "finalUrl": "https://searealm.com/"
+    },
+    {
+      "route": "/decks",
+      "status": 200,
+      "finalUrl": "https://searealm.com/decks"
+    },
+    {
+      "route": "/store",
+      "status": 200,
+      "finalUrl": "https://searealm.com/store"
+    },
+    {
+      "route": "/simulator",
+      "status": 200,
+      "finalUrl": "https://searealm.com/simulator"
+    },
+    {
+      "route": "/adventure",
+      "status": 200,
+      "finalUrl": "https://searealm.com/adventure"
+    }
+  ],
+  "matchingSimulatorAssets": [
+    {
+      "src": "/_next/static/chunks/4bd1b696-c2f6e0877b6c10aa.js",
+      "sha256": "c44812d818aed0a5034941164dcad78b5bb7d8a00daed7a33efe3ebc6ccfb492"
+    },
+    {
+      "src": "/_next/static/chunks/3794-9e54f1de291f2323.js",
+      "sha256": "24b850633752121049ecc5e0a6877367aabb66fd2a0049d8d9ee1ddcdb22308c"
+    },
+    {
+      "src": "/_next/static/chunks/main-app-51c8aa5b78bb8bd4.js",
+      "sha256": "5bdf8fd300fc129291538f877581031824228aca6d68f4f590e55666f9ad50c5"
+    },
+    {
+      "src": "/_next/static/chunks/8500-3953cc33eeceb44e.js",
+      "sha256": "89cb18e673c5225d6b74e95ff28b3e9c26f6434089c6756ad557d89613ee7450"
+    },
+    {
+      "src": "/_next/static/chunks/8437-e74155deec521a50.js",
+      "sha256": "5537539d9a24ead04aaacd8a7174bda066f7f5e2f09b24d2738a43a37acdaab7"
+    },
+    {
+      "src": "/_next/static/chunks/2430-a36d0cf2a5e55a35.js",
+      "sha256": "8ac2c6502ea2b0be7c995416bb28f885dd4c20183e627906985bd70c4de7b9e5"
+    },
+    {
+      "src": "/_next/static/chunks/9914-326b022952940db3.js",
+      "sha256": "5dc2ef935a2a65bb26fc91f4828e8ea045492e7159ba810d657d8cf94220b5a7"
+    },
+    {
+      "src": "/_next/static/chunks/app/layout-969bad0d7f4cd712.js",
+      "sha256": "982af0fee7c09e1e20d36e729646e0ede0782858aa4a411d321159f0de9c0357"
+    },
+    {
+      "src": "/_next/static/chunks/5517-ffc5732496d05d04.js",
+      "sha256": "8d306da077f5ddc775c9fe5f6c988860d7fc4faeff3a3acc15ababad9eb92c73"
+    },
+    {
+      "src": "/_next/static/chunks/5024-60246549f4def698.js",
+      "sha256": "68c973cd97d02075583c6f04f8743f11688c8defd8dfd23e9767535e864c8e48"
+    },
+    {
+      "src": "/_next/static/chunks/2463-4643ced718bffe88.js",
+      "sha256": "047f32811c2faf4aa47100020b27e45a16345d5df01bc99893d0193b16401c27"
+    },
+    {
+      "src": "/_next/static/chunks/6861-83977b549f400678.js",
+      "sha256": "6f5318cb0b4766bcb38c0727d4b7f0629a26d7cb8456692c3ea4502431627f81"
+    },
+    {
+      "src": "/_next/static/chunks/app/simulator/page-8ab3be3433fbd06c.js",
+      "sha256": "0725e7b39f6b6faced54957d344566d28d0526eba47adede2ef9000f319e6c5a"
+    },
+    {
+      "src": "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "sha256": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683"
+    },
+    {
+      "src": "/_next/static/chunks/webpack-4cfcc62f4a8287e9.js",
+      "sha256": "12ae5feba6d14c6aa1d37b2393f751685a66c789a57f1bbd5c44f55738443630"
+    }
+  ],
+  "verifiedAbilityMarkers": [
+    "abilityStun",
+    "stunCreature",
+    "neurotoxicDefense",
+    "forcedTargetInstanceId",
+    "aideBlockedUntilRound",
+    "opportunist"
+  ]
+}

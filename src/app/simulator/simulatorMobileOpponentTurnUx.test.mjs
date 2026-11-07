@@ -117,7 +117,7 @@ test("bubble bursts are scoped and rendered independently on both boards", () =>
 test("only committed permanent placements create AI placement cues", () => {
   const supportActions = sourceSection(
     simulatorSource,
-    "function runOpponentSupports(opponentState)",
+    "function runOpponentSupports(",
     "function runOpponentTurn(current"
   );
   const opponentTurn = sourceSection(

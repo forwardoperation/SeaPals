@@ -91,7 +91,7 @@ export const predatorCards = [
       {
         id: "ambush-hunt",
         name: "Ambush Hunt",
-        text: "Perform a D6 attack against an opponent’s fish or predator. If a habitat card is in play on your reef, add 1D4 to your attack roll.",
+        text: "Perform a D6 attack against an opponent’s fish or predator. If Coral Reef Habitat is in your ecosystem, add 1D4 to your attack roll.",
         effects: [
           attackEffect({
             dice: "D6",
@@ -101,7 +101,8 @@ export const predatorCards = [
         conditionalModifiers: [
           {
             condition: {
-              type: "kindInPlay",
+              type: "cardInPlay",
+              cardId: "coral-reef",
               requiredKind: CardKind.HABITAT,
               zone: Zone.YOUR_REEF,
             },
@@ -156,7 +157,7 @@ export const predatorCards = [
       {
         id: "feeding-frenzy",
         name: "Feeding Frenzy",
-        text: "1 Bite. If a habitat card is in play, add +1 more bite for each Reef Shark on your reef. Max 3.",
+        text: "1 Bite. If Coral Reef Habitat is in your ecosystem, add +1 more bite for each Reef Shark on your reef. Max 3.",
         effects: [
           {
             ...biteEffect({
@@ -169,7 +170,8 @@ export const predatorCards = [
               controller: "you",
               maxBonus: 3,
               requires: {
-                type: "kindInPlay",
+                type: "cardInPlay",
+                cardId: "coral-reef",
                 requiredKind: CardKind.HABITAT,
                 zone: Zone.YOUR_REEF,
               },

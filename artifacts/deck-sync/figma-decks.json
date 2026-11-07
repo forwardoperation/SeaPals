@@ -1,0 +1,1150 @@
+{
+  "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
+  "readAt": "2026-10-04",
+  "decks": [
+    {
+      "id": "coral-garden",
+      "name": "Coral Garden",
+      "pageId": "2310:498819",
+      "cards": [
+        {
+          "cardId": "coral-gardener",
+          "quantity": 2
+        },
+        {
+          "cardId": "coral-cement",
+          "quantity": 1
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 2
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 1
+        },
+        {
+          "cardId": "restocking",
+          "quantity": 3
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 2
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "recovery",
+          "quantity": 1
+        },
+        {
+          "cardId": "manta-ray",
+          "quantity": 1
+        },
+        {
+          "cardId": "bottlenose-dolphin",
+          "quantity": 1
+        },
+        {
+          "cardId": "spinner-dolphins",
+          "quantity": 2
+        },
+        {
+          "cardId": "cleaner-shrimp",
+          "quantity": 3
+        },
+        {
+          "cardId": "emerald-crab",
+          "quantity": 1
+        },
+        {
+          "cardId": "goliath-grouper",
+          "quantity": 2
+        },
+        {
+          "cardId": "arrow-crab",
+          "quantity": 2
+        },
+        {
+          "cardId": "blue-crab",
+          "quantity": 1
+        },
+        {
+          "cardId": "spectacled-parrotfish",
+          "quantity": 2
+        },
+        {
+          "cardId": "french-angelfish",
+          "quantity": 2
+        },
+        {
+          "cardId": "bluestriped-grunt",
+          "quantity": 3
+        },
+        {
+          "cardId": "spotfin-butterflyfish",
+          "quantity": 2
+        },
+        {
+          "cardId": "boulder-star-coral-base",
+          "quantity": 3
+        },
+        {
+          "cardId": "boulder-star-coral-stage-1",
+          "quantity": 2
+        },
+        {
+          "cardId": "boulder-star-coral-stage-2",
+          "quantity": 1
+        },
+        {
+          "cardId": "elkhorn-coral-base",
+          "quantity": 3
+        },
+        {
+          "cardId": "elkhorn-coral-stage-1",
+          "quantity": 2
+        },
+        {
+          "cardId": "elkhorn-coral-stage-2",
+          "quantity": 1
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "quantity": 2
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "quantity": 2
+        },
+        {
+          "cardId": "clubfinger-coral-base",
+          "quantity": 3
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "quantity": 2
+        },
+        {
+          "cardId": "coral-reef",
+          "quantity": 1
+        },
+        {
+          "cardId": "clubfinger-coral-stage-1",
+          "quantity": 2
+        }
+      ],
+      "unknown": [],
+      "excluded": [
+        {
+          "id": "2311:539101",
+          "texts": [
+            "Coral Garden",
+            "A growth-focused reef deck that floods the board with fast-growing corals, and wins through a combination of disruption and high value reef fish",
+            "Offense",
+            "Defense",
+            "Economy",
+            "Consistency",
+            "Tempo",
+            "Filter Feeder",
+            "Apex",
+            "Predator",
+            "Fish",
+            "Invertebrate"
+          ]
+        },
+        {
+          "id": "2311:539152",
+          "texts": [
+            "Draw a card (you must do this at the beginning of every turn)\nCollect RP from Corals\nSpend Your RP\nPlay Creatures\nPlay/Upgrade Corals\nPurchase Structure Cards\nPlay Any Support Cards\nPerform Any Creature Actions (As many as you want, but cannot play the same action twice in one turn from the same creature. Some actions cost RP)\nEnd Your Turn",
+            "What You Can Do On Your Turn",
+            "TM",
+            "TRADING CARD GAME"
+          ]
+        },
+        {
+          "id": "2869:111771",
+          "texts": []
+        }
+      ]
+    },
+    {
+      "id": "blue-water",
+      "name": "Drop Off",
+      "pageId": "2224:257782",
+      "cards": [
+        {
+          "cardId": "coral-gardener",
+          "quantity": 2
+        },
+        {
+          "cardId": "capt-dani",
+          "quantity": 1
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 2
+        },
+        {
+          "cardId": "robotic-survey",
+          "quantity": 2
+        },
+        {
+          "cardId": "coral-cement",
+          "quantity": 1
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 2
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 1
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2
+        },
+        {
+          "cardId": "tiger-shark",
+          "quantity": 1
+        },
+        {
+          "cardId": "manta-ray",
+          "quantity": 1
+        },
+        {
+          "cardId": "poison-heal",
+          "quantity": 1
+        },
+        {
+          "cardId": "green-moray-eel",
+          "quantity": 2
+        },
+        {
+          "cardId": "arrow-crab",
+          "quantity": 2
+        },
+        {
+          "cardId": "octopus",
+          "quantity": 2
+        },
+        {
+          "cardId": "oysters",
+          "quantity": 1
+        },
+        {
+          "cardId": "blue-crab",
+          "quantity": 2
+        },
+        {
+          "cardId": "spanish-hogfish",
+          "quantity": 3
+        },
+        {
+          "cardId": "picasso-triggerfish",
+          "quantity": 3
+        },
+        {
+          "cardId": "winter-flounder",
+          "quantity": 3
+        },
+        {
+          "cardId": "fairy-parrotfish",
+          "quantity": 3
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "quantity": 4
+        },
+        {
+          "cardId": "blue-tang",
+          "quantity": 3
+        },
+        {
+          "cardId": "boulder-star-coral-base",
+          "quantity": 4
+        },
+        {
+          "cardId": "boulder-star-coral-stage-1",
+          "quantity": 3
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "quantity": 2
+        },
+        {
+          "cardId": "coral-reef",
+          "quantity": 1
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "quantity": 2
+        },
+        {
+          "cardId": "boulder-star-coral-stage-2",
+          "quantity": 2
+        }
+      ],
+      "unknown": [],
+      "excluded": [
+        {
+          "id": "2224:353016",
+          "texts": [
+            "Blue Water",
+            "A slow-burn control deck that grows an unstoppable reef economy, and wins by unleashing colossal open-ocean giants.",
+            "Offense",
+            "Defense",
+            "Economy",
+            "Consistency",
+            "Tempo",
+            "Filter Feeder",
+            "Apex",
+            "Predator",
+            "Fish",
+            "Invertebrate"
+          ]
+        },
+        {
+          "id": "2224:353068",
+          "texts": [
+            "Draw a card (you must do this at the beginning of every turn)\nCollect RP from Corals\nSpend Your RP\nPlay Creatures\nPlay/Upgrade Corals\nPurchase Structure Cards\nPlay Any Support Cards\nPerform Any Creature Actions (As many as you want, but cannot play the same action twice in one turn from the same creature. Some actions cost RP)\nEnd Your Turn",
+            "What You Can Do On Your Turn",
+            "TM",
+            "TRADING CARD GAME"
+          ]
+        },
+        {
+          "id": "2849:131779",
+          "texts": []
+        }
+      ]
+    },
+    {
+      "id": "darkness-shroud",
+      "name": "Darkness Shroud",
+      "pageId": "2068:245383",
+      "cards": [
+        {
+          "cardId": "chimera",
+          "quantity": 1
+        },
+        {
+          "cardId": "frilled-shark",
+          "quantity": 1
+        },
+        {
+          "cardId": "colossal-squid",
+          "quantity": 1
+        },
+        {
+          "cardId": "giant-squid",
+          "quantity": 1
+        },
+        {
+          "cardId": "giant-phantom-jelly",
+          "quantity": 1
+        },
+        {
+          "cardId": "abyss",
+          "quantity": 1
+        },
+        {
+          "cardId": "cookie-cutter-shark",
+          "quantity": 1
+        },
+        {
+          "cardId": "giant-red-shrimp",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep-cucumber",
+          "quantity": 1
+        },
+        {
+          "cardId": "vampire-squid",
+          "quantity": 1
+        },
+        {
+          "cardId": "deep-sea-skate",
+          "quantity": 1
+        },
+        {
+          "cardId": "goblin-shark",
+          "quantity": 1
+        },
+        {
+          "cardId": "gulper-eel",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep-sea-jelly",
+          "quantity": 2
+        },
+        {
+          "cardId": "black-swallower",
+          "quantity": 2
+        },
+        {
+          "cardId": "humpback-anglerfish",
+          "quantity": 2
+        },
+        {
+          "cardId": "fangtooth-fish",
+          "quantity": 1
+        },
+        {
+          "cardId": "viperfish",
+          "quantity": 1
+        },
+        {
+          "cardId": "giant-isopod",
+          "quantity": 1
+        },
+        {
+          "cardId": "bristlemouth",
+          "quantity": 2
+        },
+        {
+          "cardId": "barrel-eye-fish",
+          "quantity": 2
+        },
+        {
+          "cardId": "owlfish",
+          "quantity": 1
+        },
+        {
+          "cardId": "coral-cement",
+          "quantity": 1
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 1
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 1
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 3
+        },
+        {
+          "cardId": "coral-gardener",
+          "quantity": 2
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 2
+        },
+        {
+          "cardId": "bamboo_coral_base",
+          "quantity": 4
+        },
+        {
+          "cardId": "bamboo_coral_stage1",
+          "quantity": 2
+        },
+        {
+          "cardId": "bamboo_coral_stage2",
+          "quantity": 2
+        },
+        {
+          "cardId": "super-whirlpool",
+          "quantity": 1
+        },
+        {
+          "cardId": "deep_mushroom_base",
+          "quantity": 4
+        },
+        {
+          "cardId": "deep_mushroom_stage1",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep_mushroom_stage2",
+          "quantity": 2
+        }
+      ],
+      "unknown": [],
+      "excluded": [
+        {
+          "id": "2298:446034",
+          "texts": [
+            "Draw a card (you must do this at the beginning of every turn)\nCollect RP from Corals\nSpend Your RP\nPlay Creatures\nPlay/Upgrade Corals\nPurchase Structure Cards\nPlay Any Support Cards\nPerform Any Creature Actions (As many as you want, but cannot play the same action twice in one turn from the same creature. Some actions cost RP)\nEnd Your Turn",
+            "What You Can Do On Your Turn",
+            "TM",
+            "TRADING CARD GAME"
+          ]
+        },
+        {
+          "id": "2893:234348",
+          "texts": []
+        },
+        {
+          "id": "2074:53602",
+          "texts": [
+            "Darkness\nShroud",
+            "A strong attacking, steady growth deck which relies on the darkness of the Abyss to shroud it’s many attackers.",
+            "Offense",
+            "Defense",
+            "Economy",
+            "Consistency",
+            "Tempo",
+            "Filter Feeder",
+            "Apex",
+            "Predator",
+            "Fish",
+            "Invertebrate"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "open-ocean-hunt",
+      "name": "Open Ocean",
+      "pageId": "2296:82568",
+      "cards": [
+        {
+          "cardId": "cast-net",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 1
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 3
+        },
+        {
+          "cardId": "spearfishing",
+          "quantity": 1
+        },
+        {
+          "cardId": "blue-sea-dragon",
+          "quantity": 1
+        },
+        {
+          "cardId": "capt-dani",
+          "quantity": 1
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2
+        },
+        {
+          "cardId": "herring-ball-base",
+          "quantity": 4
+        },
+        {
+          "cardId": "sardine-ball-base",
+          "quantity": 4
+        },
+        {
+          "cardId": "sardine-ball-stage1",
+          "quantity": 2
+        },
+        {
+          "cardId": "sardine-ball-stage2",
+          "quantity": 1
+        },
+        {
+          "cardId": "herring-ball-stage2",
+          "quantity": 2
+        },
+        {
+          "cardId": "halfbeak",
+          "quantity": 3
+        },
+        {
+          "cardId": "herring-ball-stage1",
+          "quantity": 3
+        },
+        {
+          "cardId": "man-o-war",
+          "quantity": 2
+        },
+        {
+          "cardId": "bonito-tuna",
+          "quantity": 1
+        },
+        {
+          "cardId": "frigate-tuna",
+          "quantity": 1
+        },
+        {
+          "cardId": "pompano",
+          "quantity": 1
+        },
+        {
+          "cardId": "flying-fish",
+          "quantity": 1
+        },
+        {
+          "cardId": "bluefin-tuna-juvenile",
+          "quantity": 1
+        },
+        {
+          "cardId": "ocean-triggerfish",
+          "quantity": 1
+        },
+        {
+          "cardId": "mahi-mahi",
+          "quantity": 1
+        },
+        {
+          "cardId": "market-squid",
+          "quantity": 2
+        },
+        {
+          "cardId": "lookdown",
+          "quantity": 1
+        },
+        {
+          "cardId": "thresher-shark",
+          "quantity": 1
+        },
+        {
+          "cardId": "loggerhead-sea-turtle",
+          "quantity": 2
+        },
+        {
+          "cardId": "remora",
+          "quantity": 2
+        },
+        {
+          "cardId": "open-ocean",
+          "quantity": 1
+        },
+        {
+          "cardId": "blue-whale",
+          "quantity": 1
+        },
+        {
+          "cardId": "swordfish",
+          "quantity": 1
+        },
+        {
+          "cardId": "bluefin-tuna",
+          "quantity": 1
+        },
+        {
+          "cardId": "shortfin-mako-shark",
+          "quantity": 1
+        },
+        {
+          "cardId": "killer-whale-oceanic",
+          "quantity": 1
+        },
+        {
+          "cardId": "yellowfin-tuna",
+          "quantity": 1
+        },
+        {
+          "cardId": "silky-shark",
+          "quantity": 1
+        },
+        {
+          "cardId": "sailfish",
+          "quantity": 1
+        }
+      ],
+      "unknown": [],
+      "excluded": [
+        {
+          "id": "2296:184870",
+          "texts": [
+            "Draw a card (you must do this at the beginning of every turn)\nCollect RP from Corals\nSpend Your RP\nPlay Creatures\nPlay/Upgrade Corals\nPurchase Structure Cards\nPlay Any Support Cards\nPerform Any Creature Actions (As many as you want, but cannot play the same action twice in one turn from the same creature. Some actions cost RP)\nEnd Your Turn",
+            "What You Can Do On Your Turn",
+            "TM",
+            "TRADING CARD GAME"
+          ]
+        },
+        {
+          "id": "2779:45793",
+          "texts": []
+        },
+        {
+          "id": "2296:218512",
+          "texts": [
+            "Open Ocean",
+            "A dynamic, fast paced deck which harnesses the power of massive schools of fish to unlock hard hitting open ocean creatures.",
+            "Offense",
+            "Defense",
+            "Economy",
+            "Consistency",
+            "Tempo",
+            "Filter Feeder",
+            "Apex",
+            "Predator",
+            "Fish",
+            "Invertebrate"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "murky-water",
+      "name": "Murky Water",
+      "pageId": "2241:259772",
+      "cards": [
+        {
+          "cardId": "spearfishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "coral-gardener",
+          "quantity": 3
+        },
+        {
+          "cardId": "robotic-survey",
+          "quantity": 2
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 2
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 2
+        },
+        {
+          "cardId": "poison-heal",
+          "quantity": 2
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 1
+        },
+        {
+          "cardId": "recovery",
+          "quantity": 2
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 1
+        },
+        {
+          "cardId": "manta-ray",
+          "quantity": 1
+        },
+        {
+          "cardId": "bull-shark",
+          "quantity": 1
+        },
+        {
+          "cardId": "reef-shark",
+          "quantity": 2
+        },
+        {
+          "cardId": "great-barracuda",
+          "quantity": 2
+        },
+        {
+          "cardId": "arrow-crab",
+          "quantity": 2
+        },
+        {
+          "cardId": "blue-crab",
+          "quantity": 2
+        },
+        {
+          "cardId": "sea-urchin",
+          "quantity": 3
+        },
+        {
+          "cardId": "giant-triton",
+          "quantity": 2
+        },
+        {
+          "cardId": "cleaner-wrasse",
+          "quantity": 3
+        },
+        {
+          "cardId": "pillar-coral-base",
+          "quantity": 4
+        },
+        {
+          "cardId": "brain-coral-base",
+          "quantity": 4
+        },
+        {
+          "cardId": "sargeant-major",
+          "quantity": 3
+        },
+        {
+          "cardId": "brain-coral-stage-1",
+          "quantity": 3
+        },
+        {
+          "cardId": "brain-coral-stage-2",
+          "quantity": 2
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "quantity": 3
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "quantity": 2
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "quantity": 1
+        },
+        {
+          "cardId": "coral-reef",
+          "quantity": 1
+        }
+      ],
+      "unknown": [],
+      "excluded": [
+        {
+          "id": "2241:486929",
+          "texts": [
+            "Murky Water",
+            "A ruthless ambush deck that thrives in the shadows, using shipwreck synergies, discard-fueled tempo, and brutal apex strikes to cripple reefs before opponents can recover.",
+            "Offense",
+            "Defense",
+            "Economy",
+            "Consistency",
+            "Tempo",
+            "Filter Feeder",
+            "Apex",
+            "Predator",
+            "Fish",
+            "Invertebrate"
+          ]
+        },
+        {
+          "id": "2241:486981",
+          "texts": [
+            "Draw a card (you must do this at the beginning of every turn)\nCollect RP from Corals\nSpend Your RP\nPlay Creatures\nPlay/Upgrade Corals\nPurchase Structure Cards\nPlay Any Support Cards\nPerform Any Creature Actions (As many as you want, but cannot play the same action twice in one turn from the same creature. Some actions cost RP)\nEnd Your Turn",
+            "What You Can Do On Your Turn",
+            "TM",
+            "TRADING CARD GAME"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stinging-fortress",
+      "name": "Stinging Fortress",
+      "pageId": "2363:215185",
+      "cards": [
+        {
+          "cardId": "coral-gardener",
+          "quantity": 3
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 3
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 2
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 3
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2
+        },
+        {
+          "cardId": "recovery",
+          "quantity": 2
+        },
+        {
+          "cardId": "yellow-lipped-sea-krait",
+          "quantity": 2
+        },
+        {
+          "cardId": "manta-ray",
+          "quantity": 1
+        },
+        {
+          "cardId": "anemone",
+          "quantity": 3
+        },
+        {
+          "cardId": "box-jellyfish",
+          "quantity": 2
+        },
+        {
+          "cardId": "crown-of-thorns",
+          "quantity": 2
+        },
+        {
+          "cardId": "arrow-crab",
+          "quantity": 2
+        },
+        {
+          "cardId": "clownfish",
+          "quantity": 4
+        },
+        {
+          "cardId": "lionfish",
+          "quantity": 2
+        },
+        {
+          "cardId": "blue-crab",
+          "quantity": 1
+        },
+        {
+          "cardId": "longhorn-cowfish",
+          "quantity": 3
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "quantity": 4
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "quantity": 3
+        },
+        {
+          "cardId": "porcupine-fish",
+          "quantity": 3
+        },
+        {
+          "cardId": "staghorn-coral-base",
+          "quantity": 4
+        },
+        {
+          "cardId": "clubfinger-coral-base",
+          "quantity": 3
+        },
+        {
+          "cardId": "clubfinger-coral-stage-1",
+          "quantity": 2
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "quantity": 3
+        },
+        {
+          "cardId": "coral-reef",
+          "quantity": 1
+        }
+      ],
+      "unknown": [],
+      "excluded": [
+        {
+          "id": "2363:295083",
+          "texts": [
+            "Stinging Fortress",
+            "A defensive synergy deck that leverages defensive creatures to remain untouchable, punishing attackers with toxins and stuns.",
+            "Offense",
+            "Defense",
+            "Economy",
+            "Consistency",
+            "Tempo",
+            "Filter Feeder",
+            "Apex",
+            "Predator",
+            "Fish",
+            "Invertebrate"
+          ]
+        },
+        {
+          "id": "2363:295134",
+          "texts": [
+            "Draw a card (you must do this at the beginning of every turn)\nCollect RP from Corals\nSpend Your RP\nPlay Creatures\nPlay/Upgrade Corals\nPurchase Structure Cards\nPlay Any Support Cards\nPerform Any Creature Actions (As many as you want, but cannot play the same action twice in one turn from the same creature. Some actions cost RP)\nEnd Your Turn",
+            "What You Can Do On Your Turn",
+            "TM",
+            "TRADING CARD GAME"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "disruption",
+      "name": "Disruption",
+      "pageId": "2404:505077",
+      "cards": [
+        {
+          "cardId": "spearfishing",
+          "quantity": 1
+        },
+        {
+          "cardId": "coral-gardener",
+          "quantity": 3
+        },
+        {
+          "cardId": "dr-evans",
+          "quantity": 1
+        },
+        {
+          "cardId": "scientist-jes",
+          "quantity": 2
+        },
+        {
+          "cardId": "remote-search",
+          "quantity": 2
+        },
+        {
+          "cardId": "fishing",
+          "quantity": 2
+        },
+        {
+          "cardId": "crab-trap",
+          "quantity": 2
+        },
+        {
+          "cardId": "recovery",
+          "quantity": 1
+        },
+        {
+          "cardId": "hammerhead",
+          "quantity": 1
+        },
+        {
+          "cardId": "nurse-shark",
+          "quantity": 3
+        },
+        {
+          "cardId": "manta-ray",
+          "quantity": 1
+        },
+        {
+          "cardId": "mantis-shrimp",
+          "quantity": 3
+        },
+        {
+          "cardId": "crown-of-thorns",
+          "quantity": 1
+        },
+        {
+          "cardId": "goliath-grouper",
+          "quantity": 1
+        },
+        {
+          "cardId": "arrow-crab",
+          "quantity": 1
+        },
+        {
+          "cardId": "blue-crab",
+          "quantity": 1
+        },
+        {
+          "cardId": "emerald-crab",
+          "quantity": 1
+        },
+        {
+          "cardId": "lionfish",
+          "quantity": 2
+        },
+        {
+          "cardId": "picasso-triggerfish",
+          "quantity": 2
+        },
+        {
+          "cardId": "frogfish",
+          "quantity": 3
+        },
+        {
+          "cardId": "nudibranch",
+          "quantity": 3
+        },
+        {
+          "cardId": "elkhorn-coral-base",
+          "quantity": 4
+        },
+        {
+          "cardId": "spectacled-parrotfish",
+          "quantity": 3
+        },
+        {
+          "cardId": "french-angelfish",
+          "quantity": 2
+        },
+        {
+          "cardId": "porcupine-fish",
+          "quantity": 2
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "quantity": 3
+        },
+        {
+          "cardId": "elkhorn-coral-stage-2",
+          "quantity": 2
+        },
+        {
+          "cardId": "elkhorn-coral-stage-1",
+          "quantity": 3
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "quantity": 2
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "quantity": 1
+        },
+        {
+          "cardId": "coral-reef",
+          "quantity": 1
+        }
+      ],
+      "unknown": [],
+      "excluded": [
+        {
+          "id": "2404:556844",
+          "texts": [
+            "Disruption",
+            "A grindy control deck that starves opponents of resources, disrupts their reefs with stuns and RP denial, and slowly wins by turning a fortified coral engine into an inevitable advantage.",
+            "Offense",
+            "Defense",
+            "Economy",
+            "Consistency",
+            "Tempo",
+            "Filter Feeder",
+            "Apex",
+            "Predator",
+            "Fish",
+            "Invertebrate"
+          ]
+        },
+        {
+          "id": "2404:556895",
+          "texts": [
+            "Draw a card (you must do this at the beginning of every turn)\nCollect RP from Corals\nSpend Your RP\nPlay Creatures\nPlay/Upgrade Corals\nPurchase Structure Cards\nPlay Any Support Cards\nPerform Any Creature Actions (As many as you want, but cannot play the same action twice in one turn from the same creature. Some actions cost RP)\nEnd Your Turn",
+            "What You Can Do On Your Turn",
+            "TM",
+            "TRADING CARD GAME"
+          ]
+        }
+      ]
+    }
+  ]
+}

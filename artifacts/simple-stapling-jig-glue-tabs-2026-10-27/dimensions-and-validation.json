@@ -1,0 +1,78 @@
+{
+  "source_blend": "C:\\Users\\jacob\\Documents\\Blender\\paper-stapling-rig\\paper-stapling-rig.blend",
+  "printable_parts": 3,
+  "print_files": {
+    "paper-stapling-rig.stl": 1,
+    "glue-alignment-tab.stl": 2
+  },
+  "glue_sheet_mm": [
+    209.55,
+    273.05
+  ],
+  "glue_top_bottom_inset_mm": 3.174999999999983,
+  "reference_edges_y_mm": [
+    3.674999999999983,
+    276.725
+  ],
+  "actual_reference_gap_mm": 273.05001878738403,
+  "paper_registration": "Top and right stops, with lower-left paper corner at(0.5,0.5).",
+  "tab_dimensions_mm": [
+    44.0,
+    15.375,
+    3.0
+  ],
+  "ear_width_mm": 48.0,
+  "ear_extension_mm": 10.0,
+  "tray_footprint_mm": [
+    222.8,
+    306.29999999999995
+  ],
+  "tray_height_mm": 15.7,
+  "assembled_printed_height_mm": 16.7,
+  "tab_underside_clearance_mm": 1.0,
+  "hole_diameter_mm": 3.4,
+  "hole_pitch_mm": 28.0,
+  "underside_bolt_head_recess_mm": {
+    "diameter": 6.4,
+    "depth": 3.4
+  },
+  "bolt_centers_mm": [
+    [
+      94.2,
+      -7.700000000000017
+    ],
+    [
+      122.2,
+      -7.700000000000017
+    ],
+    [
+      94.2,
+      288.1
+    ],
+    [
+      122.2,
+      288.1
+    ]
+  ],
+  "hardware": "Four M3x20 socket-head bolts inserted from below, four M3 nuts above tabs. Optional paired equal shims under tabs.",
+  "validation": {
+    "tray": {
+      "non_manifold_edges": 0,
+      "connected_components": 1,
+      "volume_mm3": 775269.4351004104
+    },
+    "top_tab": {
+      "non_manifold_edges": 0,
+      "connected_components": 1,
+      "volume_mm3": 1975.1129192436658
+    },
+    "bottom_tab": {
+      "non_manifold_edges": 0,
+      "connected_components": 1,
+      "volume_mm3": 1975.11291924367
+    },
+    "reference_gap_and_pocket_checked": true,
+    "all_bores_aligned": true
+  },
+  "fit_note": "Confirm the real three-sheet stack slides below the 1 mm gap; add equal washer shims between tab and ear if needed. Align tabs before tightening to remove bolt-clearance error. Look straight down to minimize parallax. Tabs guide top/bottom only."
+}

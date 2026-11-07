@@ -1,118 +1,172 @@
 export const oceanicEncyclopediaEntries = [
   {
-    name: "Sardine Ball",
-    scientificName: "Clupeidae",
-    aliases: ["Sardine Bait Ball", "Sardine School", "Sardines"],
+    name: "Oceanic Manta Ray",
+    scientificName: "Mobula birostris",
+    aliases: ["Giant Manta Ray", "Giant Oceanic Manta Ray"],
     zone: "Oceanic",
-    group: "Fish",
-    tagline: "A silver swirl that makes predators dizzy.",
-    intro: "A sardine ball is a tightly packed school of small, silvery fishes that turns almost like one giant animal. Sardine is a shared name for several members of the herring family, so this SeaPals creature represents the whole group.",
-    home: "Sardines gather in plankton-rich coastal and open waters around the world.",
-    diet: "They eat tiny plankton, including drifting animals and microscopic algae.",
-    size: "Usually 6-12 in (15-30 cm)—about ruler length",
-    superpower: "Thousands of neighbors can turn together in an instant and confuse attackers.",
+    group: "Filter Feeder",
+    tagline: "Giant wings follow the ocean's smallest meals.",
+    intro: "Oceanic manta rays are enormous filter feeders that migrate between rich feeding areas. Their broad fins carry them through open water while two head fins guide plankton toward their mouths.",
+    home: "Tropical, subtropical, and temperate seas worldwide, including offshore waters and productive coasts.",
+    diet: "Mostly tiny drifting animals such as copepods, krill, shrimp, and larvae.",
+    size: "Wingspan up to 26 ft (8 m), wider than two cars",
+    superpower: "Head fins form a funnel that carries plankton over filtering gill plates.",
     funFacts: [
+      "Belly spot patterns help researchers recognize individual mantas.",
+      "Repeated somersaults keep a feeding manta inside a patch of plankton.",
+      "Usually solitary travelers, they also gather at cleaning and feeding sites.",
+      "Females typically produce one pup every two to three years.",
+    ],
+    lookFor: "Look for a huge diamond-shaped body, broad wings, and two curled head fins.",
+    sourceUrls: ["https://www.fisheries.noaa.gov/species/giant-manta-ray"],
+  },
+  {
+    "name": "Sardine Ball",
+    "scientificName": "Sardinops sagax",
+    "aliases": [
+      "Sardine Bait Ball",
+      "Sardine School",
+      "Sardines",
+      "Pacific sardine"
+    ],
+    "zone": "Oceanic",
+    "group": "Fish",
+    "tagline": "A silver swirl that makes predators dizzy.",
+    "intro": "Pacific sardines form dense schools and feed on plankton. Length and weight describe one fish, not the entire school. This card represents the pacific sardine.",
+    "home": "Northeastern Pacific coastal waters from western North America into the Gulf of California.",
+    "diet": "They eat tiny plankton, including drifting animals and microscopic algae.",
+    "size": "Card reference: length 10”; weight ~180g. Length and estimated weight describe one fish. Weight is calculated from a published length–weight model.",
+    "superpower": "Thousands of neighbors can turn together in an instant and confuse attackers.",
+    "funFacts": [
       "Each fish follows nearby neighbors rather than a single school leader.",
       "A dark back and pale belly camouflage sardines from above and below.",
       "Sardines are important food for seabirds, marine mammals, and larger fishes.",
-      "Their lateral-line sensors detect vibrations and nearby movement in the water.",
+      "Their lateral-line sensors detect vibrations and nearby movement in the water."
     ],
-    lookFor: "Watch for a flashing silver cloud that ripples and changes shape.",
-    sourceUrls: [
-      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/pacific-sardine",
-      "https://www.montereybayaquarium.org/animals-the-ocean/ecosystems/open-ocean",
-    ],
+    "lookFor": "Watch for a flashing silver cloud that ripples and changes shape.",
+    "sourceUrls": [
+      "https://www.fishbase.org/summary/1477",
+      "https://www.fisheries.noaa.gov/species/pacific-sardine",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/pacific-sardine"
+    ]
   },
   {
-    name: "Anchovy Ball",
-    scientificName: "Engraulidae",
-    aliases: ["Anchovy Bait Ball", "Anchovy School", "Anchovies"],
-    zone: "Oceanic",
-    group: "Fish",
-    tagline: "Tiny teammates with a giant place in the food web.",
-    intro: "An anchovy ball can contain thousands of slim fishes swirling shoulder to shoulder. The card's broad name covers the anchovy family, whose members connect microscopic plankton to much larger hunters.",
-    home: "Anchovies school near the surface in coastal and open waters worldwide.",
-    diet: "Most strain plankton from the water and also snap up tiny prey.",
-    size: "Usually 2-9 in (5-23 cm)—pencil to banana length",
-    superpower: "A crowded school makes it hard for a predator to choose one target.",
-    funFacts: [
+    "name": "Anchovy Ball",
+    "scientificName": "Engraulis mordax",
+    "aliases": [
+      "Anchovy Bait Ball",
+      "Anchovy School",
+      "Anchovies",
+      "Northern anchovy"
+    ],
+    "zone": "Oceanic",
+    "group": "Fish",
+    "tagline": "Tiny teammates with a giant place in the food web.",
+    "intro": "Northern anchovies feed on plankton and school together near the coast. Length and weight describe one fish. This card represents the northern anchovy.",
+    "home": "Northeastern Pacific coastal waters off western North America.",
+    "diet": "Most strain plankton from the water and also snap up tiny prey.",
+    "size": "Card reference: length 6”; weight ~24g. Length and estimated weight describe one fish. Weight is calculated from a published length–weight model.",
+    "superpower": "A crowded school makes it hard for a predator to choose one target.",
+    "funFacts": [
       "Anchovies often swim with their mouths open while gathering plankton.",
       "Their upper jaw reaches behind the eye, unlike a sardine's shorter jaw.",
       "Many anchovies live only a few years but reproduce in large numbers.",
-      "Healthy anchovy schools help feed tuna, whales, seabirds, and sea lions.",
+      "Healthy anchovy schools help feed tuna, whales, seabirds, and sea lions."
     ],
-    lookFor: "Look for a slim silver fish with a large mouth and pointed snout.",
-    sourceUrls: [
-      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/northern-anchovy",
-    ],
+    "lookFor": "Look for a slim silver fish with a large mouth and pointed snout.",
+    "sourceUrls": [
+      "https://www.fishbase.org/summary/1664",
+      "https://www.fisheries.noaa.gov/species/northern-anchovy",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/northern-anchovy"
+    ]
   },
   {
-    name: "Silverside Ball",
-    scientificName: "Menidia menidia",
-    aliases: ["Atlantic Silverside", "Silverside School", "Silverside Bait Ball"],
-    zone: "Oceanic",
-    group: "Fish",
-    tagline: "A living ribbon of silver along the shore.",
-    intro: "SeaPals' silverside ball is represented by the Atlantic silverside, a little fish that gathers in glittering schools. Its bright side stripe can make the whole group flash when it turns.",
-    home: "Atlantic silversides live near beaches, inlets, and estuaries of eastern North America.",
-    diet: "They eat zooplankton, tiny crustaceans, algae, and small insect larvae.",
-    size: "Up to 7 in (18 cm)—about a new pencil",
-    superpower: "A mirror-bright stripe helps a turning school become a confusing flash.",
-    funFacts: [
+    "name": "Silverside Ball",
+    "scientificName": "Menidia menidia",
+    "aliases": [
+      "Atlantic Silverside",
+      "Silverside School",
+      "Silverside Bait Ball",
+      "Atlantic silverside"
+    ],
+    "zone": "Oceanic",
+    "group": "Fish",
+    "tagline": "A living ribbon of silver along the shore.",
+    "intro": "Atlantic silversides form shimmering schools in shallow coastal water. Length and weight describe one fish. This card represents the atlantic silverside.",
+    "home": "Atlantic silversides live near beaches, inlets, and estuaries of eastern North America.",
+    "diet": "They eat zooplankton, tiny crustaceans, algae, and small insect larvae.",
+    "size": "Card reference: length 4”; weight ~7g. Length and estimated weight describe one fish. Weight is calculated from a published length–weight model.",
+    "superpower": "A mirror-bright stripe helps a turning school become a confusing flash.",
+    "funFacts": [
       "Atlantic silversides can handle both salty seawater and brackish estuaries.",
       "They move into deeper offshore water when winter chills the coast.",
       "Many coastal fishes and birds depend on silversides as prey.",
-      "Females attach sticky eggs to sand, gravel, or underwater plants.",
+      "Females attach sticky eggs to sand, gravel, or underwater plants."
     ],
-    lookFor: "Find the bold silver stripe running down a slender, nearly see-through body.",
-    sourceUrls: [
-      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3250",
-    ],
+    "lookFor": "Find the bold silver stripe running down a slender, nearly see-through body.",
+    "sourceUrls": [
+      "https://www.fishbase.org/summary/Menidia_menidia.html",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/species/3250"
+    ]
   },
   {
-    name: "Herring Ball",
-    scientificName: "Clupea harengus",
-    aliases: ["Atlantic Herring", "Herring School", "Herring Bait Ball"],
-    zone: "Oceanic",
-    group: "Fish",
-    tagline: "Millions of silver swimmers keep northern seas humming.",
-    intro: "Atlantic herring travel in enormous schools that can shimmer across the water. These small fish are a mighty link between plankton and ocean predators.",
-    home: "They roam cool North Atlantic coastal and continental-shelf waters.",
-    diet: "They eat zooplankton, krill, and drifting fish larvae.",
-    size: "Up to 14 in (36 cm)—a little longer than a ruler",
-    superpower: "Coordinated migrations lead whole schools between feeding, spawning, and wintering grounds.",
-    funFacts: [
+    "name": "Herring Ball",
+    "scientificName": "Clupea harengus",
+    "aliases": [
+      "Atlantic Herring",
+      "Herring School",
+      "Herring Bait Ball",
+      "Atlantic herring"
+    ],
+    "zone": "Oceanic",
+    "group": "Fish",
+    "tagline": "Millions of silver swimmers keep northern seas humming.",
+    "intro": "Atlantic herring travel in schools between feeding and spawning grounds. Length and weight describe one fish. This card represents the atlantic herring.",
+    "home": "They roam cool North Atlantic coastal and continental-shelf waters.",
+    "diet": "They eat zooplankton, krill, and drifting fish larvae.",
+    "size": "Card reference: length 14”; weight ~350g. Length and estimated weight describe one fish. Weight is calculated from a published length–weight model.",
+    "superpower": "Coordinated migrations lead whole schools between feeding, spawning, and wintering grounds.",
+    "funFacts": [
       "A female can release tens of thousands of eggs in one season.",
       "Herring eggs can carpet rocky or gravelly seafloor in thick patches.",
       "They may live for about 15 years, surprisingly long for a small fish.",
-      "Whales, sharks, cod, seabirds, and seals all hunt Atlantic herring.",
+      "Whales, sharks, cod, seabirds, and seals all hunt Atlantic herring."
     ],
-    lookFor: "Look for a blue-green back, silver sides, and a deeply forked tail.",
-    sourceUrls: ["https://www.fisheries.noaa.gov/species/atlantic-herring"],
+    "lookFor": "Look for a blue-green back, silver sides, and a deeply forked tail.",
+    "sourceUrls": [
+      "https://www.fishbase.org/summary/24",
+      "https://www.fisheries.noaa.gov/species/atlantic-herring"
+    ]
   },
   {
-    name: "Krill Bloom",
-    scientificName: "Euphausiacea",
-    aliases: ["Krill Swarm", "Krill School", "Krill"],
-    zone: "Oceanic",
-    group: "Fish",
-    tagline: "Tiny crustaceans that power some of Earth's biggest animals.",
-    intro: "A krill bloom is a dense swarm of shrimp-like crustaceans, not a patch of flowers. Packed together by the thousands, krill become an ocean feast big enough for giant whales.",
-    home: "Different krill species swarm in oceans worldwide, from polar seas to the tropics.",
-    diet: "They graze on phytoplankton and also eat other tiny drifting organisms.",
-    size: "Most 0.4-2.4 in (1-6 cm)—paper-clip to finger length",
-    superpower: "Synchronized swarms concentrate tiny meals into whale-sized mouthfuls.",
-    funFacts: [
+    "name": "Krill Bloom",
+    "scientificName": "Euphausia superba",
+    "aliases": [
+      "Krill Swarm",
+      "Krill School",
+      "Krill",
+      "Antarctic krill"
+    ],
+    "zone": "Oceanic",
+    "group": "Fish",
+    "tagline": "Tiny crustaceans that power some of Earth's biggest animals.",
+    "intro": "Antarctic krill gather in dense swarms that feed whales, seals, and penguins. Length and weight describe one krill. This card represents the antarctic krill.",
+    "home": "Southern Ocean waters around Antarctica, including productive waters near seasonal sea ice.",
+    "diet": "They graze on phytoplankton and also eat other tiny drifting organisms.",
+    "size": "Card reference: length 2”; weight ~1g. Length and weight describe one Antarctic krill, rounded from published average ranges.",
+    "superpower": "Synchronized swarms concentrate tiny meals into whale-sized mouthfuls.",
+    "funFacts": [
       "Krill are crustaceans, making them relatives of crabs and shrimp.",
       "Many krill species have light-making organs called photophores.",
       "They shed their outer skeleton as they grow and can even shrink when food is scarce.",
-      "Fish, penguins, seals, seabirds, and baleen whales all eat krill.",
+      "Fish, penguins, seals, seabirds, and baleen whales all eat krill."
     ],
-    lookFor: "Look for a nearly transparent, shrimp-shaped body with feathery swimming legs.",
-    sourceUrls: [
+    "lookFor": "Look for a nearly transparent, shrimp-shaped body with feathery swimming legs.",
+    "sourceUrls": [
+      "https://repository.library.noaa.gov/view/noaa/9667/noaa_9667_DS1.pdf",
       "https://ocean.si.edu/ocean-life/invertebrates/antarctic-krill",
-      "https://ocean.si.edu/ocean-life/fish/secret-life-plankton",
-    ],
+      "https://ocean.si.edu/ocean-life/fish/secret-life-plankton"
+    ]
   },
   {
     name: "Bluefin Tuna",
@@ -211,7 +265,7 @@ export const oceanicEncyclopediaEntries = [
     name: "Sperm Whale",
     scientificName: "Physeter macrocephalus",
     aliases: ["Cachalot"],
-    zone: "Oceanic",
+    zone: "Deep",
     group: "Apex",
     tagline: "The biggest toothed whale hunts by sound in darkness.",
     intro: "Sperm whales dive into deep, dark water and search with powerful clicks. Their enormous square heads hold the sound-focusing organs that make this hunt possible.",
@@ -232,7 +286,7 @@ export const oceanicEncyclopediaEntries = [
     name: "Pilot Whale",
     scientificName: "Globicephala spp.",
     aliases: ["Short-Finned Pilot Whale", "Long-Finned Pilot Whale", "Pothead Whale"],
-    zone: "Oceanic",
+    zone: "Deep",
     group: "Apex",
     tagline: "Deep-diving dolphins that stick close to their families.",
     intro: "Pilot whale is the shared name for two very social dolphin species with rounded foreheads. Both travel in close family pods and use echolocation to chase prey below the light.",
@@ -409,50 +463,62 @@ export const oceanicEncyclopediaEntries = [
     ],
   },
   {
-    name: "Halfbeak",
-    scientificName: "Hemiramphidae",
-    aliases: ["Garfish", "Ballyhoo", "Spie Fish"],
-    zone: "Oceanic",
-    group: "Fish",
-    tagline: "A surface skimmer with only half a long beak.",
-    intro: "Halfbeaks are slim schooling fishes whose lower jaw stretches far beyond the upper jaw. They cruise just under warm ocean surfaces and become meals for many larger hunters.",
-    home: "Marine halfbeaks school near the surface of tropical and subtropical seas.",
-    diet: "They nibble algae, plankton, small crustaceans, and other surface morsels.",
-    size: "Most 7-18 in (18-46 cm)—forearm length",
-    superpower: "Tight surface schools can sprint and leap away from approaching predators.",
-    funFacts: [
+    "name": "Halfbeak",
+    "scientificName": "Hemiramphus brasiliensis",
+    "aliases": [
+      "Garfish",
+      "Ballyhoo",
+      "Spie Fish",
+      "Ballyhoo halfbeak"
+    ],
+    "zone": "Oceanic",
+    "group": "Fish",
+    "tagline": "A surface skimmer with only half a long beak.",
+    "intro": "Ballyhoo halfbeaks swim near the surface with a long lower jaw and a short upper jaw. They feed on drifting plants and small animals. This card represents the ballyhoo halfbeak.",
+    "home": "Warm western Atlantic coastal water, including the Caribbean, where ballyhoo halfbeaks school near the surface.",
+    "diet": "Seagrass fragments, algae, and small drifting animals.",
+    "size": "Card reference: length 8.4”; weight ~46g. Rounded mean length and whole weight of 432 ballyhoo halfbeaks in a study.",
+    "superpower": "Tight surface schools can sprint and leap away from approaching predators.",
+    "funFacts": [
       "Their family name means half-beak, describing the much longer lower jaw.",
       "Halfbeaks are close relatives of flying fishes and needlefishes.",
       "Billfish, tuna, wahoo, sharks, and dolphins all hunt them.",
-      "Many species lay eggs with threads that fasten to floating or underwater plants.",
+      "Many species lay eggs with threads that fasten to floating or underwater plants."
     ],
-    lookFor: "Spot the long lower jaw beneath a much shorter triangular upper jaw.",
-    sourceUrls: [
-      "https://australian.museum/learn/animals/fishes/hemiramphidae-garfishes/",
-    ],
+    "lookFor": "Spot the long lower jaw beneath a much shorter triangular upper jaw.",
+    "sourceUrls": [
+      "https://pmc.ncbi.nlm.nih.gov/articles/PMC4248363/",
+      "https://australian.museum/learn/animals/fishes/hemiramphidae-garfishes/"
+    ]
   },
   {
-    name: "Needlefish",
-    scientificName: "Belonidae",
-    aliases: ["Longtom", "Houndfish", "Needlefishes"],
-    zone: "Oceanic",
-    group: "Fish",
-    tagline: "A surface hunter armed with a beakful of needles.",
-    intro: "Needlefishes are long, narrow hunters with both jaws stretched into a toothy beak. They stalk small prey near the surface and can leap when startled.",
-    home: "The family lives in tropical and temperate seas worldwide, with some freshwater species.",
-    diet: "They grab small fishes, squid, and swimming crustaceans with sharp teeth.",
-    size: "Many 1-3 ft (30-90 cm); the largest approach 5 ft (1.5 m)",
-    superpower: "A slim body can burst forward almost invisibly along the bright surface.",
-    funFacts: [
+    "name": "Needlefish",
+    "scientificName": "Tylosurus crocodilus",
+    "aliases": [
+      "Longtom",
+      "Houndfish",
+      "Needlefishes",
+      "Hound needlefish"
+    ],
+    "zone": "Oceanic",
+    "group": "Fish",
+    "tagline": "A surface hunter armed with a beakful of needles.",
+    "intro": "Hound needlefish hunt near the surface with long jaws lined with sharp teeth. They chase small fish and may leap clear of the water. This card represents the hound needlefish.",
+    "home": "Tropical and subtropical seas around the world, near the surface over reefs and offshore water.",
+    "diet": "They grab small fishes, squid, and swimming crustaceans with sharp teeth.",
+    "size": "Card reference: length 4’ 11”; weight 14 lb. Rounded published maximum length and weight for the hound needlefish.",
+    "superpower": "A slim body can burst forward almost invisibly along the bright surface.",
+    "funFacts": [
       "Needlefish have many fine teeth lining both elongated jaws.",
       "Their dorsal and anal fins sit far back near the tail.",
       "The bones of many needlefish have a harmless greenish color.",
-      "Young needlefish begin life with shorter jaws that lengthen as they grow.",
+      "Young needlefish begin life with shorter jaws that lengthen as they grow."
     ],
-    lookFor: "Look for a pencil-thin body and two equally long, toothy jaws.",
-    sourceUrls: [
-      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/taxon/838",
-    ],
+    "lookFor": "Look for a pencil-thin body and two equally long, toothy jaws.",
+    "sourceUrls": [
+      "https://www.fishbase.se/summary/977",
+      "https://biogeodb.stri.si.edu/caribbean/en/thefishes/taxon/838"
+    ]
   },
   {
     name: "Barracuda",
@@ -799,51 +865,62 @@ export const oceanicEncyclopediaEntries = [
     ],
   },
   {
-    name: "Man O' War",
-    scientificName: "Physalia physalis",
-    aliases: ["Portuguese Man O' War", "Portuguese Man-of-War", "Bluebottle"],
-    zone: "Oceanic",
-    group: "Invertebrate",
-    tagline: "A floating colony sails with a curtain of stingers.",
-    intro: "A Portuguese man o' war is not one jellyfish but a colony of specialized animals called zooids. A gas-filled float catches the wind while long tentacles fish below.",
-    home: "It drifts on the surface of warm Atlantic, Pacific, and Indian Ocean waters.",
-    diet: "Stinging tentacles capture fish larvae, small fishes, shrimp, and other plankton.",
-    size: "Float to about 12 in (30 cm); tentacles can trail over 30 ft (9 m)",
-    superpower: "Thousands of stinging capsules fire microscopic venom threads on contact.",
-    funFacts: [
+    "name": "Man O' War",
+    "scientificName": "Physalia physalis",
+    "aliases": [
+      "Portuguese Man O' War",
+      "Portuguese Man-of-War",
+      "Bluebottle"
+    ],
+    "zone": "Oceanic",
+    "group": "Invertebrate",
+    "tagline": "A floating colony sails with a curtain of stingers.",
+    "intro": "A Portuguese man o' war is not one jellyfish but a colony of specialized animals called zooids. A gas-filled float catches the wind while long tentacles fish below.",
+    "home": "It drifts on the surface of warm Atlantic, Pacific, and Indian Ocean waters.",
+    "diet": "Stinging tentacles capture fish larvae, small fishes, shrimp, and other plankton.",
+    "size": "Card reference: tentacle length 65’; weight ~3g. Weight is a study mean for small colonies. The long tentacle reference describes larger colonies and is not paired with this weight.",
+    "superpower": "Thousands of stinging capsules fire microscopic venom threads on contact.",
+    "funFacts": [
       "Different zooids handle floating, feeding, defense, or reproduction for the colony.",
       "The colony cannot swim and travels mainly with wind and currents.",
       "Some floats lean left and others right, spreading colonies in different directions.",
-      "Detached or beached tentacles may still sting and should never be touched.",
+      "Detached or beached tentacles may still sting and should never be touched."
     ],
-    lookFor: "Watch for a blue-purple gas float shaped like a tiny translucent sailboat.",
-    sourceUrls: [
+    "lookFor": "Watch for a blue-purple gas float shaped like a tiny translucent sailboat.",
+    "sourceUrls": [
+      "https://pdfs.semanticscholar.org/4b2a/6b18d778b8cea128d1e2560eb5e30895e3bc.pdf",
       "https://animaldiversity.org/accounts/Physalia_physalis/",
-      "https://ocean.si.edu/holding-tank/images-hide/siphonophores",
-    ],
+      "https://ocean.si.edu/holding-tank/images-hide/siphonophores"
+    ]
   },
   {
-    name: "Market Squid",
-    scientificName: "Doryteuthis opalescens",
-    aliases: ["Common Market Squid", "California Market Squid", "Opalescent Inshore Squid"],
-    zone: "Oceanic",
-    group: "Invertebrate",
-    tagline: "An iridescent jet swimmer with a one-year adventure.",
-    intro: "Market squid flicker with changing color as huge schools cruise the Pacific coast. Near the end of their short lives, adults gather over sandy seafloor to lay forests of egg capsules.",
-    home: "They range through eastern Pacific coastal water from Mexico toward southeastern Alaska.",
-    diet: "They eat small fishes, crustaceans, and marine worms.",
-    size: "Up to about 11 in (28 cm)—roughly ruler length",
-    superpower: "A muscular mantle blasts water through a funnel for rapid jet propulsion.",
-    funFacts: [
+    "name": "Market Squid",
+    "scientificName": "Doryteuthis opalescens",
+    "aliases": [
+      "Common Market Squid",
+      "California Market Squid",
+      "Opalescent Inshore Squid"
+    ],
+    "zone": "Oceanic",
+    "group": "Invertebrate",
+    "tagline": "An iridescent jet swimmer with a one-year adventure.",
+    "intro": "Market squid flicker with changing color as huge schools cruise the Pacific coast. Near the end of their short lives, adults gather over sandy seafloor to lay forests of egg capsules.",
+    "home": "They range through eastern Pacific coastal water from Mexico toward southeastern Alaska.",
+    "diet": "They eat small fishes, crustaceans, and marine worms.",
+    "size": "Card reference: length 12”; weight 148g. Length includes arms; weight is a published maximum.",
+    "superpower": "A muscular mantle blasts water through a funnel for rapid jet propulsion.",
+    "funFacts": [
       "Market squid grow quickly and usually live for only about one year.",
       "Skin cells called chromatophores create fast-changing patterns and signals.",
       "Each torpedo-shaped egg capsule can hold roughly 180 to 300 eggs.",
-      "Adults usually die after the great spawning gatherings.",
+      "Adults usually die after the great spawning gatherings."
     ],
-    lookFor: "Look for a slender opalescent body, two triangular fins, eight arms, and two tentacles.",
-    sourceUrls: [
-      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/common-market-squid",
-    ],
+    "lookFor": "Look for a slender opalescent body, two triangular fins, eight arms, and two tentacles.",
+    "sourceUrls": [
+      "https://www.sealifebase.ca/summary/Doryteuthis-opalescens",
+      "https://www.fisheries.noaa.gov/species/california-market-squid",
+      "https://www.montereybayaquarium.org/animals-the-ocean/animals-a-to-z/common-market-squid"
+    ]
   },
   {
     name: "Wahoo",
@@ -985,27 +1062,32 @@ export const oceanicEncyclopediaEntries = [
     ],
   },
   {
-    name: "Silky Shark",
-    scientificName: "Carcharhinus falciformis",
-    aliases: ["Silky Whaler", "Blackspot Shark", "Falcate Shark"],
-    zone: "Oceanic",
-    group: "Predator",
-    tagline: "Tiny tooth-like scales give this shark a silky glide.",
-    intro: "Silky sharks are slender warm-water hunters named for unusually smooth-feeling skin. They travel the open ocean around tuna schools, seamounts, and islands.",
-    home: "They inhabit tropical oceans, from offshore surface water to deeper continental slopes.",
-    diet: "They hunt tuna, mackerel, sardines, squid, octopuses, and crustaceans.",
-    size: "Usually 6-8 ft; up to about 11 ft (3.3 m)—small-car length",
-    superpower: "Densely packed, tiny skin denticles reduce roughness and inspire the silky name.",
-    funFacts: [
+    "name": "Silky Shark",
+    "scientificName": "Carcharhinus falciformis",
+    "aliases": [
+      "Silky Whaler",
+      "Blackspot Shark",
+      "Falcate Shark"
+    ],
+    "zone": "Oceanic",
+    "group": "Predator",
+    "tagline": "Tiny tooth-like scales give this shark a silky glide.",
+    "intro": "Silky sharks are slender warm-water hunters named for unusually smooth-feeling skin. They travel the open ocean around tuna schools, seamounts, and islands.",
+    "home": "They inhabit tropical oceans, from offshore surface water to deeper continental slopes.",
+    "diet": "They hunt tuna, mackerel, sardines, squid, octopuses, and crustaceans.",
+    "size": "Card reference: length 11’; weight 760 lb. Rounded published maximum weight.",
+    "superpower": "Densely packed, tiny skin denticles reduce roughness and inspire the silky name.",
+    "funFacts": [
       "The first dorsal fin begins behind the rear tip of the pectoral fins.",
       "A very long free tip trails from the small second dorsal fin.",
       "Young silky sharks often gather near reefs before shifting farther offshore.",
-      "They may follow schools of tuna while searching for the same prey.",
+      "They may follow schools of tuna while searching for the same prey."
     ],
-    lookFor: "Notice smooth bronze-gray skin, a low first dorsal fin, and long pointed side fins.",
-    sourceUrls: [
-      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/silky-shark/",
-    ],
+    "lookFor": "Notice smooth bronze-gray skin, a low first dorsal fin, and long pointed side fins.",
+    "sourceUrls": [
+      "https://iotc.org/sites/default/files/documents/2022/08/IOTC-2022-WPEB18-13_Biological_information_for_most_commonly_shark_species_caught_in_tuna_fisheries.pdf",
+      "https://www.floridamuseum.ufl.edu/discover-fish/species-profiles/silky-shark/"
+    ]
   },
   {
     name: "Loggerhead",

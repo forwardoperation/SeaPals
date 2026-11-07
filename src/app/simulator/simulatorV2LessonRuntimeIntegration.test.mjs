@@ -712,7 +712,7 @@ test("Blue Crab Scavenge is gated to its authored lesson step and emits committe
   assert.match(gate({ cardId: "blue-crab", actionId: "scavenge", actionName: "Search" }), /highlighted lesson step/);
 
   const beginAbility = sourceSection(
-    "function beginCreatureUtilityAction(action)",
+    "function beginCreatureUtilityAction(",
     "function completeCreatureRecovery(cardId, sourceElement = null)",
   );
   assert.match(beginAbility, /getEmbeddedLessonBlock\("utility", \{[\s\S]*?cardId:\s*sourceCard\.id,[\s\S]*?actionId:\s*action\.id \?\? null,[\s\S]*?actionName/);

@@ -5,6 +5,29 @@ function normalizeConditionIds(conditionIds = []) {
   return new Set(conditionIds.filter(Boolean));
 }
 
+export function drawConditionCard({
+  conditionDeck = [],
+  conditionIds = [],
+  persistentConditionIds = [],
+  random = Math.random,
+} = {}) {
+  let source = conditionDeck;
+  if (!source.length) {
+    const persistent = normalizeConditionIds(persistentConditionIds);
+    // At the next reveal, the previous ordinary Condition has expired. With
+    // an empty deck, every configured card except those set aside is eligible.
+    source = [...normalizeConditionIds(conditionIds)].filter((id) => !persistent.has(id));
+    for (let index = source.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(random() * (index + 1));
+      [source[index], source[swapIndex]] = [source[swapIndex], source[index]];
+    }
+  }
+  return {
+    conditionId: source[0] ?? null,
+    conditionDeck: source.slice(1),
+  };
+}
+
 function isOceanicPredator(card) {
   const oceanic = card?.zone === "ocean" || card?.subtype === "oceanic" || card?.tags?.includes("oceanic");
   return oceanic && card?.category === "predator";

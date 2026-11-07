@@ -1,3 +1,4 @@
+import { ecoBoost, venomous } from "../abilities";
 import {
   CardKind,
   CardCategory,
@@ -6,15 +7,6 @@ import {
   Timing,
   Zone,
 } from "../types";
-
-const requiresCoralReef = {
-  id: "requires-coral-reef",
-  type: "cardInPlay",
-  cardId: "coral-reef",
-  requiredKind: CardKind.HABITAT,
-  zone: Zone.YOUR_REEF,
-  text: "Can only be played if Coral Reef is in play on your reef.",
-};
 
 const coralDamage = (amount) => ({
   type: EffectType.DAMAGE,
@@ -158,7 +150,7 @@ export const fishCards = [
     },
 
     playRequirements: [],
-    passives: [],
+    passives: [ecoBoost(1)],
 
     onPlay: [],
 
@@ -211,7 +203,7 @@ export const fishCards = [
     },
 
     playRequirements: [],
-    passives: [],
+    passives: [ecoBoost(1)],
 
     onPlay: [
       {
@@ -265,12 +257,13 @@ export const fishCards = [
       {
         id: "call-for-family",
         name: "Call for Family",
-        text: "Search your deck for up to two fish and place them into your hand. Shuffle your deck afterwards.",
+        text: "Search your deck for up to two Reef fish and place them into your hand. Shuffle your deck afterwards.",
         effects: [
           {
             type: EffectType.SEARCH_DECK,
             targetKind: CardKind.CREATURE,
             targetCategories: [CardCategory.FISH],
+            targetZone: "reef",
             destination: Zone.HAND,
             amount: 2,
             shuffleAfterwards: true,
@@ -531,7 +524,7 @@ export const fishCards = [
 
     cost: { rp: 4 },
     victoryPoints: 0,
-    tags: ["creature", "fish", "lionfish", "toxic", "invasive"],
+    tags: ["creature", "fish", "lionfish", "venomous", "invasive"],
 
     bio: {
       commonName: "Lionfish",
@@ -543,6 +536,7 @@ export const fishCards = [
     },
 
     playRequirements: [],
+    destroyedDestination: "lost-zone",
     specialRules: [
       "Play this creature onto one of your opponent's reef slots. It may possess any coral slot type. This Fish may be targeted by your opponent.",
     ],
@@ -560,7 +554,7 @@ export const fishCards = [
       {
         id: "invader",
         name: "Invader",
-        text: "Flip a coin. If heads, perform a D4-1 attack on an opponent's Fish. If tails, perform the attack on one of your own Fish.",
+        text: "At the start of your turn, flip a coin. If heads, perform a D4 attack on an opponent's Fish. If tails, perform the attack on one of your own Fish.",
         timing: Timing.START_OF_TURN,
         trigger: {
           type: "ecosystemControllerTurnStart",
@@ -570,7 +564,7 @@ export const fishCards = [
           type: EffectType.FLIP_COIN,
           heads: {
             type: EffectType.ATTACK,
-            attackDice: "D4-1",
+            attackDice: "D4",
             target: {
               controller: "sourceOpponent",
               kind: CardKind.CREATURE,
@@ -581,7 +575,7 @@ export const fishCards = [
           },
           tails: {
             type: EffectType.ATTACK,
-            attackDice: "D4-1",
+            attackDice: "D4",
             target: {
               controller: "sourceController",
               kind: CardKind.CREATURE,
@@ -592,16 +586,13 @@ export const fishCards = [
           },
         },
       },
-      {
-        ...toxicPassive,
-        text: "If eaten, your opponent flips a coin. If tails, they discard the consuming card.",
-      },
+      venomous,
     ],
 
     onPlay: [],
 
     actions: [],
-    defense: { dice: "D4-2" },
+    defense: { dice: "D6" },
     flavorText:
       "Lionfish drift like ornate fans, herding small fish with wide fins before a lightning strike.",
     set: { id: "genesis", name: "Genesis", collectorNumber: null, totalInSet: null },
@@ -647,7 +638,7 @@ export const fishCards = [
     sortOrder: 210,
 
     cost: { rp: 1 },
-    victoryPoints: 1,
+    victoryPoints: 2,
     tags: ["creature", "fish", "damselfish"],
 
     bio: {
@@ -694,17 +685,8 @@ export const fishCards = [
     image: "/images/cards/fish/Reef/french-angelfish.png",
     sortOrder: 211,
 
-    cost: { rp: 4 },
+    cost: { rp: 3 },
     victoryPoints: 3,
-    bonusVictoryPoints: {
-      amount: 2,
-      condition: {
-        type: "cardInPlay",
-        cardId: "coral-reef",
-        zone: Zone.YOUR_REEF,
-      },
-      text: "If Coral Reef is in play, gain two additional victory points while this card is on your reef.",
-    },
 
     tags: ["creature", "fish", "angelfish"],
 
@@ -719,7 +701,7 @@ export const fishCards = [
     },
 
     playRequirements: [],
-    passives: [],
+    passives: [ecoBoost(1)],
     onPlay: [],
     actions: [],
     defense: { dice: "D6" },
@@ -830,16 +812,7 @@ export const fishCards = [
     sortOrder: 214,
 
     cost: { rp: 4 },
-    victoryPoints: 3,
-    bonusVictoryPoints: {
-      amount: 1,
-      condition: {
-        type: "cardInPlay",
-        cardId: "coral-reef",
-        zone: Zone.YOUR_REEF,
-      },
-      text: "If Coral Reef is in play, gain one additional victory point while this card is on your reef.",
-    },
+    victoryPoints: 4,
 
     tags: ["creature", "fish", "angelfish"],
 
@@ -853,7 +826,7 @@ export const fishCards = [
     },
 
     playRequirements: [],
-    passives: [],
+    passives: [ecoBoost(2)],
     onPlay: [],
     actions: [],
     defense: { dice: "D6" },
@@ -883,8 +856,8 @@ export const fishCards = [
       weight: "300 g",
     },
 
-    playRequirements: [requiresCoralReef],
-    passives: [],
+    playRequirements: [],
+    passives: [ecoBoost(1)],
     onPlay: [],
     actions: [],
     defense: { dice: "D4" },

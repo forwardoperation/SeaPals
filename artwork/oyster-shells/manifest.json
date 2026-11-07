@@ -1,0 +1,95 @@
+{
+  "source_photo": "../oyster-background/reference.png",
+  "source_geometry": "figma-before.json",
+  "settings": {
+    "colormode": "color",
+    "hierarchical": "stacked",
+    "mode": "spline",
+    "filter_speckle": 6,
+    "color_precision": 6,
+    "layer_difference": 16,
+    "corner_threshold": 80,
+    "length_threshold": 3.5,
+    "max_iterations": 10,
+    "splice_threshold": 45,
+    "path_precision": 2
+  },
+  "source_prefilter_gaussian_radius": 1.35,
+  "assets": [
+    {
+      "name": "rear-oyster",
+      "title": "Rear oyster - amber limestone plates",
+      "file": "rear-oyster.svg",
+      "outline_node_id": "4473:42167",
+      "outline_parent_id": "4473:42011",
+      "page_position": {
+        "x": 1509.5,
+        "y": -91
+      },
+      "source_position": {
+        "x": 708.5,
+        "y": 335
+      },
+      "width": 430,
+      "height": 305.5,
+      "color_contour_paths": 322,
+      "total_visible_paths": 324,
+      "bytes": 239456,
+      "embedded_images": 0,
+      "external_references": 0,
+      "trace_settings": {
+        "colormode": "color",
+        "hierarchical": "stacked",
+        "mode": "spline",
+        "filter_speckle": 6,
+        "color_precision": 6,
+        "layer_difference": 16,
+        "corner_threshold": 80,
+        "length_threshold": 3.5,
+        "max_iterations": 10,
+        "splice_threshold": 45,
+        "path_precision": 2
+      },
+      "texture_group": "Shell-color-contours",
+      "suggested_texture_blur_px": 1.5
+    },
+    {
+      "name": "front-oyster",
+      "title": "Front oyster - dark olive growth ridges",
+      "file": "front-oyster.svg",
+      "outline_node_id": "4473:42165",
+      "outline_parent_id": "4483:7702",
+      "page_position": {
+        "x": 1545,
+        "y": -5
+      },
+      "source_position": {
+        "x": 744,
+        "y": 421
+      },
+      "width": 299.5,
+      "height": 304,
+      "color_contour_paths": 172,
+      "total_visible_paths": 174,
+      "bytes": 193752,
+      "embedded_images": 0,
+      "external_references": 0,
+      "trace_settings": {
+        "colormode": "color",
+        "hierarchical": "stacked",
+        "mode": "spline",
+        "filter_speckle": 9,
+        "color_precision": 8,
+        "layer_difference": 5,
+        "corner_threshold": 80,
+        "length_threshold": 3.5,
+        "max_iterations": 10,
+        "splice_threshold": 45,
+        "path_precision": 2
+      },
+      "texture_group": "Shell-color-contours",
+      "suggested_texture_blur_px": 1.5
+    }
+  ],
+  "layering": "Replace each outline in its existing parent/index; rear is behind main oyster, front is inside main oyster group."
+}

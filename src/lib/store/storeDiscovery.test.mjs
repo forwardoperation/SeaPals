@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [headerSource, footerSource, homeSource] = await Promise.all([
+const [headerSource, footerSource, homeSource, starterKitSource] = await Promise.all([
   readFile(
     new URL("../../components/layout/Header.jsx", import.meta.url),
     "utf8"
@@ -12,6 +12,7 @@ const [headerSource, footerSource, homeSource] = await Promise.all([
     "utf8"
   ),
   readFile(new URL("../../app/page.jsx", import.meta.url), "utf8"),
+  readFile(new URL("../../app/HomeStarterKit.jsx", import.meta.url), "utf8"),
 ]);
 
 test("the shared primary navigation exposes one active-aware Store tab", () => {
@@ -31,13 +32,15 @@ test("the shared footer keeps shopping and deck trials within reach", () => {
 });
 
 test("the homepage provides a complete try-before-you-buy path", () => {
-  assert.ok((homeSource.match(/href="\/store"/g)?.length ?? 0) >= 3);
+  assert.match(homeSource, /href="\/store"/);
   assert.match(homeSource, /Explore the Store/);
   assert.match(homeSource, /Try before you buy/);
   assert.match(homeSource, /href="\/decks"/);
   assert.match(homeSource, /href="\/instructions\/tutorial"/);
-  assert.match(homeSource, /href="#signup"/);
-  assert.match(homeSource, /final launch checks/);
+  assert.match(homeSource, /<HomeStarterKit\s/);
+  assert.match(homeSource, /id="signup"/);
+  assert.match(starterKitSource, /href="#signup"/);
+  assert.match(starterKitSource, /Ordering opens soon/);
   assert.doesNotMatch(homeSource, /sales tax license/i);
 });
 

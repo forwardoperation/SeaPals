@@ -1,0 +1,151 @@
+{
+  "id": "2260:30509",
+  "name": "bluefin-tuna",
+  "exportSettings": [
+    {
+      "format": "PNG",
+      "suffix": "",
+      "contentsOnly": true,
+      "colorProfile": "DOCUMENT",
+      "constraint": {
+        "type": "SCALE",
+        "value": 0.5
+      }
+    }
+  ],
+  "text": [
+    {
+      "id": "I2259:30164;3078:1180237;3052:951300",
+      "text": "Defense"
+    },
+    {
+      "id": "I2259:30164;3078:1180237;3052:951302",
+      "text": "Illus. J. Easterling"
+    },
+    {
+      "id": "I2259:30164;3078:1180237;3052:951319",
+      "text": "Oceanic Apex Predator"
+    },
+    {
+      "id": "I2259:30164;3078:1180237;3052:951322",
+      "text": "Genesis 1:21"
+    },
+    {
+      "id": "I2259:30164;3078:1180237;3052:951327",
+      "text": "PRERELEASE"
+    },
+    {
+      "id": "I2259:30164;3078:1180237;3052:951330",
+      "text": "© 2026, Sea Realm, LLC"
+    },
+    {
+      "id": "I2259:30164;2255:26721",
+      "text": "LT: 13’"
+    },
+    {
+      "id": "I2259:30164;2255:26722",
+      "text": "Scombridae"
+    },
+    {
+      "id": "I2259:30164;2255:26723",
+      "text": "WT: 1000lbs"
+    },
+    {
+      "id": "I2259:30164;2255:26724",
+      "text": "Worldwide"
+    },
+    {
+      "id": "I2259:30164;2255:28263",
+      "text": "5RP"
+    },
+    {
+      "id": "I2259:30164;2255:28264",
+      "text": "70SD"
+    },
+    {
+      "id": "I2259:30164;2255:26691;1314:109390",
+      "text": "14/64"
+    },
+    {
+      "id": "I2259:30164;2255:26726",
+      "text": "No. 015"
+    },
+    {
+      "id": "I2259:30164;2255:26686",
+      "text": "Bluefin Tuna"
+    },
+    {
+      "id": "I2259:30164;2255:26681",
+      "text": "D10"
+    },
+    {
+      "id": "I2259:30164;2255:26683",
+      "text": "5VP"
+    },
+    {
+      "id": "I2259:30164;2255:26677",
+      "text": "These colossal fish are warm-blooded, allowing them to regulate their body temperature and travel from freezing arctic to warm tropical waters."
+    },
+    {
+      "id": "I2259:30165;1302:14131",
+      "text": "Group Hunt"
+    },
+    {
+      "id": "I2259:30165;1302:14134",
+      "text": "On Play"
+    },
+    {
+      "id": "2259:30166",
+      "text": "Perform a second attack for each Tuna in your Ecosystem (Max 2)"
+    },
+    {
+      "id": "I2259:30167;1292:89622",
+      "text": "D8+5"
+    },
+    {
+      "id": "I2259:30169;1302:14123",
+      "text": "Can only be played if       Open Ocean is in your Ecosystem. If destroyed, place in your lost zone."
+    },
+    {
+      "id": "I2259:30169;1302:14126",
+      "text": "Special Rules"
+    },
+    {
+      "id": "I2259:30172;1292:91356",
+      "text": "If targeted, the opponent must first flip a coin, if tails, the attack fails."
+    },
+    {
+      "id": "I2259:30172;1292:91377",
+      "text": "Passive"
+    },
+    {
+      "id": "I2259:30172;1292:91385",
+      "text": "Agility"
+    }
+  ],
+  "rarity": [
+    {
+      "id": "I2259:30164;2255:26694",
+      "name": "Rare",
+      "visible": true
+    }
+  ],
+  "numbers": [
+    {
+      "id": "I2259:30164;2255:26691;1314:109390",
+      "text": "14/64",
+      "parent": {
+        "id": "I2259:30164;2255:26691",
+        "name": "Oceanic Set Count",
+        "children": [
+          {
+            "id": "I2259:30164;2255:26691;1314:109390",
+            "name": "4/64",
+            "type": "TEXT",
+            "visible": true
+          }
+        ]
+      }
+    }
+  ]
+}

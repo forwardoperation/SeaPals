@@ -1,7 +1,7 @@
 import { resolveOpposedRoll } from "./gameRules.mjs";
 
 export const LIONFISH_CARD_ID = "lionfish";
-export const LIONFISH_INVADER_ATTACK_DICE = "D4-1";
+export const LIONFISH_INVADER_ATTACK_DICE = "D4";
 
 function getAbilityController(entry) {
   const controller = entry?.controller ?? null;

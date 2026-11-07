@@ -1,0 +1,30 @@
+{
+  "paper-stapling-rig.stl": {
+    "dimensions_mm": [
+      222.80001831054688,
+      306.3000183105469,
+      15.700000762939453
+    ],
+    "non_manifold_edges": 0,
+    "volume_mm3": 775269.4869956562,
+    "lowest_xyz_mm": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "glue-alignment-tab.stl": {
+    "dimensions_mm": [
+      44.0,
+      15.375,
+      3.0000009536743164
+    ],
+    "non_manifold_edges": 0,
+    "volume_mm3": 1975.1129192436686,
+    "lowest_xyz_mm": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  }
+}

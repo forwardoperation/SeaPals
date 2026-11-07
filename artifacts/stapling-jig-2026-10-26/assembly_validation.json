@@ -1,0 +1,23 @@
+{
+  "assembled_and_sampled_withdrawal_overlap_count": 0,
+  "issues": [],
+  "guide_samples_mm": [
+    -1,
+    -5,
+    -15,
+    -30,
+    -60,
+    -100,
+    -150,
+    -200
+  ],
+  "bridge_samples_mm": [
+    -1,
+    -10,
+    -30,
+    -60,
+    -100,
+    -200
+  ],
+  "limitations": "Nominal printed solids only; actual media, hardware, compliance, stapler body and continuously swept surfaces require physical validation."
+}

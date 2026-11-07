@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cardsById } from "@/data/cards";
 import { getDeckAnalytics } from "@/lib/decks/deckAnalytics";
+import { getDeckSimulationWarnings } from "@/lib/decks/deckSimulationWarnings.mjs";
 import {
   createSavedDeck,
   deleteSavedDeck,
@@ -191,6 +192,7 @@ export default function AdventureDecksModal({
   const validation = useMemo(() => (
     draft ? getValidation({ id: draft.id, name: draft.name, cards: draft.cards }, save.inventory.cards) : null
   ), [draft, save.inventory.cards]);
+  const simulationWarnings = useMemo(() => getDeckSimulationWarnings(draft, cardsById), [draft]);
   const isStarterDraft = draft?.id === save.player.starterDeckId;
   const activeDeckId = save.player.activeDeckId;
   const persistedDraft = draft ? save.savedDecks[draft.id] : null;
@@ -497,6 +499,13 @@ export default function AdventureDecksModal({
                   <section className={styles.deckIssues} aria-labelledby="deck-issues-title">
                     <strong id="deck-issues-title">Before this deck can duel</strong>
                     <ul>{validation?.errors?.map((error) => <li key={error}>{error}</li>)}</ul>
+                  </section>
+                ) : null}
+
+                {simulationWarnings.length ? (
+                  <section className={styles.deckIssues} aria-label="Digital card effects">
+                    <strong>Some card effects are still being added</strong>
+                    <ul>{simulationWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
                   </section>
                 ) : null}
 

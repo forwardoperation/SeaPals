@@ -1,0 +1,130 @@
+{
+  "verifiedAt": "2026-10-04T23:10:10.477Z",
+  "origin": "https://searealm.com",
+  "pages": [
+    {
+      "route": "/",
+      "status": 200,
+      "finalUrl": "https://searealm.com/"
+    },
+    {
+      "route": "/decks",
+      "status": 200,
+      "finalUrl": "https://searealm.com/decks"
+    },
+    {
+      "route": "/store",
+      "status": 200,
+      "finalUrl": "https://searealm.com/store"
+    },
+    {
+      "route": "/simulator",
+      "status": 200,
+      "finalUrl": "https://searealm.com/simulator"
+    },
+    {
+      "route": "/adventure",
+      "status": 200,
+      "finalUrl": "https://searealm.com/adventure"
+    },
+    {
+      "route": "/gallery",
+      "status": 200,
+      "finalUrl": "https://searealm.com/gallery"
+    },
+    {
+      "route": "/encyclopedia/pilot-whale",
+      "status": 200,
+      "finalUrl": "https://searealm.com/encyclopedia/pilot-whale"
+    },
+    {
+      "route": "/encyclopedia/sperm-whale",
+      "status": 200,
+      "finalUrl": "https://searealm.com/encyclopedia/sperm-whale"
+    }
+  ],
+  "matchingSimulatorAssets": [
+    {
+      "src": "/_next/static/chunks/4bd1b696-c2f6e0877b6c10aa.js",
+      "sha256": "c44812d818aed0a5034941164dcad78b5bb7d8a00daed7a33efe3ebc6ccfb492"
+    },
+    {
+      "src": "/_next/static/chunks/3794-9e54f1de291f2323.js",
+      "sha256": "24b850633752121049ecc5e0a6877367aabb66fd2a0049d8d9ee1ddcdb22308c"
+    },
+    {
+      "src": "/_next/static/chunks/main-app-51c8aa5b78bb8bd4.js",
+      "sha256": "5bdf8fd300fc129291538f877581031824228aca6d68f4f590e55666f9ad50c5"
+    },
+    {
+      "src": "/_next/static/chunks/8500-3953cc33eeceb44e.js",
+      "sha256": "89cb18e673c5225d6b74e95ff28b3e9c26f6434089c6756ad557d89613ee7450"
+    },
+    {
+      "src": "/_next/static/chunks/8437-e74155deec521a50.js",
+      "sha256": "5537539d9a24ead04aaacd8a7174bda066f7f5e2f09b24d2738a43a37acdaab7"
+    },
+    {
+      "src": "/_next/static/chunks/2430-2cd6bcef3b7d5c26.js",
+      "sha256": "c25d05d6d76094e71f7fed802d47e5242c1b505956d9d7aa01f07f67927e7471"
+    },
+    {
+      "src": "/_next/static/chunks/9914-661f1f61cb6552ec.js",
+      "sha256": "0ab8befa39b5f5cb175d0d04f28a17e1e11fb168f2af34b22a424a1e7f7f5914"
+    },
+    {
+      "src": "/_next/static/chunks/app/layout-969bad0d7f4cd712.js",
+      "sha256": "982af0fee7c09e1e20d36e729646e0ede0782858aa4a411d321159f0de9c0357"
+    },
+    {
+      "src": "/_next/static/chunks/5517-ffc5732496d05d04.js",
+      "sha256": "8d306da077f5ddc775c9fe5f6c988860d7fc4faeff3a3acc15ababad9eb92c73"
+    },
+    {
+      "src": "/_next/static/chunks/5024-60246549f4def698.js",
+      "sha256": "68c973cd97d02075583c6f04f8743f11688c8defd8dfd23e9767535e864c8e48"
+    },
+    {
+      "src": "/_next/static/chunks/2463-4643ced718bffe88.js",
+      "sha256": "047f32811c2faf4aa47100020b27e45a16345d5df01bc99893d0193b16401c27"
+    },
+    {
+      "src": "/_next/static/chunks/6861-83977b549f400678.js",
+      "sha256": "6f5318cb0b4766bcb38c0727d4b7f0629a26d7cb8456692c3ea4502431627f81"
+    },
+    {
+      "src": "/_next/static/chunks/app/simulator/page-8ab3be3433fbd06c.js",
+      "sha256": "0725e7b39f6b6faced54957d344566d28d0526eba47adede2ef9000f319e6c5a"
+    },
+    {
+      "src": "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "sha256": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683"
+    },
+    {
+      "src": "/_next/static/chunks/webpack-ec06c1ffe6a06a51.js",
+      "sha256": "abc559ee6ded7ac5d1774d7fd2458e28c37b64e5e69c2534f224c05788b2751a"
+    }
+  ],
+  "verifiedAbilityMarkers": [
+    "abilityStun",
+    "stunCreature",
+    "neurotoxicDefense",
+    "forcedTargetInstanceId",
+    "aideBlockedUntilRound",
+    "opportunist"
+  ],
+  "whaleImages": [
+    {
+      "cardId": "pilot-whale-oceanic",
+      "src": "/images/cards/apex/Oceanic/pilot-whale.png?v=b02a72ba1efc",
+      "status": 200,
+      "sha256": "b02a72ba1efc8ff14bbfbb69bac99a26048f9cc2868c5029e8bc2035c9b2a3ac"
+    },
+    {
+      "cardId": "sperm-whale",
+      "src": "/images/cards/apex/Oceanic/sperm-whale.png?v=f3f57c62d25a",
+      "status": 200,
+      "sha256": "f3f57c62d25abfcdbf59fda40d09b9bc05561f34a27e41ec16e0ddbc25c6064c"
+    }
+  ]
+}

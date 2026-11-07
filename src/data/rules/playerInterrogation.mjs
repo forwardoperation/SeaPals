@@ -119,7 +119,7 @@ export const PLAYER_INTERROGATION = [
   answer(85, "hard", "Can those three attacks all hit the exact same card?", ["knowledge:repeated-attacks", "glossary:attack-count"], [["cannot", "not"], ["same physical target", "same target"]], "boolean", "great-white-followup"),
   answer(86, "hard", "What does the On Play ability Quick Strike do?", ["ability:quick-strike"], [["1 bite", "one bite"], ["second bite"]], "definition"),
   answer(87, "hard", "What does Coral Heal restore when that ability is on a creature?", ["ability:coral-heal"], [["1d6"], ["10 hp"]], "definition"),
-  answer(88, "hard", "What exactly is Giant Triton's Toxic Immunity protecting it from?", ["ability:toxic-immunity"], [["crown of thorns"]], "definition"),
+  answer(88, "hard", "Which creature gives Giant Triton's Starfish Hunt advantage?", ["ability:starfish-hunt"], [["crown of thorns"]], "definition"),
   answer(89, "hard", "What bonus does Sturdy give to the rest of my Corals?", ["ability:sturdy"], [["+10 hp"], ["all corals"]], "definition"),
   answer(90, "hard", "Does Photosynthesis happen at Collect, or at the start of my turn?", ["ability:photosynthesis"], [["start of your turn"], ["rp"]], "boolean"),
   answer(91, "hard", "When does Expert Hunter give Spinner Dolphins advantage?", ["ability:expert-hunter"], [["coral reef"], ["fish"]], "timing"),

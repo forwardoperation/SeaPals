@@ -2,6 +2,7 @@
   "sourceUrl": "https://docs.google.com/spreadsheets/d/1tXlN5fW1cWgbfLqIxXKJYd1bjdhXsHNHO2GirGZj_Ic/edit",
   "syncedAt": "2026-10-04T00:26:33.771Z",
   "nameOverrides": {
+    "Octopus": "Day Octopus",
     "Butterflyfish - Twinspot": "Spotfin Butterflyfish"
   },
   "sets": [
@@ -406,7 +407,7 @@
         },
         {
           "cardId": "octopus",
-          "name": "Octopus",
+          "name": "Day Octopus",
           "category": "invertebrate",
           "printings": [
             {

@@ -1124,7 +1124,7 @@ export function validateAdventureContent(content) {
     starterDecks.length !== ADVENTURE_STARTER_DECK_IDS.length
     || ADVENTURE_STARTER_DECK_IDS.some((starterDeckId) => !starterDecksById.has(starterDeckId))
   ) {
-    errors.push("starterDecks must contain exactly Coral Garden, Murky Water, and Blue Water.");
+    errors.push("starterDecks must contain exactly Coral Garden, Murky Water, and Drop Off.");
   }
   const claimedStarterDeckIds = new Set();
   for (const starterDeck of starterDecks) {

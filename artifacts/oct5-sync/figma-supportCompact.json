@@ -1,0 +1,212 @@
+[
+  {
+    "id": "259:696",
+    "name": "Whirlpool",
+    "rarity": [
+      "Rare"
+    ],
+    "number": [
+      "101/102"
+    ]
+  },
+  {
+    "id": "259:691",
+    "name": "Spearfishing",
+    "rarity": [
+      "Uncommon"
+    ],
+    "number": [
+      "85/102"
+    ]
+  },
+  {
+    "id": "259:692",
+    "name": "Coral gardener",
+    "rarity": [
+      "Common"
+    ],
+    "number": [
+      "86/102"
+    ]
+  },
+  {
+    "id": "259:697",
+    "name": "Super Whirlpool",
+    "rarity": [
+      "Rare"
+    ],
+    "number": [
+      "101/102"
+    ]
+  },
+  {
+    "id": "259:698",
+    "name": "Restocking",
+    "rarity": [
+      "Common"
+    ],
+    "number": [
+      "87/102"
+    ]
+  },
+  {
+    "id": "259:699",
+    "name": "Robotic Survey",
+    "rarity": [
+      "Uncommon"
+    ],
+    "number": [
+      "88/102"
+    ]
+  },
+  {
+    "id": "396:8478",
+    "name": "Scientist Jes",
+    "rarity": [
+      "Uncommon"
+    ],
+    "number": [
+      "56/102"
+    ]
+  },
+  {
+    "id": "259:693",
+    "name": "Full Heal",
+    "rarity": [
+      "Uncommon"
+    ],
+    "number": [
+      "87/102"
+    ]
+  },
+  {
+    "id": "259:694",
+    "name": "Capt Dani",
+    "rarity": [
+      "Rare"
+    ],
+    "number": [
+      "54/102"
+    ]
+  },
+  {
+    "id": "259:695",
+    "name": "Dr Evans",
+    "rarity": [
+      "Uncommon"
+    ],
+    "number": [
+      "55/102"
+    ]
+  },
+  {
+    "id": "259:700",
+    "name": "deep-sea-fishing-rod",
+    "rarity": [
+      "Uncommon"
+    ],
+    "number": [
+      "57/102"
+    ]
+  },
+  {
+    "id": "672:4828",
+    "name": "Coral Medicine",
+    "rarity": [
+      "Common"
+    ],
+    "number": [
+      "89/102"
+    ]
+  },
+  {
+    "id": "672:4829",
+    "name": "remote-search",
+    "rarity": [
+      "Uncommon"
+    ],
+    "number": [
+      "58/102"
+    ]
+  },
+  {
+    "id": "672:4830",
+    "name": "posion-heal",
+    "rarity": [
+      "Uncommon"
+    ],
+    "number": [
+      "90/102"
+    ]
+  },
+  {
+    "id": "672:4831",
+    "name": "Fishing",
+    "rarity": [
+      "Common"
+    ],
+    "number": [
+      "91/102"
+    ]
+  },
+  {
+    "id": "672:4832",
+    "name": "crab-trap",
+    "rarity": [
+      "Uncommon"
+    ],
+    "number": [
+      "59/102"
+    ]
+  },
+  {
+    "id": "2296:251503",
+    "name": "cast-net",
+    "rarity": [
+      "Common"
+    ],
+    "number": [
+      "63/64"
+    ]
+  },
+  {
+    "id": "672:4833",
+    "name": "Recovery",
+    "rarity": [
+      "Common"
+    ],
+    "number": [
+      "92/102"
+    ]
+  },
+  {
+    "id": "1407:140106",
+    "name": "Explorer Jordan",
+    "rarity": [
+      "Rare"
+    ],
+    "number": [
+      "101/102"
+    ]
+  },
+  {
+    "id": "1917:25068",
+    "name": "rov-lights",
+    "rarity": [
+      "Common"
+    ],
+    "number": [
+      "58/62"
+    ]
+  },
+  {
+    "id": "2738:113536",
+    "name": "ocean-jake",
+    "rarity": [
+      "Rare"
+    ],
+    "number": [
+      "93/102"
+    ]
+  }
+]

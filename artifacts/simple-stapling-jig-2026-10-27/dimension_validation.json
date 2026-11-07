@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "measured_mesh_pocket_mm": [
+    216.39999389648438,
+    279.90000915527344
+  ],
+  "measured_mesh_bed_height_mm": 12.700000762939453,
+  "notches": [
+    {
+      "side": "left",
+      "center_y": 230.49699999999999,
+      "clear_width_mm": 38.699981689453125,
+      "stop_depth_past_nominal_paper_mm": 21.293664932250977
+    },
+    {
+      "side": "right",
+      "center_y": 230.49699999999999,
+      "clear_width_mm": 38.699981689453125,
+      "stop_depth_past_nominal_paper_mm": 22.14032592773438
+    },
+    {
+      "side": "left",
+      "center_y": 46.09299999999999,
+      "clear_width_mm": 38.69999694824219,
+      "stop_depth_past_nominal_paper_mm": 21.293664932250977
+    },
+    {
+      "side": "right",
+      "center_y": 46.09299999999999,
+      "clear_width_mm": 38.69999694824219,
+      "stop_depth_past_nominal_paper_mm": 22.14032592773438
+    }
+  ],
+  "corner_rails_checked": 8
+}

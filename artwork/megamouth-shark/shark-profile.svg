@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1234" height="744" viewBox="266 194 1234 744" fill="none" role="img" aria-labelledby="title description">
+  <title id="title">Shark profile — editable outline</title>
+  <desc id="description">Hand-traced vector outline of the shark in the supplied photograph, preserving its three-quarter pose, open mouth, fins, eye, and gills. Transparent background. The upper tail continues beyond the photograph and is closed at the original right image edge, x=1480. All artwork consists of editable vector paths.</desc>
+  <g stroke="#111111" stroke-linecap="round" stroke-linejoin="round">
+    <path id="outer-profile" stroke-width="4" d="
+      M 428,214
+      C 476,212 558,230 620,243
+      C 757,270 912,315 1028,361
+      C 1051,335 1073,298 1100,269
+      C 1109,259 1120,251 1126,252
+      C 1136,256 1136,278 1137,300
+      C 1138,342 1146,393 1154,421
+      C 1201,457 1265,485 1322,493
+      C 1368,469 1402,412 1438,368
+      C 1453,348 1468,328 1480,315
+      L 1480,398
+      C 1450,438 1429,481 1424,520
+      C 1419,562 1428,618 1427,659
+      C 1402,640 1377,607 1355,580
+      C 1338,558 1320,550 1302,560
+      C 1265,580 1233,610 1199,633
+      C 1214,650 1231,674 1238,688
+      C 1218,688 1184,670 1164,651
+      C 1124,674 1085,690 1045,695
+      C 1116,746 1201,833 1264,917
+      C 1228,906 1173,874 1119,837
+      C 1040,785 971,735 930,710
+      C 879,735 813,749 739,746
+      C 646,744 563,737 497,716
+      C 415,690 347,653 311,612
+      C 294,593 284,572 287,549
+      C 289,532 300,516 315,504
+      C 333,484 339,464 337,442
+      C 336,421 322,396 316,377
+      C 311,361 313,336 317,317
+      C 326,274 350,245 380,227
+      C 395,218 411,214 428,214 Z"/>
+
+    <g id="mouth" stroke-width="3">
+      <path id="mouth-opening" d="
+        M 327,376
+        C 367,370 419,379 473,395
+        C 532,411 579,433 609,467
+        C 649,510 681,568 702,624
+        C 677,642 625,648 568,643
+        C 485,641 413,628 365,607
+        C 337,594 317,573 318,550
+        C 319,532 333,516 345,492
+        C 358,466 354,443 345,420
+        C 339,404 332,390 327,376 Z"/>
+      <path id="upper-lip" d="
+        M 316,353
+        C 337,337 397,347 446,360
+        C 513,377 570,403 608,442
+        C 659,493 690,559 706,614
+        C 714,640 705,660 685,674"/>
+      <path id="lower-lip" d="
+        M 305,520
+        C 290,548 302,579 326,603
+        C 369,646 457,673 543,683
+        C 603,691 657,685 685,674"/>
+      <path id="lower-jaw" stroke-width="2.5" d="
+        M 360,650
+        C 426,692 516,715 598,716
+        C 666,718 711,699 735,675"/>
+    </g>
+
+    <g id="eye" stroke-width="2.8" transform="rotate(-9 674 354)">
+      <ellipse id="eye-rim" cx="674" cy="354" rx="18" ry="25"/>
+      <ellipse id="pupil" cx="674" cy="356" rx="10.5" ry="15.5" fill="#111111" stroke="none"/>
+      <path id="eye-highlight" d="M 668,346 Q 671,343 674,346" stroke="#ffffff" stroke-width="2"/>
+    </g>
+
+    <g id="gills" stroke-width="2.8">
+      <path id="gill-1" d="M 876,428 C 922,530 925,628 880,692 C 865,713 845,728 820,736"/>
+      <path id="gill-2" d="M 906,449 C 943,540 945,628 906,691 C 894,710 878,725 862,732"/>
+      <path id="gill-3" d="M 934,467 C 965,550 963,629 930,684 C 921,700 910,714 895,721"/>
+      <path id="gill-4" d="M 958,485 C 981,559 976,629 952,674 C 945,688 936,699 928,706"/>
+      <path id="gill-5" d="M 979,502 C 994,567 987,625 972,658"/>
+    </g>
+
+    <g id="fin-contours" stroke-width="2.5">
+      <path id="dorsal-base" d="M 1028,361 C 1074,377 1118,399 1154,421"/>
+      <path id="pectoral-base" d="M 930,710 C 956,687 973,674 994,676 C 1012,677 1029,684 1045,695"/>
+      <path id="pectoral-fold" d="M 985,700 C 1062,747 1169,842 1240,901"/>
+      <path id="pelvic-base" d="M 1164,651 Q 1180,642 1199,633"/>
+      <path id="tail-base" d="M 1322,493 Q 1346,524 1302,560"/>
+    </g>
+  </g>
+</svg>

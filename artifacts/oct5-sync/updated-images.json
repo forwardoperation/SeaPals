@@ -1,0 +1,117 @@
+[
+  {
+    "cardId": "oceanic-manta-ray",
+    "before": "5a36c0996c79",
+    "after": "15ebd866c5e0"
+  },
+  {
+    "cardId": "bluefin-tuna",
+    "before": "852ec7360e1b",
+    "after": "7ff9a614aabd"
+  },
+  {
+    "cardId": "owlfish",
+    "before": "6d5bbbea6313",
+    "after": "40c3285ff444"
+  },
+  {
+    "cardId": "spearfishing",
+    "before": "e34891a2903d",
+    "after": "c3cb524ebb45"
+  },
+  {
+    "cardId": "robotic-survey",
+    "before": "6edf196453db",
+    "after": "c6da50fdcb9d"
+  },
+  {
+    "cardId": "capt-dani",
+    "before": "99564d2dc2cc",
+    "after": "3bcb5c7aaf59"
+  },
+  {
+    "cardId": "poison-heal",
+    "before": "ba2cd4b1a5b5",
+    "after": "1fcee0b47a39"
+  },
+  {
+    "cardId": "whirlpool",
+    "before": "ae8dca9d4b0c",
+    "after": "f10943b537b2"
+  },
+  {
+    "cardId": "coral-gardener",
+    "before": "02e82ccf9e00",
+    "after": "45c0c8f13e7e"
+  },
+  {
+    "cardId": "super-whirlpool",
+    "before": "7f2001c20e06",
+    "after": "b520a03ab4dc"
+  },
+  {
+    "cardId": "restocking",
+    "before": "19d54c923577",
+    "after": "bce3794077f1"
+  },
+  {
+    "cardId": "scientist-jes",
+    "before": "fe7bde758126",
+    "after": "cd3e2a659be5"
+  },
+  {
+    "cardId": "coral-heal",
+    "before": "e6a64be8c5bb",
+    "after": "d5eaf343f9b5"
+  },
+  {
+    "cardId": "dr-evans",
+    "before": "861968da49a9",
+    "after": "e33aa5079563"
+  },
+  {
+    "cardId": "deep-sea-fishing",
+    "before": "ae9c7a8a4ed4",
+    "after": "ebfe3b86e7c3"
+  },
+  {
+    "cardId": "coral-cement",
+    "before": "458f65321624",
+    "after": "b277101ed049"
+  },
+  {
+    "cardId": "remote-search",
+    "before": "09df7857fe59",
+    "after": "a8323967b561"
+  },
+  {
+    "cardId": "fishing",
+    "before": "299b6785f249",
+    "after": "054dbb84bff4"
+  },
+  {
+    "cardId": "crab-trap",
+    "before": "396c80532b69",
+    "after": "640d5361ce9c"
+  },
+  {
+    "cardId": "cast-net",
+    "before": "dbd32c29fa1c",
+    "after": "aeadb61bc710"
+  },
+  {
+    "cardId": "recovery",
+    "before": "063adc2092e7",
+    "after": "e1ca3ba41d14"
+  },
+  {
+    "cardId": "explorer-jordan",
+    "before": "715752e267bb",
+    "after": "5b28b653a247"
+  },
+  {
+    "cardId": "rov-lights",
+    "before": "020666c6adb4",
+    "after": "f9c7db31481d"
+  }
+]

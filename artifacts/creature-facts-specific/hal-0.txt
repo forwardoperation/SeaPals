@@ -1,0 +1,11 @@
+{
+  "response":{
+    "numFound":1,
+    "start":0,
+    "maxScore":5.5702906,
+    "numFoundExact":true,
+    "docs":[{
+      "uri_s":"https://univ-brest.hal.science/hal-00732937v1"
+    }]
+  }
+}

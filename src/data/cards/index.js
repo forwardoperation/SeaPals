@@ -2,6 +2,7 @@ import { apexCards } from "./creatures/apex";
 import { fishCards } from "./creatures/fish";
 import { predatorCards } from "./creatures/predators";
 import { invertebrateCards } from "./creatures/invertebrates";
+import { reefDeckCards } from "./creatures/reefDeckCards";
 import { deepCreatureCards } from "./creatures/deep";
 import {
   oceanicBaitballCards,
@@ -15,6 +16,7 @@ import { conditionCards } from "./conditions";
 import { validateCards } from "./validation";
 import { CardCategory, CardKind, CreatureClass, CreatureZone } from "./types";
 import galleryImages from "../gallery-images.json";
+import creatureFacts from "../creature-facts.json";
 import { applyGalleryImages } from "../../lib/cardImages.mjs";
 
 const creatureClassByCategory = {
@@ -58,6 +60,13 @@ function normalizeCreatureCard(card) {
   };
 }
 
+function applyReviewedCreatureFacts(card) {
+  const facts = creatureFacts.cards[card.id];
+  if (!facts) return card;
+  const { description, ...bio } = facts;
+  return { ...card, bio: { ...card.bio, ...bio }, flavorText: description };
+}
+
 export const allCards = applyGalleryImages([
   ...coralCards,
   ...fishCards,
@@ -65,6 +74,7 @@ export const allCards = applyGalleryImages([
   ...apexCards,
   ...predatorCards,
   ...invertebrateCards,
+  ...reefDeckCards,
   ...oceanicBaitballCards,
   ...oceanicCreatureCards,
   ...deepCreatureCards,
@@ -74,6 +84,7 @@ export const allCards = applyGalleryImages([
 ], galleryImages)
   .filter((card) => !card.galleryHidden)
   .map(normalizeCreatureCard)
+  .map(applyReviewedCreatureFacts)
   .sort((a, b) => a.sortOrder - b.sortOrder);
 
 validateCards(allCards);

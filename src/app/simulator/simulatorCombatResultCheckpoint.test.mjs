@@ -523,14 +523,14 @@ test("player combat exposes every applied contributor and rebuilds attack arithm
   assert.match(opposedBranch, /let appliedAttackDetails = \[\.\.\.modifier\.details, rolledBonus\.detail\]\.filter\(Boolean\)/);
   assert.match(
     opposedBranch,
-    /if \(attackTotal > defenseTotal && cardHasScatter\(targetEntry\.card\)\)[\s\S]*?attackTotal = scatterBase \+ scatterModifier\.flat \+ scatterRolledBonus\.flat \+ rovLightsBonus \+ flashingAlarmBonus;[\s\S]*?appliedAttackRoll = scatterBase;[\s\S]*?appliedAttackDetails = \[\.\.\.scatterModifier\.details, scatterRolledBonus\.detail\]\.filter\(Boolean\)/,
+    /if \(attackTotal > defenseTotal && cardHasScatter\(targetEntry\.card\)\)[\s\S]*?attackTotal = scatterBase \+ scatterModifier\.flat \+ scatterRolledBonus\.flat \+ flashingAlarmBonus;[\s\S]*?appliedAttackRoll = scatterBase;[\s\S]*?appliedAttackDetails = \[\.\.\.scatterModifier\.details, scatterRolledBonus\.detail\]\.filter\(Boolean\)/,
     "A Scatter reroll must replace the original roll and modifier rows rather than showing stale arithmetic",
   );
   const combatBreakdown = sourceSection(opposedBranch, "const combatBreakdown = {", "const rolls = [");
   assert.match(combatBreakdown, /attack:\s*\{[\s\S]*?cardId:\s*attacker\.id[\s\S]*?actionName:\s*attack\.actionName/);
   assert.match(combatBreakdown, /id:\s*"attack-roll"/);
   assert.match(combatBreakdown, /combatContributorsFromDetails\(/);
-  assert.match(combatBreakdown, /ROV Lights/);
+  assert.doesNotMatch(combatBreakdown, /ROV Lights/);
   assert.match(combatBreakdown, /Flashing Alarm/);
   assert.match(combatBreakdown, /total:\s*attackTotal/);
   assert.match(combatBreakdown, /defense:\s*\{[\s\S]*?cardId:\s*targetEntry\.card\.id/);

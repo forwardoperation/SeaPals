@@ -1,3 +1,5 @@
+import { TABLETOP_PROCEDURES } from "../data/rules/tabletopProcedures.mjs";
+
 const STOP_WORDS = new Set([
   "a", "an", "and", "are", "can", "card", "cards", "do", "does", "for", "from", "how", "i",
   "game", "in", "is", "it", "little", "many", "mean", "means", "of", "on", "or", "play", "the", "them",
@@ -7,9 +9,10 @@ const STOP_WORDS = new Set([
 const PHRASE_STOP_WORDS = new Set([...STOP_WORDS].filter((word) => word !== "game"));
 
 export const CORE_RULES = [
+  ...TABLETOP_PROCEDURES,
   {
     title: "How to win",
-    text: "The first player to reach the agreed Victory Point target wins. Use 30 VP for a recommended full game or 10 VP for a quick game. VP only counts while its card remains in play.",
+    text: "After resolving a play or effect, a player at or above the agreed Victory Point target wins if they have the highest VP outright. If players are tied for the highest total at or above the target, continue until one has a sole lead. Use 30 VP for a recommended full game or 10 VP for a quick game. VP only counts while its card remains in play.",
   },
   {
     title: "How you can lose",
@@ -61,11 +64,11 @@ export const CORE_RULES = [
   },
   {
     title: "Lost Zone",
-    text: "When an Apex or Filter Feeder is destroyed, place that card in its owner's Lost Zone instead of the discard pile. Cards sent to the Lost Zone are no longer in play. Lionfish has no Lost Zone instruction, so both a successful destruction and Spearfishing return it to its owner's discard pile. Other cards go to discard when destroyed unless their printed text says otherwise.",
+    text: "When an Apex or Filter Feeder is destroyed, place that card in its owner's Lost Zone instead of the discard pile. Cards sent to the Lost Zone are no longer in play. Destroying Lionfish sends it to its original owner's Lost Zone. Spearfishing explicitly discards it to its owner's discard pile. Other cards go to discard when destroyed unless their printed text says otherwise.",
   },
   {
     title: "Invader",
-    text: "Lionfish's Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish. Flip first. Targets are determined from the Lionfish owner's perspective: heads performs the D4-1 attack against a Fish controlled by that owner's opponent, normally the ecosystem holder; tails attacks another Fish controlled by the Lionfish owner. The triggering Lionfish is excluded. If the rolled branch has no legal Fish, the attack fizzles; do not switch to the other branch.",
+    text: "Lionfish's Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish. Flip first. Targets are determined from the Lionfish owner's perspective: heads performs the D4 attack against a Fish controlled by that owner's opponent, normally the ecosystem holder; tails attacks another Fish controlled by the Lionfish owner. The triggering Lionfish is excluded. If the rolled branch has no legal Fish, the attack fizzles; do not switch to the other branch.",
   },
 ];
 

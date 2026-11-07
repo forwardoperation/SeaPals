@@ -1,0 +1,22 @@
+[
+  {
+    "filename": "elkhorn-coral-editable.svg",
+    "result": {
+      "success": true,
+      "imageHash": "d954bba5b2c45677546a111964de90866d3d96ba",
+      "sizeBytes": 1811152,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3699:272784"
+    }
+  },
+  {
+    "filename": "coral-outline.svg",
+    "result": {
+      "success": true,
+      "imageHash": "50dac54ea7b7b26531a6ad787734e9e285bd3218",
+      "sizeBytes": 10773,
+      "contentType": "image/svg+xml",
+      "placedOnNodeId": "3699:7726"
+    }
+  }
+]

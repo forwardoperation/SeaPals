@@ -1,0 +1,440 @@
+{
+  "pageId": "2068:245383",
+  "cards": [
+    {
+      "id": "2677:511507",
+      "name": "Abyss",
+      "mainId": "2073:26295",
+      "mainName": "Abyss"
+    },
+    {
+      "id": "2068:318874",
+      "name": "chimera",
+      "mainId": "1885:181563",
+      "mainName": "chimera"
+    },
+    {
+      "id": "2642:61708",
+      "name": "giant-squid",
+      "mainId": "1811:12856",
+      "mainName": "giant-squid"
+    },
+    {
+      "id": "3994:529777",
+      "name": "chimera",
+      "mainId": "1885:181563",
+      "mainName": "chimera"
+    },
+    {
+      "id": "3994:752641",
+      "name": "goblin-shark",
+      "mainId": "1756:258533",
+      "mainName": "goblin-shark"
+    },
+    {
+      "id": "3994:753190",
+      "name": "goblin-shark",
+      "mainId": "1756:258533",
+      "mainName": "goblin-shark"
+    },
+    {
+      "id": "2068:318249",
+      "name": "cookie-cutter-shark",
+      "mainId": "1885:182154",
+      "mainName": "cookie-cutter-shark"
+    },
+    {
+      "id": "3994:753738",
+      "name": "cookie-cutter-shark",
+      "mainId": "1885:182154",
+      "mainName": "cookie-cutter-shark"
+    },
+    {
+      "id": "2068:316184",
+      "name": "giant-red-shrimp",
+      "mainId": "1916:16625",
+      "mainName": "giant-red-shrimp"
+    },
+    {
+      "id": "2068:316629",
+      "name": "giant-red-shrimp",
+      "mainId": "1916:16625",
+      "mainName": "giant-red-shrimp"
+    },
+    {
+      "id": "3994:754647",
+      "name": "giant-isopod",
+      "mainId": "1916:16631",
+      "mainName": "giant-isopod"
+    },
+    {
+      "id": "3994:755102",
+      "name": "giant-isopod",
+      "mainId": "1916:16631",
+      "mainName": "giant-isopod"
+    },
+    {
+      "id": "2068:315543",
+      "name": "deep-cucumber",
+      "mainId": "1916:16624",
+      "mainName": "deep-cucumber"
+    },
+    {
+      "id": "3994:756025",
+      "name": "deep-cucumber",
+      "mainId": "1916:16624",
+      "mainName": "deep-cucumber"
+    },
+    {
+      "id": "3994:756479",
+      "name": "deep-sea-jelly",
+      "mainId": "1916:16627",
+      "mainName": "deep-sea-jelly"
+    },
+    {
+      "id": "2068:312901",
+      "name": "fangtooth-fish",
+      "mainId": "1901:9375",
+      "mainName": "fangtooth-fish"
+    },
+    {
+      "id": "3994:755556",
+      "name": "vampire-squid",
+      "mainId": "1916:16630",
+      "mainName": "vampire-squid"
+    },
+    {
+      "id": "3994:756934",
+      "name": "vampire-squid",
+      "mainId": "1916:16630",
+      "mainName": "vampire-squid"
+    },
+    {
+      "id": "2068:314901",
+      "name": "deep-sea-jelly",
+      "mainId": "1916:16627",
+      "mainName": "deep-sea-jelly"
+    },
+    {
+      "id": "2068:311848",
+      "name": "humpback-anglerfish",
+      "mainId": "1901:9373",
+      "mainName": "humpback-anglerfish"
+    },
+    {
+      "id": "2068:314404",
+      "name": "black-swallower",
+      "mainId": "1901:9376",
+      "mainName": "black-swallower"
+    },
+    {
+      "id": "2068:312375",
+      "name": "humpback-anglerfish",
+      "mainId": "1901:9373",
+      "mainName": "humpback-anglerfish"
+    },
+    {
+      "id": "2068:313907",
+      "name": "black-swallower",
+      "mainId": "1901:9376",
+      "mainName": "black-swallower"
+    },
+    {
+      "id": "3994:757402",
+      "name": "fangtooth-fish",
+      "mainId": "1901:9375",
+      "mainName": "fangtooth-fish"
+    },
+    {
+      "id": "2068:311096",
+      "name": "bristlemouth",
+      "mainId": "1901:9369",
+      "mainName": "bristlemouth"
+    },
+    {
+      "id": "2068:310515",
+      "name": "barrel-eye-fish",
+      "mainId": "1901:9374",
+      "mainName": "barrel-eye-fish"
+    },
+    {
+      "id": "2068:309707",
+      "name": "owlfish",
+      "mainId": "1901:9370",
+      "mainName": "owlfish"
+    },
+    {
+      "id": "3994:758038",
+      "name": "owlfish",
+      "mainId": "1901:9370",
+      "mainName": "owlfish"
+    },
+    {
+      "id": "2068:310224",
+      "name": "barrel-eye-fish",
+      "mainId": "1901:9374",
+      "mainName": "barrel-eye-fish"
+    },
+    {
+      "id": "2068:311472",
+      "name": "bristlemouth",
+      "mainId": "1901:9369",
+      "mainName": "bristlemouth"
+    },
+    {
+      "id": "2068:309329",
+      "name": "Fishing",
+      "mainId": "672:4831",
+      "mainName": "Fishing"
+    },
+    {
+      "id": "2068:250148",
+      "name": "Dr Evans",
+      "mainId": "259:695",
+      "mainName": "Dr Evans"
+    },
+    {
+      "id": "3994:767298",
+      "name": "Dr Evans",
+      "mainId": "259:695",
+      "mainName": "Dr Evans"
+    },
+    {
+      "id": "2068:263222",
+      "name": "deep-sea-fishing-rod",
+      "mainId": "259:700",
+      "mainName": "deep-sea-fishing-rod"
+    },
+    {
+      "id": "2068:293337",
+      "name": "remote-search",
+      "mainId": "672:4829",
+      "mainName": "remote-search"
+    },
+    {
+      "id": "2068:250672",
+      "name": "Coral gardener",
+      "mainId": "259:692",
+      "mainName": "Coral gardener"
+    },
+    {
+      "id": "2068:250671",
+      "name": "Coral gardener",
+      "mainId": "259:692",
+      "mainName": "Coral gardener"
+    },
+    {
+      "id": "2068:256813",
+      "name": "remote-search",
+      "mainId": "672:4829",
+      "mainName": "remote-search"
+    },
+    {
+      "id": "2068:295664",
+      "name": "remote-search",
+      "mainId": "672:4829",
+      "mainName": "remote-search"
+    },
+    {
+      "id": "2068:301847",
+      "name": "deep-sea-fishing-rod",
+      "mainId": "259:700",
+      "mainName": "deep-sea-fishing-rod"
+    },
+    {
+      "id": "2068:302043",
+      "name": "crab-trap",
+      "mainId": "672:4832",
+      "mainName": "crab-trap"
+    },
+    {
+      "id": "3994:758773",
+      "name": "crab-trap",
+      "mainId": "672:4832",
+      "mainName": "crab-trap"
+    },
+    {
+      "id": "2068:287679",
+      "name": "bamboo-coral-base",
+      "mainId": "1929:17146",
+      "mainName": "bamboo-coral-base"
+    },
+    {
+      "id": "2068:286859",
+      "name": "bamboo-coral-base",
+      "mainId": "1929:17146",
+      "mainName": "bamboo-coral-base"
+    },
+    {
+      "id": "2068:287269",
+      "name": "bamboo-coral-base",
+      "mainId": "1929:17146",
+      "mainName": "bamboo-coral-base"
+    },
+    {
+      "id": "2068:286449",
+      "name": "bamboo-coral-base",
+      "mainId": "1929:17146",
+      "mainName": "bamboo-coral-base"
+    },
+    {
+      "id": "2068:285102",
+      "name": "bamboo-coral-stage-1",
+      "mainId": "1929:17147",
+      "mainName": "bamboo-coral-stage-1"
+    },
+    {
+      "id": "2068:285551",
+      "name": "bamboo-coral-stage-1",
+      "mainId": "1929:17147",
+      "mainName": "bamboo-coral-stage-1"
+    },
+    {
+      "id": "2068:281063",
+      "name": "bamboo-coral-stage-2",
+      "mainId": "1929:17148",
+      "mainName": "bamboo-coral-stage-2"
+    },
+    {
+      "id": "2068:288528",
+      "name": "Scientist Jes",
+      "mainId": "396:8478",
+      "mainName": "Scientist Jes"
+    },
+    {
+      "id": "3994:758673",
+      "name": "Scientist Jes",
+      "mainId": "396:8478",
+      "mainName": "Scientist Jes"
+    },
+    {
+      "id": "2068:284478",
+      "name": "bamboo-coral-stage-2",
+      "mainId": "1929:17148",
+      "mainName": "bamboo-coral-stage-2"
+    },
+    {
+      "id": "2068:288089",
+      "name": "mushroom-coral-base",
+      "mainId": "1929:17143",
+      "mainName": "mushroom-coral-base"
+    },
+    {
+      "id": "2068:280634",
+      "name": "mushroom-coral-base",
+      "mainId": "1929:17143",
+      "mainName": "mushroom-coral-base"
+    },
+    {
+      "id": "2068:280224",
+      "name": "mushroom-coral-base",
+      "mainId": "1929:17143",
+      "mainName": "mushroom-coral-base"
+    },
+    {
+      "id": "2068:284068",
+      "name": "mushroom-coral-base",
+      "mainId": "1929:17143",
+      "mainName": "mushroom-coral-base"
+    },
+    {
+      "id": "2068:279759",
+      "name": "mushroom-coral-stage-1",
+      "mainId": "1929:17144",
+      "mainName": "mushroom-coral-stage-1"
+    },
+    {
+      "id": "2068:275035",
+      "name": "mushroom-coral-stage-1",
+      "mainId": "1929:17144",
+      "mainName": "mushroom-coral-stage-1"
+    },
+    {
+      "id": "2068:283423",
+      "name": "mushroom-coral-stage 3",
+      "mainId": "1929:17145",
+      "mainName": "mushroom-coral-stage 2"
+    },
+    {
+      "id": "2068:252238",
+      "name": "mushroom-coral-stage 2",
+      "mainId": "1929:17145",
+      "mainName": "mushroom-coral-stage 2"
+    }
+  ],
+  "references": [
+    {
+      "id": "2298:446034",
+      "children": [
+        {
+          "id": "2298:446035",
+          "name": "OpenOceanBackdrop"
+        },
+        {
+          "id": "2298:446036",
+          "name": "Backdrop"
+        },
+        {
+          "id": "2298:446037",
+          "name": "LightShaft"
+        },
+        {
+          "id": "2298:446038",
+          "name": "LightShaft"
+        },
+        {
+          "id": "2298:446039",
+          "name": "LightShaft"
+        },
+        {
+          "id": "2298:446040",
+          "name": "LightShaft"
+        },
+        {
+          "id": "2298:446041",
+          "name": "LightShaft"
+        },
+        {
+          "id": "2298:446042",
+          "name": "Draw a card (you must do this at the beginning of every turn) Collect RP from Corals Spend Your RP Play Creatures Play/Upgrade Corals Purchase Structure Cards Play Any Support Cards Perform Any Creature Actions (As many as you want, but cannot play the same action twice in one turn from the same creature. Some actions cost RP) End Your Turn"
+        },
+        {
+          "id": "2298:446043",
+          "name": "What You Can Do On Your Turn"
+        },
+        {
+          "id": "2298:446044",
+          "name": "Group 4"
+        }
+      ],
+      "text": "Draw a card (you must do this at the beginning of every turn)\nCollect RP from Corals\nSpend Your RP\nPlay Creatures\nPlay/Upgrade Corals\nPurchase Structure Cards\nPlay Any Support Cards\nPerform Any Creature Actions (As many as you want, but cannot play the same action twice in one turn from the same creature. Some actions cost RP)\nEnd Your Turn | What You Can Do On Your Turn | TM | TRADING CARD GAME"
+    },
+    {
+      "id": "2893:234348",
+      "children": [],
+      "text": ""
+    },
+    {
+      "id": "2074:53602",
+      "children": [
+        {
+          "id": "2074:53685",
+          "name": "Rectangle 839"
+        },
+        {
+          "id": "2074:53604",
+          "name": "Darkness Shroud"
+        },
+        {
+          "id": "2074:53605",
+          "name": "A strong attacking, steady growth deck which relies on the darkness of the Abyss to shroud it’s many attackers."
+        },
+        {
+          "id": "2074:53606",
+          "name": "Group 25"
+        }
+      ],
+      "text": "Darkness\nShroud | A strong attacking, steady growth deck which relies on the darkness of the Abyss to shroud it’s many attackers. | Offense | Defense | Economy | Consistency | Tempo | Filter Feeder | Apex | Predator | Fish | Invertebrate"
+    }
+  ]
+}

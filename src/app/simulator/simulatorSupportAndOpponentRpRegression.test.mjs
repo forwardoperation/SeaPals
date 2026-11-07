@@ -31,9 +31,9 @@ test("every Support path that formerly reopened the legacy hand sheet uses the V
     "function completeInvasivePlacement",
   );
   const recovery = sourceSection(
-    playCard,
-    'if (card.id === "recovery")',
-    'if (card.id === "scientist-jes")',
+    simulatorSource,
+    'function completeRecovery(cardId)',
+    'function ',
   );
   const singleSearch = sourceSection(
     simulatorSource,
@@ -57,7 +57,7 @@ test("every Support path that formerly reopened the legacy hand sheet uses the V
   );
 
   for (const [name, section] of [
-    ["Recovery tails", recovery],
+    ["Recovery completion", recovery],
     ["single-card search", singleSearch],
     ["multi-card search", multipleSearch],
     ["Support cancellation", cancelSearch],
@@ -111,13 +111,13 @@ test("opponent RP collection snapshots sources before any Support or permanent c
   );
 
   assert.match(opponentTurn, /const startTurnCorals = current\.corals\.map/);
-  assert.match(opponentTurn, /const income = 1 \+ getEcosystemStartTurnRp\(startTurnCorals, activeCondition\)/);
-  assert.match(opponentTurn, /const rpSources = getEcosystemStartTurnRpSources\(startTurnCorals, activeCondition\)\.map/);
+  assert.match(opponentTurn, /const income = 1 \+ getEcosystemStartTurnRp\(startTurnCorals, activeCondition, current\.creatureStatuses\)/);
+  assert.match(opponentTurn, /const rpSources = getEcosystemStartTurnRpSources\(startTurnCorals, activeCondition, current\.creatureStatuses\)\.map/);
   assert.match(opponentTurn, /const startOfTurnCollection = \{[\s\S]*?rpSources,[\s\S]*?requestedDraws,/);
 
-  const sourceSnapshotIndex = opponentTurn.indexOf("const rpSources = getEcosystemStartTurnRpSources(startTurnCorals, activeCondition)");
+  const sourceSnapshotIndex = opponentTurn.indexOf("const rpSources = getEcosystemStartTurnRpSources(startTurnCorals, activeCondition, current.creatureStatuses)");
   const startStateIndex = opponentTurn.indexOf("const startOfTurnState = reconcileOpponentInstances(current, next)");
-  const supportPlayIndex = opponentTurn.indexOf("const supportResult = runOpponentSupports(next)");
+  const supportPlayIndex = opponentTurn.indexOf("const supportResult = runOpponentSupports(next,");
   const permanentPlayIndex = opponentTurn.indexOf("const permanentPlays = [{");
 
   assert.ok(sourceSnapshotIndex >= 0 && sourceSnapshotIndex < startStateIndex);

@@ -1,0 +1,35 @@
+{
+  "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
+  "pageId": "4473:42011",
+  "sessionId": "0c8d7469-69cb-484b-a251-09cb646c350c",
+  "assets": [
+    {
+      "file": "rear-oyster.svg",
+      "nodeId": "4486:56743",
+      "name": "Oyster 2 — pale rear shell",
+      "originalGuide": "4473:42167",
+      "x": 1509.5,
+      "y": -91,
+      "width": 430,
+      "height": 305.5,
+      "vectorCount": 325
+    },
+    {
+      "file": "front-oyster.svg",
+      "nodeId": "4486:57075",
+      "name": "Oyster 3 — dark foreground shell",
+      "originalGuide": "4473:42165",
+      "parent": "4483:7702",
+      "x": 1545,
+      "y": -5,
+      "width": 299.5,
+      "height": 304,
+      "vectorCount": 175
+    }
+  ],
+  "nativeTextureBlurPx": 1.5,
+  "originalGuides": "Preserved but hidden",
+  "embeddedImages": 0,
+  "verification": "Confirmed exact original bounds and parent order, editable vector masks and gradients, no image fills. Full Figma page screenshot visually checked after composition.",
+  "preview": "figma-composition-after.png"
+}

@@ -1,0 +1,228 @@
+[
+  {
+    "id": "1901:9370",
+    "name": "owlfish",
+    "exportSettings": [
+      {
+        "format": "PNG",
+        "suffix": "",
+        "contentsOnly": true,
+        "colorProfile": "DOCUMENT",
+        "constraint": {
+          "type": "SCALE",
+          "value": 0.5
+        }
+      }
+    ],
+    "text": [
+      {
+        "id": "I1885:182397;3068:1071710;3052:951300",
+        "text": "Defense"
+      },
+      {
+        "id": "I1885:182397;3068:1071710;3052:951302",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I1885:182397;3068:1071710;3052:951319",
+        "text": "Deep Fish"
+      },
+      {
+        "id": "I1885:182397;3068:1071710;3052:951322",
+        "text": "Genesis 1:21"
+      },
+      {
+        "id": "I1885:182397;3068:1071710;3052:951327",
+        "text": "PRERELEASE"
+      },
+      {
+        "id": "I1885:182397;3068:1071710;3052:951330",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I1885:182397;2266:228981;2042:55508",
+        "text": "50/62"
+      },
+      {
+        "id": "I1885:182397;2058:17664",
+        "text": "No. 145"
+      },
+      {
+        "id": "I1885:182397;1993:12218",
+        "text": "LT: 6.5”"
+      },
+      {
+        "id": "I1885:182397;1993:12219",
+        "text": "Deep-Sea Smelt"
+      },
+      {
+        "id": "I1885:182397;1993:12220",
+        "text": "WT: 1oz"
+      },
+      {
+        "id": "I1885:182397;1993:12221",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I1885:182397;1867:66438",
+        "text": "2RP"
+      },
+      {
+        "id": "I1885:182397;1867:66439",
+        "text": "2VP"
+      },
+      {
+        "id": "I1885:182397;1867:66440",
+        "text": "Owlfish"
+      },
+      {
+        "id": "I1885:182397;1867:66437",
+        "text": "These stealthy predators drift through pitch-black environments using their massive eyes to spot the faintest glimmers of bioluminescent prey."
+      },
+      {
+        "id": "I1885:182397;1867:66436",
+        "text": "D4-2"
+      },
+      {
+        "id": "I1885:182645;1302:14131",
+        "text": "Snap"
+      },
+      {
+        "id": "I1885:182645;1302:14134",
+        "text": "On Play"
+      },
+      {
+        "id": "I1885:182646;1292:89622",
+        "text": "D4"
+      },
+      {
+        "id": "I2407:562756;1292:91356",
+        "text": "If       Abyss is in play, gain +2 Defense"
+      },
+      {
+        "id": "I2407:562756;1292:91377",
+        "text": "Passive"
+      },
+      {
+        "id": "I2407:562756;1292:91385",
+        "text": "Darkness Shroud"
+      }
+    ],
+    "rarity": [
+      {
+        "id": "I1885:182397;1993:12188",
+        "name": "Common",
+        "visible": true
+      }
+    ]
+  },
+  {
+    "id": "2285:31385",
+    "name": "bluefin-tuna-juvenile",
+    "exportSettings": [
+      {
+        "format": "PNG",
+        "suffix": "",
+        "contentsOnly": true,
+        "colorProfile": "DOCUMENT",
+        "constraint": {
+          "type": "SCALE",
+          "value": 0.5
+        }
+      }
+    ],
+    "text": [
+      {
+        "id": "I2280:19171;3078:1181658;3052:951300",
+        "text": "Defense"
+      },
+      {
+        "id": "I2280:19171;3078:1181658;3052:951302",
+        "text": "Illus. J. Easterling"
+      },
+      {
+        "id": "I2280:19171;3078:1181658;3052:951319",
+        "text": "Oceanic Fish"
+      },
+      {
+        "id": "I2280:19171;3078:1181658;3052:951322",
+        "text": "Genesis 1:21"
+      },
+      {
+        "id": "I2280:19171;3078:1181658;3052:951327",
+        "text": "PRERELEASE"
+      },
+      {
+        "id": "I2280:19171;3078:1181658;3052:951330",
+        "text": "© 2026, Sea Realm, LLC"
+      },
+      {
+        "id": "I2280:19171;1993:12085",
+        "text": "Bluefin Tuna (Juvenile)"
+      },
+      {
+        "id": "I2280:19171;2042:55521",
+        "text": "No. 014"
+      },
+      {
+        "id": "I2280:19171;1993:12121",
+        "text": "LT: 2’"
+      },
+      {
+        "id": "I2280:19171;1993:12122",
+        "text": "Scombridae"
+      },
+      {
+        "id": "I2280:19171;1993:12123",
+        "text": "WT: 20lbs"
+      },
+      {
+        "id": "I2280:19171;1993:12124",
+        "text": "Worldwide"
+      },
+      {
+        "id": "I2280:19171;1993:12082",
+        "text": "D4"
+      },
+      {
+        "id": "I2280:19171;1993:12083",
+        "text": "3RP"
+      },
+      {
+        "id": "I2280:19171;2035:10028",
+        "text": "20SD"
+      },
+      {
+        "id": "I2280:19171;1993:12084",
+        "text": "3VP"
+      },
+      {
+        "id": "I2280:19171;1993:12078",
+        "text": "They transform in size from nearly microscopic larvae to 3-foot predatory fish in just three years, gathering in large, protective schools."
+      },
+      {
+        "id": "I2280:19171;1993:12090;1314:109390",
+        "text": "46/64"
+      },
+      {
+        "id": "I2280:19172;1292:91356",
+        "text": "Search your deck for a      Tuna, show it to your opponent, and place it into your hand."
+      },
+      {
+        "id": "I2280:19172;1292:91377",
+        "text": "Passive"
+      },
+      {
+        "id": "I2280:19172;1292:91385",
+        "text": "Tuna School"
+      }
+    ],
+    "rarity": [
+      {
+        "id": "I2280:19171;1993:12091",
+        "name": "Common",
+        "visible": true
+      }
+    ]
+  }
+]

@@ -1,0 +1,171 @@
+SEA REALM — STACK ALIGNMENT AND STAPLING JIG
+Blender 5.2.3 prototype, October 26, 2026
+
+STATUS
+This is an editable, digitally checked prototype. Stapler fit, printed scale,
+media thickness, sliding friction and repeatability have not been physically
+validated. Measure the remaining stapler dimensions before printing the full kit.
+The user's original paper-stapling-rig.blend was only inspected and is unchanged.
+
+OPEN
+SeaRealm_Stapling_Jig_PROTOTYPE.blend — assembled editable model, millimeter units.
+01_alignment_assembly.png — loading view, top sheet hidden to show glue and guide.
+02_top_alignment.png — plan view of the same phase.
+03_stapling_phase.png — guide/supports removed; top sheet and approximate stapler.
+stl_prototype/ — 38 individual part files, including eight keys and three coupons.
+parts_manifest.json — print size, geometry checks and orientation notes per part.
+parameters.json + build_jig.py — regenerate after measurement changes.
+assembly_validation.json — nominal solid overlaps and sampled withdrawal checks.
+backing_board_hardware_relief.csv — 16 underside hardware clearance locations.
+
+The stapler shown in the render is only a rough envelope. Its body is not a
+measured replica. Paper, glue, screws and stapler are reference objects only;
+they are not included in the STL exports.
+
+HOW IT WORKS
+Outer sheets register against two right-edge pads and one top-right pad.
+The teal U guide opens to the right and withdraws LEFT. Its thick frame rides
+in recessed tracks outside the paper; thin fingers locate the glue inside it.
+Seat the guide to the RIGHT ends of its tracks and bias it toward the TOP track
+wall. This repeatable seated position establishes the smaller sheet's offset.
+Press the glue gently against the TOP and LEFT fingers. The bottom fingers
+have 0.2 mm extra clearance, so they are guards rather than the primary datum.
+Two right-side screw clamps grip all three sheets before the guide is withdrawn.
+Teal loading bridges support paper over the stapler openings during assembly.
+After clamping, remove the guide first, then pull both loading bridges left.
+The lower stapler base slides between adjustable orange rails to an orange toe
+stop. The metal anvil, rather than printed plastic, supports the staple itself.
+
+DAILY SEQUENCE
+1. Fit both loading bridges. Leave the stapler out. Back off the hold-down screws.
+2. Place the 8.5 x 11 inch bottom sheet against the TOP and RIGHT paper datums.
+3. Seat the U guide fully right and toward its top track wall.
+4. Lay the 8.25 x 10.75 inch dry glue sheet inside; gently bias it TOP and LEFT.
+5. Place the top 8.5 x 11 inch sheet against the TOP and RIGHT paper datums.
+6. Position the two loose pressure pads and gently tighten both hold-down screws.
+7. Pull the U guide straight LEFT about 200 mm, keeping it level.
+8. Pull both loading bridges LEFT. Keep the stack clamped.
+9. Slide the stapler into the first dock until it reaches its calibrated stop;
+   press the stapler, withdraw it, then repeat at the other station.
+10. Release the clamps and remove the stack. Heat activation happens separately;
+    this is a room-temperature alignment fixture, not part of the heating press.
+
+CONFIRMED / DERIVED DIMENSIONS
+Outer paper: 215.9 x 279.4 mm (8.5 x 11 inches).
+Glue sheet: 209.55 x 273.05 mm (8.25 x 10.75 inches).
+Nominal centered border: 3.175 mm (1/8 inch) on all four sides.
+Stapler base width: approximately 38.1 mm (1.5 inches), supplied by user.
+Staple targets: 5.4187 mm from LEFT; 49.403 and 233.807 mm from TOP.
+Targets derive from Figma dashed-box centers, assuming actual-size Letter print:
+2550 x 3300 source pixels at 300 pixels/inch; boxes x25, y468/2646, w78, h231.
+The glue offset is nominal: actual trim variation and printer scaling must be
+checked on physical sheets. Mechanical registration cannot correct artwork
+printed at a different scale or position on the page.
+
+MEASURE BEFORE FULL PRINT
+A. Base width at TWO separated positions along the rigid lower base.
+B. Toe-to-staple distance: from the very front tip of the lower base BACK to
+   the center line of the metal anvil/staple strike. Default 18 mm is unmeasured.
+C. Anvil height: tabletop to the top surface of the metal anvil, with the stapler
+   sitting normally on its rubber feet. Default 12 mm is unmeasured.
+D. Actual bottom paper and glue thickness. Defaults 0.20 and 0.15 mm are guesses.
+
+The paper bed is 4 mm dock floor + anvil height = 16 mm in this prototype.
+Toe stop X = 5.4187 mm staple inset + measured toe-to-staple distance.
+The current low rails and loading bridges require anvil height above 10.2 mm.
+For a lower stapler, revise those parts rather than just changing the bed height.
+The current stop slot gives roughly -2.6 to +7.8 mm adjustment around the modeled
+position with an M3 shank; exact usable travel depends on washer and clearance.
+If the actual toe distance falls outside this range, regenerate the stop/dock.
+
+HARDWARE / BACKING
+- One flat, rigid backing board, approximately 425 x 320 x 9 mm.
+  Model board bounds: X -180..245; Y -20..300. Board is not an STL part.
+- 12 M3 bolts for rails/toe stops (M3x8 starting size), nuts and washers.
+- Four M3x25 bolts, nuts and washers for the two hold-down feet.
+- Two M4 hex nuts (standard 7 mm across flats) and two M4x30 thumbscrews.
+- Adhesive suited to your printed material for seam keys and guide splice plates.
+- Smooth protective tape for the pressure-pad undersides if needed.
+- Suitable short board screws for the eight 3.6 mm dock mounting bores.
+
+Board hardware relief is essential: the M3 nuts and bolt tips extend beneath
+the printed floors. The CSV gives 10 mm THROUGH relief holes measured from the
+board's left/bottom edges. These permit nut/bolt access; THEY ARE NOT LOCATORS.
+Fit underside nuts before fixing the pieces down. Verify actual bolt lengths
+and washer thickness; no bolt or nut may lift the printed assembly off the board.
+The M4 nuts fit into pockets on the UNDERSIDE of the clamp arms, with solid
+plastic above them taking the clamping reaction. Insert before mounting the arms.
+
+ASSEMBLY
+1. Print one width coupon first. The three channels are 38.4, 38.7 and 39.1 mm.
+   Use it to test the real rigid base, not the moving upper cover. Trim/measure
+   actual sliding clearance before committing to large parts.
+2. Join the four tray tiles on a flat surface using four underside keys. Seams
+   are butt joints; key clearance permits assembly. Align TOP/RIGHT paper datum
+   faces and verify the full paper footprint before fixing the joints.
+3. Join each pair of dock floors with two underside keys (four keys total).
+4. Assemble the four U-guide sections with three keyed splice plates. Glue both
+   the butt joints and plate interfaces on a flat surface. Pegs only align the
+   plates; no guide screws/nuts are needed. Keep every paper-contact edge smooth.
+5. Dry-fit the guide in its tray tracks. Seat it RIGHT and TOP. Measure its
+   glue-contact positions before fixing anything permanently. It must slide
+   out freely without rocking, lifting paper or allowing the film underneath.
+6. Secure the tray firmly to the backing board with suitable adhesive or thin
+   uniform adhesive tape. Align and secure both docks to the SAME board: each
+   front edge X=42 meets the back of its tray opening, and each 88 mm dock is
+   centered in the corresponding opening. Rails must be perpendicular to the
+   paper's left edge. The tray itself MUST be fixed; arm bolts do not do this.
+7. Install adjustable rails/stops using the board relief holes for nut access.
+   Fit loading bridges and verify their surfaces are flush with the paper bed.
+8. Install clamps with the M4 nuts underneath the arms. Use broad loose pads
+   and only enough pressure to prevent sheet slip.
+9. Calibrate both docks independently with scrap paper. Set smooth rail travel,
+   consistent side bias, correct anvil height, square entry and actual staple
+   centers. Tighten adjustment bolts, then repeat the check several times.
+
+PRINTING
+STL coordinates are millimeters. Import at 100% scale; check size against manifest.
+Every part's exported footprint is at most 174 mm, leaving only 6 mm total on a
+180 mm plate. Check your actual Bambu model, slicer margins and brim requirements.
+Exported guide sections are inverted so thin finger surfaces lie on the bed.
+Splice plates export flat face down with pegs upward. Clamp arms export on side.
+Loading bridges export upright: they need supports under the loading surfaces,
+or a deliberate alternative orientation. Other parts should be checked in slicer.
+0.2 mm layers produce three layers in the 0.6 mm fingers. As starting settings,
+use four walls and moderate infill; stiff, flat parts and smooth tracks matter
+more than a particular infill number. Inspect thin-finger toolpaths before printing.
+
+CALIBRATION / ACCEPTANCE
+- Confirm a 100 mm model distance prints as 100 mm. Do not scale to fit the plate.
+- Verify BOTH printed outer sheets touch their datums without curling or buckling.
+- Verify actual dry glue film catches the TOP and LEFT fingers. The modeled
+  finger-bottom gap above bottom paper is only 0.05 mm; printer Z rounding can
+  consume that margin. Tune track depth/guide seating or deburr/shim as needed.
+- Check the glue cannot ride on the fingers, slip underneath, or move when the
+  guide is pulled. Use light clamp pressure and remove burrs before testing.
+- Check bridge withdrawal and stapler insertion do not lift or drag the stack.
+- Staple sacrificial stacks at both stations. Compare actual centers with the
+  printed boxes; adjust the stops using the actual result, not the online listing.
+- Repeat on at least ten stacks and measure all four glue borders. Record the
+  spread and decide whether it meets your manufacturing tolerance.
+
+DIGITAL VALIDATION
+All 38 exported part meshes are closed, positive-volume, single connected solids.
+Nominal assembled printed solids have no detected positive-volume overlaps.
+Guide withdrawal was checked at -1,-5,-15,-30,-60,-100,-150,-200 mm.
+Bridge withdrawal was checked at -1,-10,-30,-60,-100,-200 mm with guide removed.
+These checks exclude physical tolerance, exact hardware/stapler shape, flex and
+friction. They are not evidence of achieved manufacturing repeatability.
+
+REGENERATE
+Edit parameters.json, then run in PowerShell:
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --python 'C:\Users\jacob\Documents\SeaPals\artifacts\stapling-jig-2026-10-26\build_jig.py'
+This overwrites only the generated prototype outputs in this artifact folder.
+After geometry changes, rerun verify_assembly.py against the saved .blend.
+
+SOURCES
+Figma: https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx/Sea-Realm-Production?node-id=4099-6158
+Measured component: 4317:7886; staple rectangles 4317:7880 and 4317:7884.
+Stapler listing: https://www.amazon.com/dp/B079ZV816K
+The listing presents conflicting dimensions, and does not establish the needed
+base profile, toe offset or anvil height. The model does not treat them as verified.

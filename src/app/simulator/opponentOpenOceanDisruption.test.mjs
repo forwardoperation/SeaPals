@@ -24,8 +24,8 @@ const jiti = createJiti(filename, {
 const { cardsById } = jiti(path.join(projectRoot, "src/data/cards/index.js"));
 const { getPlayableDeckById } = jiti(path.join(projectRoot, "src/data/decks/prebuiltDecks.js"));
 
-function getOnPlayAttacks(card) {
-  return (card?.onPlay ?? []).flatMap((ability) => {
+function getAvailableAttacks(card) {
+  return [...(card?.onPlay ?? []), ...(card?.actions ?? [])].flatMap((ability) => {
     const legacy = parseLegacyAttackText(typeof ability === "string" ? ability : ability?.text);
     if (legacy) return [legacy];
     const structured = (ability?.effects ?? []).find((effect) => effect.type === "attack" && effect.attackDice);
@@ -37,17 +37,17 @@ function uniqueDeckCards(deckId) {
   return getPlayableDeckById(deckId).cards.map(({ cardId }) => cardsById[cardId]).filter(Boolean);
 }
 
-test("Open Ocean has broad legal attack coverage into the Disruption creature package", () => {
+test("revised Open Ocean retains its seven printed attack options against Disruption", () => {
   const openOceanCards = uniqueDeckCards("open-ocean-hunt");
   const disruptionCreatures = uniqueDeckCards("disruption").filter((card) => card.kind === "creature");
   const attackersWithTargets = openOceanCards.filter((card) => (
-    getOnPlayAttacks(card).some((attack) => disruptionCreatures.some((target) => attackCanTargetCard(target, attack)))
+    getAvailableAttacks(card).some((attack) => disruptionCreatures.some((target) => attackCanTargetCard(target, attack)))
   ));
 
-  assert.ok(attackersWithTargets.length >= 8, `expected broad matchup pressure, found ${attackersWithTargets.map((card) => card.id).join(", ")}`);
-  assert.ok(attackersWithTargets.some((card) => card.id === "frigate-tuna"));
-  assert.ok(attackersWithTargets.some((card) => card.id === "sailfish"));
-  assert.ok(attackersWithTargets.some((card) => card.id === "swordfish"));
+  assert.deepEqual(attackersWithTargets.map((card) => card.id).sort(), [
+    "blue-sea-dragon", "frigate-tuna", "killer-whale-oceanic", "loggerhead-sea-turtle",
+    "sailfish", "silky-shark", "yellowfin-tuna",
+  ]);
 });
 
 test("Hard scores the actual Open Ocean attack line above another passive school upgrade", () => {
@@ -83,7 +83,7 @@ test("Hard scores the actual Open Ocean attack line above another passive school
   assert.ok(attackScore > upgradeScore);
 });
 
-test("Hard Darkness Shroud searches for an affordable school attacker instead of Colossal Squid", () => {
+test("Hard Darkness Shroud searches for an affordable school attacker instead of Giant Squid", () => {
   const darknessCards = uniqueDeckCards("darkness-shroud");
   const school = cardsById["herring-ball-base"];
   const predatorAndApexIds = darknessCards
@@ -93,7 +93,7 @@ test("Hard Darkness Shroud searches for an affordable school attacker instead of
     amount: 1,
     scoreCandidate: (cardId) => {
       const candidate = cardsById[cardId];
-      const attack = getOnPlayAttacks(candidate)[0] ?? null;
+      const attack = getAvailableAttacks(candidate)[0] ?? null;
       const cost = Number(candidate.cost?.rp ?? 0);
       const printedVp = Number(candidate.victoryPoints?.value ?? candidate.victoryPoints ?? 0);
       const needsAbyss = (candidate.specialRules ?? []).some((rule) => /requires?.*abyss|only be played if abyss/i.test(typeof rule === "string" ? rule : rule?.text ?? ""));
@@ -110,7 +110,7 @@ test("Hard Darkness Shroud searches for an affordable school attacker instead of
   });
 
   assert.deepEqual(selected, ["chimera"]);
-  assert.notDeepEqual(selected, ["colossal-squid"]);
+  assert.notDeepEqual(selected, ["giant-squid"]);
 });
 
 test("Hard Darkness Shroud puts Fish in its dedicated slot before flexible attack slots", () => {

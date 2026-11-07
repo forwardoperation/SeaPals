@@ -191,6 +191,15 @@ export const STRUCTURED_RULE_FACTS = [
     text: "A Support resolves its printed effect and normally goes to discard. It remains in play only when its own text explicitly says so.",
   },
   {
+    id: "support-play-limits",
+    sourceTitle: "Support cards",
+    concepts: ["aide", "aides", "aide cards", "item", "items", "item cards"],
+    intents: ["how many", "limit", "maximum", "per turn", "each turn", "same turn", "after", "already", "another", "two", "several"],
+    answerTypes: ["quantity", "boolean", "timing"],
+    values: { aidesPerTurn: 1 },
+    text: "You may play only 1 Aide per turn. You may play any number of Items, including after an Aide; Items do not use your Aide allowance. Every Support must still meet its costs, timing, targets, and other active restrictions.",
+  },
+  {
     id: "normal-attack",
     sourceTitle: "How normal attacks resolve",
     concepts: ["attack", "combat", "fight", "attacking"],
@@ -260,7 +269,7 @@ export const STRUCTURED_RULE_FACTS = [
     concepts: ["oceanic apex", "apex sacrifice", "sacrifice fish", "sacrifice predator", "killer whale", "pilot whale", "sperm whale", "shortfin mako", "bluefin tuna", "swordfish"],
     intents: ["play", "cost", "need", "sacrifice", "requirement", "qualify", "open ocean", "abyss"],
     answerTypes: ["procedure", "quantity"],
-    text: "Oceanic Apex requirements are card-specific. Shortfin Mako, Sperm Whale, Pilot Whale, and Killer Whale require Open Ocean and 2 Oceanic Predators already in your ecosystem; those Predators stay in play. Bluefin Tuna requires Open Ocean, while Swordfish allows Open Ocean or Abyss. Sacrifice cards only when a specific card explicitly instructs you to do so.",
+    text: "Apex requirements are card-specific. Shortfin Mako and Killer Whale require Open Ocean and 2 Oceanic Predators already in your ecosystem; those Predators stay in play. Sperm Whale and Pilot Whale are Deep Apex Predators and require Abyss Habitat, with no Oceanic Predator requirement. Bluefin Tuna requires Open Ocean, while Swordfish allows Open Ocean or Abyss. Sacrifice cards only when a specific card explicitly instructs you to do so.",
   },
   {
     id: "ocean-triggerfish-territorial",
@@ -287,7 +296,7 @@ export const STRUCTURED_RULE_FACTS = [
     concepts: ["lost zone", "lost pile", "destroyed apex", "destroyed filter feeder", "destroyed lionfish", "spearfishing lionfish"],
     intents: ["where", "go", "destroy", "discard", "removed"],
     answerTypes: ["location", "procedure", "boolean"],
-    text: "When an Apex or Filter Feeder is destroyed, place that physical card in its owner's Lost Zone instead of discard. Lionfish has no Lost Zone instruction, so destroying it or discarding it with Spearfishing returns it to its original owner's discard pile.",
+    text: "When an Apex or Filter Feeder is destroyed, place that physical card in its owner's Lost Zone instead of discard. Destroying Lionfish sends it to its original owner's Lost Zone. Spearfishing explicitly discards it to its original owner's discard pile.",
   },
   {
     id: "lionfish-invader",
@@ -296,7 +305,7 @@ export const STRUCTURED_RULE_FACTS = [
     intents: ["when", "start", "turn", "trigger", "owner", "opponent", "target", "no legal target", "fizzle"],
     answerTypes: ["timing", "procedure", "boolean"],
     overrideNamedAbility: true,
-    text: "Lionfish's Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish. Flip first. Targets are determined from the Lionfish owner's perspective: heads performs the D4-1 attack against a Fish controlled by that owner's opponent, normally the ecosystem holder; tails attacks another Fish controlled by the Lionfish owner. The triggering Lionfish is excluded. If the rolled branch has no legal Fish, the attack fizzles; do not switch to the other branch.",
+    text: "Lionfish's Invader triggers at the start of the turn of the player whose ecosystem physically contains Lionfish. Flip first. Targets are determined from the Lionfish owner's perspective: heads performs the D4 attack against a Fish controlled by that owner's opponent, normally the ecosystem holder; tails attacks another Fish controlled by the Lionfish owner. The triggering Lionfish is excluded. If the rolled branch has no legal Fish, the attack fizzles; do not switch to the other branch.",
   },
   {
     id: "school-density",
@@ -431,6 +440,14 @@ export const STRUCTURED_RULE_FACTS = [
     intents: ["what", "mean", "tell", "legal", "hit", "target"],
     answerTypes: ["definition", "procedure"],
     text: "Target icons identify the legal card families an attack or ability may choose. The target must also satisfy every habitat, controller, and card-text restriction.",
+  },
+  {
+    id: "cross-habitat-attacks",
+    sourceTitle: "Reading targets on attacks and abilities",
+    concepts: ["across habitats", "cross habitat", "different habitat", "same habitat", "different zone", "target habitat"],
+    intents: ["attack", "attacks", "target", "hit", "can", "allowed"],
+    answerTypes: ["boolean", "procedure"],
+    text: "The attacker's habitat does not by itself restrict which habitat it can attack. A Deep creature can attack Reef Fish only if Fish appear in its target icons or printed target list and every other restriction is met. A Deep-only target restriction excludes Reef and Oceanic; a Predator-only target icon does not include Fish, even though a Predator slot can hold Fish. Always apply controller, visibility, and card-text restrictions.",
   },
   {
     id: "star-icons",

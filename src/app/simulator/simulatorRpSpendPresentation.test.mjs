@@ -135,17 +135,17 @@ test("opponent Supports, permanents, utilities, attacks, and Regenerate carry on
 test("player utility RP spends follow the exact inspected card instance through deferred resolution", () => {
   const inspectedIdentity = sourceSection(
     simulatorSource,
-    "function getInspectedPlayerCardInstanceId(cardInspection = inspectedCard)",
+    "function getInspectedCreatureInstanceId(cardInspection = inspectedCard)",
     "function getPendingCreatureActionRpSpendPresentation(",
   );
   const pendingSpend = sourceSection(
     simulatorSource,
     "function getPendingCreatureActionRpSpendPresentation(",
-    "function beginCreatureUtilityAction(action)",
+    "function beginCreatureUtilityAction(",
   );
   const beginUtility = sourceSection(
     simulatorSource,
-    "function beginCreatureUtilityAction(action)",
+    "function beginCreatureUtilityAction(",
     "function completeCreatureDrawAction()",
   );
   const deferredUtilityResolvers = sourceSection(
@@ -155,12 +155,13 @@ test("player utility RP spends follow the exact inspected card instance through 
   );
 
   assert.match(inspectedIdentity, /return `foundation:\$\{cardInspection\.coralId\}`/);
-  assert.match(inspectedIdentity, /return `hosted:\$\{cardInspection\.hostedBySlotId\}:\$\{hostedIndex\}`/);
+  assert.match(inspectedIdentity, /return abilityInstanceId\(cardInspection\.slotId\)/);
   assert.match(inspectedIdentity, /return getLionfishSlotInstanceId\(coral, slot\)/);
-  assert.match(inspectedIdentity, /playerReefCreatureInstances\[reefIndex\]\?\.instanceId/);
-  assert.match(inspectedIdentity, /playerOrphanCreatures\[orphanIndex\]\?\.instanceId/);
+  assert.match(inspectedIdentity, /reef\[reefIndex\]\?\.instanceId/);
+  assert.match(inspectedIdentity, /orphans\[orphanIndex\]\?\.instanceId/);
   assert.match(pendingSpend, /cardInstanceId:\s*pendingAction\?\.sourceCardInstanceId/);
-  assert.match(beginUtility, /sourceCardInstanceId\s*=\s*getInspectedPlayerCardInstanceId\(inspectedCard\)/);
+  assert.match(beginUtility, /const inspection = sourceOverride\?\.inspection \?\? inspectedCard/);
+  assert.match(beginUtility, /sourceCardInstanceId\s*=\s*getInspectedPlayerCardInstanceId\(inspection\)/);
   assert.match(beginUtility, /setPendingCreatureAction\(\{[\s\S]{0,360}\bsourceCardInstanceId\b/);
   assert.match(
     deferredUtilityResolvers,
@@ -191,7 +192,7 @@ test("opponent utility RP spends retain the exact acting permanent instance", ()
 test("opponent permanent play RP spends target the newly placed instance, including follow-up plays", () => {
   const opponentTurn = sourceSection(
     simulatorSource,
-    "function runOpponentTurn(current, { startTurnAlreadyBegun = false } = {})",
+    "function runOpponentTurn(",
     "function applyOpponentFoundationDamage(",
   );
   const permanentEvents = sourceSection(

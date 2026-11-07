@@ -268,9 +268,15 @@ export const conditionCards = [
         targetCategories: [CardCategory.FILTER_FEEDER, CardCategory.APEX],
         duration: "round",
       },
+      {
+        type: EffectType.PREVENT_CARD_PLAY,
+        affectedPlayers: "all",
+        targetTags: ["creature-school"],
+        duration: "round",
+      },
     ],
 
-    text: "Filter Feeders and Apex creatures cannot be played while this card is in play.",
+    text: "Filter Feeders, Apex creatures, and Creature Schools / Baitballs cannot be played while this card is in play.",
   },
 
   {

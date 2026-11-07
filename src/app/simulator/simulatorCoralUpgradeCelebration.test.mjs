@@ -41,7 +41,7 @@ test("a legal player Coral upgrade celebrates once on the stable upgraded founda
 test("primary and Hard follow-up opponent upgrades retain exact per-play metadata", () => {
   const opponentTurn = sourceSection(
     simulatorSource,
-    "function runOpponentTurn(current, { startTurnAlreadyBegun = false } = {})",
+    "function runOpponentTurn(",
     "function applyOpponentFoundationDamage(",
   );
 

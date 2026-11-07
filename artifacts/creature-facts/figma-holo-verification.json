@@ -1,0 +1,15 @@
+{
+  "verifiedAt": "2026-10-06T02:03:02.020Z",
+  "holo": {
+    "checked": 29,
+    "errors": []
+  },
+  "exportCleanup": {
+    "removedNodeIds": [
+      "4028:405737",
+      "4028:408327",
+      "4028:411770"
+    ],
+    "preservedPageId": "4025:79142"
+  }
+}

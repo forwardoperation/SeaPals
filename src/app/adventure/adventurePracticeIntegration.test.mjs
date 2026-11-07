@@ -47,129 +47,144 @@ const { prebuiltDecks } = jiti(path.join(projectRoot, "src/data/decks/prebuiltDe
 
 const VICTORY_TARGET = 26;
 const PROFESSOR_DECK = prebuiltDecks.find((candidate) => candidate.id === "coral-garden");
-const OPPONENT_TARGET = cardsById["arrow-crab"];
 
 // These are deterministic, human-readable build plans rather than a second
 // implementation of the Simulator AI. They exercise the same card records and
 // exported rule/contract helpers used by Simulator.jsx. A component/browser
 // match remains a separate end-to-end gate.
 const STARTER_BUILD_PLANS = Object.freeze({
-  "coral-garden": Object.freeze({
-    foundations: Object.freeze([
+  "coral-garden": {
+    "foundations": [
+      "boulder-star-coral-base",
+      "boulder-star-coral-base",
+      "boulder-star-coral-base",
+      "elkhorn-coral-base"
+    ],
+    "upgrades": [
+      {
+        "baseIndex": 0,
+        "cardId": "boulder-star-coral-stage-1"
+      }
+    ],
+    "creatures": [
+      "goliath-grouper",
+      "spinner-dolphins",
+      "french-angelfish",
+      "spectacled-parrotfish",
+      "spotfin-butterflyfish",
+      "cleaner-shrimp",
+      "blue-crab",
+      "bottlenose-dolphin"
+    ],
+    "habitats": [
+      "coral-reef"
+    ],
+    "apexCardId": "bottlenose-dolphin",
+    "attackCardId": "goliath-grouper",
+    "playOrder": [
       "boulder-star-coral-base",
       "boulder-star-coral-base",
       "boulder-star-coral-base",
       "elkhorn-coral-base",
-    ]),
-    creatures: Object.freeze([
-      "frogfish",
+      "boulder-star-coral-stage-1",
+      "goliath-grouper",
+      "spinner-dolphins",
       "french-angelfish",
       "spectacled-parrotfish",
-      "mantis-shrimp",
-      "blue-crab",
-      "french-angelfish",
-      "french-angelfish",
+      "spotfin-butterflyfish",
       "cleaner-shrimp",
-      "bottlenose-dolphin",
-    ]),
-    habitats: Object.freeze(["coral-reef"]),
-    apexCardId: "bottlenose-dolphin",
-    attackCardId: "frogfish",
-    playOrder: Object.freeze([
-      "boulder-star-coral-base",
-      "boulder-star-coral-base",
-      "boulder-star-coral-base",
-      "elkhorn-coral-base",
-      "frogfish",
-      "french-angelfish",
-      "spectacled-parrotfish",
-      "mantis-shrimp",
       "blue-crab",
-      "french-angelfish",
-      "french-angelfish",
-      "cleaner-shrimp",
       "coral-reef",
-      "bottlenose-dolphin",
-    ]),
-  }),
-  "murky-water": Object.freeze({
-    foundations: Object.freeze([
+      "bottlenose-dolphin"
+    ]
+  },
+  "murky-water": {
+    "foundations": [
+      "pillar-coral-base",
+      "pillar-coral-base",
+      "pillar-coral-base",
+      "brain-coral-base"
+    ],
+    "creatures": [
+      "reef-shark",
+      "reef-shark",
+      "great-barracuda",
+      "cleaner-wrasse",
+      "sargeant-major",
+      "giant-triton",
+      "giant-triton",
+      "sea-urchin",
+      "blue-crab",
+      "bull-shark"
+    ],
+    "habitats": [
+      "coral-reef"
+    ],
+    "apexCardId": "bull-shark",
+    "attackCardId": "reef-shark",
+    "targetCardId": "french-angelfish",
+    "playOrder": [
       "pillar-coral-base",
       "pillar-coral-base",
       "pillar-coral-base",
       "brain-coral-base",
-    ]),
-    creatures: Object.freeze([
-      "spanish-hogfish",
-      "fairy-parrotfish",
+      "reef-shark",
+      "reef-shark",
+      "great-barracuda",
+      "cleaner-wrasse",
+      "sargeant-major",
+      "giant-triton",
+      "giant-triton",
       "sea-urchin",
-      "emerald-crab",
-      "octopus",
-      "reef-shark",
-      "reef-shark",
-      "hammerhead",
-    ]),
-    habitats: Object.freeze(["coral-reef"]),
-    apexCardId: "hammerhead",
-    attackCardId: "spanish-hogfish",
-    playOrder: Object.freeze([
-      "pillar-coral-base",
-      "pillar-coral-base",
-      "pillar-coral-base",
-      "brain-coral-base",
-      "spanish-hogfish",
-      "fairy-parrotfish",
-      "sea-urchin",
-      "emerald-crab",
-      "reef-shark",
-      "reef-shark",
+      "blue-crab",
       "coral-reef",
-      "octopus",
-      "hammerhead",
-    ]),
-  }),
-  "blue-water": Object.freeze({
-    foundations: Object.freeze([
+      "bull-shark"
+    ]
+  },
+  "blue-water": {
+    "foundations": [
       "boulder-star-coral-base",
       "boulder-star-coral-base",
       "boulder-star-coral-base",
-      "boulder-star-coral-base",
-    ]),
-    creatures: Object.freeze([
-      "frogfish",
-      "flounder",
+      "boulder-star-coral-base"
+    ],
+    "creatures": [
+      "winter-flounder",
+      "winter-flounder",
+      "winter-flounder",
+      "blue-tang",
+      "blue-tang",
+      "blue-tang",
+      "spanish-hogfish",
+      "blue-crab",
       "blue-crab",
       "arrow-crab",
+      "tiger-shark"
+    ],
+    "habitats": [
+      "coral-reef"
+    ],
+    "apexCardId": "tiger-shark",
+    "attackCardId": "winter-flounder",
+    "playOrder": [
+      "boulder-star-coral-base",
+      "boulder-star-coral-base",
+      "boulder-star-coral-base",
+      "boulder-star-coral-base",
+      "winter-flounder",
+      "winter-flounder",
+      "winter-flounder",
+      "blue-tang",
+      "blue-tang",
+      "blue-tang",
+      "spanish-hogfish",
       "blue-crab",
-      "fairy-parrotfish",
-      "picasso-triggerfish",
-      "porcupine-fish",
-      "flounder",
-      "giant-triton",
-      "great-white",
-    ]),
-    habitats: Object.freeze(["coral-reef"]),
-    apexCardId: "great-white",
-    attackCardId: "frogfish",
-    playOrder: Object.freeze([
-      "boulder-star-coral-base",
-      "boulder-star-coral-base",
-      "boulder-star-coral-base",
-      "boulder-star-coral-base",
-      "frogfish",
-      "flounder",
       "blue-crab",
       "arrow-crab",
-      "blue-crab",
-      "fairy-parrotfish",
-      "picasso-triggerfish",
-      "porcupine-fish",
-      "flounder",
-      "giant-triton",
       "coral-reef",
-      "great-white",
-    ]),
-  }),
+      "tiger-shark"
+    ]
+  }
 });
 
 function expandDeck(deck) {
@@ -180,7 +195,7 @@ function expandDeck(deck) {
 
 function requirePlanCardsInDeck(deck, plan) {
   const remaining = expandDeck(deck);
-  for (const cardId of [...plan.foundations, ...plan.creatures, ...plan.habitats]) {
+  for (const cardId of [...plan.foundations, ...(plan.upgrades ?? []).map((upgrade) => upgrade.cardId), ...plan.creatures, ...plan.habitats]) {
     const index = remaining.indexOf(cardId);
     assert.notEqual(index, -1, `${deck.id} is missing planned copy of ${cardId}`);
     remaining.splice(index, 1);
@@ -189,9 +204,11 @@ function requirePlanCardsInDeck(deck, plan) {
 
 function createFoundationSlots(plan) {
   return plan.foundations.flatMap((cardId, foundationIndex) => {
-    const card = cardsById[cardId];
+    const upgrade = plan.upgrades?.find((candidate) => candidate.baseIndex === foundationIndex);
+    if (upgrade) assert.equal(cardsById[cardId].upgrade?.nextCardId, upgrade.cardId);
+    const card = cardsById[upgrade?.cardId ?? cardId];
     assert.equal(card.kind, "coral", `${cardId} must be a Coral foundation`);
-    assert.equal(Number(card.stage), 0, `${cardId} must be a base foundation`);
+    assert.equal(Number(cardsById[cardId].stage), 0, `${cardId} must be a base foundation`);
     return (card.slots ?? []).flatMap((slot, slotGroupIndex) => (
       Array.from({ length: slot.count ?? 1 }, (_, copyIndex) => ({
         ...slot,
@@ -230,7 +247,7 @@ function getAttack(card) {
 }
 
 function assertPlanRequirements(plan) {
-  const expectedCards = [...plan.foundations, ...plan.creatures, ...plan.habitats].sort();
+  const expectedCards = [...plan.foundations, ...(plan.upgrades ?? []).map((upgrade) => upgrade.cardId), ...plan.creatures, ...plan.habitats].sort();
   assert.deepEqual([...plan.playOrder].sort(), expectedCards, "play order must include every planned card exactly once");
   assert.deepEqual(plan.habitats, ["coral-reef"], "the Academy plan must establish Coral Reef");
   assert.equal(cardsById[plan.apexCardId]?.category, "apex", "the Academy plan must name an Apex finisher");
@@ -322,6 +339,7 @@ function applyTutorialObservation(contract, progress, save, tutorialEvent) {
 function runStarterTableauContractSmoke(starterDeckId) {
   const deck = prebuiltDecks.find((candidate) => candidate.id === starterDeckId);
   const plan = STARTER_BUILD_PLANS[starterDeckId];
+  const OPPONENT_TARGET = cardsById[plan.targetCardId ?? "arrow-crab"];
   assert.ok(deck, `Missing starter deck ${starterDeckId}`);
   assert.ok(plan, `Missing deterministic practice plan ${starterDeckId}`);
   requirePlanCardsInDeck(deck, plan);

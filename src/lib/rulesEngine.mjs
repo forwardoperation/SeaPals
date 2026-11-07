@@ -8,6 +8,22 @@ const OUT_OF_SCOPE_PATTERN = /\b(artist|artwork|author|creator|designed the (?:l
 const UNDOCUMENTED_TERM_PATTERN = /\b(pressure markers?|armor (?:value|points?)|energy crystals?|reserve deck|evolution points?|critical hits?|speed stat|mana|initiative markers?|shield counters?|bonus lane)\b/i;
 const INTENT_ROUTES = [
   {
+    question: /\b(?:who (?:goes|plays|starts) first|who starts|who (?:takes|gets) the (?:first|opening) turn|opening (?:coin )?toss)\b|\b(?:choose|chooses|choosing|determine|decides?|select|pick)\b.*\b(?:first|starting) player\b|\b(?:first|starting) player\b.*\b(?:chosen|determined|selected|picked|decided|changes?|rotates?)\b/i,
+    title: /^Choosing the first player$/i,
+  },
+  {
+    question: /^(?=.*\b(?:conditions?|weather)\b)(?=.*\b(?:deck|pile|cards?)\b)(?=.*\b(?:empty|exhausted|exhaustion|runs? out|ran out|no (?:more|cards)|reshuffle|recycle)\b).*$/i,
+    title: /^When the Conditions Deck runs out$/i,
+  },
+  {
+    question: /^(?!.*\b(?:conditions?|weather)\b)(?=.*\b(?:decks?|piles?)\b)(?=.*\b(?:empty|exhaust\w*|deplet\w*|runs? out|ran out|reshuffle)\b).*$/i,
+    title: /^How you can lose$/i,
+  },
+  {
+    question: /^(?=.*\b(?:vp|victory points?|score|scoring|goal|finish|win|winning)\b)(?=.*\b(?:tie|ties|tied|simultaneous|simultaneously|same time|together|both)\b)(?!.*\b(?:attack|defen[cs]e|combat|dice|rolls?)\b).*$/i,
+    title: /^Simultaneous VP finishes$/i,
+  },
+  {
     question: /^(?=.*\bcorals?\b)(?=.*\bstun(?:s|ned|ning)?\b)(?=.*\b(?:how|become|became|get|got|cause|make|cards?|effects?)\b).*$/i,
     title: /^How a Coral becomes Stunned$/i,
   },
@@ -417,6 +433,38 @@ function sourcesForStructuredFact(match, rules) {
   return uniqueSources([sourceFor(match.rule), ...(glossary ? [sourceFor(glossary)] : [])]);
 }
 
+function answerFromStructuredFact(id, rules, title) {
+  const fact = STRUCTURED_RULE_FACTS.find((candidate) => candidate.id === id);
+  const rule = fact && ruleForStructuredFact(fact, rules);
+  if (!rule) return null;
+  return {
+    kind: "answer",
+    title: title ?? rule.title,
+    text: fact.text,
+    sources: sourcesForStructuredFact({ fact, rule }, rules),
+    structuredFactId: fact.id,
+  };
+}
+
+function supportPlayLimitAnswer(question, rules) {
+  if (!/\b(?:aides?|items?)\b/i.test(question)) return null;
+  if (!/\b(?:play|played|playing|use|used|count|allowed|limit|maximum|turn|round)\b/i.test(question)) return null;
+  if (!/\b(?:how many|maximum|limit|second|another|two|three|multiple|several|any number|after|before|already|then|(?:per|each|every|same|one|a) turn)\b/i.test(question)) return null;
+  return answerFromStructuredFact("support-play-limits", rules);
+}
+
+function crossHabitatAttackAnswer(question, rules, mentionedCards) {
+  // Named cards and abilities must retain their own printed target restrictions.
+  if (mentionedCards.length || findNamedAbility(question, rules, [])) return null;
+  if (/\b(?:slots?|placement)\b/i.test(question)) return null;
+  if (!/\b(?:attacks?|attacking|attacker|targets?|targeting|hits?)\b/i.test(question)) return null;
+  const habitats = new Set((question.toLowerCase().match(/\b(?:reef|oceanic|deep)\b/g) ?? []));
+  const habitatRelationship = /\b(?:habitats?|zones?)\b/i.test(question)
+    && /\b(?:across|cross|different|same|share|match|other)\b/i.test(question);
+  if (habitats.size < 2 && !habitatRelationship) return null;
+  return answerFromStructuredFact("cross-habitat-attacks", rules, "Attacking across habitats");
+}
+
 export function findStructuredFact(question, rules) {
   const normalizedQuestion = normalize(question);
   const questionTypes = inferQuestionTypes(question);
@@ -513,6 +561,10 @@ function sourcesFor(rule) {
 
 function sourcesForIntentRule(rule, rules) {
   const sources = [sourceFor(rule)];
+  if (/^How you can lose$/i.test(rule.title)) {
+    const drawRule = rules.find((candidate) => /^Choose and draw$/i.test(candidate.title) && candidate.source !== "glossary");
+    if (drawRule) sources.push(sourceFor(drawRule));
+  }
   if (/^Victory Points$/i.test(rule.title)) {
     const glossary = rules.find((candidate) => candidate.id === "glossary:victory-points");
     const inPlay = rules.find((candidate) => candidate.id === "knowledge:victory-points-in-play");
@@ -1100,10 +1152,11 @@ function stunCoralStrategyAnswer(strategyRule, rules) {
 function toxicStrategyAnswer(strategyRule, rules) {
   const toxicRule = rules.find((rule) => /^Toxic creatures$/i.test(rule.title));
   const poisonHeal = cardRuleById(rules, "poison-heal");
-  const giantTriton = cardRuleById(rules, "giant-triton");
+  const immuneCards = rules.filter((rule) => rule.entity?.type === "card"
+    && (rule.facts?.printedRules ?? []).some((text) => /toxic immunity|immune to[^.]*toxic/i.test(text)));
   const options = [
     poisonHeal ? `${poisonHeal.title} makes your next attack ignore Toxic effects.` : null,
-    giantTriton ? `${giantTriton.title} has source-specific immunity to Crown of Thorns's Toxic effect.` : null,
+    ...immuneCards.map((rule) => `${rule.title}: ${firstPrintedRule(rule, /toxic immunity|immune to[^.]*toxic/i)}`),
     "A non-consuming attack or effect can defeat a Toxic When Eaten creature without triggering its when-eaten consequence.",
   ].filter(Boolean);
 
@@ -1111,7 +1164,7 @@ function toxicStrategyAnswer(strategyRule, rules) {
     kind: "answer",
     title: strategyRule.title,
     text: `Toxic does not make the creature immune to being defeated. First read its exact trigger. If it says Toxic When Eaten, it triggers only when the attacker consumes that card; if it says to flip when targeted, resolve that flip before the attack. Your grounded options are: ${options.join(" ")} Then resolve the attack or removal effect normally.`,
-    sources: uniqueSources([strategyRule, toxicRule, poisonHeal, giantTriton].filter(Boolean).map(sourceFor)),
+    sources: uniqueSources([strategyRule, toxicRule, poisonHeal, ...immuneCards].filter(Boolean).map(sourceFor)),
   };
 }
 
@@ -1900,6 +1953,18 @@ function answerRulesQuestionInternal(question, rules, context = {}) {
   if (densityAnswer) {
     densityAnswer.context = nextContext(cleanQuestion, densityAnswer, context, mentionedCards, roles);
     return densityAnswer;
+  }
+
+  const supportLimitAnswer = supportPlayLimitAnswer(cleanQuestion, rules);
+  if (supportLimitAnswer) {
+    supportLimitAnswer.context = nextContext(cleanQuestion, supportLimitAnswer, context, mentionedCards, roles);
+    return supportLimitAnswer;
+  }
+
+  const crossHabitatAnswer = crossHabitatAttackAnswer(cleanQuestion, rules, mentionedCards);
+  if (crossHabitatAnswer) {
+    crossHabitatAnswer.context = nextContext(cleanQuestion, crossHabitatAnswer, context, mentionedCards, roles);
+    return crossHabitatAnswer;
   }
 
   const densityCapacityAnswer = schoolDensityCapacityAnswer(cleanQuestion, rules);

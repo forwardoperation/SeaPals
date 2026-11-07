@@ -528,7 +528,7 @@ test("the authored placement plan reserves Predator and Apex slots", () => {
   assert.deepEqual(
     Object.keys(SCRIPTED_TUTORIAL_PLACEMENT_PLAN).sort(),
     [
-      "arrow-crab",
+      "cleaner-shrimp",
       "fairy-parrotfish",
       "great-barracuda",
       "hammerhead",

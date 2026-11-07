@@ -98,15 +98,15 @@ test("every proposed question has a useful built-in answer", () => {
   }
 });
 
-test("routes Lionfish destruction and Spearfishing to its owner's discard", () => {
+test("distinguishes Lionfish destruction from Spearfishing discard", () => {
   const answer = findRulesAnswer(
     "Where does Lionfish go when destroyed, and where does Spearfishing send it?",
     CORE_RULES,
   );
 
   assert.equal(answer?.title, "Lost Zone");
-  assert.match(answer?.text ?? "", /Lionfish has no Lost Zone instruction/i);
-  assert.match(answer?.text ?? "", /successful destruction and Spearfishing.*owner's discard pile/i);
+  assert.match(answer?.text ?? "", /Destroying Lionfish.*Lost Zone.*Spearfishing.*discard/i);
+  assert.match(answer?.text ?? "", /Spearfishing explicitly discards it to its owner's discard pile/i);
 });
 
 test("answers Lionfish Invader timing and owner-relative targeting without inventing a fallback", () => {

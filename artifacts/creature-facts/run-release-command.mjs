@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import {spawn} from 'node:child_process';
+const step=process.argv[2];
+if(!['bundle','deploy'].includes(step))throw Error('Unknown release step');
+const logfile='artifacts/creature-facts/'+step+'-release.log';
+const out=fs.openSync(logfile,'w');
+const args=['node_modules/@opennextjs/cloudflare/dist/cli/index.js',...(step==='bundle'?['build','--skipNextBuild']:['deploy'])];
+const child=spawn(process.execPath,args,{stdio:['ignore',out,out],env:{...process.env,WRANGLER_LOG_PATH:process.cwd()+'/artifacts/creature-facts/wrangler-release.log'}});
+child.on('error',error=>{console.error(error.message);process.exitCode=1;});
+child.on('close',code=>{fs.closeSync(out);const debugPath='artifacts/creature-facts/wrangler-release.log';if(fs.existsSync(debugPath)){const safe=fs.readFileSync(debugPath,'utf8').split('\n').filter(line=>!/(?:refresh_token|access_token|oauth_token|id_token|client_secret|fetching auth token)/i.test(line)).join('\n');fs.writeFileSync(debugPath,safe);}fs.writeFileSync('artifacts/creature-facts/'+step+'-result.json',JSON.stringify({step,exitCode:code,finishedAt:new Date().toISOString(),logfile},null,2));console.log(JSON.stringify({step,exitCode:code,logfile}));process.exitCode=code??1;});

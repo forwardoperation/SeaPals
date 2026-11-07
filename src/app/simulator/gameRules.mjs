@@ -29,6 +29,7 @@ export function conditionPreventsCardPlay(card, activeCondition = null) {
   return (activeCondition?.effects ?? []).some((effect) => {
     if (effect.type !== "preventCardPlay") return false;
     if (effect.targetKind && effect.targetKind !== card?.kind) return false;
+    if (effect.targetTags?.some((tag) => !card?.tags?.includes(tag))) return false;
     return !effect.targetCategories?.length || effect.targetCategories.includes(card?.category);
   });
 }
@@ -63,7 +64,7 @@ export function parseLegacyUtilityText(action) {
     const words = { one: 1, two: 2, three: 3, five: 5 };
     return { type: "reorderTopDeck", amount: Number(reorderMatch[1]) || words[reorderMatch[1].toLowerCase()] };
   }
-  const onPlayBonus = action.match(/next on play attack has \+(\d+)/i);
+  const onPlayBonus = action.match(/next on play attack(?: this turn)? has \+(\d+)/i);
   if (onPlayBonus) return { type: "grantNextOnPlayAttackBonus", amount: Number(onPlayBonus[1]) };
   if (/discard up to two cards,?\s*draw as many cards/i.test(action)) return { type: "discardThenDraw", discard: { min: 1, max: 2 } };
   if (/discard two cards.*search your deck for a card/i.test(action)) return { type: "discardThenSearchDeck", discard: { amount: 2 }, search: { amount: 1 } };
@@ -299,11 +300,21 @@ export const DEFAULT_RP_BANK_CAP = 8;
  * effect takes precedence for that passive so migrated cards are not counted
  * twice when they retain their human-readable rules text.
  */
-export function getCardRpBankCapModifier(card) {
+export function getCardRpBankCapModifier(card, inPlayContext = {}) {
   return (card?.passives ?? []).reduce((total, passive) => {
     const effect = typeof passive === "object" ? passive.effect : null;
     if (effect?.type === "modifyRpBankCap") {
-      return total + (Number(effect.amount) || 0);
+      const bonus = effect.conditionalBonus;
+      const requirement = bonus?.requires;
+      const ownIds = inPlayContext.cardIdsInPlay ?? [];
+      const opposingIds = inPlayContext.opposingCardIdsInPlay ?? [];
+      const requiredIds = requirement?.controller === "any"
+        ? [...ownIds, ...opposingIds]
+        : requirement?.controller === "opponent" ? opposingIds : ownIds;
+      const conditionalAmount = requirement?.cardId && requiredIds.includes(requirement.cardId)
+        ? Number(bonus.amount) || 0
+        : 0;
+      return total + (Number(effect.amount) || 0) + conditionalAmount;
     }
 
     const text = typeof passive === "string" ? passive : passive?.text;
@@ -323,9 +334,10 @@ export function getConditionRpBankCapModifier(activeCondition = null) {
  * Calculates one player's live RP bank cap from cards currently in that
  * player's ecosystem and the shared active condition.
  */
-export function calculateRpBankCap(cardsInPlay = [], activeCondition = null, baseCap = DEFAULT_RP_BANK_CAP) {
+export function calculateRpBankCap(cardsInPlay = [], activeCondition = null, baseCap = DEFAULT_RP_BANK_CAP, inPlayContext = {}) {
+  const context = { cardIdsInPlay: cardsInPlay.map((card) => card?.id), ...inPlayContext };
   const ecosystemModifier = cardsInPlay.reduce(
-    (total, card) => total + getCardRpBankCapModifier(card),
+    (total, card) => total + getCardRpBankCapModifier(card, context),
     0,
   );
   return Math.max(0, (Number(baseCap) || 0) + getConditionRpBankCapModifier(activeCondition) + ecosystemModifier);
@@ -351,8 +363,11 @@ export function determineVictoryResult(playerVp, opponentVp, target) {
   const opponent = Math.max(0, Number(opponentVp) || 0);
   const goal = Math.max(1, Number(target) || 1);
   if (player < goal && opponent < goal) return null;
+  // A shared scoring effect may put both players at the target. Equal totals
+  // keep the game going until a later resolved effect leaves a sole leader.
+  if (player === opponent) return null;
   if (player >= goal && opponent >= goal) {
-    return player >= opponent
+    return player > opponent
       ? { winner: "player", message: `Victory: you reached ${player} VP against the opponent's ${opponent} VP.` }
       : { winner: "opponent", message: `Defeat: the opponent reached ${opponent} VP against your ${player} VP.` };
   }
