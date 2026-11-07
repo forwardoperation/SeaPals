@@ -1,3 +1,4 @@
+import { printSidesForSheet } from "../../../lib/manufacturing/sheetKinds.mjs";
 import { fixedSheetAssets } from "../../../lib/manufacturing/recipes.mjs";
 
 export const MAX_PAGE_REPRINT_TARGETS = 1000;
@@ -17,7 +18,7 @@ export function selectedPageTargets(pages, selectedIds, side) {
   const available = new Set(pages.map((page) => page.sheetId));
   if ([...selected].some((id) => !available.has(id))) throw new Error("The selected pages changed. Refresh this print run.");
   return pages.filter((page) => selected.has(page.sheetId)).flatMap((page) =>
-    (side === "both" ? ["fronts", "backs"] : [side]).map((printSide) => ({ sheetId: page.sheetId, side: printSide })),
+    printSidesForSheet(page).filter((printSide) => side === "both" || printSide === side).map((printSide) => ({ sheetId: page.sheetId, side: printSide })),
   );
 }
 
@@ -28,7 +29,7 @@ export function pageReprintBlockedReason(job, now = Date.now()) {
   if (job.received) return "This stock build has received products. Open the workshop run to review its stock history.";
   if (!job.printRequestedAt) return "Send this run to the printers from the workshop before requesting replacement pages.";
   if (Date.parse(job.leasedUntil ?? "") > now) return "This run is printing. Wait for its current print attempt to finish.";
-  const statuses = (job.pages ?? []).flatMap((page) => [page.frontsStatus, page.backsStatus]);
+  const statuses = (job.pages ?? []).flatMap((page) => printSidesForSheet(page).map((side) => page[`${side}Status`]));
   if (statuses.includes("submitting")) return "A print attempt needs to finish or be reviewed in the workshop first.";
   if (statuses.includes("queued")) return "This run already has pages waiting for the printers. Wait for them to finish before reprinting.";
   return "";

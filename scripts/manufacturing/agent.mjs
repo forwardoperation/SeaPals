@@ -5,6 +5,7 @@ import { randomUUID, createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { renderJob, verifiedPng } from "./render.mjs";
 import { preflightPrintAssets } from "../../src/lib/manufacturing/printPlan.mjs";
+import { printSidesForSheet } from "../../src/lib/manufacturing/sheetKinds.mjs";
 import { PRIVATE_ROOT as privateRoot, atomicJson } from "./orders.mjs";
 import { preparePrinterPdf, validatePrinterPlacement } from "./printer-placement.mjs";
 import { queueGuardSettings, readPrinterQueue, withPrinterSubmission, waitForPrinterIdle, monitorPrinterSubmission } from "./printer-queue.mjs";
@@ -273,7 +274,7 @@ export async function runJob({
     const targets = [
       ...(job.manifest.jobKind === "stock" ? [] : [{ sheetId: "work-ticket", side: "ticket" }]),
       ...job.manifest.sheets.flatMap((s) =>
-        ["fronts", "backs"].map((side) => ({ sheetId: s.sheetId, side })),
+        printSidesForSheet(s).map((side) => ({ sheetId: s.sheetId, side })),
       ),
     ];
     const status = (t) =>

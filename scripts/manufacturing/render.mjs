@@ -8,6 +8,8 @@ import { verifyHoloBatch } from "../../src/lib/manufacturing/holoBatch.mjs";
 import { sha256 } from "../../src/lib/manufacturing/integration.mjs";
 import { validFixedSheetPositions, fixedSheetOutputPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
 import { stockSheetLabel } from "../../src/lib/manufacturing/stockSheetLabel.mjs";
+import { isFlyerSheet, printSidesForSheet } from "../../src/lib/manufacturing/sheetKinds.mjs";
+import { flyerDisplayLabel } from "../../src/lib/manufacturing/recipes.mjs";
 import {
   CUTTER_LAYOUT_V4,
   CUTTER_LAYOUT_V5,
@@ -211,11 +213,14 @@ export async function renderJob({
     jobs.push({ sheetId: "work-ticket", side: "ticket", file: ticketFile });
   }
   for (const sheet of manifest.sheets) {
-    for (const side of ["fronts", "backs"]) {
+    for (const side of printSidesForSheet(sheet)) {
       const doc = await PDFDocument.create(),
         page = doc.addPage(LETTER),
         font = await doc.embedFont(StandardFonts.Helvetica);
-      if (isCutterLayout(manifest.layout.version)) {
+      if (isFlyerSheet(sheet)) {
+        const image = await doc.embedPng(bytes.get(sheet.fronts.assetId));
+        page.drawImage(image, { x: 0, y: 0, width: LETTER[0], height: LETTER[1] });
+      } else if (isCutterLayout(manifest.layout.version)) {
         const tuned = [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8].includes(manifest.layout.version);
         // Front artwork is placed over the exported backdrop bounds, whose
         // raster already includes any Figma rotation. V4/V5/V6/V7/V8 backs are one
@@ -325,13 +330,13 @@ export async function renderJob({
           height: 792 * t.contentScale,
         });
       }
-      if (!isCutterLayout(manifest.layout.version))
+      if (!isFlyerSheet(sheet) && !isCutterLayout(manifest.layout.version))
         marginLabel(
           page,
           font,
           `${sheet.sheetId} / ${sheet.set ?? sheet.productId ?? ""} / ${side.toUpperCase()} / ${manifest.manifestHash.slice(0, 12)}`,
         );
-      const label = stockSheetLabel(manifest, release, sheet.sheetId, side);
+      const label = isFlyerSheet(sheet) ? null : stockSheetLabel(manifest, release, sheet.sheetId, side);
       if (label) {
         const stockFont = await doc.embedFont(StandardFonts.CourierBold);
         page.drawText(label.text, {
@@ -342,7 +347,7 @@ export async function renderJob({
       }
       const file = path.join(outputDir, `${sheet.sheetId}-${side}.pdf`);
       await save(doc, file);
-      jobs.push({ sheetId: sheet.sheetId, side, file });
+      jobs.push({ sheetId: sheet.sheetId, side, file, ...(isFlyerSheet(sheet) ? { kind: "flyer" } : {}) });
     }
   }
   return jobs;
@@ -454,7 +459,7 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
     line("PRINT SHEET ORDER", { heading: true, gap: 23 });
     for (const [index, sheet] of manifest.sheets.entries())
       line(
-        `${index + 1}. ${sheet.sheetId} : ${sheet.set ? `${{ reef: "Reef", deep: "Deep", ocean: "Oceanic" }[sheet.set]} Dive Pack` : sheet.productId} / front + back`,
+        `${index + 1}. ${sheet.sheetId} : ${isFlyerSheet(sheet) ? flyerDisplayLabel(sheet.fronts.assetId) : sheet.set ? `${{ reef: "Reef", deep: "Deep", ocean: "Oceanic" }[sheet.set]} Dive Pack` : sheet.productId} / ${isFlyerSheet(sheet) ? "Epson flyer only" : "front + back"}`,
       );
     line(
       "Card pages have no printed job labels. Keep both printer stacks in this order and match each front with the corresponding back.",
@@ -470,7 +475,7 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
   y -= 12;
   line("PRINT AND ASSEMBLY", { heading: true, gap: 23 });
   line(
-    `${manifest.sheets.length} front sheet(s) on Epson + ${manifest.sheets.length} separate back sheet(s) on Canon.`,
+    `${manifest.sheets.length} front sheet(s) on Epson + ${manifest.sheets.filter(sheet => !isFlyerSheet(sheet)).length} separate back sheet(s) on Canon.`,
   );
   line(
     cutterLayout
@@ -485,6 +490,8 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
       ? "Pull each finished holo card shown in a placeholder slot. Insert it into the matching pack; discard the placeholder and confirm each pull before quality check."
       : "Apply holo stickers at your preferred assembly stage; confirm every sticker before quality check.",
   );
+  if (manifest.sheets.some(isFlyerSheet))
+    line("Keep flyers whole. Include one How to play flyer and one Store promo flyer in each newly built Starter Kit; no back, gluing, or cutting is required for flyers.");
   if (manifest.sheets.some((s) => s.productId))
     line(
       "Fixed products use the saved Figma sheets. Separate any reference inserts before packing.",

@@ -49,6 +49,18 @@ status, artwork eligibility, deployment steps, and commands.
 - Epson fronts use thin photo paper in the standard tray. Canon backs use
   separate sheets. The two sheets are glued together; this is not duplex
   printing and the same sheet does not pass through both printers.
+- Starter Kits prepared with `starter-kit-flyers-v1` include one **How to play**
+  flyer and one **Store promotion** flyer per kit being manufactured. Each kit
+  has 18 Epson pages and 16 Canon pages: 16 paired card sheets and two
+  single-sided Epson flyers. Quantities picked from finished inventory do not
+  create another print run. The flyers are complete native Letter exports from
+  Figma's Promos page (`4556:17027` and `4561:85207`), stored privately with the
+  artwork release. They fit inside physical Letter with quarter-inch margins;
+  the calibrated card-page placement stays unchanged.
+  Each flyer has its own preview and Epson reprint control, with no Canon,
+  glue, or cut step. Flyers must be submitted before quality check and packing.
+  Releases and saved manifests without this recipe keep their original pages.
+  Future private Figma syncs include both flyer sources for Starter Kits.
 - Stock builds print their full pinned stock number vertically in the wider
   side margin of the first logical sheet, on both its Epson front and matching
   Canon back. Later sheets and customer orders receive no stock label. The

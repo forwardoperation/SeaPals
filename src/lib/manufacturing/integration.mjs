@@ -14,7 +14,8 @@ import {
   normalizedPageReprint,
 } from "./workflow.mjs";
 import { validateBoosterPool } from "./boosters.mjs";
-import { BOOSTER_PRODUCTS, fixedSheetAssets, fixedSheetLabel } from "./recipes.mjs";
+import { BOOSTER_PRODUCTS, fixedSheetAssets, fixedSheetLabel, FLYER_RECIPE_VERSION, FLYER_SOURCES, productPrintAssets } from "./recipes.mjs";
+import { isFlyerSheet, printSidesForSheet } from "./sheetKinds.mjs";
 import { validFixedSheetPositions, validFixedSheetOutputPositions } from "./sourceGeometry.mjs";
 import {
   backgroundsForLayout,
@@ -142,7 +143,7 @@ export function requireOrderArtwork(items, release) {
     if (set)
       for (const card of catalog.filter((c) => c.set === set))
         ids.add(card.printingId);
-    else for (const id of fixedSheetAssets(item.productId)) ids.add(id);
+    else for (const id of productPrintAssets(item.productId, release.flyerVersion)) ids.add(id);
   }
   if (ids.size) {
     ids.add("standard-back-sheet");
@@ -183,6 +184,10 @@ export function validateRelease(release) {
   )
     throw new Error("A versioned artwork release and catalog are required.");
   const boosterCatalog = releaseBoosterCatalog(release);
+  if (release.flyerVersion !== undefined && release.flyerVersion !== FLYER_RECIPE_VERSION)
+    throw new Error("Unsupported Starter Kit flyer recipe.");
+  if (release.flyerVersion === FLYER_RECIPE_VERSION && FLYER_SOURCES.some(source => !release.assets?.[source.id]))
+    throw new Error("The Starter Kit flyer release requires both complete flyers.");
   for (const set of ["reef", "deep", "ocean"])
     validateBoosterPool(boosterCatalog, set);
   if (release.printTemplates !== undefined)
@@ -202,6 +207,12 @@ export function validateRelease(release) {
       if (backgroundsForLayout(release.printTemplates.version)[side]?.assetId !== id)
         throw new Error("A private background requires its matching versioned asset identity.");
       validateBackgroundAsset(asset, side, release.printTemplates.version);
+    } else if (FLYER_SOURCES.some(source => source.id === id)) {
+      const source = FLYER_SOURCES.find(source => source.id === id);
+      if (release.flyerVersion !== FLYER_RECIPE_VERSION || asset.kind !== "flyer" ||
+          asset.nodeId !== source.nodeId || asset.width !== 2550 || asset.height !== 3300 ||
+          asset.positions !== undefined || asset.sourceGeometry !== undefined || asset.outputPositions !== undefined)
+        throw new Error(`Incorrect native Letter flyer: ${id}`);
     } else if (id === "standard-back-sheet" || id.startsWith("sheet-")) {
       if (asset.width !== 2550 || asset.height !== 3300)
         throw new Error(`Incorrect Letter sheet dimensions: ${id}`);
@@ -360,6 +371,7 @@ export function manufacturingService(db) {
           catalog: releaseBoosterCatalog(art),
           artworkRelease: art.releaseId,
           printTemplates: art.printTemplates,
+          flyerVersion: art.flyerVersion,
           inventoryPlan: r.inventory_plan ?? undefined,
           jobKind: r.job_kind ?? "order",
         });
@@ -605,6 +617,7 @@ export function manufacturingService(db) {
         const manifest = verifyManifest(JSON.parse(r.manifest_text));
         const pages = manifest.sheets.filter(sheet => sheet.productId === productId).map((sheet, index) => ({
           sheetId: sheet.sheetId, label: pageDisplayLabel(sheet.fronts.assetId, index + 1),
+          ...(isFlyerSheet(sheet) ? { kind: "flyer" } : {}), sides: printSidesForSheet(sheet),
           unit: sheet.unit ?? 1, frontsStatus: r.state?.sheets?.[sheet.sheetId]?.fronts ?? "unknown",
           backsStatus: r.state?.sheets?.[sheet.sheetId]?.backs ?? "unknown",
         }));

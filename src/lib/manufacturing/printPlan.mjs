@@ -8,8 +8,9 @@ import {
 import {
   BOOSTER_PRODUCTS as PRODUCTS,
   FIXED_PRODUCTS,
-  fixedSheetAssets,
+  fixedSheetAssets, productFlyerAssets, validateFlyerVersion, isFlyerAsset, FLYER_SOURCES,
 } from "./recipes.mjs";
+import { isFlyerSheet } from "./sheetKinds.mjs";
 import { validFixedSheetPositions, validFixedSheetOutputPositions } from "./sourceGeometry.mjs";
 import {
   CUTTER_LAYOUT_V2,
@@ -393,6 +394,7 @@ export function createManufacturingManifest({
   catalog,
   artworkRelease,
   printTemplates,
+  flyerVersion,
   policy = BOOSTER_POLICY,
   randomIndex,
   now = new Date().toISOString(),
@@ -400,6 +402,7 @@ export function createManufacturingManifest({
   jobKind = "order",
 }) {
   const order = validateOrderRequest(request);
+  validateFlyerVersion(flyerVersion);
   const { layout, backTemplate } = resolvePrintTemplates(printTemplates);
   if (!["order", "stock"].includes(jobKind))
     throw new Error("Unknown job kind.");
@@ -494,6 +497,15 @@ export function createManufacturingManifest({
           slots: [],
         });
       }
+      for (const assetId of productFlyerAssets(item.productId, flyerVersion)) {
+        sheets.push({
+          sheetId: `${order.orderNumber}-${item.productId}-${unit}-${assetId}`,
+          kind: "flyer", productId: item.productId, unit,
+          fronts: { printerRole: "fronts", printerName: PRINTER_ROUTES.fronts,
+            side: "fronts", copies: 1, paper: "thin-photo-paper", assetId },
+          slots: [],
+        });
+      }
     }
     for (const accessory of FIXED_PRODUCTS[item.productId].accessories)
       accessoryChecklist.push({
@@ -515,6 +527,7 @@ export function createManufacturingManifest({
     order,
     catalogHash: contentHash(catalog),
     artworkRelease,
+    ...(flyerVersion === undefined ? {} : { flyerVersion }),
     policy: { ...policy },
     layout,
     assembly: "separate-sheets-glued-together",
@@ -589,6 +602,23 @@ export function verifyManifest(manifest) {
     throw new Error("Manifest order does not match its request hash.");
   if (manifest.holoHandling !== undefined && manifest.holoHandling !== "pull-finished")
     throw new Error("Unsupported holo handling in the saved manifest.");
+  validateFlyerVersion(manifest.flyerVersion);
+  const flyers = manifest.sheets.filter(isFlyerSheet), expectedFlyers = [];
+  for (const item of productionItemsForPlan(manifest.order.items, manifest.inventoryPlan))
+    for (let unit = 1; unit <= item.quantity; unit++)
+      for (const assetId of productFlyerAssets(item.productId, manifest.flyerVersion))
+        expectedFlyers.push({ assetId, productId: item.productId, unit,
+          sheetId: `${manifest.order.orderNumber}-${item.productId}-${unit}-${assetId}` });
+  if (flyers.length !== expectedFlyers.length || new Set(manifest.sheets.map(sheet => sheet.sheetId)).size !== manifest.sheets.length ||
+      manifest.sheets.some(sheet => sheet.kind !== undefined && !isFlyerSheet(sheet)) ||
+      flyers.some((sheet, index) => {
+        const expected = expectedFlyers[index];
+        return sheet.sheetId !== expected.sheetId || sheet.productId !== expected.productId || sheet.unit !== expected.unit ||
+          sheet.fronts?.assetId !== expected.assetId || sheet.fronts.printerRole !== "fronts" ||
+          sheet.fronts.printerName !== PRINTER_ROUTES.fronts || sheet.fronts.copies !== 1 ||
+          sheet.fronts.side !== "fronts" || sheet.fronts.assetIds !== undefined || sheet.backs !== undefined ||
+          !Array.isArray(sheet.slots) || sheet.slots.length !== 0;
+      })) throw new Error("The saved Starter Kit flyer pages do not match their pinned recipe.");
   return manifest;
 }
 
@@ -610,10 +640,13 @@ export function preflightPrintAssets(manifest, release) {
   const required = new Set(
     manifest.sheets.flatMap((sheet) => [
       ...(sheet.fronts.assetIds ?? [sheet.fronts.assetId]),
-      sheet.backs.assetId,
+      ...(isFlyerSheet(sheet) ? [] : [sheet.backs.assetId]),
     ]),
   );
   const errors = [];
+  const cardSheets = manifest.sheets.filter(sheet => !isFlyerSheet(sheet));
+  if (manifest.flyerVersion !== undefined && manifest.flyerVersion !== release.flyerVersion)
+    errors.push("The saved flyers require their matching pinned artwork recipe.");
   if (
     [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8].includes(release.printTemplates?.version) &&
     manifest.layout.version !== release.printTemplates.version
@@ -625,23 +658,28 @@ export function preflightPrintAssets(manifest, release) {
       if (templates.layout.version !== manifest.layout.version)
         throw new Error("The saved background layout requires its matching versioned release templates.");
       validateBackground(manifest.layout.background, "fronts", manifest.layout.version);
-      for (const sheet of manifest.sheets)
+      for (const sheet of cardSheets)
         validateBackground(sheet.backs.template?.background, "backs", manifest.layout.version);
     } catch (error) {
       errors.push(error.message);
     }
-    if (manifest.sheets.length)
+    if (cardSheets.length)
       for (const background of Object.values(backgroundsForLayout(manifest.layout.version)))
         required.add(background.assetId);
   } else if (
     manifest.layout.background !== undefined ||
-    manifest.sheets.some((sheet) => sheet.backs.template?.background !== undefined)
+    cardSheets.some((sheet) => sheet.backs.template?.background !== undefined)
   ) {
     errors.push("Legacy print manifests cannot contain a background.");
   }
   for (const id of required) {
     const asset = release.assets?.[id];
     const side = backgroundSide(id, manifest.layout.version);
+    if (isFlyerAsset(id)) {
+      const source = FLYER_SOURCES.find(item => item.id === id);
+      if (asset?.kind !== "flyer" || asset.nodeId !== source.nodeId)
+        errors.push(`${id}: the verified native flyer source is required`);
+    }
     if (side) {
       try {
         validateBackgroundAsset(asset, side, manifest.layout.version);
@@ -655,7 +693,7 @@ export function preflightPrintAssets(manifest, release) {
     if (!asset?.path || !/^[a-f0-9]{64}$/.test(asset.sha256 ?? ""))
       errors.push(`${id}: missing private asset or checksum`);
     else if (
-      id === "standard-back-sheet" || id.startsWith("sheet-")
+      id === "standard-back-sheet" || id.startsWith("sheet-") || isFlyerAsset(id)
         ? asset.width !== 2550 || asset.height !== 3300
         : asset.width < 720 ||
           asset.height < 1008 ||

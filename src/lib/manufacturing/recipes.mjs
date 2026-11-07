@@ -130,6 +130,27 @@ export const FIXED_PRODUCTS = {
     accessories: [{ id: "tokens", name: "Reef Point tokens", quantity: 15 }],
   },
 };
+// These are full native Letter pages, not nine-card cutter sheets. Capability
+// is pinned to each artwork release so older manifests retain their old recipe.
+export const FLYER_RECIPE_VERSION = "starter-kit-flyers-v1";
+export const FLYER_SOURCES = Object.freeze([
+  Object.freeze({ id: "flyer-how-to-play", nodeId: "4556:17027", kind: "flyer", name: "How to play flyer", width: 2550, height: 3300 }),
+  Object.freeze({ id: "flyer-store-promo", nodeId: "4561:85207", kind: "flyer", name: "Store promo flyer", width: 2550, height: 3300 }),
+]);
+export const isFlyerAsset = (assetId) => FLYER_SOURCES.some(source => source.id === assetId);
+export const flyerDisplayLabel = (assetId) => FLYER_SOURCES.find(source => source.id === assetId)?.name ?? assetId;
+export function validateFlyerVersion(version) {
+  if (version !== undefined && version !== FLYER_RECIPE_VERSION)
+    throw new Error("Unsupported Starter Kit flyer recipe.");
+  return version === FLYER_RECIPE_VERSION;
+}
+export function productFlyerAssets(productId, version) {
+  return validateFlyerVersion(version) && productId === "starter-kit" ? FLYER_SOURCES.map(source => source.id) : [];
+}
+export function productPrintAssets(productId, version) {
+  return [...fixedSheetAssets(productId), ...productFlyerAssets(productId, version)];
+}
+
 export function fixedSheetAssets(productId) {
   const recipe = FIXED_PRODUCTS[productId];
   if (!recipe) return [];
@@ -145,6 +166,7 @@ export function fixedSheetAssets(productId) {
 // Display names follow the current product name; saved manifests and private
 // asset keys retain their original identity for reproducible reprints.
 export function fixedSheetLabel(assetId) {
+  if (isFlyerAsset(assetId)) return flyerDisplayLabel(assetId);
   const dropOff = /^sheet-blue-water-([1-7])$/.exec(assetId);
   return dropOff ? `sheets-drop-off-${dropOff[1]}` : assetId;
 }

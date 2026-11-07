@@ -1,3 +1,5 @@
+import { isFlyerSheet } from "./sheetKinds.mjs";
+
 // Browser-safe summary; mutations and manifest validation stay on the server.
 // Successful submission permits finishing; physical quality is checked before packing.
 export const isPrintSubmitted = (status) =>
@@ -6,10 +8,11 @@ export const isPrintSubmitted = (status) =>
 export function workflowReadiness(state) {
   const sheets = Object.values(state.sheets);
   const allPrinted = sheets.every(
-    (sheet) => isPrintSubmitted(sheet.fronts) && isPrintSubmitted(sheet.backs),
+    (sheet) => isPrintSubmitted(sheet.fronts) && (isFlyerSheet(sheet) || isPrintSubmitted(sheet.backs)),
   );
-  const allGlued = sheets.every((sheet) => sheet.glued);
-  const allCut = sheets.every((sheet) => sheet.cut);
+  const assembly = sheets.filter(sheet => !isFlyerSheet(sheet));
+  const allGlued = assembly.every((sheet) => sheet.glued);
+  const allCut = assembly.every((sheet) => sheet.cut);
   const holosRemaining = Object.values(state.holos).filter(
     (done) => !done,
   ).length;

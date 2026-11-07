@@ -30,6 +30,8 @@ import {
   validateRelease,
 } from "../../src/lib/manufacturing/integration.mjs";
 
+import { printSidesForSheet } from "../../src/lib/manufacturing/sheetKinds.mjs";
+
 export const REPO_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 export const PRIVATE_ROOT = path.join(REPO_ROOT, ".private", "manufacturing");
 
@@ -83,6 +85,7 @@ export async function saveOrder({
   catalog,
   artworkRelease,
   printTemplates,
+  flyerVersion,
   randomIndex,
 }) {
   const normalized = validateOrderRequest(request);
@@ -98,6 +101,7 @@ export async function saveOrder({
       catalog,
       artworkRelease,
       printTemplates,
+      flyerVersion,
       randomIndex,
     });
     const saved = { manifest, state: createManufacturingState(manifest) };
@@ -140,7 +144,7 @@ function summary(saved) {
     directory: saved.directory,
     packs: saved.manifest.packs.length,
     frontSheets: saved.manifest.sheets.length,
-    backSheets: saved.manifest.sheets.length,
+    backSheets: saved.manifest.sheets.filter(sheet => printSidesForSheet(sheet).includes("backs")).length,
     holoStickers: saved.manifest.holoChecklist.length,
     prereleaseCards: saved.manifest.packs
       .flatMap((pack) => pack.cards)
@@ -158,7 +162,7 @@ async function main() {
     if (!/^[A-Za-z0-9._-]{1,100}$/.test(options.release ?? ""))
       throw new Error("An explicit artwork release is required.");
     const releaseFile = path.join(PRIVATE_ROOT, "releases", options.release, "release.json");
-    let catalog, printTemplates;
+    let catalog, printTemplates, flyerVersion;
     if (await exists(releaseFile)) {
       const release = validateRelease(await readJson(releaseFile));
       if (release.releaseId !== options.release)
@@ -166,6 +170,7 @@ async function main() {
       requireOrderArtwork(validateOrderRequest(request).items, release);
       catalog = releaseBoosterCatalog(release);
       printTemplates = release.printTemplates;
+      flyerVersion = release.flyerVersion;
     } else {
       // Keep the original local-fixture workflow when no private release has
       // been downloaded. Its manifests retain the legacy v2 layout.
@@ -180,6 +185,7 @@ async function main() {
       catalog,
       artworkRelease: options.release,
       printTemplates,
+      flyerVersion,
     });
     console.log(JSON.stringify(summary(saved), null, 2));
   } else if (command === "status") {

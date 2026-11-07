@@ -70,3 +70,13 @@ test("booster and ticket recovery labels do not depend on private asset names", 
   assert.equal(sheetDisplayLabel(manifest, "work-ticket"), "Work ticket");
   assert.equal(sheetDisplayLabel(manifest, "unknown-saved-sheet"), "unknown-saved-sheet");
 });
+
+test("flyers have readable saved-sheet labels in repeated kits", () => {
+  const manifest = { sheets: [
+    { sheetId: "kit1-card", fronts: { assetId: "sheet-coral-garden-1" } },
+    { sheetId: "kit1-guide", kind: "flyer", fronts: { assetId: "flyer-how-to-play" } },
+    { sheetId: "kit2-promo", kind: "flyer", fronts: { assetId: "flyer-store-promo" } },
+  ] };
+  assert.match(sheetDisplayLabel(manifest, "kit1-guide"), /^Sheet 2 of 3.*How to play flyer$/);
+  assert.match(sheetDisplayLabel(manifest, "kit2-promo"), /^Sheet 3 of 3.*Store promo flyer$/);
+});

@@ -34,6 +34,7 @@ export function stockSheetLabel(manifest, release, sheetId, side) {
   const text = manifest.order?.orderNumber;
   if (typeof text !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(text)) return null;
   const sheet = manifest.sheets[0], layout = manifest.layout;
+  if (sheet.kind === 'flyer') return null;
   if (layout.width !== PAGE_WIDTH || layout.height !== PAGE_HEIGHT) return null;
   const template = side === 'fronts' ? layout : sheet.backs?.template;
   // Old layouts with no saved grid cannot prove that the template marks leave

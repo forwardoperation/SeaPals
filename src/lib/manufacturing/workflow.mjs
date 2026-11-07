@@ -1,6 +1,7 @@
 import { contentHash } from "./boosters.mjs";
 import { verifyManifest } from "./printPlan.mjs";
 import { fixedSheetAssets } from "./recipes.mjs";
+import { isFlyerSheet, printSidesForSheet } from "./sheetKinds.mjs";
 import { isPrintSubmitted, workflowReadiness } from "./readiness.mjs";
 export { workflowReadiness } from "./readiness.mjs";
 
@@ -13,7 +14,7 @@ export function createManufacturingState(manifest) {
     sheets: Object.fromEntries(
       manifest.sheets.map((sheet) => [
         sheet.sheetId,
-        {
+        isFlyerSheet(sheet) ? { kind: "flyer", fronts: "queued", backs: "not_required" } : {
           fronts: "queued",
           backs: "queued",
           glued: false,
@@ -95,7 +96,7 @@ export function applyManufacturingEvent(
       throw new Error("Finish or resolve the current print queue before reprinting selected pages.");
     for (const target of batch.targets) {
       const saved = manifest.sheets.find(s => s.sheetId === target.sheetId);
-      if (!saved || saved.productId !== batch.productId ||
+      if (!saved || !printSidesForSheet(saved).includes(target.side) || saved.productId !== batch.productId ||
           !["submitted", "confirmed", "needs_review"].includes(original.sheets[target.sheetId]?.[target.side]))
         throw new Error("Every selected page must be a previously submitted page of this product.");
     }
@@ -104,6 +105,7 @@ export function applyManufacturingEvent(
   const sheet =
     event.side === "ticket" ? state.ticket : state.sheets[event.sheetId];
   const side = event.side;
+  const manifestSheet = manifest.sheets.find(item => item.sheetId === event.sheetId);
   const printAction = [
     "submission_started",
     "submission_succeeded",
@@ -113,6 +115,10 @@ export function applyManufacturingEvent(
   ].includes(event.type);
   if (printAction && (!sheet || !["fronts", "backs", "ticket"].includes(side)))
     throw new Error("A known sheet and print side are required.");
+  if (printAction && side !== "ticket" && (!manifestSheet || !printSidesForSheet(manifestSheet).includes(side)))
+    throw new Error("This page has no requested print side.");
+  if (["glued", "cut"].includes(event.type) && isFlyerSheet(manifestSheet))
+    throw new Error("Flyers do not require gluing or cutting.");
   const agentActions = [
     "submission_started",
     "submission_succeeded",
@@ -176,8 +182,10 @@ export function applyManufacturingEvent(
         const page = target.side === "ticket" ? state.ticket : state.sheets[target.sheetId];
         page[target.side] = "queued";
         if (target.side === "ticket") continue;
-        page.glued = false;
-        page.cut = false;
+        if (!isFlyerSheet(manifest.sheets.find(item => item.sheetId === target.sheetId))) {
+          page.glued = false;
+          page.cut = false;
+        }
         state.qualityChecked = false;
         state.packed = false;
         if (target.side === "fronts") {

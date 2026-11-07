@@ -196,3 +196,19 @@ test("stock-only orders with a work ticket do not request card assembly or page 
   assert.match(result.description, /Once the work ticket prints/);
   assert.doesNotMatch(result.description, /gluing|cutting|Paper checked/);
 });
+
+test("kit print progress counts each flyer once and leaves finished inventory unchanged", () => {
+  const detail = { ...job(), job_kind: "stock" };
+  detail.manifest.sheets.push({ sheetId: "insert", kind: "flyer" });
+  detail.state.sheets.insert = { kind: "flyer", fronts: "queued", backs: "not_required" };
+  let result = printFeedback(detail, true, now);
+  assert.equal(result.sent, 2); assert.equal(result.total, 3);
+  assert.equal(result.title, "Waiting to send remaining pages");
+  detail.state.sheets.insert.fronts = "submitted";
+  const before = JSON.stringify(detail);
+  result = printFeedback(detail, true, now);
+  assert.equal(result.sent, 3); assert.equal(result.total, 3);
+  assert.equal(result.title, "Sent to printers");
+  assert.match(result.description, /Include the flyers with the packaged kits/);
+  assert.equal(JSON.stringify(detail), before);
+});

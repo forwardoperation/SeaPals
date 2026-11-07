@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { printSidesForSheet } from "./sheetKinds.mjs";
 import { authenticated, mutationOriginAllowed, uuid, assetKey, PRIVATE_HEADERS } from "./integration.mjs";
 
 // Execute the real route with local dependencies; no Supabase, object storage,
@@ -9,17 +10,18 @@ const routeSource = (await readFile(new URL("../../app/api/admin/manufacturing/p
   .replace(/^import .+;\r?\n/gm, "").replace(/^export const runtime.+;\r?\n/m, "").replace("export async function GET", "async function GET");
 const orderId = "7ec4e9fa-5aa0-4088-bd7c-f8b2734baf14", token = "preview-test-staff-token-at-least-24-characters";
 const sha = "a".repeat(64), asset = { sha256: sha, path: `manufacturing/sha256/${sha}.png`, width: 2550, height: 3300 };
-function harness({ prepared = true, missingAsset = false } = {}) {
+function harness({ prepared = true, missingAsset = false, flyer = false } = {}) {
   const calls = [];
   const plan = { sheetId: "sheet1", side: "fronts", releaseId: "saved-release", requiredAssetIds: ["saved-page"], layers: [] };
   const dependencies = {
     authenticated: (request, _env, role) => authenticated(request, { STORE_ADMIN_TOKEN: token }, role), mutationOriginAllowed, uuid, assetKey, PRIVATE_HEADERS,
+    printSidesForSheet,
     buildPagePreview(manifest, release, sheet, side) { calls.push(["plan", release.releaseId, sheet, side]); return { ...plan, side }; },
     json: (value, status = 200) => new Response(JSON.stringify(value), { status, headers: { ...PRIVATE_HEADERS, "Content-Type": "application/json" } }),
     service: () => ({
       row: async id => { calls.push(["row", id]); return prepared ? { manifest_text: "saved", release_id: "saved-release" } : null; },
       release: async id => { calls.push(["release", id]); return { releaseId: id, assets: { "saved-page": asset } }; },
-      unpack: () => ({ manifest: { sheets: [{ sheetId: "sheet1" }] } }),
+      unpack: () => ({ manifest: { sheets: [{ sheetId: "sheet1", ...(flyer ? { kind: "flyer" } : {}) }] } }),
     }),
     bucket: async () => ({ get: async key => { calls.push(["asset", key]); return missingAsset ? null : { body: new Uint8Array([137, 80, 78, 71]), size: 4 }; } }),
   };
@@ -66,4 +68,17 @@ test("private previews reject missing jobs, sheets, assets, and malformed inputs
     const bad = new URL(req.url); bad.searchParams.set(key, value);
     assert.equal((await h.GET(new Request(bad, { headers: req.headers }))).status, 400);
   }
+});
+
+test("flyer previews reject nonexistent Canon backs before composing or accessing private assets", async () => {
+  const h = harness({ flyer: true }), req = h.request("&assetId=saved-page"), url = new URL(req.url);
+  url.searchParams.set("side", "backs");
+  const denied = await h.GET(new Request(url, { headers: req.headers }));
+  assert.equal(denied.status, 400);
+  assert.match((await denied.json()).error, /Epson only/);
+  assert.ok(!h.calls.some(call => ["plan", "asset"].includes(call[0])));
+  assert.equal((await h.GET(h.request())).status, 200);
+  const front = await h.GET(req);
+  assert.equal(front.status, 200);
+  assert.equal(front.headers.get("cache-control"), PRIVATE_HEADERS["Cache-Control"]);
 });

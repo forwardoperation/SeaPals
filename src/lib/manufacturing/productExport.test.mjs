@@ -6,12 +6,14 @@ import {
   buildSourceMap,
   parseProducts,
   selectProductArtwork,
+  validateFlyerSource,
+  figmaImageRoutes,
 } from "../../../scripts/manufacturing/sync-figma.mjs";
 import { conditionOutputMapping } from "./sourceGeometry.mjs";
 import { contentHash, generateBooster } from "./boosters.mjs";
 import { requireOrderArtwork, validateRelease } from "./integration.mjs";
 import { PRINT_BACKGROUNDS } from "./backdrops.mjs";
-import { BOOSTER_PRODUCTS, FIXED_PRODUCTS, fixedSheetAssets } from "./recipes.mjs";
+import { BOOSTER_PRODUCTS, FIXED_PRODUCTS, fixedSheetAssets, FLYER_RECIPE_VERSION, FLYER_SOURCES, productPrintAssets } from "./recipes.mjs";
 
 const read = async (relative) => JSON.parse(await readFile(new URL(relative, import.meta.url), "utf8"));
 const [setList, gallery, holos, policy] = await Promise.all([
@@ -40,11 +42,13 @@ function releaseFor(selected) {
     releaseId: `test-${contentHash(selected).slice(0, 8)}`, figmaVersion: "test-version",
     catalog: selected.catalog, printTemplates: selected.templates,
     exportScope: selected.exportScope,
+    ...(selected.flyerVersion ? { flyerVersion: selected.flyerVersion } : {}),
     assets: Object.fromEntries(selected.sources.filter((item) => item.nodeId).map((item) => {
       const background = Object.values(PRINT_BACKGROUNDS).find((value) => value.assetId === item.id);
       const hash = contentHash(item.id);
       return [item.id, {
         nodeId: item.nodeId, sha256: hash, path: `manufacturing/sha256/${hash}.png`,
+        ...(item.kind === "flyer" ? { kind: "flyer" } : {}),
         width: background?.assetWidth ?? background?.width ?? (item.kind === "card" ? 750 : 2550),
         height: background?.assetHeight ?? background?.height ?? (item.kind === "card" ? 1050 : 3300),
         ...(item.kind === "sheet" ? { positions: Array.from({ length: ["sheet-murky-water-7", "sheet-stinging-fortress-7", "sheet-disruption-7"].includes(item.id) ? 8 : 9 }, (_, index) => ({ x: 167 + index % 3 * 720, y: 106 + Math.floor(index / 3) * 1008, width: 720, height: 1008 })) } : {}),
@@ -57,7 +61,7 @@ function releaseFor(selected) {
 test("omitting products preserves the full export and its existing cache hash", () => {
   assert.equal(parseProducts([]), null);
   assert.equal(selectProductArtwork(source), source);
-  assert.equal(source.sources.length, 270);
+  assert.equal(source.sources.length, 272);
   assert.equal(source.exportScope, undefined);
 });
 
@@ -163,7 +167,7 @@ test("the recurring refresh retains all 15 products and every deck and Condition
   assert.deepEqual(products, [...Object.keys(FIXED_PRODUCTS), ...Object.keys(BOOSTER_PRODUCTS)].sort());
   assert.equal(products.length, 15);
   const selected = selectProductArtwork(source, products);
-  assert.equal(selected.sources.length, 270);
+  assert.equal(selected.sources.length, 272);
   assert.equal(selected.sources.filter(item => item.kind === "sheet").length, 51);
   assert.deepEqual(ids(selected.sources), ids(source.sources));
   const release = validateRelease(releaseFor(selected));
@@ -172,5 +176,41 @@ test("the recurring refresh retains all 15 products and every deck and Condition
   for (const productId of ["starter-kit", "conditions-deck", "accessory-set"]) {
     const incomplete = structuredClone(release); delete incomplete.assets["sheet-conditions-2"];
     assert.throws(() => requireOrderArtwork([{ productId, quantity: 1 }], incomplete), /sheet-conditions-2/);
+  }
+});
+
+test("Starter Kit exports include both native flyers while other products retain their scope", () => {
+  const selected = selectProductArtwork(source, ["starter-kit"]);
+  assert.equal(selected.flyerVersion, FLYER_RECIPE_VERSION);
+  assert.equal(selected.sources.length, 20, "16 card sheets, two flyers and two shared templates");
+  assert.deepEqual(selected.sources.filter(item => item.kind === "flyer"), FLYER_SOURCES);
+  assert.equal(productPrintAssets("starter-kit", selected.flyerVersion).length, 18);
+  assert.equal(selectProductArtwork(source, ["conditions-deck"]).flyerVersion, undefined);
+  const release = releaseFor(selected);
+  validateRelease(release);
+  for (const flyer of FLYER_SOURCES) {
+    const missing = structuredClone(release); delete missing.assets[flyer.id];
+    assert.throws(() => validateRelease(missing), /requires both complete flyers/);
+    assert.throws(() => requireOrderArtwork([{ productId: "starter-kit", quantity: 1 }], missing), /Artwork is incomplete/);
+    const malformed = structuredClone(release); malformed.assets[flyer.id].width = 2549;
+    assert.throws(() => validateRelease(malformed), /Incorrect native Letter flyer/);
+  }
+  const legacy = structuredClone(release); delete legacy.flyerVersion;
+  for (const flyer of FLYER_SOURCES) delete legacy.assets[flyer.id];
+  validateRelease(legacy);
+  requireOrderArtwork([{ productId: "starter-kit", quantity: 1 }], legacy);
+});
+
+test("flyer sync exports exact full-frame Letter bounds without card-grid normalization", () => {
+  const routes = figmaImageRoutes("file", FLYER_SOURCES, "version");
+  assert.equal(routes.length, 1);
+  const url = new URL(routes[0], "https://api.figma.com/v1/");
+  assert.equal(url.searchParams.get("use_absolute_bounds"), "true");
+  assert.equal(url.searchParams.get("scale"), "1");
+  for (const source of FLYER_SOURCES) {
+    const node = { id: source.nodeId, type: "FRAME", clipsContent: true, absoluteBoundingBox: { width: 2550, height: 3300 } };
+    validateFlyerSource(node, source);
+    assert.throws(() => validateFlyerSource({ ...node, clipsContent: false }, source), /complete native Letter flyer/);
+    assert.throws(() => validateFlyerSource({ ...node, absoluteBoundingBox: { width: 720, height: 1008 } }, source), /complete native Letter flyer/);
   }
 });

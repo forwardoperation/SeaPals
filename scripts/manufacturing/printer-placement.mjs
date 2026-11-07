@@ -22,9 +22,14 @@ const exactKeys = (value, keys) => plainObject(value) &&
 
 /** Validate the opt-in transport profile without reading files or touching a printer. */
 export function validatePrinterPlacement(config, job) {
+  if (job?.kind === "flyer" && job.side !== "fronts")
+    throw new Error("Flyers print only on the Epson front route.");
   const route = config?.[job?.side];
   const placement = route?.pagePlacement;
-  if (placement === undefined) return null;
+  if (placement === undefined) {
+    if (job?.kind === "flyer") throw new Error("Flyers require a verified Epson Letter placement profile.");
+    return null;
+  }
   const imageable = placement?.mode === IMAGEABLE_MODE;
   if (imageable && job.side !== "backs")
     throw new Error("Imageable-area placement is supported only for rear pages.");
@@ -59,6 +64,9 @@ export function validatePrinterPlacement(config, job) {
     return { mode: IMAGEABLE_MODE, expectedDevice: { ...device },
       expectedImageableArea: validateImageableArea(placement.expectedImageableArea) };
   }
+  if (job.kind === "flyer" && (device.physicalWidth * 72 / device.rasterDpiX < 612 ||
+      device.physicalHeight * 72 / device.rasterDpiY < 792))
+    throw new Error("Flyers require a complete physical Letter canvas.");
   return { mode: MODE, expectedDevice: { ...device } };
 }
 
@@ -100,7 +108,7 @@ export async function preparePrinterPdf(config, job, {
   if (typeof probe !== "function") throw new Error("A printer capabilities probe is required.");
   const route = config[job.side];
   const actual = await probe(route.printerName);
-  const imageable = placement.mode === IMAGEABLE_MODE;
+  const imageable = placement.mode === IMAGEABLE_MODE, flyer = job.kind === "flyer";
   if (imageable) {
     if (actual?.paperSize !== 1 || actual?.orientation !== 1)
       throw new Error("Rear imageable-area placement requires the current printer to use portrait Letter paper.");
@@ -130,6 +138,7 @@ export async function preparePrinterPdf(config, job, {
     printSettings: REQUIRED_SETTINGS,
     expectedDevice: Object.fromEntries(DEVICE_FIELDS.map((field) => [field, device[field]])),
     ...(imageable ? { expectedImageableArea: placement.expectedImageableArea } : {}),
+    ...(flyer ? { contentPlacement: "flyer-fit-physical-letter-v1", insetPoints: 18 } : {}),
   };
   const profileSha256 = sha256(JSON.stringify(profile));
   const cacheKey = sha256(JSON.stringify({ sourceSha256, profileSha256 }));
@@ -138,13 +147,16 @@ export async function preparePrinterPdf(config, job, {
   const area = placement.expectedImageableArea;
   // Convert WPF's top-left dip96 coordinates to PDF's bottom-left point units.
   // GDI must expose the whole Letter page, so Sumatra noscale adds no second offset.
-  const clipRectangle = imageable ? {
+  // Flyer artwork fits inside physical Letter with a quarter-inch margin. The
+  // cutter transform deliberately fills the larger borderless driver canvas;
+  // using that transform for a flyer could trim text near its exported edges.
+  const clipRectangle = flyer ? { x: 18, y: 18, width: 576, height: 756 } : imageable ? {
     x: area.originX * 72 / 96,
     y: 792 - (area.originY + area.height) * 72 / 96,
     width: area.width * 72 / 96,
     height: area.height * 72 / 96,
   } : null;
-  const scale = Math.max((clipRectangle?.width ?? widthPoints) / 612, (clipRectangle?.height ?? heightPoints) / 792);
+  const scale = (flyer ? Math.min : Math.max)((clipRectangle?.width ?? widthPoints) / 612, (clipRectangle?.height ?? heightPoints) / 792);
   const offsetXPoints = clipRectangle ? clipRectangle.x + (clipRectangle.width - 612 * scale) / 2 : (widthPoints - 612 * scale) / 2;
   const offsetYPoints = clipRectangle ? clipRectangle.y + (clipRectangle.height - 792 * scale) / 2 : (heightPoints - 792 * scale) / 2;
 
@@ -183,6 +195,7 @@ export async function preparePrinterPdf(config, job, {
     offsetXPoints,
     offsetYPoints,
     ...(imageable ? { expectedImageableArea: placement.expectedImageableArea, imageableSnapshot, clipRectangle } : {}),
+    ...(flyer ? { contentPlacement: "flyer-fit-physical-letter-v1", clipRectangle } : {}),
   };
   const metadataFile = path.join(outputDirectory, `${cacheKey}.placement.json`);
   await writeVerifiedArtifact(outputFile, outputBytes);

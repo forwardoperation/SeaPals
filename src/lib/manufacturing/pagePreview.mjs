@@ -1,5 +1,6 @@
 import { preflightPrintAssets } from './printPlan.mjs';
-import { fixedSheetAssets } from './recipes.mjs';
+import { productPrintAssets } from './recipes.mjs';
+import { isFlyerSheet, printSidesForSheet } from './sheetKinds.mjs';
 import { fixedSheetOutputPositions } from './sourceGeometry.mjs';
 import { stockSheetLabel } from './stockSheetLabel.mjs';
 import { CUTTER_LAYOUT_V2, CUTTER_LAYOUT_V3, hasPrintBackgrounds, isCutterLayout } from './backdrops.mjs';
@@ -11,19 +12,22 @@ export function buildPagePreview(manifest, release, sheetId, side) {
   const check = preflightPrintAssets(manifest, release);
   if (!check.ready) throw new Error('The saved page artwork is unavailable.');
   const sheet = manifest.sheets.find(item => item.sheetId === sheetId);
-  if (!sheet || !sheet.fronts?.assetId || fixedSheetAssets(sheet.productId).length < 2)
+  if (!sheet || !sheet.fronts?.assetId || productPrintAssets(sheet.productId, manifest.flyerVersion).length < 2)
     throw new Error('Choose a saved page from a multi-page product.');
+  if (!printSidesForSheet(sheet).includes(side)) throw new Error('This flyer prints on Epson only.');
   if (!isCutterLayout(manifest.layout.version))
     throw new Error('This older print layout does not support page previews. Open its workshop job to reprint it.');
   const layers = [], version = manifest.layout.version;
   const add = (assetId, position, crop) => layers.push({ assetId,
     position: { x: position.x, y: position.y, width: position.width, height: position.height, rotation: position.rotation ?? 0 },
     ...(crop ? { crop } : {}) });
-  if (hasPrintBackgrounds(version)) {
+  if (!isFlyerSheet(sheet) && hasPrintBackgrounds(version)) {
     const background = side === 'fronts' ? manifest.layout.background : sheet.backs.template.background;
     add(background.assetId, background);
   }
-  if (side === 'fronts') {
+  if (isFlyerSheet(sheet)) {
+    add(sheet.fronts.assetId, { x: 0, y: 0, width: 2550, height: 3300 });
+  } else if (side === 'fronts') {
     const asset = release.assets[sheet.fronts.assetId];
     const sources = asset.positions.toSorted((a, b) => Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y);
     const positions = fixedSheetOutputPositions(asset, manifest.layout) ?? manifest.layout.positions;
@@ -50,5 +54,5 @@ export function buildPagePreview(manifest, release, sheetId, side) {
     width: 2550, height: 3300, requiredAssetIds,
     assets: Object.fromEntries(requiredAssetIds.map(id => [id, {
       sha256: release.assets[id].sha256, width: release.assets[id].width, height: release.assets[id].height,
-    }])), layers, stockLabel: stockSheetLabel(manifest, release, sheetId, side) };
+    }])), layers, stockLabel: isFlyerSheet(sheet) ? null : stockSheetLabel(manifest, release, sheetId, side) };
 }

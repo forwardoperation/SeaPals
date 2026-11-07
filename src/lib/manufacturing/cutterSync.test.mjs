@@ -61,7 +61,7 @@ const source = buildSourceMap(
 );
 
 test("current source mapping pins the complete tuned Canon page and versioned cutter geometry", () => {
-  assert.equal(source.sources.length, 281);
+  assert.equal(source.sources.length, 283);
   assert.equal(source.sources.find((s) => s.id === "standard-back-sheet").nodeId, "4311:139076");
   assert.equal(BACK_ART_SOURCE.nodeId, "4311:139076");
   assert.equal(source.sources.some((s) => ["4099:61637", "4099:61666"].includes(s.nodeId)), false);

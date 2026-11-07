@@ -219,3 +219,43 @@ test("cache is deterministic, detects modified output and keys source bytes and 
   assert.equal(cachedFiles.filter((name) => name.endsWith(".placement.json")).length, 3);
   assert.equal(cachedFiles.length, 6, "Atomic cache writes must not leave temporary files");
 });
+
+test("Epson flyers contain the complete Letter page inside physical margins while card fill remains unchanged", async (t) => {
+  const { job, bytes } = await fixture(t, (_document, page) => {
+    // Edge-to-edge marks make clipping observable in the embedded commands.
+    page.drawRectangle({ x: 0, y: 0, width: 612, height: 792, borderWidth: 1, borderColor: rgb(1, 0, 0) });
+  });
+  const card = await preparePrinterPdf(configuration(), job, { probe });
+  const flyer = await preparePrinterPdf(configuration(), { ...job, kind: "flyer" }, { probe });
+  assert.equal(flyer.kind, "flyer");
+  assert.equal(flyer.placement.contentPlacement, "flyer-fit-physical-letter-v1");
+  assert.deepEqual(flyer.placement.clipRectangle, { x: 18, y: 18, width: 576, height: 756 });
+  almost(flyer.placement.scale, 576 / 612);
+  const { scale, offsetXPoints: x, offsetYPoints: y } = flyer.placement;
+  assert.ok(x >= 18 && y >= 18 && x + 612 * scale <= 594 && y + 792 * scale <= 774);
+  assert.notEqual(flyer.file, card.file); assert.notEqual(flyer.placement.profileSha256, card.placement.profileSha256);
+  almost(card.placement.scale, 628.4 / 612);
+  assert.equal(card.placement.contentPlacement, undefined);
+  assert.deepEqual(await readFile(job.file), bytes);
+  const document = await PDFDocument.load(await readFile(flyer.file)), page = document.getPage(0);
+  assert.deepEqual(page.getSize(), { width: 628.4, height: 802 });
+  const operations = contentText(document, page);
+  assert.match(operations, /18 18 576 756 re/);
+  const object = document.context.lookup(page.node.Resources().lookup(PDFName.of("XObject")).entries()[0][1], PDFRawStream);
+  assert.deepEqual(object.dict.lookup(PDFName.of("BBox")).asArray().map(n => n.asNumber()), [0, 0, 612, 792]);
+  const source = await PDFDocument.load(bytes);
+  assert.ok(Buffer.from(decodePDFRawStream(object).decode()).toString("latin1").includes(contentText(source, source.getPage(0)).trim()));
+  const repeat = await preparePrinterPdf(configuration(), { ...job, kind: "flyer" }, { probe });
+  assert.equal(repeat.file, flyer.file); assert.deepEqual(await readFile(repeat.file), await readFile(flyer.file));
+});
+
+test("flyer placement rejects a Canon side, an unverified route, and a canvas smaller than physical Letter", () => {
+  const job = { side: "fronts", file: path.resolve("flyer.pdf"), kind: "flyer" };
+  const noProfile = configuration(); delete noProfile.fronts.pagePlacement;
+  assert.throws(() => validatePrinterPlacement(noProfile, job), /verified Epson/);
+  assert.throws(() => validatePrinterPlacement(configuration(), { ...job, side: "backs" }), /only on the Epson/);
+  const undersized = configuration();
+  undersized.fronts.pagePlacement.expectedDevice.physicalWidth = 6000;
+  undersized.fronts.pagePlacement.expectedDevice.printableWidth = 6000;
+  assert.throws(() => validatePrinterPlacement(undersized, job), /physical Letter/);
+});

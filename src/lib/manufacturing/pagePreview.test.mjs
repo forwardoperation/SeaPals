@@ -8,7 +8,7 @@ import { PDFDocument, PDFName, PDFArray, PDFRawStream, decodePDFRawStream } from
 import { buildPrintingCatalog, contentHash } from './boosters.mjs';
 import { PRINT_LAYOUT, BACK_TEMPLATE, V7_PRINT_LAYOUT, V7_BACK_TEMPLATE, V7_HOLO_PRINT_LAYOUT, V7_HOLO_BACK_TEMPLATE, createManufacturingManifest } from './printPlan.mjs';
 import { backgroundsForLayout } from './backdrops.mjs';
-import { fixedSheetAssets, fixedArtworkSources } from './recipes.mjs';
+import { fixedSheetAssets, fixedArtworkSources, FLYER_RECIPE_VERSION, FLYER_SOURCES } from './recipes.mjs';
 import { sha256, validateRelease } from './integration.mjs';
 import { buildPagePreview } from './pagePreview.mjs';
 import { stockSheetLabel } from './stockSheetLabel.mjs';
@@ -59,6 +59,17 @@ before(async () => {
     releases[name] = validateRelease({ releaseId: `preview-${name}`, figmaVersion: 'fixture', catalog, printTemplates, assets });
     assetFiles[name] = files;
   }
+  const flyerRelease = structuredClone(releases.v8), flyerFiles = { ...assetFiles.v8 };
+  flyerRelease.releaseId = 'preview-flyers'; flyerRelease.flyerVersion = FLYER_RECIPE_VERSION;
+  for (const id of fixedSheetAssets('starter-kit')) {
+    if (flyerRelease.assets[id]) continue;
+    flyerRelease.assets[id] = structuredClone(fixed.asset); flyerFiles[id] = fixed.file;
+  }
+  for (const source of FLYER_SOURCES) {
+    const saved = await save(front, source.nodeId, { kind: 'flyer' });
+    flyerRelease.assets[source.id] = saved.asset; flyerFiles[source.id] = saved.file;
+  }
+  releases.flyers = validateRelease(flyerRelease); assetFiles.flyers = flyerFiles;
 });
 after(async () => {
   if (!directory) return;
@@ -69,7 +80,7 @@ after(async () => {
 function manifest(version = 'v8', productId = 'coral-garden', quantity = 1) {
   const release = releases[version];
   return createManufacturingManifest({ request: { orderId: 'preview-order', orderNumber: 'PREVIEW-ORDER', items: [{ productId, quantity }] },
-    catalog, artworkRelease: release.releaseId, printTemplates: release.printTemplates, jobKind: 'stock', now: '2026-11-02T12:00:00.000Z' });
+    catalog, artworkRelease: release.releaseId, printTemplates: release.printTemplates, flyerVersion: release.flyerVersion, jobKind: 'stock', now: '2026-11-02T12:00:00.000Z' });
 }
 function oneSheet(saved, index = 0) {
   const { manifestHash, ...body } = saved; body.sheets = [body.sheets[index]]; return { ...body, manifestHash: contentHash(body) };
@@ -173,4 +184,25 @@ test('browser preview positions and source crops match the actual saved printer 
       }
     }
   }
+});
+
+test('saved kit flyers preview the complete native Letter image with no card template, crop or stock label', () => {
+  const saved = manifest('flyers', 'starter-kit', 2), before = JSON.stringify(saved);
+  const flyers = saved.sheets.filter(sheet => sheet.kind === 'flyer');
+  assert.equal(saved.sheets.length, 36); assert.equal(flyers.length, 4);
+  for (const sheet of flyers) {
+    const plan = buildPagePreview(saved, releases.flyers, sheet.sheetId, 'fronts');
+    assert.deepEqual(plan.requiredAssetIds, [sheet.fronts.assetId]);
+    assert.deepEqual(plan.layers, [{ assetId: sheet.fronts.assetId, position: { x: 0, y: 0, width: 2550, height: 3300, rotation: 0 } }]);
+    assert.deepEqual(plan.assets, { [sheet.fronts.assetId]: { sha256: releases.flyers.assets[sheet.fronts.assetId].sha256, width: 2550, height: 3300 } });
+    assert.equal(plan.stockLabel, null);
+    assert.throws(() => buildPagePreview(saved, releases.flyers, sheet.sheetId, 'backs'), /Epson only/);
+  }
+  const legacy = createManufacturingManifest({ request: { orderId: 'preview-order', orderNumber: 'PREVIEW-ORDER', items: [{ productId: 'starter-kit', quantity: 1 }] },
+    catalog, artworkRelease: releases.flyers.releaseId, printTemplates: releases.flyers.printTemplates, jobKind: 'stock', now: '2026-11-02T12:00:00.000Z' });
+  assert.equal(legacy.sheets.length, 16); assert.ok(!legacy.sheets.some(sheet => sheet.kind === 'flyer'));
+  const currentCard = buildPagePreview(saved, releases.flyers, saved.sheets[0].sheetId, 'fronts');
+  const oldCard = buildPagePreview(legacy, releases.flyers, legacy.sheets[0].sheetId, 'fronts');
+  assert.deepEqual(currentCard.layers, oldCard.layers);
+  assert.equal(JSON.stringify(saved), before);
 });

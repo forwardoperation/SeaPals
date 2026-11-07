@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { isPrintSubmitted, workflowReadiness } from "@/lib/manufacturing/readiness.mjs";
+import { isFlyerSheet, printSidesForSheet } from "@/lib/manufacturing/sheetKinds.mjs";
 import FinishedInventory from "./FinishedInventory";
 import StockReceiving from "./StockReceiving";
 import { RECEIPT_RETRY_KEY, readReceiptRetry, receiptWasRejected } from "./receiving.mjs";
@@ -442,13 +443,14 @@ export default function ManufacturingDashboard() {
             detail?.order.fulfillment_status,
           )));
   function printControl(sheetId, side, status) {
+    const flyer = isFlyerSheet(manifest?.sheets.find((sheet) => sheet.sheetId === sheetId));
     return (
       <div className="rounded-xl bg-slate-50 p-3" key={side}>
         <p className="font-bold capitalize">
           {side === "ticket"
             ? "Canon work ticket"
             : side === "fronts"
-              ? "Epson fronts"
+              ? flyer ? "Epson flyer" : "Epson fronts"
               : "Canon backs"}
         </p>
         <p
@@ -498,7 +500,7 @@ export default function ManufacturingDashboard() {
                 setReason("");
               }}
             >
-              {side === "fronts" ? "Reprint this front" : side === "backs" ? "Reprint this back" : "Reprint work ticket"}
+              {side === "fronts" ? flyer ? "Reprint this flyer" : "Reprint this front" : side === "backs" ? "Reprint this back" : "Reprint work ticket"}
             </button>
           )}
         </div>
@@ -739,7 +741,7 @@ export default function ManufacturingDashboard() {
                         <h3 className="font-bold">Review and send this job</h3>
                         <p className="my-2 text-sm text-slate-600">
                           {detail.job_kind === "stock"
-                            ? "Print only the card fronts and backs for this stock build."
+                            ? "Print the pages needed for this stock build."
                             : "Use reserved finished stock and print only the shortfall, plus a work ticket."}
                           {" "}Any new booster gets 5 commons, 3 uncommons, and
                           1 rare or holo rare from its set. Its cards are saved
@@ -777,7 +779,7 @@ export default function ManufacturingDashboard() {
                     <div className="my-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
                       <p className="font-bold">Blank or damaged sheet?</p>
                       <p className="mt-1">
-                        Find its sheet number below and choose Reprint this front or Reprint this back.
+                        Find the affected sheet below and choose its reprint button.
                         Only that side is queued again, using the same saved cards, artwork, and positions.
                         You do not need to recreate the page. Check the physical output and printer queue first.
                       </p>
@@ -893,7 +895,7 @@ export default function ManufacturingDashboard() {
                       : sheet.productId === "blue-water" ? "Drop Off deck" : sheet.productId?.replaceAll("-", " ")}
                   </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {["fronts", "backs"].map((side) =>
+                    {printSidesForSheet(sheet).map((side) =>
                       printControl(
                         sheet.sheetId,
                         side,
@@ -901,7 +903,7 @@ export default function ManufacturingDashboard() {
                       ),
                     )}
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-3">
+                  {isFlyerSheet(sheet) ? <p className="mt-4 text-sm text-slate-600">Include this flyer with the packaged kit.</p> : <div className="mt-4 flex flex-wrap gap-3">
                     <button
                       className={button}
                       disabled={
@@ -933,7 +935,7 @@ export default function ManufacturingDashboard() {
                         ? "Cut ✓"
                         : "Confirm dry and cut"}
                     </button>
-                  </div>
+                  </div>}
                   {manifest.holoChecklist
                     .filter((h) => h.sheetId === sheet.sheetId)
                     .map((holo) => (
@@ -1095,7 +1097,7 @@ export default function ManufacturingDashboard() {
             </h2>
             <p className="my-3 text-sm">
               Check the physical output and printer queue first. This will queue only the{" "}
-              {reprint.side === "fronts" ? "Epson front" : reprint.side === "backs" ? "Canon back" : "Canon work ticket"}{" "}
+              {reprint.side === "fronts" ? isFlyerSheet(manifest?.sheets.find((sheet) => sheet.sheetId === reprint.sheetId)) ? "Epson flyer" : "Epson front" : reprint.side === "backs" ? "Canon back" : "Canon work ticket"}{" "}
               for {sheetDisplayLabel(manifest, reprint.sheetId)}.
               The saved card choices, artwork, and positions stay the same.
             </p>

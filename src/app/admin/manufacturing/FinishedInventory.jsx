@@ -62,7 +62,7 @@ export default function FinishedInventory({
                     <th scope="row" className="p-2 text-left font-medium">
                       {expandable ? <button type="button" className="flex w-full items-center gap-2 rounded-md py-1 text-left text-cyan-950 hover:text-cyan-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-700" aria-expanded={expanded} aria-controls={`product-pages-${s.product_id}`} onClick={() => setExpandedProduct(expanded ? "" : s.product_id)}>
                         <span aria-hidden="true" className="w-3 shrink-0 text-xs">{expanded ? "▼" : "▶"}</span>
-                        <span className="min-w-0"><span className="block">{s.product_name}</span><span className="text-[11px] font-normal text-slate-500">{pageCount} print pages</span></span>
+                        <span className="min-w-0"><span className="block">{s.product_name}</span><span className="text-[11px] font-normal text-slate-500">{s.product_id === "starter-kit" ? "Card pages and inserts" : `${pageCount} print pages`}</span></span>
                       </button> : <span className="block py-1">{s.product_name}</span>}
                     </th>
                     <td className="p-2">{s.on_hand}</td>

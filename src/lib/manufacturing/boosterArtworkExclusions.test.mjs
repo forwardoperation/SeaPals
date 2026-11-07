@@ -46,7 +46,7 @@ test("approved booster holds preserve the full catalog, mapped artwork, and sele
   const selected = selectProductArtwork(source, products);
   const updated = applyBoosterArtworkPolicy(selected, policy);
   assert.equal(updated.catalog.length, 217);
-  assert.equal(updated.sources.length, 270);
+  assert.equal(updated.sources.length, 272);
   assert.equal(updated.sources.filter((item) => item.kind === "card").length, 217);
   assert.equal(updated.sources.filter((item) => item.kind === "sheet").length, 51);
   for (const key of ["catalog", "sources", "templates", "missing", "excludedUnfinished", "exportScope"])

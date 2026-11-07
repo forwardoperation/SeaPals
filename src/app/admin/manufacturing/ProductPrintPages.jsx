@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { isFlyerSheet, printSidesForSheet } from "../../../lib/manufacturing/sheetKinds.mjs";
 import PagePreview from "./PagePreview";
 import { pageReprintBlockedReason, pageReprintButtonLabel, pageReprintRetryKey, pageReprintSelectionError, pageReprintWasRejected, readPageReprintRetry, selectedPageTargets } from "./productPages.mjs";
 
@@ -67,11 +68,16 @@ export default function ProductPrintPages({ productId, productName, busy, sessio
   }, [productId, sessionKey]);
 
   const jobs = snapshot?.jobs ?? [], job = jobs.find((entry) => entry.orderId === orderId), pages = job?.pages ?? [];
-  const targets = selectedPageTargets(pages, selected, printSide), blocker = pageReprintBlockedReason(job);
+  const selectedPages = pages.filter((page) => selected.includes(page.sheetId));
+  const flyersOnly = selectedPages.length > 0 && selectedPages.every(isFlyerSheet);
+  const effectivePrintSide = flyersOnly ? "fronts" : printSide;
+  const targets = selectedPageTargets(pages, selected, effectivePrintSide), blocker = pageReprintBlockedReason(job);
   const selectionError = pageReprintSelectionError(targets);
   const disabled = busy || submitting || !!pending;
   const repeated = new Set(pages.map((page) => page.unit)).size > 1;
   const preview = pages.find((page) => page.sheetId === previewId);
+  const previewSides = preview ? printSidesForSheet(preview) : [];
+  const effectivePreviewSide = previewSides.includes(previewSide) ? previewSide : "fronts";
   function chooseJob(id) {
     source.current = id;
     setOrderId(id);
@@ -165,34 +171,35 @@ export default function ProductPrintPages({ productId, productName, busy, sessio
                 }} />
                 <button type="button" className="min-w-0 flex-1 text-left" aria-label={`Preview ${page.label}${repeated ? `, copy ${page.unit}` : ""}`} aria-pressed={previewId === page.sheetId} onClick={() => setPreviewId(page.sheetId)}>
                   <span className="block text-sm font-bold text-slate-900 [overflow-wrap:anywhere]">{repeated ? `Copy ${page.unit} · ` : ""}{page.label || `Page ${index + 1}`}</span>
-                  <span className="mt-1 block text-[11px] text-slate-500">Front: {statusLabels[page.frontsStatus] ?? page.frontsStatus} · Back: {statusLabels[page.backsStatus] ?? page.backsStatus}</span>
+                  <span className="mt-1 block text-[11px] text-slate-500">{isFlyerSheet(page) ? "Epson flyer" : "Front"}: {statusLabels[page.frontsStatus] ?? page.frontsStatus}{!isFlyerSheet(page) && <> · Back: {statusLabels[page.backsStatus] ?? page.backsStatus}</>}</span>
                 </button>
               </div>)}
             </div>
           </div>
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap gap-1" aria-label="Preview side">
-              {[['fronts', 'Epson front'], ['backs', 'Canon back']].map(([side, label]) => <button type="button" key={side} aria-pressed={previewSide === side} onClick={() => setPreviewSide(side)} className={`rounded-lg px-3 py-2 text-xs font-bold ${previewSide === side ? "bg-cyan-900 text-white" : "border border-slate-300 bg-white text-slate-700"}`}>{label}</button>)}
+              {previewSides.map((side) => { const label = side === 'backs' ? 'Canon back' : isFlyerSheet(preview) ? 'Epson flyer' : 'Epson front'; return <button type="button" key={side} aria-pressed={effectivePreviewSide === side} onClick={() => setPreviewSide(side)} className={`rounded-lg px-3 py-2 text-xs font-bold ${effectivePreviewSide === side ? "bg-cyan-900 text-white" : "border border-slate-300 bg-white text-slate-700"}`}>{label}</button>; })}
             </div>
             {preview && <>
               <p className="mb-2 text-xs font-bold text-slate-700">{repeated ? `Copy ${preview.unit} · ` : ""}{preview.label}</p>
-              <PagePreview key={`${job.orderId}:${previewId}:${previewSide}:${sessionKey}`} orderId={job.orderId} sheetId={previewId} side={previewSide} onLoadPagePreview={onLoadPagePreview} />
+              <PagePreview key={`${job.orderId}:${previewId}:${effectivePreviewSide}:${sessionKey}`} orderId={job.orderId} sheetId={previewId} side={effectivePreviewSide} onLoadPagePreview={onLoadPagePreview} />
             </>}
           </div>
         </div>
         <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3">
           <div className="grid gap-3 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)]">
             <label className="text-xs font-bold text-slate-700">Sides to reprint
-              <select className={field} value={printSide} disabled={disabled} onChange={(event) => { setPrintSide(event.target.value); setPreviewSide(event.target.value === "backs" ? "backs" : "fronts"); }}>
+              <select className={field} value={effectivePrintSide} disabled={disabled} onChange={(event) => { setPrintSide(event.target.value); setPreviewSide(event.target.value === "backs" ? "backs" : "fronts"); }}>
                 <option value="fronts">Fronts only · Epson</option>
-                <option value="backs">Backs only · Canon</option>
-                <option value="both">Fronts and backs</option>
+                {!flyersOnly && <option value="backs">Backs only · Canon</option>}
+                {!flyersOnly && <option value="both">Fronts and backs</option>}
               </select>
             </label>
             <label className="text-xs font-bold text-slate-700">Reason
               <input className={field} value={reason} onChange={(event) => setReason(event.target.value)} maxLength={500} disabled={disabled} />
             </label>
           </div>
+          {selectedPages.some(isFlyerSheet) && <p className="text-xs text-slate-600">Flyers print on Epson only. Canon selections include card backs only.</p>}
           {blocker && <p role="status" className="text-xs text-amber-900">{blocker}</p>}
           {selectionError && <p role="alert" className="text-xs text-amber-900">{selectionError}</p>}
           <div className="flex flex-wrap items-center gap-3">

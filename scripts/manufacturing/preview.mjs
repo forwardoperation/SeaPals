@@ -23,6 +23,8 @@ import {
 import { renderTicket } from "./render.mjs";
 import { PRIVATE_ROOT, REPO_ROOT, atomicJson } from "./orders.mjs";
 
+import { printSidesForSheet } from "../../src/lib/manufacturing/sheetKinds.mjs";
+
 const orderId = "10000000-0000-4000-8000-000000000001";
 export async function previewFixture({
   id = orderId,
@@ -32,6 +34,7 @@ export async function previewFixture({
   orderNumber,
   awaitingSend = false,
   printTemplates,
+  flyerVersion,
 } = {}) {
   const load = async (name) =>
     JSON.parse(await readFile(path.join(REPO_ROOT, "src/data", name), "utf8"));
@@ -50,6 +53,7 @@ export async function previewFixture({
     catalog,
     artworkRelease: "preview-only",
     printTemplates,
+    flyerVersion,
     randomIndex: () => 0,
     inventoryPlan,
     jobKind,
@@ -58,7 +62,7 @@ export async function previewFixture({
   for (const target of [
     ...(manifest.jobKind === "stock" ? [] : [{ sheetId: "work-ticket", side: "ticket" }]),
     ...manifest.sheets.flatMap((s) =>
-      ["fronts", "backs"].map((side) => ({ sheetId: s.sheetId, side })),
+      printSidesForSheet(s).map((side) => ({ sheetId: s.sheetId, side })),
     ),
   ]) {
     for (const type of ["submission_started", "submission_succeeded"])

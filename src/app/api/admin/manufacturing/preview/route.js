@@ -1,4 +1,5 @@
 import { authenticated, mutationOriginAllowed, uuid, assetKey, PRIVATE_HEADERS } from "@/lib/manufacturing/integration.mjs";
+import { printSidesForSheet } from "@/lib/manufacturing/sheetKinds.mjs";
 import { buildPagePreview } from "@/lib/manufacturing/pagePreview.mjs";
 import { service, json, bucket } from "@/lib/manufacturing/server";
 export const runtime = "nodejs";
@@ -13,7 +14,9 @@ export async function GET(request) {
     const s = service(), row = await s.row(orderId);
     if (!row?.manifest_text || !row.release_id) return json({ error: "This job has no saved print pages." }, 404);
     const release = await s.release(row.release_id), manifest = s.unpack(row).manifest;
-    if (!manifest.sheets.some(sheet => sheet.sheetId === sheetId)) return json({ error: "This job has no such saved page." }, 404);
+    const sheet = manifest.sheets.find(sheet => sheet.sheetId === sheetId);
+    if (!sheet) return json({ error: "This job has no such saved page." }, 404);
+    if (!printSidesForSheet(sheet).includes(side)) return json({ error: "This flyer prints on Epson only." }, 400);
     const plan = buildPagePreview(manifest, release, sheetId, side);
     if (!assetId) return json({ plan });
     if (!plan.requiredAssetIds.includes(assetId)) return json({ error: "This artwork is not part of the selected page." }, 404);

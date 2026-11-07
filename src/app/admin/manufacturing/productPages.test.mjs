@@ -69,3 +69,19 @@ test("ambiguous reprint retries preserve the original revision, reason, UUID and
   assert.equal(pageReprintWasRejected({ status: 409 }, false), true);
   assert.equal(pageReprintWasRejected({ status: 401 }, true), true);
 });
+
+test("mixed kit selections queue card pairs and Epson-only flyers without synthesizing a back", () => {
+  const pages = [job.pages[0], { sheetId: "how-to-play-1", kind: "flyer", unit: 1, frontsStatus: "submitted", backsStatus: "not_required" },
+    { sheetId: "promo-2", kind: "flyer", unit: 2, frontsStatus: "submitted", backsStatus: "not_required" }];
+  const before = JSON.stringify(pages), selected = pages.map(page => page.sheetId);
+  assert.deepEqual(selectedPageTargets(pages, selected.toReversed(), "both"), [
+    { sheetId: "one", side: "fronts" }, { sheetId: "one", side: "backs" },
+    { sheetId: "how-to-play-1", side: "fronts" }, { sheetId: "promo-2", side: "fronts" },
+  ]);
+  assert.deepEqual(selectedPageTargets(pages, selected, "backs"), [{ sheetId: "one", side: "backs" }]);
+  assert.deepEqual(selectedPageTargets(pages, ["promo-2"], "backs"), []);
+  assert.deepEqual(selectedPageTargets(pages, ["promo-2"], "both"), [{ sheetId: "promo-2", side: "fronts" }]);
+  assert.equal(pageReprintBlockedReason({ ...job, pages }), "");
+  assert.ok(pageReprintBlockedReason({ ...job, pages: [{ ...pages[1], frontsStatus: "queued" }] }));
+  assert.equal(JSON.stringify(pages), before);
+});

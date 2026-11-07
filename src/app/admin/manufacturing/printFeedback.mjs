@@ -1,3 +1,4 @@
+import { isFlyerSheet } from "../../../lib/manufacturing/sheetKinds.mjs";
 import { isStockBuild, printStatuses } from "./printStatus.mjs";
 import { isPrintSubmitted } from "../../../lib/manufacturing/readiness.mjs";
 import { fixedSheetLabel } from "../../../lib/manufacturing/recipes.mjs";
@@ -47,12 +48,16 @@ export function printFeedback(detail, enabled, now = Date.now()) {
   if (isStockBuild(detail) && state && detail.manifest?.sheets?.length === 0 && counts.total === 0)
     return feedback("No card pages required", "Continue picking, quality checks, and packaging, then scan the finished products to receive them into inventory.");
   if (counts.total && counts.sent === counts.total) {
-    const finishing = !detail.manifest?.sheets?.length
+    const sheets = detail.manifest?.sheets ?? [];
+    const hasFlyers = sheets.some(isFlyerSheet);
+    const finishing = !sheets.length
       ? "Once the work ticket prints, continue picking, quality checks, and packing."
+      : !sheets.some((sheet) => !isFlyerSheet(sheet))
+        ? "Once the flyers finish printing, check them and include them with the packaged kits."
       : detail.manifest?.holoHandling === "pull-finished"
         ? "Once the sheets finish printing, continue gluing, cutting, pulling the listed finished holo cards, and quality checks."
         : "Once the sheets finish printing, continue gluing, cutting, applying holo stickers, and quality checks.";
-    return feedback("Sent to printers", "Windows accepted all print jobs. No page-by-page confirmations are needed. " + finishing + " Use the reprint controls for any blank or damaged pages.");
+    return feedback("Sent to printers", "Windows accepted all print jobs. No page-by-page confirmations are needed. " + finishing + (hasFlyers && sheets.some((sheet) => !isFlyerSheet(sheet)) ? " Include the flyers with the packaged kits." : "") + " Use the reprint controls for any blank or damaged pages.");
   }
   if (!enabled)
     return feedback("Waiting for printing to be activated", "The request is saved. Pending pages will wait until printing is enabled.");

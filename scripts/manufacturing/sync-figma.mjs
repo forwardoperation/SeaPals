@@ -8,7 +8,9 @@ import {
   FIXED_PRODUCTS,
   fixedArtworkSources,
   fixedSheetLabel,
-  fixedSheetAssets,
+  productPrintAssets,
+  FLYER_RECIPE_VERSION,
+  FLYER_SOURCES,
   EMPTY_FIXED_SHEET_RECTANGLES,
   LEGACY_CONDITION_SOURCES,
 } from "../../src/lib/manufacturing/recipes.mjs";
@@ -73,6 +75,7 @@ export function buildSourceMap(
     // Each Canon asset is its complete native page, including all approved marks.
     { id: "standard-back-sheet", kind: "back", nodeId: BACK_ART_SOURCE.nodeId },
     ...fixedArtworkSources(),
+    ...FLYER_SOURCES,
     ...currentTemplates.filter(template => template.background.assetId !== "standard-back-sheet").map((template) => ({
       id: template.background.assetId,
       kind: "backdrop",
@@ -91,6 +94,7 @@ export function buildSourceMap(
   });
   return {
     fileKey: gallery.fileKey,
+    flyerVersion: FLYER_RECIPE_VERSION,
     catalog,
     sources,
     // Geometry participates in the source hash, so changing a cutter template
@@ -197,7 +201,7 @@ export function selectProductArtwork(source, products = null) {
       // Select the whole eligible pool, including every rare/holo outcome.
       for (const card of source.catalog.filter((card) => card.set === set))
         required.add(card.printingId);
-    } else for (const id of fixedSheetAssets(productId)) required.add(id);
+    } else for (const id of productPrintAssets(productId, source.flyerVersion)) required.add(id);
   }
   if (!required.size)
     throw new Error("The selected products have no printable artwork to export.");
@@ -212,6 +216,7 @@ export function selectProductArtwork(source, products = null) {
     // Catalog stays complete: unsupported sets fail before drawing, rather than
     // acquiring a smaller pool. Scope also participates in the cache/release hash.
     exportScope: { products: selected },
+    flyerVersion: selected.includes("starter-kit") ? source.flyerVersion : undefined,
     sources,
     missing: sources.filter((item) => !item.nodeId)
       .map((item) => ({ id: item.id, cardId: item.cardId })),
@@ -507,14 +512,21 @@ export const validateDropOffSheetBackgrounds = validateFixedSheetBackgrounds;
 export const checkDropOffSheetBackgrounds = checkFixedSheetBackgrounds;
 
 export function figmaImageRoutes(fileKey, batch, version) {
-  // Fixed-sheet crops use coordinates relative to the complete Letter frame,
-  // including transparent margins. Other assets retain their existing bounds.
+  // Fixed-sheet crops and native flyers retain exact frame bounds, including
+  // transparent margins. Other assets retain their existing export bounds.
   return [false, true].flatMap((absoluteBounds) => {
-    const nodes = batch.filter((item) => isFixedSheet(item) === absoluteBounds);
+    const nodes = batch.filter((item) => (isFixedSheet(item) || item.kind === "flyer") === absoluteBounds);
     if (!nodes.length) return [];
     const ids = [...new Set(nodes.map((item) => item.exportNodeId ?? item.nodeId))].join(",");
     return [`images/${fileKey}?ids=${encodeURIComponent(ids)}&format=png&scale=1&version=${encodeURIComponent(version)}${absoluteBounds ? "&use_absolute_bounds=true" : ""}`];
   });
+}
+export function validateFlyerSource(document, source) {
+  const expected = FLYER_SOURCES.find(item => item.id === source?.id && item.nodeId === source?.nodeId);
+  if (!expected || source.kind !== "flyer" || document?.id !== expected.nodeId || document.type !== "FRAME" ||
+      document.absoluteBoundingBox?.width !== 2550 || document.absoluteBoundingBox?.height !== 3300 ||
+      document.clipsContent !== true || (document.rotation ?? 0) !== 0)
+    throw new Error(`Expected the complete native Letter flyer frame: ${source?.id ?? "unknown"}`);
 }
 function texts(node, found = []) {
   if (node.type === "TEXT" && typeof node.characters === "string")
@@ -777,6 +789,7 @@ async function main() {
     figmaSnapshot,
     sourceHash,
     printTemplates: source.templates,
+    ...(source.flyerVersion ? { flyerVersion: source.flyerVersion } : {}),
     catalog: source.catalog,
     missing: source.missing,
     excludedUnfinished: source.excludedUnfinished,
@@ -846,6 +859,7 @@ async function main() {
           url = images[item.exportNodeId ?? item.nodeId];
         if (!node || !url)
           throw new Error(`Missing Figma export for ${item.id}.`);
+        if (item.kind === "flyer") validateFlyerSource(node, item);
         if (
           item.kind === "card" &&
           !texts(node).some((t) => t.replaceAll(" ", "") === item.expectedNumber)
@@ -875,6 +889,7 @@ async function main() {
           sha256: hash,
           ...dimensions,
           nodeId: item.nodeId,
+          ...(item.kind === "flyer" ? { kind: "flyer" } : {}),
           ...(item.kind === "sheet" ? { positions: normalized.positions,
             ...(normalized.sourceGeometry ? { sourceGeometry: normalized.sourceGeometry } : {}),
             ...(normalized.omittedNodeIds ? { omittedNodeIds: normalized.omittedNodeIds } : {}),
