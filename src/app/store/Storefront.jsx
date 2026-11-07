@@ -38,8 +38,8 @@ const FALLBACK_PRODUCTION_OPTIONS = Object.freeze([
 ]);
 
 const CATEGORY_ORDER = [
-  "dive-packs",
   "starter-kits",
+  "dive-packs",
   "expansion-decks",
   "game-accessories",
   "apparel",

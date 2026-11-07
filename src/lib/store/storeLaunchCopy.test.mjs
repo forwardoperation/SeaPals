@@ -72,12 +72,12 @@ test("the holiday banner gives the December 11 cutoff and Christmas delivery gua
   assert.match(storefrontSource, /Starter Kits &amp; Expansion Decks/);
 });
 
-test("Dive Packs appear before the preorder products and preorder buttons identify the purchase", () => {
+test("Starter Kits appear first and preorder buttons identify the purchase", () => {
   const categoryOrder = storefrontSource.match(/const CATEGORY_ORDER = \[([\s\S]*?)\];/)?.[1];
   assert.ok(categoryOrder);
   assert.deepEqual(
     [...categoryOrder.matchAll(/"([^\"]+)"/g)].slice(0, 4).map((match) => match[1]),
-    ["dive-packs", "starter-kits", "expansion-decks", "game-accessories"]
+    ["starter-kits", "dive-packs", "expansion-decks", "game-accessories"]
   );
   assert.match(storefrontSource, /"Pre-order"/);
   assert.match(storefrontSource, /"Add another pre-order"/);
