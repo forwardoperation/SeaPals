@@ -18,7 +18,7 @@ test("instructions opens V2 lessons with an exit back to instructions or the sel
   const experienceSource = await readAppSource("simulator", "SimulatorV2Experience.jsx");
 
   assert.match(pageSource, /getValidSimulatorDeck\(params\?\.returnDeck\)/);
-  assert.match(pageSource, /createSimulatorDeckHref\(returnDeck\?\.id\) \?\? "\/instructions#learn-by-doing"/);
+  assert.match(pageSource, /createSimulatorDeckHref\(returnDeck\?\.id\) \?\? "\/instructions"/);
   assert.match(pageSource, /initialDeckId=\{returnDeck\?\.id \?\? null\}/);
   assert.match(clientSource, /<SimulatorV2Experience[\s\S]*?initialDeckId=\{initialDeckId\}[\s\S]*?initialTutorial[\s\S]*?onExitTutorial=\{returnToInstructions\}/);
   assert.match(clientSource, /router\.replace\(returnPath\)/);
@@ -69,20 +69,14 @@ test("Reefbound uses the V2 board while retaining its campaign duel and tutorial
   assert.match(simulator, /simulatorAnalyticsEnabled = Boolean\(previewExperience && !isStoryMode && !tutorialRuntime\)/);
 });
 
-test("learn by doing appears before the written rules and legacy tutorial links redirect", async () => {
+test("instructions retains guided tutorial access and legacy tutorial links redirect", async () => {
   const instructionsSource = await readAppSource("instructions", "page.jsx");
   const legacyTutorialSource = await readAppSource("tutorial", "page.jsx");
-  const learnByDoingIndex = instructionsSource.indexOf('id="learn-by-doing"');
   const writtenRulesIndex = instructionsSource.indexOf('id="start-here"');
 
-  assert.ok(learnByDoingIndex >= 0, "instructions page should include the learn-by-doing section");
   assert.ok(writtenRulesIndex >= 0, "instructions page should include the written rules section");
-  assert.ok(
-    learnByDoingIndex < writtenRulesIndex,
-    "guided lesson should appear before the written rules",
-  );
   assert.match(instructionsSource, /href="\/instructions\/tutorial"/);
-  assert.match(instructionsSource, /Start guided tutorial/);
+  assert.match(instructionsSource, /Start Interactive Tutorial/);
   assert.match(legacyTutorialSource, /redirect\("\/instructions\/tutorial"\)/);
   assert.doesNotMatch(legacyTutorialSource, /TutorialSimulator|PokemonTutorial/);
 });

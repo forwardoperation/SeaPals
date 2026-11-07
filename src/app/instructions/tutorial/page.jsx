@@ -15,7 +15,7 @@ export default async function InstructionsTutorialPage({ searchParams }) {
   const params = await searchParams;
   const returnDeck = getValidSimulatorDeck(params?.returnDeck);
   const returnPath =
-    createSimulatorDeckHref(returnDeck?.id) ?? "/instructions#learn-by-doing";
+    createSimulatorDeckHref(returnDeck?.id) ?? "/instructions";
 
   return (
     <StandaloneTutorial

@@ -3,7 +3,6 @@ import Link from "next/link";
 import AskFinnButton from "./AskFinnButton";
 import Faq from "./Faq";
 import InstructionsNav from "./InstructionsNav";
-import { SIMULATOR_V2_LESSONS } from "@/app/simulator/simulatorV2Lessons.mjs";
 
 export const metadata = {
   title: "How to Play SeaRealm | Beginner Guide & Complete Rules",
@@ -247,129 +246,30 @@ function CardIcon({ src, alt, size = 46 }) {
   );
 }
 
-function SimulatorPromo() {
-  return (
-    <aside
-      id="learn-by-doing"
-      data-rules-ignore
-      aria-label="SeaRealm guided tutorial"
-      className="relative mt-8 scroll-mt-6 overflow-hidden border-y border-white/15 text-white"
-    >
-      <div className="relative grid gap-6 py-8 lg:grid-cols-[1fr_auto] lg:items-end lg:py-10">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-300">
-            Start here · Learn by doing
-          </p>
-          <h2 className="mt-3 max-w-3xl text-3xl font-black tracking-tight md:text-5xl">
-            Play the lessons before you read the rulebook
-          </h2>
-          <p className="mt-4 max-w-3xl text-sm leading-7 text-cyan-100/90 md:text-lg md:leading-8">
-            Mr. Easterling guides you through hands-on simulator lessons. Start
-            with your first reef, practice interactions and attacks, then learn
-            Apex creatures, Support combos, and open-water ecosystems. Choose a
-            lesson and replay it whenever you like.
-          </p>
-          <ul className="mt-5 flex flex-wrap gap-2 text-xs font-bold text-cyan-50 md:text-sm">
-            {[
-              "Step-by-step lessons",
-              "Replay any lesson",
-              "Supports, Actions, and attacks",
-              "Reefs and open water",
-            ].map((benefit) => (
-              <li key={benefit} className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2">
-                <span aria-hidden="true" className="text-emerald-300">✓</span>
-                {benefit}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="flex flex-col items-start gap-3 lg:items-end">
-          <Link
-            href="/instructions/tutorial"
-            className="inline-flex items-center justify-center rounded-full bg-amber-300 px-7 py-3.5 text-sm font-black text-slate-950 shadow-lg transition hover:-translate-y-0.5 hover:bg-amber-200"
-          >
-            Start the guided tutorial →
-          </Link>
-          <Link
-            href="/simulator"
-            className="text-xs font-bold text-cyan-200 underline decoration-cyan-400/50 underline-offset-4 transition hover:text-cyan-100"
-          >
-            Already know the basics? Open free play
-          </Link>
-        </div>
-      </div>
-
-      <Link
-        href="/instructions/tutorial"
-        aria-label="Start Mr. Easterling's guided SeaRealm tutorial"
-        className="group relative block border-t border-white/10 bg-gradient-to-br from-cyan-950 to-emerald-900 p-2 sm:p-3 md:p-5"
-      >
-        <Image
-          src="/images/promo/seapals-simulator-gameplay.png"
-          alt="A full SeaRealm Simulator match showing the player's ecosystem, rival ecosystem, hand, Conditions, RP bank, and current scores"
-          width={1800}
-          height={1254}
-          sizes="(min-width: 1280px) 1152px, 100vw"
-          className="h-auto w-full rounded-xl border border-cyan-300/30 shadow-2xl transition duration-300 group-hover:border-cyan-200/70 group-hover:brightness-105"
-        />
-        <span className="absolute bottom-5 right-5 hidden rounded-full bg-slate-950/90 px-4 py-2 text-xs font-black text-white shadow-xl backdrop-blur transition group-hover:bg-cyan-700 sm:block md:bottom-8 md:right-8">
-          Begin lesson ↗
-        </span>
-      </Link>
-    </aside>
-  );
-}
-
 export default function InstructionsPage() {
   return (
     <main className="pb-20 text-white">
       <section className="relative overflow-hidden px-1 py-8 text-white md:py-12 lg:py-14">
         <div className="relative grid gap-9 lg:grid-cols-[1.12fr_0.88fr] lg:items-center">
           <div>
-            <p data-rules-ignore className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-300">
-              SeaRealm how-to-play guide
-            </p>
-            <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight md:text-6xl md:leading-[1.05]">
-              How to get started with SeaRealm
+            <h1 className="max-w-3xl text-4xl font-black tracking-tight md:text-6xl md:leading-[1.05]">
+              Learn How to Play SeaRealm
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-cyan-100/90 md:text-lg md:leading-8">
-              Begin with Mr. Easterling&apos;s hands-on simulator lessons. Once you
-              have played through the turn flow yourself, use the written rules below
-              whenever a card or interaction raises a question.
-            </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
                 href="/instructions/tutorial"
                 className="inline-flex items-center justify-center rounded-full bg-amber-300 px-6 py-3 text-sm font-black text-slate-950 shadow-lg transition hover:bg-amber-200"
               >
-                Start guided tutorial →
+                Start Interactive Tutorial
               </Link>
               <a
                 href="#start-here"
                 className="inline-flex items-center justify-center rounded-full border border-cyan-300/60 bg-cyan-300/10 px-6 py-3 text-sm font-bold text-cyan-50 transition hover:bg-cyan-300/20"
               >
-                Read the written rules ↓
+                Read the Rules Yourself
               </a>
-              <AskFinnButton className="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10">
-                Ask Finn a question
-              </AskFinnButton>
             </div>
-
-            <dl className="mt-8 flex flex-wrap gap-x-7 gap-y-3 border-t border-white/10 pt-6 text-sm">
-              <div className="flex items-baseline gap-2">
-                <dt className="text-cyan-100/75">Players</dt>
-                <dd className="font-black text-white">2–4</dd>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <dt className="text-cyan-100/75">Guided lessons</dt>
-                <dd className="font-black text-white">{SIMULATOR_V2_LESSONS.length}</dd>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <dt className="text-cyan-100/75">Full game</dt>
-                <dd className="font-black text-white">30 VP</dd>
-              </div>
-            </dl>
           </div>
 
           <div className="relative border-l border-cyan-200/25 py-5 pl-5 md:py-7 md:pl-7">
@@ -388,8 +288,6 @@ export default function InstructionsPage() {
           </div>
         </div>
       </section>
-
-      <SimulatorPromo />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)] xl:gap-10">
         <InstructionsNav />
