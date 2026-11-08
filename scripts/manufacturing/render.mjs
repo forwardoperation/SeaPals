@@ -487,7 +487,7 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
   );
   line(
     pullFinished
-      ? "Pull each finished holo card shown in a placeholder slot. Insert it into the matching pack; discard the placeholder and confirm each pull before quality check."
+      ? "Pull each finished holo card shown in a placeholder slot. Include it in the matching pack and discard the printed placeholder."
       : "Apply holo stickers at your preferred assembly stage; confirm every sticker before quality check.",
   );
   if (manifest.sheets.some(isFlyerSheet))
@@ -503,7 +503,7 @@ export async function renderTicket({ manifest, order, siteOrigin, file }) {
   });
   for (const holo of manifest.holoChecklist)
     line(
-      `[ ] ${holo.packId}: ${holo.name} (${pullFinished ? holoNumber(holo) : holo.printingId}), row ${holo.row}, column ${holo.column}`,
+      `${pullFinished ? "" : "[ ] "}${holo.packId}: ${holo.name} (${pullFinished ? holoNumber(holo) : holo.printingId}), row ${holo.row}, column ${holo.column}`,
     );
   if (!manifest.holoChecklist.length)
     line(pullFinished ? "No finished holo cards to pull for these packs." : "No holo stickers required for these selected printings.");

@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { isPrintSubmitted, workflowReadiness } from "@/lib/manufacturing/readiness.mjs";
 import { isFlyerSheet, printSidesForSheet } from "@/lib/manufacturing/sheetKinds.mjs";
 import FinishedInventory from "./FinishedInventory";
+import HoloFinishing from "./HoloFinishing";
 import StockReceiving from "./StockReceiving";
 import { RECEIPT_RETRY_KEY, readReceiptRetry, receiptWasRejected } from "./receiving.mjs";
 import { createRefreshGuard, formatManufacturingMessage, printFeedback } from "./printFeedback.mjs";
@@ -418,7 +419,7 @@ export default function ManufacturingDashboard() {
   const recovery = reprintReadiness(detail);
   const state = detail?.state,
     manifest = detail?.manifest,
-    ready = state ? workflowReadiness(state) : null,
+    ready = state ? workflowReadiness(state, manifest) : null,
     inventoryPlan =
       detail?.inventory_plan ??
       manifest?.inventoryPlan ??
@@ -938,36 +939,15 @@ export default function ManufacturingDashboard() {
                   </div>}
                   {manifest.holoChecklist
                     .filter((h) => h.sheetId === sheet.sheetId)
-                    .map((holo) => (
-                      <div
-                        key={holo.id}
-                        className="mt-4 rounded-xl border border-violet-200 bg-violet-50 p-4"
-                      >
-                        <p className="font-bold">{manifest.holoHandling === "pull-finished" ? "Pull finished holo" : "Holo sticker"}: {holo.name}</p>
-                        <p className="my-2 text-sm">
-                          Row {holo.row}, column {holo.column} ·{" "}
-                          {manifest.holoHandling === "pull-finished"
-                            ? `${holo.set === "ocean" ? "Oceanic" : holo.set} ${holo.collectorNumber}/${holo.setTotal}`
-                            : holo.printingId}
-                        </p>
-                        <button
-                          className={button}
-                          disabled={
-                            busy ||
-                            state.hold ||
-                            state.holos[holo.id] ||
-                            !isPrintSubmitted(state.sheets[sheet.sheetId].fronts)
-                          }
-                          onClick={() =>
-                            update(manifest.holoHandling === "pull-finished" ? "holo_pulled" : "holo_applied", { holoId: holo.id })
-                          }
-                        >
-                          {state.holos[holo.id]
-                            ? manifest.holoHandling === "pull-finished" ? "Finished holo pulled ✓" : "Sticker applied ✓"
-                            : manifest.holoHandling === "pull-finished" ? "Confirm finished holo pulled" : "Confirm sticker applied"}
-                        </button>
-                      </div>
-                    ))}
+                    .map((holo) => <HoloFinishing
+                      key={holo.id}
+                      holo={holo}
+                      holoHandling={manifest.holoHandling}
+                      confirmed={state.holos[holo.id]}
+                      disabled={busy || state.hold || !isPrintSubmitted(state.sheets[sheet.sheetId].fronts)}
+                      onConfirmSticker={() => update("holo_applied", { holoId: holo.id })}
+                      buttonClassName={button}
+                    />)}
                 </article>
               ))}
               {manifest?.accessoryChecklist?.length > 0 && (
@@ -1002,10 +982,11 @@ export default function ManufacturingDashboard() {
                 <div className={panel}>
                   <h3 className="font-black">Quality check & packing</h3>
                   <p className="my-3 text-sm">
-                    {ready.holosRemaining} {manifest.holoHandling === "pull-finished" ? "finished holos to pull" : "holo stickers"} and{" "}
+                    {manifest.holoHandling !== "pull-finished" && <>{ready.holosRemaining} holo stickers and{" "}</>}
                     {ready.accessoriesRemaining} accessory groups and{" "}
                     {ready.stockRemaining} finished-stock picks remaining. Check
                     card counts, alignment, glue, and cut edges.
+                    {manifest.holoHandling === "pull-finished" && manifest.holoChecklist.length > 0 && " Include each listed finished holo in its matching pack."}
                   </p>
                   <div className="flex flex-wrap gap-3">
                     <button

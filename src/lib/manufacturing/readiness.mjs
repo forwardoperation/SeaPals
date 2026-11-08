@@ -5,7 +5,7 @@ import { isFlyerSheet } from "./sheetKinds.mjs";
 export const isPrintSubmitted = (status) =>
   status === "submitted" || status === "confirmed";
 
-export function workflowReadiness(state) {
+export function workflowReadiness(state, manifest) {
   const sheets = Object.values(state.sheets);
   const allPrinted = sheets.every(
     (sheet) => isPrintSubmitted(sheet.fronts) && (isFlyerSheet(sheet) || isPrintSubmitted(sheet.backs)),
@@ -13,9 +13,11 @@ export function workflowReadiness(state) {
   const assembly = sheets.filter(sheet => !isFlyerSheet(sheet));
   const allGlued = assembly.every((sheet) => sheet.glued);
   const allCut = assembly.every((sheet) => sheet.cut);
-  const holosRemaining = Object.values(state.holos).filter(
-    (done) => !done,
-  ).length;
+  // Finished pulls remain packing instructions, not a confirmation gate. Read
+  // the pinned manifest so already-saved states need no migration or fabricated
+  // completion flags. Without that context, retain the legacy sticker check.
+  const holosRemaining = manifest?.holoHandling === "pull-finished" ? 0 :
+    Object.values(state.holos).filter((done) => !done).length;
   const accessoriesRemaining = Object.values(state.accessories ?? {}).filter(
     (done) => !done,
   ).length;

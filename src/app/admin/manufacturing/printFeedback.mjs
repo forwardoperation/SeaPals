@@ -55,7 +55,7 @@ export function printFeedback(detail, enabled, now = Date.now()) {
       : !sheets.some((sheet) => !isFlyerSheet(sheet))
         ? "Once the flyers finish printing, check them and include them with the packaged kits."
       : detail.manifest?.holoHandling === "pull-finished"
-        ? "Once the sheets finish printing, continue gluing, cutting, pulling the listed finished holo cards, and quality checks."
+        ? "Once the sheets finish printing, continue gluing, cutting, and quality checks. Include the listed finished holo cards when packing."
         : "Once the sheets finish printing, continue gluing, cutting, applying holo stickers, and quality checks.";
     return feedback("Sent to printers", "Windows accepted all print jobs. No page-by-page confirmations are needed. " + finishing + (hasFlyers && sheets.some((sheet) => !isFlyerSheet(sheet)) ? " Include the flyers with the packaged kits." : "") + " Use the reprint controls for any blank or damaged pages.");
   }

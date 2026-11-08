@@ -355,9 +355,8 @@ test("submitted sheets can be assembled and quality checked without per-side pap
     run.apply("glued", { sheetId });
     run.apply("cut", { sheetId });
   }
-  for (const { id } of saved.holoChecklist) run.apply("holo_pulled", { holoId: id });
-  assert.equal(workflowReadiness(run.state()).canQualityCheck, true);
-  assert.equal(workflowReadiness(run.state()).canPack, false);
+  assert.equal(workflowReadiness(run.state(), saved).canQualityCheck, true);
+  assert.equal(workflowReadiness(run.state(), saved).canPack, false);
   assert.throws(() => run.apply("quality_checked", { role: "agent" }), /Only an operator/);
   assert.throws(() => run.apply("packed"), /Quality check/);
   run.apply("quality_checked");
@@ -376,12 +375,12 @@ test("queued, active, and uncertain print sides still prevent finishing and qual
     if (status === "needs_review") run.apply("submission_uncertain", { sheetId, side: "fronts", role: "agent" });
     assert.throws(() => run.apply("glued", { sheetId }), /Both matching/);
     assert.throws(() => run.apply("holo_pulled", { holoId: saved.holoChecklist[0].id }), /matching front/);
-    assert.equal(workflowReadiness(run.state()).allPrinted, false);
-    assert.equal(workflowReadiness(run.state()).canQualityCheck, false);
+    assert.equal(workflowReadiness(run.state(), saved).allPrinted, false);
+    assert.equal(workflowReadiness(run.state(), saved).canQualityCheck, false);
   }
 });
 
-test("finished holo pulls may precede or follow gluing/cutting, but always gate QC", () => {
+test("finished holo pull confirmations are optional and existing confirmations remain accepted", () => {
   for (const early of [true, false]) {
     const saved = manifest();
     const run = exercise(saved);
@@ -395,17 +394,15 @@ test("finished holo pulls may precede or follow gluing/cutting, but always gate 
     run.print(sheetId, "backs");
     run.apply("glued", { sheetId });
     run.apply("cut", { sheetId });
-    if (!early) {
-      assert.throws(() => run.apply("quality_checked"), /every finished holo pull/);
-      run.apply("holo_pulled", { holoId: saved.holoChecklist[0].id });
-    }
+    assert.equal(workflowReadiness(run.state(), saved).canQualityCheck, true);
+    assert.equal(run.state().holos[saved.holoChecklist[0].id], early);
     run.apply("quality_checked");
     run.apply("packed");
     assert.equal(run.state().packed, true);
   }
 });
 
-test("front reprints require holo pulls to be checked again; back reprints preserve pulls but reset assembly", () => {
+test("reprints reset assembly and optional front pull records without requiring pull confirmations", () => {
   for (const side of ["fronts", "backs"]) {
     const saved = manifest();
     const run = exercise(saved);
@@ -429,6 +426,14 @@ test("front reprints require holo pulls to be checked again; back reprints prese
       run.state().sheets[sheetId][side === "backs" ? "fronts" : "backs"],
       "confirmed",
     );
+    assert.equal(workflowReadiness(run.state(), saved).canQualityCheck, false);
+    run.print(sheetId, side);
+    run.apply("glued", { sheetId });
+    run.apply("cut", { sheetId });
+    run.apply("quality_checked");
+    run.apply("packed");
+    assert.equal(run.state().holos[saved.holoChecklist[0].id], side === "backs");
+    assert.equal(run.state().packed, true);
   }
 });
 
@@ -480,7 +485,7 @@ test("holds prevent production and non-holo packs require zero sticker work", ()
   const saved = manifest((upper) => (upper === 10000 ? 9999 : 0));
   const run = exercise(saved);
   assert.equal(saved.holoChecklist.length, 0);
-  assert.equal(workflowReadiness(run.state()).holosRemaining, 0);
+  assert.equal(workflowReadiness(run.state(), saved).holosRemaining, 0);
   run.apply("hold");
   assert.throws(
     () =>

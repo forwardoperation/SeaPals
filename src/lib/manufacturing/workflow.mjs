@@ -226,10 +226,10 @@ export function applyManufacturingEvent(
       sheet.cut = true;
       break;
     case "quality_checked":
-      if (!workflowReadiness(state).canQualityCheck)
+      if (!workflowReadiness(state, manifest).canQualityCheck)
         throw new Error(
           manifest.holoHandling === "pull-finished"
-            ? "Complete printing, finishing, every finished holo pull, accessories, and reserved stock picks first."
+            ? "Complete printing, finishing, accessories, and reserved stock picks first."
             : "Complete printing, finishing, every holo sticker, accessories, and reserved stock picks first.",
         );
       state.qualityChecked = true;
@@ -245,7 +245,7 @@ export function applyManufacturingEvent(
       state.stock[event.productId] = true;
       break;
     case "packed":
-      if (!workflowReadiness(state).canPack)
+      if (!workflowReadiness(state, manifest).canPack)
         throw new Error("Quality check is required before packing.");
       state.packed = true;
       break;

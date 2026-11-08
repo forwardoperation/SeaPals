@@ -8,7 +8,7 @@ import { PDFArray, PDFDocument, PDFName, PDFRawStream, decodePDFRawStream } from
 import { PNG } from "pngjs";
 import { buildPrintingCatalog, contentHash, generateBooster } from "./boosters.mjs";
 import { V4_PRINT_LAYOUT as PRINT_LAYOUT, V4_BACK_TEMPLATE as BACK_TEMPLATE, createManufacturingManifest, preflightPrintAssets, verifyManifest } from "./printPlan.mjs";
-import { applyManufacturingEvent, createManufacturingState } from "./workflow.mjs";
+import { applyManufacturingEvent, createManufacturingState, workflowReadiness } from "./workflow.mjs";
 import { renderJob } from "../../../scripts/manufacturing/render.mjs";
 
 const read = async (name) => JSON.parse(await readFile(new URL(`../../data/${name}`, import.meta.url), "utf8"));
@@ -76,6 +76,48 @@ test("new finished pulls and legacy sticker confirmations cannot be confused; ne
     assert.equal(flow.state().holos[holoId], true);
     assert.equal(applyManufacturingEvent(flow.state(), saved, event), flow.state());
     assert.equal(saved.packs[0].cards[8].printingId, create().packs[0].cards[8].printingId);
+  }
+});
+
+test("saved finished-pull states can finish without changing their pull records or pinned manifest", () => {
+  const saved = JSON.parse(JSON.stringify(create())), original = JSON.stringify(saved);
+  const flow = run(saved), sheetId = saved.sheets[0].sheetId;
+  flow.print();
+  flow.apply("submission_started", { sheetId, side: "backs", role: "agent" });
+  flow.apply("submission_succeeded", { sheetId, side: "backs", role: "agent" });
+  flow.apply("glued", { sheetId });
+  flow.apply("cut", { sheetId });
+  assert.equal(Object.hasOwn(flow.state(), "holoHandling"), false, "old persisted state shape remains supported");
+  assert.equal(workflowReadiness(flow.state(), saved).holosRemaining, 0);
+  assert.equal(workflowReadiness(flow.state(), saved).canQualityCheck, true);
+  assert.equal(workflowReadiness(flow.state()).holosRemaining, 1, "no-manifest callers retain conservative sticker gating");
+  assert.equal(workflowReadiness(flow.state()).canQualityCheck, false);
+  flow.apply("quality_checked");
+  flow.apply("packed");
+  assert.equal(flow.state().packed, true);
+  assert.ok(Object.values(flow.state().holos).every(done => done === false));
+  assert.ok(!flow.state().events.some(event => event.type === "holo_pulled"));
+  assert.equal(JSON.stringify(saved), original);
+});
+
+test("legacy printed holo stickers still require confirmation before quality check, including after a front reprint", () => {
+  const saved = legacy(create()), flow = run(saved), sheetId = saved.sheets[0].sheetId;
+  const holoId = saved.holoChecklist[0].id;
+  for (const reprint of [false, true]) {
+    if (reprint) flow.apply("reprint", { sheetId, side: "fronts", reason: "Damaged sheet" });
+    flow.print();
+    if (!reprint) {
+      flow.apply("submission_started", { sheetId, side: "backs", role: "agent" });
+      flow.apply("submission_succeeded", { sheetId, side: "backs", role: "agent" });
+    }
+    flow.apply("glued", { sheetId });
+    flow.apply("cut", { sheetId });
+    assert.equal(workflowReadiness(flow.state(), saved).holosRemaining, 1);
+    assert.throws(() => flow.apply("quality_checked"), /every holo sticker/);
+    flow.apply("holo_applied", { holoId });
+    flow.apply("quality_checked");
+    flow.apply("packed");
+    assert.equal(flow.state().packed, true);
   }
 });
 

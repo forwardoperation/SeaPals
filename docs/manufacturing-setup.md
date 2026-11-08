@@ -716,8 +716,10 @@ Shared SKU barcodes cannot identify duplicate scans of one physical pack; staff
 review the scanned count. No real barcode numbers are seeded by this migration.
 
 New manifests pin `holoHandling: "pull-finished"`: the holo front slot contains
-its name and collector/set number, and the operator confirms `holo_pulled`.
-Saved older manifests still print their original holo artwork and require
+its name and collector/set number. As of November 7, 2026, this is a packing
+instruction rather than a required confirmation. Existing `holo_pulled` history
+is retained, and pull-finished jobs can pass QC without recording each pull.
+Saved older sticker-mode manifests still print their original holo artwork and require
 `holo_applied`. Restart the local printer helper after installing the updated
 renderer, before the server begins generating new manifests. No art release,
 pull-rate, printer-driver, or template-geometry change is needed.
@@ -1115,8 +1117,9 @@ export mode requires complete mappings for every eligible printing.
   draw; front reprints reset their holo checkboxes and both types reset assembly/QC.
   Already submitted pages may still finish after a hold or refund.
 - A submission acknowledgement is not proof of physical output. Staff confirms
-  glue/drying/cutting, finished holo pulls, accessory picking, QC,
-  and packing. Older saved jobs keep their original sticker confirmations.
+  glue/drying/cutting, accessory picking, QC, and packing. Finished holo pulls
+  are shown as named packing instructions; they need no separate confirmation.
+  Older sticker-mode jobs keep their required sticker confirmations.
 - Agent acknowledgements tolerate unrelated staff finishing updates without
   retrying a physical print. Holds, reprints, conflicting print attempts, and
   lost leases still stop submission. Run `supabase/manufacturing-batch-print.sql`

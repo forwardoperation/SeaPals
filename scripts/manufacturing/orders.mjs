@@ -150,7 +150,7 @@ function summary(saved) {
       .flatMap((pack) => pack.cards)
       .filter((card) => card.prerelease).length,
     revision: saved.state.revision,
-    ...workflowReadiness(saved.state),
+    ...workflowReadiness(saved.state, saved.manifest),
   };
 }
 

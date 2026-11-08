@@ -540,6 +540,39 @@ test("legacy stock ticket retirement releases its lease without printing or chan
 });
 
 
+test("persisted finished-holo jobs pass quality and packing through the service and SQL without pull events", async () => {
+  const f = await fixture({ receiving: true });
+  try {
+    await f.artwork();
+    const items = [{ productId: "reef-dive-pack", quantity: 1 }];
+    const id = await f.build(items), r = await f.row(id);
+    const manifest = createManufacturingManifest({
+      request: { orderId: id, orderNumber: r.display_number, items }, catalog,
+      artworkRelease: r.release_id, jobKind: "stock", randomIndex: () => 0,
+    });
+    assert.equal(manifest.holoChecklist.length, 1, "deterministic holo slot");
+    const state = createManufacturingState(manifest), manifestText = JSON.stringify(manifest);
+    assert.equal(Object.hasOwn(state, "holoHandling"), false);
+    for (const page of Object.values(state.sheets))
+      Object.assign(page, { fronts: "submitted", backs: "submitted", glued: true, cut: true });
+    await f.db.query("update manufacturing_orders set manifest_text=$2,state=$3,phase='awaiting_operator',print_requested_at=now() where order_id=$1", [id, manifestText, state]);
+    const inventory = await f.stock(), movements = await f.movements();
+    await f.event(id, "quality_checked");
+    await f.event(id, "packed");
+    const saved = await f.row(id);
+    assert.equal(saved.manifest_text, manifestText);
+    assert.equal(saved.state.manifestHash, manifest.manifestHash);
+    assert.equal(saved.state.qualityChecked, true);
+    assert.equal(saved.state.packed, true);
+    assert.deepEqual(saved.state.holos, state.holos);
+    assert.ok(Object.values(saved.state.holos).every(done => done === false));
+    assert.deepEqual(saved.state.events.map(event => event.type), ["quality_checked", "packed"]);
+    assert.equal(saved.phase, "awaiting_operator", "packaging does not automatically receive stock");
+    assert.deepEqual(await f.stock(), inventory);
+    assert.deepEqual(await f.movements(), movements);
+  } finally { await f.db.close(); }
+});
+
 // Selected page recovery remains one existing-job transaction; no new stock job,
 // inventory receipt, catalog lookup, or booster draw is created.
 async function pageReprintFixture() {

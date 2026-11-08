@@ -102,7 +102,9 @@ test("new holo jobs say to pull finished cards and legacy jobs retain sticker in
   const detail = job();
   assert.match(printFeedback(detail, true, now).description, /applying holo stickers/);
   detail.manifest.holoHandling = "pull-finished";
-  assert.match(printFeedback(detail, true, now).description, /pulling the listed finished holo cards/);
+  const result = printFeedback(detail, true, now);
+  assert.match(result.description, /Include the listed finished holo cards when packing/);
+  assert.doesNotMatch(result.description, /confirm.{0,30}pull|pull.{0,30}confirm/i);
 });
 
 test("replaced selection ignores an older response even when fetch ignores abort", async () => {

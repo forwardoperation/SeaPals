@@ -70,8 +70,11 @@ status, artwork eligibility, deployment steps, and commands.
   make it a new first sheet. This adds no ticket or page and does not change
   saved card contents, artwork geometry, or printer placement settings.
 - New booster jobs pull already finished holo cards. The holo slot prints a
-  disposable instruction; no holo artwork is printed there. Confirm the pull
-  in the workshop. Existing saved sticker jobs keep their original behavior.
+  disposable instruction; no holo artwork is printed there. The workshop shows
+  a named packing instruction without a separate pull-confirmation button.
+  Quality check does not require recording individual finished-holo pulls.
+  This applies to existing pull-finished jobs without changing their saved
+  cards or event history. Saved sticker jobs retain required sticker confirmations.
 
 ## Source artwork and sheet geometry
 
@@ -167,10 +170,11 @@ its own document/media profile so it does not unexpectedly consume card stock.
    attempts require review before resuming.
 3. Match the identified pair, glue the sheets, and confirm gluing.
 4. Cut the assembled sheet and confirm cutting.
-5. Pull the listed finished holo card, discard its printed instruction slot,
-   and confirm the pull after checking the front sheet. Older saved jobs still
-   ask for sticker application instead.
-6. Quality check requires both prints, gluing, cutting, and every holo confirmation.
+5. Include the listed finished holo card in its matching pack and discard its
+   printed instruction slot. No separate pull confirmation is required. Older
+   sticker-mode jobs still require sticker-application confirmations.
+6. Quality check requires both prints, gluing, cutting, accessories, and stock
+   picks; legacy sticker-mode jobs also require every sticker confirmation.
    Check card count, finish, alignment, print quality, and adhesion; allow the
    materials the drying/curing time their actual process requires.
 7. Pack only after quality check. Shipping and pickup follow the store's
@@ -178,8 +182,8 @@ its own document/media profile so it does not unexpectedly consume card stock.
 
 The generated booster layout places five commons in slots 1-5, three uncommons
 in slots 6-8, and the rare/holo in slot 9 (row 3, column 3). On the work ticket,
-show each holo's name, printing number, pack ID, and sheet position, with an
-individual checkbox. Never draw the checklist or production QR over card art.
+show each holo's name, printing number, pack ID, and sheet position as a
+packing reference. Finished-holo pulls do not require individual confirmation. Never draw the checklist or production QR over card art.
 Randomize the physical pack's presentation during assembly if desired; the
 saved sheet layout exists to make manufacturing easy.
 
