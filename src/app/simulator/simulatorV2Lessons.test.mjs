@@ -939,7 +939,7 @@ test("lesson two starts a full turn, teaches faceoff fundamentals, then covers d
   }]).progress.status, "active", "a regular attack cannot replace Great Barracuda's On Play ability");
 });
 
-test("lesson four chains Coral Gardener, Dr. Evans, Spearfishing, and Blue Crab into a repeated On Play attack", () => {
+test("lesson four chains Coral Nursery, Dr. Evans, Spearfishing, and Blue Crab into a repeated On Play attack", () => {
   const selected = getSimulatorV2Lesson("support-strategies");
   const coralGardener = cardsById["coral-gardener"];
   const drEvans = cardsById["dr-evans"];
@@ -978,7 +978,7 @@ test("lesson four chains Coral Gardener, Dr. Evans, Spearfishing, and Blue Crab 
     "the combo fits the revised bank after Spearfishing's printed-cost refund",
   );
   assert.equal(selected.seed.hand[0], coralGardener.id);
-  assert.ok(selected.seed.foundationDeck.includes(searchedCoralId), "Coral Gardener can find the authored search target");
+  assert.ok(selected.seed.foundationDeck.includes(searchedCoralId), "Coral Nursery can find the authored search target");
   let supportRandomStream = createSimulatorRandomStream(selected.randomSeed);
   const nextSupportRandom = () => {
     const sample = sampleSimulatorRandom(supportRandomStream);
@@ -1045,7 +1045,7 @@ test("lesson four chains Coral Gardener, Dr. Evans, Spearfishing, and Blue Crab 
   const gardenerStep = selected.contract.checkpoints[0];
   const gardenerHelp = getSimulatorV2LessonHelp(selected, gardenerStep, { gamePhase: "main", hand: [coralGardener.id] });
   assert.equal(gardenerHelp.targetCardId, coralGardener.id);
-  assert.match(gardenerHelp.message, /Support cards.*resolve once.*discard.*Coral Gardener.*Coral/is);
+  assert.match(gardenerHelp.message, /Support cards.*resolve once.*discard.*Coral Nursery.*Coral/is);
   const searchHelp = getSimulatorV2LessonHelp(selected, gardenerStep, { gamePhase: "main", modal: "search" });
   assert.equal(searchHelp.target, "search-card");
   assert.equal(searchHelp.targetSearchCardId, searchedCoralId);
@@ -1109,7 +1109,7 @@ test("lesson four chains Coral Gardener, Dr. Evans, Spearfishing, and Blue Crab 
     vp(6, 1),
   ];
   assert.equal(observe(selected.id, route).progress.status, "complete");
-  assert.equal(observe(selected.id, [support(drEvans.id)]).progress.completedCheckpointIds.length, 0, "Dr. Evans cannot skip Coral Gardener");
+  assert.equal(observe(selected.id, [support(drEvans.id)]).progress.completedCheckpointIds.length, 0, "Dr. Evans cannot skip Coral Nursery");
   assert.equal(observe(selected.id, route.slice(0, -1)).progress.status, "active", "the Support combo alone does not bypass the VP goal");
   assert.equal(observe(selected.id, [
     ...route.slice(0, 13),

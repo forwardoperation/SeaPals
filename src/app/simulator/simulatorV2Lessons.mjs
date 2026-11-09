@@ -523,7 +523,7 @@ export const SIMULATOR_V2_LESSONS = Object.freeze([
     randomSeed: 0x5EA9400E,
     title: "Turn Support into a combo", duration: "10 min", goalLabel: "Use three Supports and repeat an On Play ability",
     summary: "Search for a precise card, refresh your hand, and reuse Great Barracuda's Quick Strike.",
-    introduction: "In this lesson, you’ll learn three ways Support cards shape a turn: Coral Gardener searches for a precise Foundation, Dr. Evans exchanges a stale hand for eight new cards, and Spearfishing converts a creature into RP. Then Blue Crab will retrieve that creature so its On Play ability can fire again!",
+    introduction: "In this lesson, you’ll learn three ways Support cards shape a turn: Coral Nursery searches for a precise Foundation, Dr. Evans exchanges a stale hand for eight new cards, and Spearfishing converts a creature into RP. Then Blue Crab will retrieve that creature so its On Play ability can fire again!",
     completion: "You searched for and built a Foundation, watched Recycle refund an eaten Fish, cycled a stale hand, converted Great Barracuda into RP, and used Scavenge to replay Quick Strike.",
     preVictoryMessage: "You used a search to choose a specific card, a hand cycle to draw fresh options, and Spearfishing plus Scavenge to replay an On Play attack. Recycle was different: it refunded RP when your Fish was eaten, but did not return the card. All three Supports in this lesson are Aides. You may play one Aide per turn; Items remain available after it. Also watch your decks: you lose if you cannot complete a required draw, not merely because a deck becomes empty.",
     knowledgeCheck: {
@@ -918,7 +918,7 @@ const CARD_NAMES = Object.freeze({
   "arrow-crab": "Arrow Crab",
   "cleaner-shrimp": "Cleaner Shrimp",
   flounder: "Southern Flounder",
-  "coral-gardener": "Coral Gardener",
+  "coral-gardener": "Coral Nursery",
   "dr-evans": "Dr. Evans",
   spearfishing: "Spearfishing",
   "coral-heal": "Coral Heal",
@@ -1433,7 +1433,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
       return help(
         "search-card",
         cardId === "coral-gardener"
-          ? "Coral Gardener found the eligible Corals in your Foundation Deck. Search effects trade one Support card for the exact card your plan needs."
+          ? "Coral Nursery found the eligible Corals in your Foundation Deck. Search effects trade one Support card for the exact card your plan needs."
           : name(cardId) + " found the eligible cards in your personal decks.",
         "Choose " + name(searchTargetCardId) + ".",
         { targetSearchCardId: searchTargetCardId },
@@ -1460,9 +1460,9 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     const selectedCard = uiState.selectedHandCard === cardId
       && (uiState.handPopoverOpen || uiState.handDockSelectionOpen || uiState.modal === "hand");
     const message = cardId === "coral-gardener"
-      ? "Support cards normally resolve once and go to discard, unless their text says otherwise. Coral Gardener searches your personal decks for one Coral: you choose a specific card instead of taking a blind draw. Coral Gardener is an Aide. You may play only one Aide per turn; Items are still allowed afterward."
+      ? "Support cards normally resolve once and go to discard, unless their text says otherwise. Coral Nursery searches your personal decks for one Coral: you choose a specific card instead of taking a blind draw. Coral Nursery is an Aide. You may play only one Aide per turn; Items are still allowed afterward."
       : cardId === "dr-evans"
-        ? "Coral Gardener found a Coral, but imagine the rest of this hand no longer fits your plan. Dr. Evans discards the cards you are holding and replaces them with eight new cards. It is a powerful reset when hand quality matters more than keeping individual cards."
+        ? "Coral Nursery found a Coral, but imagine the rest of this hand no longer fits your plan. Dr. Evans discards the cards you are holding and replaces them with eight new cards. It is a powerful reset when hand quality matters more than keeping individual cards."
         : cardId === "spearfishing"
           ? "Spearfishing turns a Fish or Predator already on your reef into immediate RP equal to its printed cost. The creature and Support both go to discard, so the best target is one you can profitably recover or no longer need."
           : "Support cards normally resolve once and go to discard, unless their text says otherwise.";
@@ -1630,7 +1630,7 @@ export function getSimulatorV2LessonHelp(value, current, uiState = {}) {
     } else if (selected.id === "apex-predators" && cardId === "coral-reef") {
       message = "All three Coral Reef counts are met! Four Reef Corals, two Reef Fish, and two Reef Invertebrates sustain this zero-RP Habitat and unlock the hammerhead. They stay in play; they are not sacrificed. If a count falls short at the end of your turn, the Habitat takes 10 HP damage.";
     } else if (selected.id === "support-strategies" && cardId === "mustard-hill-coral-base") {
-      message = "Coral Gardener turned a Support card into the exact Foundation your plan needed. Build Mustard Hill Coral for 2 RP now. Its 2 RP production will help fund the later Barracuda combo.";
+      message = "Coral Nursery turned a Support card into the exact Foundation your plan needed. Build Mustard Hill Coral for 2 RP now. Its 2 RP production will help fund the later Barracuda combo.";
     } else if (selected.id === "support-strategies" && cardId === "sea-urchin") {
       message = "Dr. Evans replaced the stale hand with eight new cards. Sea Urchin is the inexpensive first play: it costs 1 RP, scores 1 VP, and leaves enough RP for the combo that follows.";
     } else if (selected.id === "support-strategies" && cardId === "great-barracuda") {

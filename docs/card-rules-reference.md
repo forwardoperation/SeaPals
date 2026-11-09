@@ -815,7 +815,7 @@ One Aide per turn. Items may still be played afterward.
 - **Rules:** Discard one fish or predator in play on your reef and collect its RP cost.
 - **Restriction:** This card can only be played in the main phase of play.
 
-## Coral Gardener
+## Coral Nursery
 
 ID: `coral-gardener`. support / aide. [Gallery](/gallery#card-coral-gardener).
 
@@ -823,7 +823,7 @@ Play cost: 0 RP.
 
 One Aide per turn. Items may still be played afterward.
 
-- **Rules:** Search your deck for a coral and place it into your hand.
+- **Rules:** Search your deck for a coral and place it into your hand. Shuffle your deck afterwards.
 - **Restriction:** This card can only be played in the main phase of play.
 
 ## Coral Heal

@@ -570,8 +570,8 @@ function getAcademyDrawResultLesson(round, cards, drawnCards) {
     },
     2: {
       cardId: cards.firstFish?.cardId,
-      message: `${cards.firstFish?.cardName ?? primaryCard.name} came from the Main Deck. Coral Reef needs any two regular Fish; this card can fill one of those spots and later teach its Crunch attack. Keep it in hand for now; first use ${cards.coralSupport?.cardName ?? "Coral Gardener"} to find ${cards.searchedCoral?.cardName ?? "Lettuce Coral"} and complete the four-Coral economy.`,
-      action: `Press Continue to Actions, then choose ${cards.coralSupport?.cardName ?? "Coral Gardener"}. Keep ${cards.firstFish?.cardName ?? primaryCard.name} in hand for Round 3.`,
+      message: `${cards.firstFish?.cardName ?? primaryCard.name} came from the Main Deck. Coral Reef needs any two regular Fish; this card can fill one of those spots and later teach its Crunch attack. Keep it in hand for now; first use ${cards.coralSupport?.cardName ?? "Coral Nursery"} to find ${cards.searchedCoral?.cardName ?? "Lettuce Coral"} and complete the four-Coral economy.`,
+      action: `Press Continue to Actions, then choose ${cards.coralSupport?.cardName ?? "Coral Nursery"}. Keep ${cards.firstFish?.cardName ?? primaryCard.name} in hand for Round 3.`,
     },
     3: {
       cardId: cards.secondFish?.cardId,
@@ -712,7 +712,7 @@ function getAcademyCurriculumHelp(uiState) {
       title: `Search for ${searched?.cardName ?? "the highlighted card"}`,
       message: isApexSearch
         ? `${cards.apexSupport?.cardName ?? "Deep Sea Fishing"} can search a Predator or Apex. We already built the Coral Reef and an Apex slot, so ${searched?.cardName ?? "Hammerhead"} is useful immediately rather than merely impressive in hand.`
-        : `${cards.coralSupport?.cardName ?? "Coral Gardener"} searches for a Coral. Choose ${searched?.cardName ?? "Lettuce Coral"}: it becomes our fourth true Coral, improves RP income, and provides another legal home for a creature. Open slots help us build the required community, but empty slots do not count toward Coral Reef's requirement.`,
+        : `${cards.coralSupport?.cardName ?? "Coral Nursery"} searches for a Coral. Choose ${searched?.cardName ?? "Lettuce Coral"}: it becomes our fourth true Coral, improves RP income, and provides another legal home for a creature. Open slots help us build the required community, but empty slots do not count toward Coral Reef's requirement.`,
       action: `Choose the highlighted ${searched?.cardName ?? "lesson card"} to add it to your hand.`,
       targetSearchCardId: route.searchTargetCardId,
     }, "search-card", `search-${route.searchTargetCardId}`);
@@ -781,9 +781,9 @@ function getAcademyCurriculumHelp(uiState) {
   if (round === 2) {
     if (!cards.coralSupport?.inDiscard) {
       return play(cards.coralSupport, {
-        title: `Use your first Support: ${cards.coralSupport?.cardName ?? "Coral Gardener"}`,
-        message: `Support cards are one-shot tactical effects. They do not occupy a reef slot or add VP; after resolving, they go to the discard pile. ${cards.coralSupport?.cardName ?? "Coral Gardener"} searches for the exact Coral our long-term plan needs, and uses your one Aide for this turn. Items remain playable afterward.`,
-        action: `Choose ${cards.coralSupport?.cardName ?? "Coral Gardener"}, press Play Card, then select the highlighted Coral in the search results.`,
+        title: `Use your first Support: ${cards.coralSupport?.cardName ?? "Coral Nursery"}`,
+        message: `Support cards are one-shot tactical effects. They do not occupy a reef slot or add VP; after resolving, they go to the discard pile. ${cards.coralSupport?.cardName ?? "Coral Nursery"} searches for the exact Coral our long-term plan needs, and uses your one Aide for this turn. Items remain playable afterward.`,
+        action: `Choose ${cards.coralSupport?.cardName ?? "Coral Nursery"}, press Play Card, then select the highlighted Coral in the search results.`,
       });
     }
     if (!cards.coralBase?.inPlay) {

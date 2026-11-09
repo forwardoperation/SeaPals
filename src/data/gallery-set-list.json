@@ -2,6 +2,7 @@
   "sourceUrl": "https://docs.google.com/spreadsheets/d/1tXlN5fW1cWgbfLqIxXKJYd1bjdhXsHNHO2GirGZj_Ic/edit",
   "syncedAt": "2026-10-04T00:26:33.771Z",
   "nameOverrides": {
+    "Coral Gardener": "Coral Nursery",
     "Octopus": "Day Octopus",
     "Butterflyfish - Twinspot": "Spotfin Butterflyfish"
   },
@@ -867,7 +868,7 @@
         },
         {
           "cardId": "coral-gardener",
-          "name": "Coral Gardener",
+          "name": "Coral Nursery",
           "category": "support",
           "printings": [
             {

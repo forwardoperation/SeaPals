@@ -53,14 +53,15 @@ export const supportCards = [
   },
 
   {
+    // Keep the original ID so saved decks and matches use the renamed card.
     id: "coral-gardener",
-    name: "Coral Gardener",
+    name: "Coral Nursery",
     kind: CardKind.SUPPORT,
     ...standardSupportRules,
     image: "/images/brand/SeaPalsTCGLogoWhite.svg",
     sortOrder: 501,
 
-    text: "Search your deck for a coral and place it into your hand.",
+    text: "Search your deck for a coral and place it into your hand. Shuffle your deck afterwards.",
 
     effects: [
       {

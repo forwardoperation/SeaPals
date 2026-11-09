@@ -277,7 +277,7 @@ test("the seven-round curriculum is legal, teaches Coral Reef, School Density, F
   foundations.push(plan.economyCardId);
   assert.equal(rp, 1);
 
-  // Round 2: Coral Gardener finds Lettuce; two inexpensive Corals broaden the reef.
+  // Round 2: Coral Nursery finds Lettuce; two inexpensive Corals broaden the reef.
   turn = collect(rp, foundations, creatures, "clear-water");
   assert.deepEqual(turn, { cap: 8, income: 5, rp: 6 });
   rp = turn.rp;

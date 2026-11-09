@@ -1,0 +1,18 @@
+{
+  "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
+  "pageId": "219:2",
+  "nodeId": "259:692",
+  "sourceName": "Coral gardener",
+  "printedName": "Coral Nursery",
+  "type": "Aide",
+  "text": "Search your deck for a coral and place it into your hand. Shuffle your deck afterwards",
+  "restriction": "You may play only one aide per turn",
+  "number": "86/102",
+  "prerelease": false,
+  "exportedAt": "2026-11-09T14:15:50.923Z",
+  "contentHash": "398c9b9a0f58",
+  "retainedCardId": "coral-gardener",
+  "image": "/images/cards/support/coral-gardener.png",
+  "width": 375,
+  "height": 525
+}

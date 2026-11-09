@@ -1,5 +1,13 @@
 # Gallery card audit — October 2026
 
+## November 9 Coral Nursery sync
+
+Replaced Coral Gardener's displayed name and artwork with Coral Nursery from the [Support source card](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx?node-id=259-692). The card remains Reef 86/102, Common, and an Aide: search for one Coral, put it in hand, and shuffle afterwards. Added the printed shuffle instruction to the canonical rules text; the simulator already implements that effect.
+
+The gallery, set list, deck builder, six physical deck contents lists, Adventure card references, both simulator tutorials, generated card reference, and Finn now use Coral Nursery. The stable `coral-gardener` ID and artwork path preserve saved decks, games, and links. Historical printed-name evidence stays intact and resolves through the existing name-override mechanism. Finn recognizes either card name and answers with Coral Nursery.
+
+Exported the current Figma card to the standard 375 × 525 preview and refreshed its cache hash. The source has no Prerelease label, bringing completed artwork to 79 cards. The isolated release passes all 1,290 simulator, catalog, deck, Adventure, and rules checks. All 204 gallery previews and 221 public card images pass size/hash checks; generated references verify 206 cards and 138 creatures. The production webpack build generates all 170 pages.
+
 ## November 7 Oysters and Day Octopus sync
 
 Refreshed both gallery previews from their current Figma source cards, preserving 375 × 525 previews and updating the image cache hashes. The simulator and resumed games resolve those same versioned images. Oysters no longer has a Prerelease label, bringing completed artwork to 78 cards.

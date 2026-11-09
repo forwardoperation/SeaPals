@@ -474,7 +474,7 @@ test("build help recommends an actual legal ecosystem card, not a Support", () =
     modal: "hand",
     selectedHandCard: "coral-gardener",
     selectedCardIsSupport: true,
-    selectedCardName: "Coral Gardener",
+    selectedCardName: "Coral Nursery",
     selectedCardCost: 0,
     selectedSupportLocksFurtherSupports: true,
   });
@@ -1115,7 +1115,7 @@ function academyCurriculumRoute({
   const defaults = {
     setup: { cardId: "mustard-hill-coral-base", cardName: "Mustard Hill Coral", inPlay: true, victoryPoints: 0 },
     economy: { cardId: "pillar-coral-base", cardName: "Pillar Coral", inHand: true, ready: true, cost: 3, victoryPoints: 0 },
-    coralSupport: { cardId: "coral-gardener", cardName: "Coral Gardener", inHand: true, ready: true, cost: 0, victoryPoints: 0 },
+    coralSupport: { cardId: "coral-gardener", cardName: "Coral Nursery", inHand: true, ready: true, cost: 0, victoryPoints: 0 },
     searchedCoral: { cardId: "lettuce-coral-base", cardName: "Lettuce Coral", inFoundationDeck: true, cost: 1, victoryPoints: 0 },
     coralBase: { cardId: "brain-coral-base", cardName: "Brain Coral", inHand: true, ready: true, cost: 1, victoryPoints: 0 },
     coralStageOne: { cardId: "brain-coral-stage-1", cardName: "Brain Coral Stage 1", inHand: true, ready: true, cost: 2, victoryPoints: 0 },
@@ -1285,8 +1285,8 @@ test("every authored draw result explains the actual card and its concrete next 
       cardId: "porcupine-fish",
       name: "Porcupine Fish",
       source: "Pals",
-      message: /Main Deck.*any two regular Fish.*one of those spots.*Crunch.*Keep it in hand.*Coral Gardener.*Lettuce Coral/i,
-      action: /Continue to Actions.*Coral Gardener.*Round 3/i,
+      message: /Main Deck.*any two regular Fish.*one of those spots.*Crunch.*Keep it in hand.*Coral Nursery.*Lettuce Coral/i,
+      action: /Continue to Actions.*Coral Nursery.*Round 3/i,
     },
     {
       round: 3,

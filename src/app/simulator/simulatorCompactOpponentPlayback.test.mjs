@@ -178,7 +178,7 @@ test("opponent search readers show a left-to-right source, arrow, and revealed r
   );
 });
 
-test("Coral Gardener sends its found Coral through the shared search-result reader", () => {
+test("Coral Nursery sends its found Coral through the shared search-result reader", () => {
   const coralGardener = sourceSection(
     supportCardsSource,
     'id: "coral-gardener"',

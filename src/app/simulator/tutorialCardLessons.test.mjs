@@ -530,7 +530,7 @@ test("creature introductions pitch strategy while leaving exact specs for later 
 test("every new Support gets a card-specific fullscreen lesson even after its generic type is known", () => {
   const card = {
     id: "coral-gardener",
-    name: "Coral Gardener",
+    name: "Coral Nursery",
     kind: "support",
     text: "Search your deck for a Coral and place it into your hand.",
   };

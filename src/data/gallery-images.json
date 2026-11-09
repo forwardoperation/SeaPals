@@ -1,7 +1,7 @@
 {
   "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
   "exportScale": 0.5,
-  "exportedAt": "2026-11-07T20:11:59.880Z",
+  "exportedAt": "2026-11-09T14:15:50.923Z",
   "cards": [
     {
       "cardId": "humpback-whale",
@@ -3851,7 +3851,7 @@
     },
     {
       "cardId": "coral-gardener",
-      "name": "Coral Gardener",
+      "name": "Coral Nursery",
       "src": "/images/cards/support/coral-gardener.png",
       "category": "support",
       "zone": "reef",
@@ -3866,11 +3866,11 @@
       "width": 375,
       "height": 525,
       "sourceStatus": "figma-export",
-      "contentHash": "45c0c8f13e7e",
-      "prerelease": true,
-      "exportedAt": "2026-10-03T16:20:40.350Z",
+      "contentHash": "398c9b9a0f58",
+      "prerelease": false,
+      "exportedAt": "2026-11-09T14:15:50.923Z",
       "exportMethod": "figma-editor",
-      "prereleaseSource": "figma-label"
+      "prereleaseSource": "figma-no-label"
     },
     {
       "cardId": "super-whirlpool",
