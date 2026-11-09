@@ -177,11 +177,23 @@ export function hasDefenseAdvantage({ targetCard, statuses = [], ignoreDefensive
     || statuses.some((status) => status?.type === "defenseAdvantage" || status?.type === "grantDefenseAdvantage");
 }
 
-export function attackerHasDisadvantageFromMassive(targetCard) {
+/** These protections apply to the card making an attack, never its defense. */
+export function ignoresEffectWhileAttacking(attackerCard, effectName) {
+  return (attackerCard?.passives ?? []).some((passive) => {
+    const effect = passiveEffect(passive);
+    return effect?.type === "ignoreEffectsWhileAttacking"
+      && effect.ignoredEffects?.includes(effectName);
+  });
+}
+
+export function attackerHasDisadvantageFromMassive(targetCard, attackerCard = null) {
   return getMassiveDefenseMode(targetCard) === "attackDisadvantage"
-    || (targetCard?.passives ?? []).some((passive) =>
-      passiveEffect(passive)?.type === "attackDisadvantage"
-      || /\battackers have disadvantage\b/i.test(passiveText(passive)));
+    || (targetCard?.passives ?? []).some((passive) => {
+      const venomous = passive?.id === "venomous" || /^Venomous\b/i.test(passiveText(passive));
+      if (venomous && ignoresEffectWhileAttacking(attackerCard, "venomous")) return false;
+      return passiveEffect(passive)?.type === "attackDisadvantage"
+        || /\battackers have disadvantage\b/i.test(passiveText(passive));
+    });
 }
 
 /**
@@ -248,13 +260,21 @@ export function isToxicWhenConsumed(card) {
   });
 }
 
-/** Supports source-specific immunity such as Giant Triton versus Crown of Thorns. */
+/** Supports source-specific immunity and protection during the consuming attack. */
 export function hasExplicitToxicImmunity(attackerCard, toxicSourceCard) {
+  if (ignoresEffectWhileAttacking(attackerCard, "toxic")) return true;
   return (attackerCard?.passives ?? []).some((passive) => {
     const effect = passiveEffect(passive);
     if (effect?.type !== "ignoreEffect" || effect?.ignoredEffectType !== "toxicWhenEaten") return false;
     return !effect.sourceCardId || effect.sourceCardId === toxicSourceCard?.id;
   });
+}
+
+export function getToxicProtectionName(attackerCard, toxicSourceCard) {
+  const passive = (attackerCard?.passives ?? []).find((candidate) => (
+    hasExplicitToxicImmunity({ passives: [candidate] }, toxicSourceCard)
+  ));
+  return passive?.name || "Toxic Immunity";
 }
 
 /**

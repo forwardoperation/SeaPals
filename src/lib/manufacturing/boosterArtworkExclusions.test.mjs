@@ -21,7 +21,7 @@ const [sets, gallery, holos, unfinished, policy] = await Promise.all([
   read("../../../scripts/manufacturing/booster-artwork-exclusions.json"),
 ]);
 const source = applyUnfinishedArtworkPolicy(buildSourceMap(sets, gallery, holos), unfinished);
-const heldIds = ["reef-011", "reef-026", "reef-034", "reef-044", "reef-076"];
+const heldIds = ["reef-034", "reef-044", "reef-076"];
 const withPolicy = applyBoosterArtworkPolicy(source, policy);
 const products = [...Object.keys(FIXED_PRODUCTS), ...Object.keys(BOOSTER_PRODUCTS)];
 const cardIds = (cards) => cards.map((card) => card.printingId);
@@ -66,23 +66,25 @@ test("approved booster holds preserve the full catalog, mapped artwork, and sele
 
 test("holds persist through artwork remapping and require explicit review-policy removal", () => {
   const remapped = structuredClone(source);
-  remapped.sources.find((item) => item.id === "reef-011").nodeId = "9999:9999";
+  remapped.sources.find((item) => item.id === "reef-034").nodeId = "9999:9999";
   assert.deepEqual(applyBoosterArtworkPolicy(remapped, policy).excludedBoosterArtwork, withPolicy.excludedBoosterArtwork);
-  const released = applyBoosterArtworkPolicy(remapped, { ...policy, printingIds: heldIds.filter((id) => id !== "reef-011") });
-  assert.ok(releaseBoosterCatalog(released).some((card) => card.printingId === "reef-011"));
-  assert.ok(!releaseBoosterCatalog(released).some((card) => card.printingId === "reef-026"));
+  const released = applyBoosterArtworkPolicy(remapped, { ...policy, printingIds: heldIds.filter((id) => id !== "reef-034") });
+  assert.ok(releaseBoosterCatalog(released).some((card) => card.printingId === "reef-034"));
+  assert.ok(!releaseBoosterCatalog(released).some((card) => card.printingId === "reef-044"));
 });
 
-test("only the five reviewed Reef printing variants leave the Dive Pack pool", () => {
+test("only the three remaining reviewed Reef printing variants leave the Dive Pack pool", () => {
   const release = validateRelease(releaseFixture()), pool = releaseBoosterCatalog(release);
-  assert.equal(pool.length, 212);
+  assert.equal(pool.length, 214);
+  assert.deepEqual(pool.filter((card) => card.cardId === "giant-triton").map((card) => card.printingId),
+    ["reef-011", "reef-026"], "Reviewed Giant Triton regular and holo artwork is eligible again");
   assert.deepEqual(cardIds(source.catalog.filter((card) => !pool.includes(card))), heldIds);
   for (const set of ["reef", "deep", "ocean"]) {
     const eligible = validateBoosterPool(pool, set);
     if (set !== "reef") assert.deepEqual(eligible, validateBoosterPool(source.catalog, set));
     else assert.deepEqual(Object.fromEntries(["Common", "Uncommon", "Rare", "Holo Rare"].map((rarity) =>
       [rarity, eligible.filter((card) => card.rarity === rarity).length])),
-    { Common: 31, Uncommon: 28, Rare: 17, "Holo Rare": 14 });
+    { Common: 31, Uncommon: 28, Rare: 18, "Holo Rare": 15 });
     // Exercise both sides of the exact 25% boundary and every index in the largest pool.
     for (const roll of [0, 2499, 2500, 9999]) for (let offset = 0; offset < 100; offset++) {
       let call = 0;

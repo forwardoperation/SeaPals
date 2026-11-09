@@ -80,8 +80,9 @@ test("unknown or repeated set query values retain the unfiltered All sets defaul
 test("rarity updates do not promote prerelease or missing artwork to completed cards", () => {
   const artwork = (id) => rows.find((row) => row.cardId === id).artwork;
   assert.equal(artwork("thresher-shark"), "Complete");
+  assert.equal(artwork("giant-triton"), "Complete");
   assert.equal(artwork("frilled-shark"), "Prerelease");
   assert.equal(artwork("chum-bucket"), "Coming soon");
   assert.equal(artwork("bloody-belly-comb-jelly"), "Coming soon");
-  assert.equal(getGalleryArtProgress(gallery).completedCards, 79);
+  assert.equal(getGalleryArtProgress(gallery).completedCards, 80);
 });

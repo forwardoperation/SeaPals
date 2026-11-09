@@ -331,7 +331,7 @@ export const COMPREHENSION_BENCHMARK = [
   ability("035", "How does Venom Spines damage Coral?", "ability:venom-spines"),
   ability("036", "What are the different printed results for Munch?", "ability:munch"),
   ability("037", "What exactly does Toxic Immunity protect against?", "ability:toxic-immunity"),
-  ability("038", "What can Starfish Hunt legally target?", "ability:starfish-hunt"),
+  ability("038", "What can Echinoderm Hunt legally target?", "ability:echinoderm-hunt"),
   ability("039", "When does King of Camouflage increase Day Octopus's defense?", "ability:king-of-camouflage", ["Coral Reef Habitat is in play", "+4 Defense"]),
   ability("040", "How do I resolve the Pearl Hunting action?", "ability:pearl-hunting"),
   ability("041", "What does Eco Foundation produce at each stage?", "ability:eco-foundation"),

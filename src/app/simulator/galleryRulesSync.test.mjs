@@ -9,7 +9,7 @@ import {
 } from "./gameRules.mjs";
 import {
   attackCanTargetCard, attackerHasDisadvantageFromMassive,
-  getDarknessShroudDefenseBonus, getNightVisionAttackBonus, isToxicWhenConsumed,
+  getDarknessShroudDefenseBonus, getNightVisionAttackBonus, getToxicProtectionName, ignoresEffectWhileAttacking, isToxicWhenConsumed, resolveToxicConsumption,
 } from "./combatRules.mjs";
 import { getCombatDieOutcomes } from "./opponentCombatRules.mjs";
 import { getOpponentActionUseKey, markOpponentActionUsed, wasOpponentActionUsedThisTurn } from "./opponentActionRules.mjs";
@@ -62,7 +62,7 @@ test("October gallery stat corrections stay in the playable catalog", () => {
   for (const [id, cost, vp, defense] of [
     ["lionfish", 4, 0, "D6"], ["french-angelfish", 3, 3, "D6"],
     ["queen-angelfish", 4, 4, "D6"], ["blue-crab", 1, 1, "D4"],
-    ["giant-triton", 3, 3, "D8"], ["manta-ray", 4, 6, "D8"],
+    ["giant-triton", 3, 4, "D8"], ["manta-ray", 4, 6, "D8"],
     ["barrel-eye-fish", 3, 3, "D4-2"],
   ]) {
     const card = cardsById[id];
@@ -111,7 +111,7 @@ test("Social Hunter counts every friendly dolphin including itself across locati
   assert.equal(runtime("cardHasAttackAdvantage")(dolphin, cardsById.frogfish, [], attack), false);
 });
 
-test("Moray needs Coral Reef and Giant Triton attacks any Invertebrate with a cooldown", () => {
+test("Moray needs Coral Reef and Giant Triton hunts only echinoderms without the retired cooldown", () => {
   const modifier = runtime("getAttackConditionalModifier");
   const moray = cardsById["green-moray-eel"];
   const attack = getOnPlayAttackEffect(moray);
@@ -120,18 +120,54 @@ test("Moray needs Coral Reef and Giant Triton attacks any Invertebrate with a co
   assert.equal(modifier(moray, cardsById.frogfish, ["coral-reef"], [], [], attack, [], options).flat, 4);
   const triton = cardsById["giant-triton"];
   const hunt = getBasicAttackEffect(triton);
-  assert.equal(hunt.skipNextTurn, true);
-  assert.equal(hunt.actionCost, 1);
-  assert.equal(attackCanTargetCard(cardsById["sea-urchin"], hunt), true);
+  assert.equal(hunt.skipNextTurn, false);
+  assert.equal(hunt.actionCost, 2);
+  assert.equal(hunt.attackDice, "D8");
+  assert.equal(hunt.actionName, "Echinoderm Hunt");
+  assert.equal(hunt.target.controller, "opponent");
+  for (const target of Object.values(cardsById)) {
+    const allowed = target.category === "invertebrate"
+      && target.tags?.some((tag) => ["starfish", "sea-urchin"].includes(tag));
+    assert.equal(attackCanTargetCard(target, hunt), Boolean(allowed), target.id);
+  }
   const advantage = runtime("cardHasAttackAdvantage");
-  assert.equal(advantage(triton, cardsById["crown-of-thorns"], [], hunt), true);
+  assert.equal(advantage(triton, cardsById["crown-of-thorns"], [], hunt), false);
   assert.equal(advantage(triton, cardsById["sea-urchin"], [], hunt), false);
-  assert.equal(triton.passives.length, 0);
+  assert.equal(triton.passives[0].name, "Nerve Shield");
   const shark = cardsById["reef-shark"];
   const sharkAttack = getOnPlayAttackEffect(shark);
   const repeats = runtime("getDynamicAttackRepeat");
   assert.equal(repeats(shark, sharkAttack, [], [shark.id, shark.id], ["abyss"]), 1);
   assert.equal(repeats(shark, sharkAttack, [], [shark.id, shark.id], ["coral-reef"]), 3);
+});
+
+test("Giant Triton's Nerve Shield protects its attacks without bypassing unrelated defenses", () => {
+  const triton = cardsById["giant-triton"];
+  const venomous = cardsById["crown-of-thorns"];
+  assert.equal(attackerHasDisadvantageFromMassive(venomous, triton), false);
+  assert.equal(attackerHasDisadvantageFromMassive(venomous, cardsById["octopus"]), true);
+  assert.equal(attackerHasDisadvantageFromMassive(venomous, { ...triton, passives: [] }), true);
+  assert.equal(attackerHasDisadvantageFromMassive({ passives: ["Massive: Attacks have disadvantage."] }, triton), true);
+  assert.equal(attackerHasDisadvantageFromMassive({ passives: [{ name: "Other ward", effect: { type: "attackDisadvantage" } }] }, triton), true);
+  const toxic = cardsById.nudibranch;
+  assert.equal(resolveToxicConsumption({ attackerCard: triton, toxicSourceCard: toxic, consumed: true }, () => 0).discardAttacker, false);
+  assert.equal(getToxicProtectionName(triton, toxic), "Nerve Shield");
+  const legacyImmunity = { effect: { type: "ignoreEffect", ignoredEffectType: "toxicWhenEaten", sourceCardId: toxic.id } };
+  assert.equal(getToxicProtectionName({ passives: [legacyImmunity] }, toxic), "Toxic Immunity");
+  assert.equal(getToxicProtectionName({ passives: [{ ...legacyImmunity, name: "Protective Shell" }] }, toxic), "Protective Shell");
+  assert.equal(getToxicProtectionName({ passives: [
+    { name: "Different source immunity", effect: { ...legacyImmunity.effect, sourceCardId: "different-creature" } },
+    ...triton.passives,
+  ] }, toxic), "Nerve Shield");
+  assert.equal(resolveToxicConsumption({ attackerCard: cardsById.octopus, toxicSourceCard: toxic, consumed: true }, () => 0).discardAttacker, true);
+  const avoidance = runtime("getTargetAvoidance", { ignoresEffectWhileAttacking });
+  const toxicWard = { passives: ["Toxic: If targeted, flip a coin. If tails, the attack fails."] };
+  assert.equal(avoidance(toxicWard, triton), null);
+  assert.equal(avoidance(toxicWard, cardsById.octopus).failureResult, "tails");
+  assert.equal(avoidance({ passives: ["Agility: If targeted, flip a coin. If tails, the attack fails."] }, triton).failureResult, "tails");
+  assert.equal(isToxicWhenConsumed(triton), false);
+  assert.equal(triton.bio.length, "18\u201d");
+  assert.equal(triton.bio.weight, "6lbs");
 });
 
 test("Frigate Tuna Snap is a paid action and Deep bonuses match the new wording", () => {

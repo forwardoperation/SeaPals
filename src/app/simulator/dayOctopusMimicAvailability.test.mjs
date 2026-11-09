@@ -68,15 +68,18 @@ test("stunned donors and actions without an executable effect are unavailable", 
   assert.equal(choices([entry("emerald-crab", "unknown", "opponent", unsupported)]).length, 0);
 });
 
-test("structured and legacy copied attacks retain target rules and next-turn cooldown at Mimic's cost", () => {
+test("copied attacks retain their own target and cooldown rules at Mimic's cost", () => {
   const result = choices([entry("giant-triton", "triton"), entry("greenland-shark", "shark")]);
   assert.equal(result.length, 2);
   const triton = result.find((choice) => choice.donorCardId === "giant-triton");
-  assert.equal(triton.attack.advantageAgainstCardId, "crown-of-thorns");
+  assert.equal(triton.attack.advantageAgainstCardId, undefined);
   assert.deepEqual(plain(triton.attack.target.categories), ["invertebrate"]);
+  assert.deepEqual(plain(triton.attack.targetTags), ["starfish", "sea-urchin"]);
+  assert.equal(triton.attack.attackDice, "D8");
+  assert.equal(triton.attack.skipNextTurn, false);
+  assert.equal(result.find((choice) => choice.donorCardId === "greenland-shark").attack.skipNextTurn, true);
   for (const choice of result) {
     assert.equal(choice.attack.actionCost, 3);
-    assert.equal(choice.attack.skipNextTurn, true);
     assert.equal(choice.attack.mimic.donorInstanceId, choice.donorInstanceId);
   }
 });

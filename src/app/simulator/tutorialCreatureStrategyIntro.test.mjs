@@ -301,7 +301,7 @@ test("Blue Sea Dragon describes its own Munch attack and Venomous disadvantage",
   assert.doesNotMatch(introduction, /Toxic[^.]*(?:consum|eaten|usual retaliation)/i);
 });
 
-test("attached-Coral protection and source-specific Toxic Immunity stay precise", () => {
+test("attached-Coral protection and Giant Triton's offensive Nerve Shield stay precise", () => {
   const sargeantMajor = getProductionCreatureIntroduction("sargeant-major");
   assert.match(
     sargeantMajor,
@@ -310,9 +310,9 @@ test("attached-Coral protection and source-specific Toxic Immunity stay precise"
   assert.doesNotMatch(sargeantMajor, /Coral Protector[^.]*flexible placement/i);
 
   const giantTriton = getProductionCreatureIntroduction("giant-triton");
-  assert.match(giantTriton, /Starfish Hunt[^.]*Invertebrates.*advantage.*Crown of Thorns/i);
-  assert.doesNotMatch(giantTriton, /Toxic Immunity[^.]*Toxic prey/i);
-  assert.doesNotMatch(giantTriton, /Starfish Hunt[^,.]*Starfish[^,.]*(?:Toxic|retaliation)/i);
+  assert.match(giantTriton, /Echinoderm Hunt[^.]*starfish or sea urchins/i);
+  assert.match(giantTriton, /Nerve Shield[^.]*Toxic and Venomous[^.]*attacks/i);
+  assert.doesNotMatch(giantTriton, /Starfish Hunt|advantage against Crown|rests next turn/i);
 });
 
 test("one-time and triggered economy effects are not pitched as generic long-term engines", async (t) => {

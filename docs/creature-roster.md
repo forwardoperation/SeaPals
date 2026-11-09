@@ -48,7 +48,7 @@ Generated from `src/data/cards` with `npm run docs:cards`. These are the playabl
 | Cleaner Shrimp | cleaner-shrimp | reef | invertebrate | 1 | 1 |  |  |  | D4 |
 | Crown of Thorns | crown-of-thorns | reef | invertebrate | 2 | 1 |  |  |  | D4 |
 | Nudibranch | nudibranch | reef | invertebrate | 1 | 1 |  |  |  | D4 |
-| Giant Triton | giant-triton | reef | invertebrate | 3 | 3 |  |  |  | D8 |
+| Giant Triton | giant-triton | reef | invertebrate | 3 | 4 |  |  |  | D8 |
 | Day Octopus | octopus | reef | invertebrate | 4 | 4 |  |  |  | D6 |
 | Oysters | oysters | reef | invertebrate | 6 | 2 |  |  |  | D10 |
 | Giant Clam | giant-clam | reef | invertebrate | 5 | 3 |  |  |  | D6 |

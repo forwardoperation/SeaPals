@@ -40,8 +40,9 @@ status, artwork eligibility, deployment steps, and commands.
   `scripts/manufacturing/booster-artwork-exclusions.json` and saved in each
   release as `excludedBoosterArtwork`. They affect new Dive Pack draws only;
   the full catalog and PNGs remain available for fixed decks, manual holo
-  replenishment, and saved-job reprints. The current holds cover both Giant
-  Triton printings, Green Sea Turtle, Giant Clam, and Leather Starfish. Remove
+  replenishment, and saved-job reprints. The current holds cover Green Sea
+  Turtle, Giant Clam, and Leather Starfish. Both Giant Triton printings return
+  to new Dive Pack draws with the reviewed replacement artwork release. Remove
   a printing from this list only after its replacement artwork is reviewed,
   then publish a new release. Refreshing or remapping Figma artwork does not
   automatically clear a hold. Deploy the exclusion-aware Worker before the

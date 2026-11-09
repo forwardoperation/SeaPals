@@ -85,7 +85,7 @@ import { DAMAGE_COUNTER_HP, addResourceWithinCap, applyDamage, calculateAttached
 import { createHabitatInstance, evaluateHabitatComposition, getHabitatRequirementError, resolveEndOfTurnHabitatMaintenance } from "./habitatRules.mjs";
 import { createHandLimitChoice, resolveHandLimitChoice, selectAutomatedHandLimitDiscards } from "./handLimitRules.mjs";
 import { addCardsToHandWithLimit, canHostSpecialPlacement, createCreatureInstance, getOceanicApexSacrificeChoices, getPersonalDeckType, getRequiredOceanicPredatorCount, getSpecialPlacementHostTags, moveSlottedCreatureBetweenFoundations, placeCardInSpecialHost, removeCreatureInstances, resolveDestructionRecoveryWaves, resolvePlenteousDestruction } from "./zoneRules.mjs";
-import { attackCanTargetCard, attackerHasDisadvantageFromMassive, beginFlashingAlarmTurn, canTargetInAttackSequence, createAttackSequence, createRegenerateDecision, endFlashingAlarmTurn, getCloakDefenseBonus, getDarknessShroudDefenseBonus, getKingOfCamouflageDefenseBonus, getFlashingAlarmAttackBonus, getNightVisionAttackBonus, getRemainingAttackTargets, hasDefenseAdvantage, hasExplicitToxicImmunity, isToxicWhenConsumed, recordAttackResolution, resolveRegenerateDecision, resolveToxicConsumption, shouldSelfDiscardAfterConsume, triggerFlashingAlarm } from "./combatRules.mjs";
+import { attackCanTargetCard, attackerHasDisadvantageFromMassive, beginFlashingAlarmTurn, canTargetInAttackSequence, createAttackSequence, createRegenerateDecision, endFlashingAlarmTurn, getCloakDefenseBonus, getDarknessShroudDefenseBonus, getKingOfCamouflageDefenseBonus, getFlashingAlarmAttackBonus, getNightVisionAttackBonus, getRemainingAttackTargets, hasDefenseAdvantage, hasExplicitToxicImmunity, getToxicProtectionName, ignoresEffectWhileAttacking, isToxicWhenConsumed, recordAttackResolution, resolveRegenerateDecision, resolveToxicConsumption, shouldSelfDiscardAfterConsume, triggerFlashingAlarm } from "./combatRules.mjs";
 import { consumeSchoolDensityConditionDiscount, drawConditionCard, getEffectiveSchoolDensityRequirement } from "./conditionRules.mjs";
 import { createSchoolDensityBucketState, getEcosystemSchoolDensityCommitted } from "./schoolDensityRules.mjs";
 import { getOpponentActionUseKey, markOpponentActionUsed, supportLocksFurtherPlays, wasOpponentActionUsedThisTurn } from "./opponentActionRules.mjs";
@@ -1755,7 +1755,7 @@ function resolveHostTurnLionfishInvaders({
               Math.max(0.05, 0.42 + (expectedLionfishAttack - expectedDefense) * 0.1),
             );
             const lionfishCard = cardsById.lionfish;
-            const targetAvoidanceProbability = getTargetAvoidance(candidate.card) ? 0.5 : 0;
+            const targetAvoidanceProbability = getTargetAvoidance(candidate.card, lionfishCard) ? 0.5 : 0;
             const isCreatureSchoolTarget = isCreatureSchool(candidate.card);
             const targetResolutionProbability = isCreatureSchoolTarget
               ? 1
@@ -1941,7 +1941,7 @@ function resolveHostTurnLionfishInvaders({
     const targetOwnerState = states[target.controller];
     const nextFlashingAlarm = triggerFlashingAlarm(targetOwnerState.flashingAlarmAttackBonus, target.card);
     states[target.controller] = { ...targetOwnerState, flashingAlarmAttackBonus: nextFlashingAlarm };
-    const targetAvoidance = getTargetAvoidance(target.card);
+    const targetAvoidance = getTargetAvoidance(target.card, cardsById.lionfish);
     if (targetAvoidance) {
       const avoidanceCoin = forcedPlan?.avoidanceCoin ?? resolveLionfishInvaderCoin(random);
       plan.avoidanceCoin = avoidanceCoin;
@@ -2006,7 +2006,7 @@ function resolveHostTurnLionfishInvaders({
               : null;
     const defenseStatuses = states[target.controller].creatureStatuses?.[defenseStatusKey] ?? [];
     const defenseAdvantage = hasDefenseAdvantage({ targetCard: target.card, statuses: defenseStatuses });
-    const attackDisadvantage = attackerHasDisadvantageFromMassive(target.card);
+    const attackDisadvantage = attackerHasDisadvantageFromMassive(target.card, cardsById.lionfish);
     const resolutionRandom = combatRollPacket ? createCombatResolutionRandom(combatRollPacket) : random;
     const secondAttackRoll = attackDisadvantage ? rollDie("D4", resolutionRandom) : null;
     const attackTotal = secondAttackRoll
@@ -2721,9 +2721,12 @@ function getBiteBackAttack(card) {
   return dice ? { attackDice: dice.toUpperCase(), actionName: "Bite Back" } : null;
 }
 
-function getTargetAvoidance(card) {
+function getTargetAvoidance(card, attackerCard = null) {
   for (const passive of card?.passives ?? []) {
     const text = typeof passive === "string" ? passive : passive?.text ?? "";
+    const name = typeof passive === "string" ? passive.split(":")[0] : passive?.name ?? passive?.id ?? "";
+    if (attackerCard && /^(toxic|venomous)\b/i.test(name)
+      && ignoresEffectWhileAttacking(attackerCard, name.toLowerCase().startsWith("toxic") ? "toxic" : "venomous")) continue;
     if (!/if targeted|if being targeted/i.test(text) || !/flip a coin/i.test(text) || !/attack fails/i.test(text)) continue;
     const failureResult = /if heads[^.]*attack fails/i.test(text) ? "heads" : /if tails[^.]*attack fails/i.test(text) ? "tails" : null;
     if (failureResult) return { abilityName: text.split(":")[0]?.trim() || "Evasion", failureResult };
@@ -10148,7 +10151,7 @@ export default function Simulator({
     const flashingAlarmTriggerMessage = flashingAlarmTriggered
       ? ` ${targetEntry.card.name}'s Flashing Alarm will give the opponent +${opponentFlashingAlarmAfterAttack.amount} on every attack roll during its next turn.`
       : "";
-    const targetAvoidance = getTargetAvoidance(targetEntry.card);
+    const targetAvoidance = getTargetAvoidance(targetEntry.card, attacker);
     if (rollNow && targetAvoidance) {
       const coinResult = combatRandom() < 0.5 ? "heads" : "tails";
       if (coinResult === targetAvoidance.failureResult) {
@@ -10190,7 +10193,7 @@ export default function Simulator({
         setFaceoffPreview(null);
         return;
       }
-      const hasDisadvantage = attackerHasDisadvantageFromMassive(targetEntry.card);
+      const hasDisadvantage = attackerHasDisadvantageFromMassive(targetEntry.card, attacker);
       const hasAdvantage = cardHasAttackAdvantage(attacker, targetEntry.card, playerHabitats, attack);
       const useAdvantage = hasAdvantage && !hasDisadvantage;
       const useDisadvantage = hasDisadvantage && !hasAdvantage;
@@ -10312,7 +10315,7 @@ export default function Simulator({
       return;
     }
     const attackAdvantage = cardHasAttackAdvantage(attacker, targetEntry.card, playerHabitats, attack);
-    const attackDisadvantage = attackerHasDisadvantageFromMassive(targetEntry.card);
+    const attackDisadvantage = attackerHasDisadvantageFromMassive(targetEntry.card, attacker);
     const useAttackAdvantage = attackAdvantage && !attackDisadvantage;
     const useAttackDisadvantage = attackDisadvantage && !attackAdvantage;
     const defenseAdjustment = getDefenseAdjustment(attack, targetEntry.card, playerHabitats);
@@ -10514,7 +10517,7 @@ export default function Simulator({
         });
         const toxicMessage = toxicResult.triggered
           ? toxicResult.protected
-            ? ` ${toxicResult.protectionSource === "poisonHeal" ? "Poison Heal" : `${attacker.name}'s Toxic Immunity`} prevented Toxic.`
+            ? ` ${toxicResult.protectionSource === "poisonHeal" ? "Poison Heal" : `${attacker.name}'s ${getToxicProtectionName(attacker, targetEntry.card)}`} prevented Toxic.`
             : toxicResult.discardAttacker
               ? " Toxic coin flip: tails, so the consuming attacker was also discarded."
               : " Toxic coin flip: heads, so the attacker survived."
@@ -10654,7 +10657,7 @@ export default function Simulator({
       const attackerOrphanInstanceId = attackerDiscardedAfterConsume && attackerOrphanIndex >= 0
         ? playerOrphanCreatures[attackerOrphanIndex]?.instanceId
         : null;
-      const toxicMessage = toxicResult.triggered ? toxicResult.protected ? ` ${toxicResult.protectionSource === "poisonHeal" ? "Poison Heal" : `${attacker.name}'s Toxic Immunity`} prevented the Toxic effect.` : toxicDiscardedAttacker ? " Toxic coin flip: tails, so the consuming attacker was also discarded." : " Toxic coin flip: heads, so the attacker survived." : "";
+      const toxicMessage = toxicResult.triggered ? toxicResult.protected ? ` ${toxicResult.protectionSource === "poisonHeal" ? "Poison Heal" : `${attacker.name}'s ${getToxicProtectionName(attacker, targetEntry.card)}`} prevented the Toxic effect.` : toxicDiscardedAttacker ? " Toxic coin flip: tails, so the consuming attacker was also discarded." : " Toxic coin flip: heads, so the attacker survived." : "";
       const selfDiscardMessage = selfDiscardedAttacker
         ? toxicDiscardedAttacker
           ? ` ${attacker.name}'s consume rule also required it to be discarded; it left play only once.`
@@ -17959,7 +17962,7 @@ export default function Simulator({
       const outcome = estimateOpponentCombatOutcome({
         attackDice: candidateAttacker.attack.attackDice,
         attackAdvantage: cardHasAttackAdvantage(candidateAttacker.card, entry.card, opponentState.habitats, candidateAttacker.attack),
-        attackDisadvantage: attackerHasDisadvantageFromMassive(entry.card),
+        attackDisadvantage: attackerHasDisadvantageFromMassive(entry.card, candidateAttacker.card),
         attackFlat: modifier.flat + flashingAlarmBonus + 0,
         attackBonusDice,
         attackRollBonus: (roll) => getRolledAttackBonus(candidateAttacker.attack, roll, opponentState.habitats).flat,
@@ -17971,7 +17974,7 @@ export default function Simulator({
             + getKingOfCamouflageDefenseBonus(entry.card, [...playerHabitats, ...opponentState.habitats])
             + (entry.coral && !coralIsStunned(entry.coral) ? calculateAttachedCreatureDefenseBonus(cardsById[entry.coral.cardId]) : 0)),
         defenseBonusDice,
-        avoidanceProbability: getTargetAvoidance(entry.card) ? 0.5 : 0,
+        avoidanceProbability: getTargetAvoidance(entry.card, candidateAttacker.card) ? 0.5 : 0,
         scatter: cardHasScatter(entry.card),
         schoolHealth: entry.school ? entry.coral?.health ?? entry.coral?.maxHealth ?? entry.card?.health ?? 1 : null,
         targetSurvives: resilience || regenerate,
@@ -18113,7 +18116,7 @@ export default function Simulator({
       };
     }
     const combatRandom = combatRollPacket ? createCombatResolutionRandom(combatRollPacket) : nextGameplayRandom;
-    const targetAvoidance = getTargetAvoidance(targetEntry.card);
+    const targetAvoidance = getTargetAvoidance(targetEntry.card, attackerEntry.card);
     if (targetAvoidance) {
       const coinResult = controllerState.forcedAvoidanceCoinResult
         ?? (combatRandom() < 0.5 ? "heads" : "tails");
@@ -18137,7 +18140,7 @@ export default function Simulator({
       }
     }
     if (targetEntry.school) {
-      const hasDisadvantage = attackerHasDisadvantageFromMassive(targetEntry.card);
+      const hasDisadvantage = attackerHasDisadvantageFromMassive(targetEntry.card, attackerEntry.card);
       const hasAdvantage = cardHasAttackAdvantage(attackerEntry.card, targetEntry.card, opponentState.habitats, attackerEntry.attack);
       const useAdvantage = hasAdvantage && !hasDisadvantage;
       const useDisadvantage = hasDisadvantage && !hasAdvantage;
@@ -18203,7 +18206,7 @@ export default function Simulator({
     const activeDefenseStatuses = controllerCreatureStatuses[targetStatusKey] ?? [];
     const attackAdvantage = cardHasAttackAdvantage(attackerEntry.card, targetEntry.card, opponentState.habitats, attackerEntry.attack);
     const defenseAdjustment = getDefenseAdjustment(attackerEntry.attack, targetEntry.card, opponentState.habitats);
-    const attackDisadvantage = attackerHasDisadvantageFromMassive(targetEntry.card);
+    const attackDisadvantage = attackerHasDisadvantageFromMassive(targetEntry.card, attackerEntry.card);
     const useAttackAdvantage = attackAdvantage && !attackDisadvantage;
     const useAttackDisadvantage = attackDisadvantage && !attackAdvantage;
     const defenseAdvantage = hasDefenseAdvantage({ targetCard: targetEntry.card, statuses: activeDefenseStatuses, ignoreDefensiveBonuses: defenseAdjustment.ignoresBonuses });
@@ -18462,7 +18465,7 @@ export default function Simulator({
         actionCost: attackerEntry.attack.actionCost,
         opponentCooldownKey,
         opponentAttackActionKey,
-        summary: `Opponent's ${attackerEntry.card.name} attacked your invading ${targetEntry.card.name}: ${rolls.join(", ")}. The attack succeeded, so the invader left the opponent's reef and went to your ${defeatedInvaderDestination}.${shouldDeferToxicCoin ? "" : toxicResult.triggered ? toxicResult.protected ? " Poison Heal or Toxic Immunity prevented Toxic." : toxicResult.discardAttacker ? " Toxic also discarded the opponent's attacker." : " The opponent's attacker survived Toxic." : ""}`,
+        summary: `Opponent's ${attackerEntry.card.name} attacked your invading ${targetEntry.card.name}: ${rolls.join(", ")}. The attack succeeded, so the invader left the opponent's reef and went to your ${defeatedInvaderDestination}.${shouldDeferToxicCoin ? "" : toxicResult.triggered ? toxicResult.protected ? ` ${toxicResult.protectionSource === "poisonHeal" ? "Poison Heal" : `${attackerEntry.card.name}'s ${getToxicProtectionName(attackerEntry.card, targetEntry.card)}`} prevented Toxic.` : toxicResult.discardAttacker ? " Toxic also discarded the opponent's attacker." : " The opponent's attacker survived Toxic." : ""}`,
       };
     }
     const defeatedCorals = targetEntry.reefIndex >= 0 || targetEntry.orphanIndex >= 0 ? currentPlayerCorals : currentPlayerCorals.map((coral) => coral.id === targetEntry.coral.id ? {
@@ -18576,7 +18579,7 @@ export default function Simulator({
       actionCost: attackerEntry.attack.actionCost,
       opponentCooldownKey,
       opponentAttackActionKey,
-      summary: `Opponent's ${attackerEntry.card.name}${onPlayAttack ? ` used ${attackerEntry.attack.actionName} on` : " attacked"} ${targetEntry.card.name}: ${rolls.join(", ")}. ${destroyedCardGoesToLostZone(targetEntry.card) ? `${targetEntry.card.name} was destroyed and sent to your Lost Zone.` : `${targetEntry.card.name} was discarded.`}${shouldDeferToxicCoin ? "" : toxicResult.triggered ? toxicResult.protected ? ` ${toxicResult.protectionSource === "poisonHeal" ? "Poison Heal" : `${attackerEntry.card.name}'s Toxic Immunity`} prevented Toxic.` : toxicDiscardedAttacker ? " Toxic coin flip: tails, so the opponent's consuming attacker was also discarded." : " Toxic coin flip: heads, so the opponent's attacker survived." : ""}${!shouldDeferToxicCoin && selfDiscardedAttacker ? toxicDiscardedAttacker ? ` ${attackerEntry.card.name}'s consume rule also required it to be discarded; it left play only once.` : ` ${attackerEntry.card.name}'s consume rule discarded it after eating an Apex or Predator.` : ""}${attackerEntry.attack.unsupportedDetails ? ` ${attackerEntry.attack.unsupportedDetails}` : ""}`,
+      summary: `Opponent's ${attackerEntry.card.name}${onPlayAttack ? ` used ${attackerEntry.attack.actionName} on` : " attacked"} ${targetEntry.card.name}: ${rolls.join(", ")}. ${destroyedCardGoesToLostZone(targetEntry.card) ? `${targetEntry.card.name} was destroyed and sent to your Lost Zone.` : `${targetEntry.card.name} was discarded.`}${shouldDeferToxicCoin ? "" : toxicResult.triggered ? toxicResult.protected ? ` ${toxicResult.protectionSource === "poisonHeal" ? "Poison Heal" : `${attackerEntry.card.name}'s ${getToxicProtectionName(attackerEntry.card, targetEntry.card)}`} prevented Toxic.` : toxicDiscardedAttacker ? " Toxic coin flip: tails, so the opponent's consuming attacker was also discarded." : " Toxic coin flip: heads, so the opponent's attacker survived." : ""}${!shouldDeferToxicCoin && selfDiscardedAttacker ? toxicDiscardedAttacker ? ` ${attackerEntry.card.name}'s consume rule also required it to be discarded; it left play only once.` : ` ${attackerEntry.card.name}'s consume rule discarded it after eating an Apex or Predator.` : ""}${attackerEntry.attack.unsupportedDetails ? ` ${attackerEntry.attack.unsupportedDetails}` : ""}`,
     };
   }
 
@@ -20150,7 +20153,7 @@ export default function Simulator({
       attackerDiscardedAfterConsume = toxicResult.discardAttacker || selfDiscardedAttacker;
       if (toxicResult.triggered) {
         toxicMessage = toxicResult.protected
-          ? ` ${toxicResult.protectionSource === "poisonHeal" ? "The opponent's Poison Heal" : `${attacker.name}'s Toxic Immunity`} prevented Toxic.`
+          ? ` ${toxicResult.protectionSource === "poisonHeal" ? "The opponent's Poison Heal" : `${attacker.name}'s ${getToxicProtectionName(attacker, defender)}`} prevented Toxic.`
           : toxicResult.discardAttacker ? " Toxic rolled tails, so the opponent's consuming attacker was also discarded." : " Toxic rolled heads, so the opponent's attacker survived.";
       }
       if (selfDiscardedAttacker) {

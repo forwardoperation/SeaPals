@@ -76,15 +76,15 @@ test("master set placement and baitball stages override catalog classifications"
 
 test("Prerelease cards are excluded from completed counts but remain in set totals", () => {
   const progress = getGalleryArtProgress(gallery);
-  assert.equal(cards.filter((card) => card.prerelease).length, 102);
+  assert.equal(cards.filter((card) => card.prerelease).length, 101);
   assert.equal(progress.totalCards, 193);
-  assert.equal(progress.completedCards, 79);
+  assert.equal(progress.completedCards, 80);
   assert.equal(progress.overallPercent, 41);
   assert.deepEqual(progress.categoryStats.map((set) => [set.zone, set.complete]), [
-    ["reef", 67], ["ocean", 9], ["deep", 3],
+    ["reef", 68], ["ocean", 9], ["deep", 3],
   ]);
   assert.equal(byId.get("nurse-shark").prerelease, true);
-  for (const id of ["humpback-whale", "ocean-sunfish", "basking-shark", "oysters", "octopus", "coral-gardener"]) {
+  for (const id of ["humpback-whale", "ocean-sunfish", "basking-shark", "oysters", "octopus", "giant-triton", "coral-gardener"]) {
     assert.equal(byId.get(id).prerelease, false, id);
   }
   assert.equal(byId.get("colossal-squid").prerelease, false);
@@ -93,7 +93,7 @@ test("Prerelease cards are excluded from completed counts but remain in set tota
   assert.equal(byId.get("abyss").prerelease, true);
   for (const id of ["recovery", "fishing", "robotic-survey", "restocking",
     "spearfishing", "scientist-jes", "capt-dani", "dr-evans",
-    "leather-starfish", "giant-triton", "green-sea-turtle"]) {
+    "leather-starfish", "green-sea-turtle"]) {
     assert.equal(byId.get(id).hasImage, true, id);
     assert.equal(byId.get(id).prerelease, true, id);
   }

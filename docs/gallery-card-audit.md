@@ -1,5 +1,13 @@
 # Gallery card audit — October 2026
 
+## November 9 Reef artwork count audit
+
+Audited all 87 Reef card/stage entries against the live gallery, current source data, and Giant Triton's current Figma card. The correct artwork count is **68/87**: 68 complete, 11 prerelease, and 8 awaiting artwork. The 102 numbered Reef printings include 15 additional Holo Rare variants and are a separate count.
+
+The Coral Nursery push retained Giant Triton's older prerelease entry from main, omitting its already-deployed November 8 update. Restored that verified update, including the finished artwork, 4 VP, Nerve Shield, Echinoderm Hunt, simulator behavior, tutorials, rules answers, and reviewed printing eligibility. Coral Nursery remains complete. Gallery totals are now 80/193 overall: Reef 68/87, Oceanic 9/59, and Deep 3/47.
+
+Validation: 2,966 of 2,989 tests passed in the full run; the 23 temporary-file permission failures passed when rerun with a writable test temporary directory (all 80 tests in the affected files passed). Gallery image and generated-reference checks pass, and the production webpack build generates all 170 pages.
+
 ## November 9 Coral Nursery sync
 
 Replaced Coral Gardener's displayed name and artwork with Coral Nursery from the [Support source card](https://www.figma.com/design/xeol2YE0jCE0N5vAD6tjzx?node-id=259-692). The card remains Reef 86/102, Common, and an Aide: search for one Coral, put it in hand, and shuffle afterwards. Added the printed shuffle instruction to the canonical rules text; the simulator already implements that effect.
@@ -48,7 +56,7 @@ The initial audit found 193 cards shared by the gallery and the 199-card playabl
 | Emerald Crab; Blue Crab; Arrow Crab | Removed Eco Boost. Blue Crab costs 1 RP; its Recycle and Scavenge remain. Cleaner Shrimp and Oysters retain their own Eco Boost. |
 | Crown of Thorns | Venomous replaces Toxic. Stun is now **Coral Shock**; it and Venom Spines each cost 1 RP. |
 | Nudibranch | Toxic added. Munch reduces a chosen Coral's next RP collection by 2. |
-| Giant Triton | 3 RP / 3 VP. Starfish Hunt targets any Invertebrate, has advantage against Crown of Thorns, costs 1 RP, and cannot be used on the next turn. Removed Toxic Immunity. |
+| Giant Triton | 3 RP / 4 VP; D8 defense. Echinoderm Hunt costs 2 RP for a D8 attack against an opponent's starfish or sea urchin. Nerve Shield ignores Toxic and Venomous while attacking. Updated from the approved November 8 artwork. |
 | Giant Clam; Basking Shark | D6 and D20 defense, respectively. |
 | Reef Manta Ray (`manta-ray`) | 4 RP / 6 VP / D8; requires 135 School Density and Coral Reef. Kept its existing ID so saved decks still resolve it. |
 | Barrel Eye; Tripod Fish; Gulper Eel | Barrel Eye is 3 RP / 3 VP. Tripod defense is D4. Gulper Eel's Darkness Shroud adds +4 with Abyss. |

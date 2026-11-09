@@ -138,6 +138,21 @@ test("actual optional attacks pass suicidal Toxic trades but mandatory On Play s
   assert.equal(selected.targetInstanceId, "target-0");
 });
 
+test("actual opponent planning uses Nerve Shield against Venomous and Toxic prey", () => {
+  const cards = {
+    hunter: attacker("hunter", "D8"),
+    dangerous: target("dangerous", { victoryPoints: 3, passives: [
+      { id: "venomous", name: "Venomous", effect: { type: "attackDisadvantage" } },
+      { name: "Toxic", effect: { type: "toxicWhenEaten" } },
+    ] }),
+    safe: target("safe"),
+  };
+  const options = { cards, attackers: ["hunter"], targets: ["dangerous", "safe"] };
+  assert.equal(decide(options).targetInstanceId, "target-1");
+  cards.hunter.passives = [{ effect: { type: "ignoreEffectsWhileAttacking", ignoredEffects: ["toxic", "venomous"] } }];
+  assert.equal(decide(options).targetInstanceId, "target-0");
+});
+
 test("actual attack selection respects once-per-turn action uses", () => {
   const cards = { hunter: attacker("hunter"), fish: target("fish") };
   const key = actions.getOpponentActionUseKey("reef-attacker-0", cards.hunter.attack);

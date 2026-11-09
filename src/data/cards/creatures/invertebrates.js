@@ -603,7 +603,7 @@ export const invertebrateCards = [
     sortOrder: 310,
 
     cost: { rp: 3 },
-    victoryPoints: 3,
+    victoryPoints: 4,
     tags: ["creature", "invertebrate", "triton"],
 
     bio: {
@@ -611,27 +611,37 @@ export const invertebrateCards = [
       role: "Invertebrate",
       region: "Indo-Pacific",
       length: "18”",
-      weight: "600 lbs",
+      weight: "6lbs",
     },
 
     playRequirements: [],
 
-    passives: [],
+    passives: [
+      {
+        id: "nerve-shield",
+        name: "Nerve Shield",
+        text: "Ignore effects of toxic or venomous when attacking.",
+        timing: Timing.PASSIVE,
+        effect: {
+          type: "ignoreEffectsWhileAttacking",
+          ignoredEffects: ["toxic", "venomous"],
+        },
+      },
+    ],
 
     onPlay: [],
 
     actions: [
       {
-        id: "starfish-hunt",
-        name: "Starfish Hunt",
-        text: "Perform a D6 attack targeting an opponent’s invertebrate. Has advantage against Crown of Thorns. This action cannot be used on your next turn.",
-        cost: { rp: 1 },
+        id: "echinoderm-hunt",
+        name: "Echinoderm Hunt",
+        text: "Perform a 1D8 attack against an opponent's starfish, or sea urchin.",
+        cost: { rp: 2 },
         timing: Timing.ACTION_PHASE,
         effect: {
-          ...attackEffect({ dice: "D6", categories: [CardCategory.INVERTEBRATE] }),
-          advantageAgainstCardId: "crown-of-thorns",
+          ...attackEffect({ dice: "D8", categories: [CardCategory.INVERTEBRATE] }),
+          targetTags: ["starfish", "sea-urchin"],
         },
-        cooldown: { duration: "yourNextTurn" },
       },
     ],
 

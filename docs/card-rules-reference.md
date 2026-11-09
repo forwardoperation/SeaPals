@@ -653,9 +653,10 @@ Play cost: 1 RP; 1 VP; Defense: D4.
 
 ID: `giant-triton`. reef / invertebrate. [Gallery](/gallery#card-giant-triton).
 
-Play cost: 3 RP; 3 VP; Defense: D8.
+Play cost: 3 RP; 4 VP; Defense: D8.
 
-- **Action — Starfish Hunt:** Perform a D6 attack targeting an opponent’s invertebrate. Has advantage against Crown of Thorns. This action cannot be used on your next turn.
+- **Passive — Nerve Shield:** Ignore effects of toxic or venomous when attacking.
+- **Action — Echinoderm Hunt:** Perform a 1D8 attack against an opponent's starfish, or sea urchin.
 
 ## Day Octopus
 

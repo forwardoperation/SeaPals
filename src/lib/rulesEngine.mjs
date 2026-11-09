@@ -1153,10 +1153,10 @@ function toxicStrategyAnswer(strategyRule, rules) {
   const toxicRule = rules.find((rule) => /^Toxic creatures$/i.test(rule.title));
   const poisonHeal = cardRuleById(rules, "poison-heal");
   const immuneCards = rules.filter((rule) => rule.entity?.type === "card"
-    && (rule.facts?.printedRules ?? []).some((text) => /toxic immunity|immune to[^.]*toxic/i.test(text)));
+    && (rule.facts?.printedRules ?? []).some((text) => /toxic immunity|immune to[^.]*toxic|ignore effects of toxic/i.test(text)));
   const options = [
     poisonHeal ? `${poisonHeal.title} makes your next attack ignore Toxic effects.` : null,
-    ...immuneCards.map((rule) => `${rule.title}: ${firstPrintedRule(rule, /toxic immunity|immune to[^.]*toxic/i)}`),
+    ...immuneCards.map((rule) => `${rule.title}: ${firstPrintedRule(rule, /toxic immunity|immune to[^.]*toxic|ignore effects of toxic/i)}`),
     "A non-consuming attack or effect can defeat a Toxic When Eaten creature without triggering its when-eaten consequence.",
   ].filter(Boolean);
 
