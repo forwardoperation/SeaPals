@@ -6,12 +6,12 @@ import path from 'node:path';
 import { PNG } from 'pngjs';
 import { PDFDocument, PDFName, PDFArray, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 import { buildPrintingCatalog, contentHash } from './boosters.mjs';
-import { PRINT_LAYOUT, BACK_TEMPLATE, V7_PRINT_LAYOUT, V7_BACK_TEMPLATE, V7_HOLO_PRINT_LAYOUT, V7_HOLO_BACK_TEMPLATE, createManufacturingManifest } from './printPlan.mjs';
+import { V8_PRINT_LAYOUT as PRINT_LAYOUT, V8_BACK_TEMPLATE as BACK_TEMPLATE, V7_PRINT_LAYOUT, V7_BACK_TEMPLATE, V7_HOLO_PRINT_LAYOUT, V7_HOLO_BACK_TEMPLATE, createManufacturingManifest } from './printPlan.mjs';
 import { backgroundsForLayout } from './backdrops.mjs';
 import { fixedSheetAssets, fixedArtworkSources, FLYER_RECIPE_VERSION, FLYER_SOURCES } from './recipes.mjs';
 import { sha256, validateRelease } from './integration.mjs';
 import { buildPagePreview } from './pagePreview.mjs';
-import { stockSheetLabel } from './stockSheetLabel.mjs';
+import { sheetMarginLabels } from './sheetMarginLabels.mjs';
 import { renderJob } from '../../../scripts/manufacturing/render.mjs';
 import { normalizeFixedSheetExport } from '../../../scripts/manufacturing/sync-figma.mjs';
 
@@ -96,11 +96,13 @@ test('preview reveals only assets needed by the selected saved side, including r
   assert.ok(!front.requiredAssetIds.includes('sheet-coral-garden-1'));
   assert.equal(front.layers.length, 10);
   assert.equal(front.stockLabel, null, 'A later sheet is not relabeled as the top sheet');
+  assert.deepEqual(front.marginLabels.map(label => label.text), ['Coral Garden | Page 2 of 7 | Copy 2']);
   assert.deepEqual(front.layers[1].crop, { x: 167, y: 106, width: 721, height: 1009 }, 'Round both crop edges, not just its size');
   const back = buildPagePreview(saved, releases.v8, sheet.sheetId, 'backs');
   assert.deepEqual(back.requiredAssetIds, ['standard-back-sheet']); assert.equal(back.layers.length, 1);
   assert.deepEqual(back.layers[0].position, { x: 0, y: 0, width: 2550, height: 3300, rotation: 0 });
   assert.equal(back.stockLabel, null);
+  assert.deepEqual(back.marginLabels.map(label => label.text), front.marginLabels.map(label => label.text));
   assert.equal(JSON.stringify(saved), before, 'Reading a preview cannot mutate the immutable job');
 });
 
@@ -111,7 +113,8 @@ test('first-stock-sheet preview shares the printer margin label without changing
   for (const side of ['fronts', 'backs']) {
     const preview = buildPagePreview(saved, releases.v8, sheetId, side);
     const customerPreview = buildPagePreview(customer, releases.v8, sheetId, side);
-    assert.deepEqual(preview.stockLabel, stockSheetLabel(saved, releases.v8, sheetId, side));
+    assert.deepEqual(preview.stockLabel, sheetMarginLabels(saved, releases.v8, sheetId, side).find(label => label.kind === 'stock'));
+    assert.deepEqual(preview.marginLabels, sheetMarginLabels(saved, releases.v8, sheetId, side));
     assert.equal(preview.stockLabel.text, saved.order.orderNumber);
     assert.equal(preview.stockLabel.margin, side === 'fronts' ? 'right' : 'left');
     assert.deepEqual(preview.layers, customerPreview.layers);
@@ -196,6 +199,7 @@ test('saved kit flyers preview the complete native Letter image with no card tem
     assert.deepEqual(plan.layers, [{ assetId: sheet.fronts.assetId, position: { x: 0, y: 0, width: 2550, height: 3300, rotation: 0 } }]);
     assert.deepEqual(plan.assets, { [sheet.fronts.assetId]: { sha256: releases.flyers.assets[sheet.fronts.assetId].sha256, width: 2550, height: 3300 } });
     assert.equal(plan.stockLabel, null);
+    assert.deepEqual(plan.marginLabels, []);
     assert.throws(() => buildPagePreview(saved, releases.flyers, sheet.sheetId, 'backs'), /Epson only/);
   }
   const legacy = createManufacturingManifest({ request: { orderId: 'preview-order', orderNumber: 'PREVIEW-ORDER', items: [{ productId: 'starter-kit', quantity: 1 }] },

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { PDFArray, PDFDocument, PDFName, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 import { PNG } from 'pngjs';
 import { buildPrintingCatalog, contentHash } from './boosters.mjs';
-import { PRINT_LAYOUT as V8_PRINT_LAYOUT, BACK_TEMPLATE as V8_BACK_TEMPLATE, V7_PRINT_LAYOUT as PRINT_LAYOUT, V7_BACK_TEMPLATE as BACK_TEMPLATE, V7_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT, V7_HOLO_BACK_TEMPLATE as HOLO_BACK_TEMPLATE, V6_PRINT_LAYOUT, V6_BACK_TEMPLATE, V6_HOLO_PRINT_LAYOUT, V6_HOLO_BACK_TEMPLATE, createManufacturingManifest, preflightPrintAssets } from './printPlan.mjs';
+import { V8_PRINT_LAYOUT, V8_BACK_TEMPLATE, V7_PRINT_LAYOUT as PRINT_LAYOUT, V7_BACK_TEMPLATE as BACK_TEMPLATE, V7_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT, V7_HOLO_BACK_TEMPLATE as HOLO_BACK_TEMPLATE, V6_PRINT_LAYOUT, V6_BACK_TEMPLATE, V6_HOLO_PRINT_LAYOUT, V6_HOLO_BACK_TEMPLATE, createManufacturingManifest, preflightPrintAssets } from './printPlan.mjs';
 import { createHoloBatch } from './holoBatch.mjs';
 import { sha256, validateRelease } from './integration.mjs';
 import { LEGACY_CONDITION_SOURCES } from "./recipes.mjs";

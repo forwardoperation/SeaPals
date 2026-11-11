@@ -7,7 +7,7 @@ import { PDFDocument, PDFName, PDFArray, PDFRawStream, StandardFonts, decodePDFR
 import { PNG } from 'pngjs';
 import { stockSheetLabel } from './stockSheetLabel.mjs';
 import { buildPrintingCatalog } from './boosters.mjs';
-import { PRINT_LAYOUT, BACK_TEMPLATE, V7_PRINT_LAYOUT, V7_BACK_TEMPLATE, V4_PRINT_LAYOUT,
+import { V8_PRINT_LAYOUT as PRINT_LAYOUT, V8_BACK_TEMPLATE as BACK_TEMPLATE, V7_PRINT_LAYOUT, V7_BACK_TEMPLATE, V4_PRINT_LAYOUT,
   createManufacturingManifest, verifyManifest } from './printPlan.mjs';
 import { conditionOutputMapping, fixedSheetOutputPositions } from './sourceGeometry.mjs';
 import { sha256 } from './integration.mjs';

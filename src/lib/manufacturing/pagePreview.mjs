@@ -2,7 +2,7 @@ import { preflightPrintAssets } from './printPlan.mjs';
 import { productPrintAssets } from './recipes.mjs';
 import { isFlyerSheet, printSidesForSheet } from './sheetKinds.mjs';
 import { fixedSheetOutputPositions } from './sourceGeometry.mjs';
-import { stockSheetLabel } from './stockSheetLabel.mjs';
+import { sheetMarginLabels } from './sheetMarginLabels.mjs';
 import { CUTTER_LAYOUT_V2, CUTTER_LAYOUT_V3, hasPrintBackgrounds, isCutterLayout } from './backdrops.mjs';
 
 // This describes saved page composition, never a new draw or print request.
@@ -50,9 +50,10 @@ export function buildPagePreview(manifest, release, sheetId, side) {
         (crop && (![crop.x, crop.y, crop.width, crop.height].every(Number.isSafeInteger) || crop.x < 0 || crop.y < 0 || crop.width <= 0 || crop.height <= 0 || crop.x + crop.width > asset.width || crop.y + crop.height > asset.height)))
       throw new Error('The saved page has invalid image placement.');
   }
+  const marginLabels = sheetMarginLabels(manifest, release, sheetId, side);
   return { sheetId, side, releaseId: release.releaseId, templateVersion: version,
     width: 2550, height: 3300, requiredAssetIds,
     assets: Object.fromEntries(requiredAssetIds.map(id => [id, {
       sha256: release.assets[id].sha256, width: release.assets[id].width, height: release.assets[id].height,
-    }])), layers, stockLabel: isFlyerSheet(sheet) ? null : stockSheetLabel(manifest, release, sheetId, side) };
+    }])), layers, marginLabels, stockLabel: marginLabels.find(label => label.kind === 'stock') ?? null };
 }

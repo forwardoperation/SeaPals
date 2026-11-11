@@ -53,6 +53,22 @@ test('Both new Conditions outputs exactly match legacy calibrated placement for 
   }
 });
 
+test('V9 translates both Conditions mappings with the new shared grids without changing insets or pixels', () => {
+  for (const source of sources) {
+    const fresh = { nodeId: source.nodeId, ...normalized.get(source.id) };
+    const before = JSON.stringify(fresh.outputPositions);
+    for (const [oldX, newX, y] of [[70,85,62.84000015258789],[131.400390625,146.39999389648438,85.83999633789062]]) {
+      const old = fixedSheetOutputPositions(fresh,{version:'figma-cutter-nine-up-v8',grid:{x:oldX,y}});
+      const current = fixedSheetOutputPositions(fresh,{version:'figma-cutter-nine-up-v9',grid:{x:newX,y}});
+      for (let i=0;i<9;i++) {
+        assert.ok(Math.abs(current[i].x-old[i].x-(newX-oldX))<1e-10);
+        assert.deepEqual({...current[i],x:old[i].x},old[i]);
+      }
+    }
+    assert.equal(JSON.stringify(fresh.outputPositions),before);
+  }
+});
+
 test('Pre-inset original Conditions releases retain their standard-layout reprint behavior', () => {
   assert.equal(current.historicFullSheetReleaseId,'decks-2415421149796541083-8661fb89145b');
   for (const [id,asset] of Object.entries(current.historicFullSheetAssets)) {

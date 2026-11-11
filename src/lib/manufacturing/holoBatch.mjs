@@ -1,7 +1,7 @@
 import { contentHash } from "./boosters.mjs";
 import { resolvePrintTemplates } from "./printPlan.mjs";
 import { validateRelease } from "./integration.mjs";
-import { CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8 } from "./backdrops.mjs";
+import { CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9 } from "./backdrops.mjs";
 
 export function parseHoloSelections(value) {
   if (typeof value !== "string" || !value.length)
@@ -15,7 +15,7 @@ export function parseHoloSelections(value) {
 
 export function createHoloBatch({ release, selections }) {
   validateRelease(release);
-  if (![CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8].includes(release.printTemplates?.version))
+  if (![CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9].includes(release.printTemplates?.version))
     throw new Error("Holo replenishment requires a release with supported V5 or later print templates.");
   if (!Array.isArray(selections) || !selections.length || selections.length > 100)
     throw new Error("Select between 1 and 100 different finished-artwork holo printings.");

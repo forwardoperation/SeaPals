@@ -79,7 +79,32 @@ status, artwork eligibility, deployment steps, and commands.
 
 ## Source artwork and sheet geometry
 
-New releases use the Page_Templates adjusted on October 28, 2026. All four
+Current V9 releases use the shared Page_Templates pair measured on November 11,
+2026. Both are full native 2550 x 3300 PNGs for Letter at 300 DPI:
+
+| Use | Source frame | Grid origin (Figma pixels) |
+|---|---|---|
+| Epson fronts, standard and separate holo batches | `4311:139557` | (85, 62.84000015258789) |
+| Canon backs, standard and separate holo batches | `4311:139076` | (146.39999389648438, 85.83999633789062) |
+
+Each grid is 2330 x 3170 with nine centered cards. The front is the empty water
+page; the Canon PNG contains the nine backs and all approved white gutters,
+staple marks, and top bar. The front water begins at (83, 61). Fixed deck cards
+and Conditions insets follow the new grid without changing their source crops
+or dimensions. New jobs adopt V9 after release activation; saved jobs and
+reprints retain their pinned artwork and geometry.
+
+V9 card pages show the deck or Dive Pack set plus Page N of N in their white
+side margin on both printers. Repeated copies have a copy number. Starter Kit
+labels identify each component deck separately, and the first stock sheet also
+keeps the full stock number. Separate holo batches show their set(s) and page
+count. Previews use the same placement as PDFs. Labels stay clear of artwork,
+cutting grids, and staple marks; any label without enough safe space is skipped.
+Flyers stay unmarked. These labels do not add pages or change printer alignment.
+
+### Historical V7 geometry (October 28)
+
+V7 releases use the Page_Templates adjusted on October 28, 2026. All four
 masters are 2550 x 3300 pixels for Letter at 300 DPI:
 
 | Use | Epson front frame | Canon rear frame |
@@ -100,7 +125,7 @@ embedded once at full Letter size, without cropping, reflection, or an extra
 background. The ordinary rear grid is at (65, 85.8400); the holo rear grid is
 at (110, 85.8400). Keep the front/back pair for its intended production type.
 
-New releases save `figma-cutter-nine-up-v7`, all four private template assets,
+V7 releases save `figma-cutter-nine-up-v7`, all four private template assets,
 and exact geometry. The sync checks the pinned grids and background structure
 before exporting. Changed geometry requires an explicit layout update. A holo
 draw does not switch the whole Dive Pack to the holo template: it still prints

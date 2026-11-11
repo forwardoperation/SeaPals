@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { PRINT_LAYOUT, BACK_TEMPLATE } from './printPlan.mjs';
+import { V8_PRINT_LAYOUT as PRINT_LAYOUT, V8_BACK_TEMPLATE as BACK_TEMPLATE } from './printPlan.mjs';
 import { checkCutterTemplates, validateCutterTemplate } from '../../../scripts/manufacturing/sync-figma.mjs';
 
 const fixture = JSON.parse(await readFile(new URL('../../../scripts/manufacturing/fixtures/grid-template-nov1.json', import.meta.url), 'utf8'));

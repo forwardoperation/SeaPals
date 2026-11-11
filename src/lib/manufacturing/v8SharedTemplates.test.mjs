@@ -6,7 +6,7 @@ import os from 'node:os';
 import {PNG} from 'pngjs';
 import {PDFDocument,PDFName,PDFArray,PDFRawStream,decodePDFRawStream} from 'pdf-lib';
 import {buildPrintingCatalog} from './boosters.mjs';
-import {PRINT_LAYOUT,BACK_TEMPLATE,HOLO_PRINT_LAYOUT,HOLO_BACK_TEMPLATE,V7_PRINT_LAYOUT,V7_BACK_TEMPLATE,V7_HOLO_PRINT_LAYOUT,V7_HOLO_BACK_TEMPLATE,resolvePrintTemplates,createManufacturingManifest,preflightPrintAssets,verifyManifest} from './printPlan.mjs';
+import {V8_PRINT_LAYOUT as PRINT_LAYOUT,V8_BACK_TEMPLATE as BACK_TEMPLATE,V8_HOLO_PRINT_LAYOUT as HOLO_PRINT_LAYOUT,V8_HOLO_BACK_TEMPLATE as HOLO_BACK_TEMPLATE,V7_PRINT_LAYOUT,V7_BACK_TEMPLATE,V7_HOLO_PRINT_LAYOUT,V7_HOLO_BACK_TEMPLATE,resolvePrintTemplates,createManufacturingManifest,preflightPrintAssets,verifyManifest} from './printPlan.mjs';
 import {backgroundsForLayout} from './backdrops.mjs';
 import {validateRelease,sha256} from './integration.mjs';
 import {createHoloBatch,verifyHoloBatch} from './holoBatch.mjs';

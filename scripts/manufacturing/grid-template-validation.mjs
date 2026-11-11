@@ -1,4 +1,4 @@
-import { CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V8 } from "../../src/lib/manufacturing/backdrops.mjs";
+import { CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9 } from "../../src/lib/manufacturing/backdrops.mjs";
 
 // V5 and later use empty centered front grids and native, complete Canon rear pages.
 // Its validation is deliberately separate from V4's rotated guide rectangles.
@@ -74,7 +74,7 @@ function matrixMatches(node, expected) {
   return Array.isArray(matrix) && matrix.length === 2 && matrix.every((row, i) =>
     Array.isArray(row) && row.length === 3 && row.every((value, j) => close(value, expected[i][j], 0.000001)));
 }
-function checkSharedBackground(node, saved, invalid) {
+function checkSharedBackground(node, saved, invalid, version) {
   clean(node, invalid, 'shared background');
   if (node.id !== saved.background || node.type !== 'INSTANCE' || node.componentId !== saved.component || node.clipsContent !== true)
     invalid('the shared full-page background instance is required');
@@ -93,7 +93,7 @@ function checkSharedBackground(node, saved, invalid) {
     if (water.type !== 'RECTANGLE' || !onePaint(water, paint => paint.type === 'IMAGE' &&
         (paint.opacity ?? 1) === 1 && (paint.blendMode ?? 'NORMAL') === 'NORMAL' && paint.scaleMode === 'TILE'))
       invalid('the shared ocean background must retain its visible tiled image');
-    translation(water, invalid, 'shared ocean background', 68, 61);
+    translation(water, invalid, 'shared ocean background', version === CUTTER_LAYOUT_V9 ? 83 : 68, 61);
     dimensions(water, 2337, 3182, invalid, 'shared ocean background');
     return;
   }
@@ -162,7 +162,7 @@ function checkSharedCardArtwork(card, invalid) {
 }
 export function validateGridTemplate(document, template) {
   const invalid = detail => { throw new Error(`Cutter template ${template.name}: ${detail}. Review the Figma template and saved print geometry before syncing; the active artwork release is unchanged.`); };
-  const saved = (template.version === CUTTER_LAYOUT_V8 ? sharedSources : sources)[template.nodeId], expected = template.grid;
+  const saved = ([CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9].includes(template.version) ? sharedSources : sources)[template.nodeId], expected = template.grid;
   if (!saved || !expected || !document || document.type !== 'FRAME' || document.id !== template.nodeId || document.name !== template.name)
     invalid('the expected template frame is missing or renamed');
   clean(document, invalid, 'page');
@@ -177,7 +177,7 @@ export function validateGridTemplate(document, template) {
   if (children.length !== (saved.shared && saved.rear ? 3 : saved.background ? 2 : 1) || grid?.type !== 'FRAME' || grid.name !== 'card_backs' || grid.id !== expected.nodeId)
     invalid('the saved card_backs grid and background layers are required');
   if (saved.shared) {
-    checkSharedBackground(children[0], saved, invalid);
+    checkSharedBackground(children[0], saved, invalid, template.version);
     if (saved.rear) checkSharedTopBar(children[2], invalid);
   } else if (saved.background) checkBackground(children[0], { ...saved,
     waterX: template.version === CUTTER_LAYOUT_V5 ? saved.legacyWaterX

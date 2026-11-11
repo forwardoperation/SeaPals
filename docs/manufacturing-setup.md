@@ -92,9 +92,41 @@ bytes (437 PNGs). All eight saved jobs and their complete releases were retained
 checkout; its plan, exact manifests, PNGs, and cleanup receipt support recovery.
 This is a local recovery archive, not a separate off-device backup.
 
+## November 11 template alignment: immutable V9 layout
+
+V9 follows Page_Templates snapshot `2420571525357308443` /
+`2026-11-11T11:41:11Z`. Standard cards, Dive Packs, and separate holo
+replenishment batches continue sharing front frame `4311:139557`
+(`die-cut-front-epson-template`) and rear frame `4311:139076`
+(`die-cut-rear-canon-template`). Both templates are complete native
+2550 x 3300 PNGs. The front exports the empty water page; the rear exports all
+nine backs, white gutters, staple marks, and top bar together.
+
+The front grid is now (85, 62.84000015258789); the rear grid is
+(146.39999389648438, 85.83999633789062). Each remains 2330 x 3170 with nine
+centered cards. The front water moves with its grid to (83, 61), retaining
+2337 x 3182 dimensions. V9 validation checks these measured positions and the
+full shared template structure before accepting a sync. Existing fixed-sheet
+crops and Conditions insets translate with the grid; their pixels, dimensions,
+and source metadata stay intact. The refresh replaces only the two template
+assets and retains the other 270 assets, catalog, booster holds, and flyer recipe.
+
+Each V9 card sheet carries its component deck or Dive Pack set and page number
+in the verified white side margin on both Epson and Canon pages. Repeated deck
+copies include a copy number; Starter Kit pages name Coral Garden, Drop Off,
+or Conditions. The first stock sheet also retains the full stock number.
+Separate holo batches identify their set(s) and page count. Flyers stay unmarked,
+and labels that cannot fit safely are omitted. PDF output and web previews use
+the same label geometry without moving artwork or changing printer transport.
+
+New jobs use V9 after release activation. Saved V1-V8 jobs and reprints retain
+their pinned releases and exact geometry; no saved manifests are rewritten.
+Native rear templates remain a single full-page image, with no reconstructed
+backs or logo overlays. No alignment sheet or additional stock ticket is added.
+
 ## November 1 shared templates: immutable V8 layout
 
-New releases use one pair from Page_Templates for standard cards and separate
+V8 releases use one pair from Page_Templates for standard cards and separate
 holo replenishment batches: front frame `4311:139557`
 (`die-cut-front-epson-template`) and rear frame `4311:139076`
 (`die-cut-rear-canon-template`). The second front frame with sample cards is
@@ -113,7 +145,7 @@ reprints keep their pinned releases; new jobs use V8 after publication. Dive
 packs retain named finished-holo pull instructions. The 217 card images and
 51 fixed sheets retain their original provenance, including Conditions' reviewed
 native insets. In V8 those insets move with the shared grid while keeping their
-original dimensions; V7 keeps the old positions. The active release has 270 assets.
+original dimensions; V7 keeps the old positions. The November 1 release had 270 assets.
 Printer transport settings,
 stock ticket suppression, and barcode receiving are unchanged.
 
@@ -1096,12 +1128,12 @@ export mode requires complete mappings for every eligible printing.
   Conditions, dice, and tokens. Standalone prepared accessory SKUs are supported.
   Existing packaging supplies are checked during packing; this integration
   does not generate new box/wrapper artwork or carrier labels.
-- New releases use the October 28 V7 templates: upright native Epson cards
-  centered in the supplied grid, plus the complete Canon rear master with its
-  white gutters. Ordinary and holo replenishment have separate front/back
-  templates; randomized packs continue using ordinary sheets with named holo
-  pull instructions. Existing V1 through V6 jobs retain their original layouts
-  and assets. See `manufacturing-workflow.md` for the four exact references.
+- New releases use the November 11 V9 shared templates: upright native Epson
+  cards centered in the measured grid, plus the complete Canon rear master
+  with its white gutters. Standard and holo replenishment share the same pair;
+  randomized packs retain named finished-holo pull instructions. Existing
+  V1-V8 jobs retain their original layouts and assets. See
+  `manufacturing-workflow.md` for the measured references and margin labels.
   No automatic duplexing or separate alignment print is used.
 - Work tickets, fronts, and backs have separate durable attempt states. The
   Canon ticket defaults to the same stock/tray as backs; configure a dedicated

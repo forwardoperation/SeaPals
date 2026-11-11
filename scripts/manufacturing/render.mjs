@@ -7,7 +7,7 @@ import { preflightPrintAssets } from "../../src/lib/manufacturing/printPlan.mjs"
 import { verifyHoloBatch } from "../../src/lib/manufacturing/holoBatch.mjs";
 import { sha256 } from "../../src/lib/manufacturing/integration.mjs";
 import { validFixedSheetPositions, fixedSheetOutputPositions } from "../../src/lib/manufacturing/sourceGeometry.mjs";
-import { stockSheetLabel } from "../../src/lib/manufacturing/stockSheetLabel.mjs";
+import { sheetMarginLabels } from "../../src/lib/manufacturing/sheetMarginLabels.mjs";
 import { isFlyerSheet, printSidesForSheet } from "../../src/lib/manufacturing/sheetKinds.mjs";
 import { flyerDisplayLabel } from "../../src/lib/manufacturing/recipes.mjs";
 import {
@@ -16,6 +16,7 @@ import {
   CUTTER_LAYOUT_V6,
   CUTTER_LAYOUT_V7,
   CUTTER_LAYOUT_V8,
+  CUTTER_LAYOUT_V9,
   hasPrintBackgrounds,
   isCutterLayout,
 } from "../../src/lib/manufacturing/backdrops.mjs";
@@ -221,7 +222,7 @@ export async function renderJob({
         const image = await doc.embedPng(bytes.get(sheet.fronts.assetId));
         page.drawImage(image, { x: 0, y: 0, width: LETTER[0], height: LETTER[1] });
       } else if (isCutterLayout(manifest.layout.version)) {
-        const tuned = [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8].includes(manifest.layout.version);
+        const tuned = [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9].includes(manifest.layout.version);
         // Front artwork is placed over the exported backdrop bounds, whose
         // raster already includes any Figma rotation. V4/V5/V6/V7/V8 backs are one
         // complete Figma page, including the water, logos, and template marks.
@@ -336,12 +337,12 @@ export async function renderJob({
           font,
           `${sheet.sheetId} / ${sheet.set ?? sheet.productId ?? ""} / ${side.toUpperCase()} / ${manifest.manifestHash.slice(0, 12)}`,
         );
-      const label = isFlyerSheet(sheet) ? null : stockSheetLabel(manifest, release, sheet.sheetId, side);
-      if (label) {
-        const stockFont = await doc.embedFont(StandardFonts.CourierBold);
+      const labels = sheetMarginLabels(manifest, release, sheet.sheetId, side);
+      const labelFont = labels.length ? await doc.embedFont(StandardFonts.CourierBold) : null;
+      for (const label of labels) {
         page.drawText(label.text, {
           x: label.x * POINT, y: LETTER[1] - label.y * POINT,
-          size: label.fontSize * POINT, font: stockFont, color: ink,
+          size: label.fontSize * POINT, font: labelFont, color: ink,
           rotate: degrees(-label.rotation),
         });
       }
@@ -551,6 +552,12 @@ export async function renderHoloBatch({ batch, release, assetFiles, outputDir })
         for (const slot of sheet.slots)
           drawCard(page, await document.embedPng(bytes.get(slot.printingId)), slot, slot.rotation);
       }
+      const labels = sheetMarginLabels(batch, release, sheet.sheetId, side);
+      const labelFont = labels.length ? await document.embedFont(StandardFonts.CourierBold) : null;
+      for (const label of labels) page.drawText(label.text, {
+        x: label.x * POINT, y: LETTER[1] - label.y * POINT,
+        size: label.fontSize * POINT, font: labelFont, color: ink, rotate: degrees(-label.rotation),
+      });
       // Partial sheets leave unused front slots empty; the complete rear master
       // stays intact, preserving the cutter/staple marks and tuned offsets.
       const pdf = await document.save(), file = path.join(outputDir, `${sheet.sheetId}-${side}.pdf`);

@@ -42,8 +42,8 @@ export default function PagePreview({ onLoadPagePreview, orderId, sheetId, side 
         else ctx.drawImage(image, 0, 0, p.width, p.height);
         ctx.restore();
       }
-      if (plan.stockLabel) {
-        const label = plan.stockLabel, box = label.bounds;
+      for (const label of plan.marginLabels ?? (plan.stockLabel ? [plan.stockLabel] : [])) {
+        const box = label.bounds;
         ctx.save();
         // Match the printer label while confining browser font metrics to its safe margin.
         ctx.beginPath(); ctx.rect(box.x, box.y, box.width, box.height); ctx.clip();

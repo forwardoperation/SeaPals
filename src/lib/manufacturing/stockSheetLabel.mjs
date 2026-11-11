@@ -21,39 +21,38 @@ function transformedBounds(rect) {
 const overlaps = (a, b) => a.x < b.x + b.width + CLEARANCE && a.x + a.width + CLEARANCE > b.x &&
   a.y < b.y + b.height + CLEARANCE && a.y + a.height + CLEARANCE > b.y;
 
-/**
- * First stock sheet only; no changes to manifests or card geometry. Coordinates
- * are native 300-DPI pixels with top-left origin. x/y locate the alphabetic text
- * baseline; rotation is clockwise-positive, matching Canvas. Courier's advance
- * is exactly 0.6 em per character. The bounds conservatively reserve a full em.
- */
-export function stockSheetLabel(manifest, release, sheetId, side) {
-  if (manifest?.jobKind !== 'stock' || !['fronts', 'backs'].includes(side) ||
-      !isCutterLayout(manifest.layout?.version) || manifest.sheets?.[0]?.sheetId !== sheetId)
-    return null;
-  const text = manifest.order?.orderNumber;
-  if (typeof text !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(text)) return null;
-  const sheet = manifest.sheets[0], layout = manifest.layout;
-  if (sheet.kind === 'flyer') return null;
-  if (layout.width !== PAGE_WIDTH || layout.height !== PAGE_HEIGHT) return null;
-  const template = side === 'fronts' ? layout : sheet.backs?.template;
+// A caller may request several consecutive vertical labels in one verified
+// margin. Text never changes page count, image placement, or saved job contents.
+export function placeSheetMarginText(manifest, release, sheetId, side, entries,
+  { bandTop = BAND_TOP, bandBottom = BAND_BOTTOM, gap = 40 } = {}) {
+  if (!['fronts', 'backs'].includes(side) || !isCutterLayout(manifest?.layout?.version)) return [];
+  const sheet = manifest.sheets?.find(item => item.sheetId === sheetId), layout = manifest.layout;
+  if (!sheet || sheet.kind === 'flyer' || !Array.isArray(entries) || !entries.length ||
+      !Number.isFinite(bandTop) || !Number.isFinite(bandBottom) || !Number.isFinite(gap) || gap < 0 ||
+      bandTop < 0 || bandBottom > PAGE_HEIGHT || bandTop >= bandBottom ||
+      entries.some(entry => typeof entry.text !== 'string' || !/^[\x20-\x7e]{1,100}$/.test(entry.text) ||
+        !Number.isFinite(entry.fontSize) || entry.fontSize < 30 || entry.fontSize > FONT_SIZE)) return [];
+  if (layout.width !== PAGE_WIDTH || layout.height !== PAGE_HEIGHT) return [];
+  const template = side === 'fronts' ? layout : sheet.backs?.template ?? manifest.backTemplate;
   // Old layouts with no saved grid cannot prove that the template marks leave
   // this margin free. Do not invent an offset for those historical pages.
-  const grid = side === 'fronts' ? layout.grid : release?.printTemplates?.backs?.grid;
-  if (!insidePage(grid) || (grid.rotation ?? 0) !== 0) return null;
+  const grid = side === 'fronts' ? layout.grid : manifest.kind === 'holo-replenishment'
+    ? (manifest.backTemplate?.grid ?? release?.printTemplates?.holoBacks?.grid ?? release?.printTemplates?.backs?.grid)
+    : release?.printTemplates?.backs?.grid;
+  if (!insidePage(grid) || (grid.rotation ?? 0) !== 0) return [];
   let positions;
   if (side === 'fronts' && sheet.fronts?.assetId) {
     const asset = release?.assets?.[sheet.fronts.assetId];
-    if (!asset) return null;
+    if (!asset) return [];
     try { positions = fixedSheetOutputPositions(asset, layout) ?? layout.positions; }
-    catch { return null; }
+    catch { return []; }
   } else if (side === 'fronts') {
     positions = sheet.slots?.map(slot => ({ ...slot,
       width: slot.width ?? layout.cardWidth, height: slot.height ?? layout.cardHeight }));
   } else positions = template?.positions;
-  if (!Array.isArray(positions) || !positions.length) return null;
+  if (!Array.isArray(positions) || !positions.length) return [];
   const cards = positions.map(transformedBounds);
-  if (cards.some(rect => !insidePage(rect))) return null;
+  if (cards.some(rect => !insidePage(rect))) return [];
   const protectedBounds = [grid, ...cards];
   const left = Math.min(...protectedBounds.map(rect => rect.x));
   const right = Math.max(...protectedBounds.map(rect => rect.x + rect.width));
@@ -61,16 +60,30 @@ export function stockSheetLabel(manifest, release, sheetId, side) {
     { margin: 'left', start: EDGE_INSET, end: left - CLEARANCE },
     { margin: 'right', start: right + CLEARANCE, end: PAGE_WIDTH - EDGE_INSET },
   ].sort((a, b) => (b.end - b.start) - (a.end - a.start));
-  const textWidth = text.length * FONT_SIZE * 0.6;
-  if (textWidth > BAND_BOTTOM - BAND_TOP) return null;
+  const totalHeight = entries.reduce((height, entry) => height + entry.text.length * entry.fontSize * 0.6, 0) +
+    gap * (entries.length - 1);
+  if (totalHeight > bandBottom - bandTop) return [];
   for (const margin of margins) {
-    if (margin.end - margin.start < FONT_SIZE) continue;
-    const bounds = { x: (margin.start + margin.end - FONT_SIZE) / 2,
-      y: (BAND_TOP + BAND_BOTTOM - textWidth) / 2, width: FONT_SIZE, height: textWidth };
-    if (!insidePage(bounds) || protectedBounds.some(rect => overlaps(bounds, rect))) continue;
-    return { text, font: 'Courier-Bold', fontSize: FONT_SIZE, rotation: -90,
-      x: bounds.x + FONT_SIZE * 0.8, y: bounds.y + textWidth,
-      bounds, margin: margin.margin };
+    if (entries.some(entry => margin.end - margin.start < entry.fontSize)) continue;
+    let y = (bandTop + bandBottom - totalHeight) / 2;
+    const labels = entries.map(entry => {
+      const height = entry.text.length * entry.fontSize * 0.6;
+      const bounds = { x: (margin.start + margin.end - entry.fontSize) / 2,
+        y, width: entry.fontSize, height };
+      y += height + gap;
+      return { ...entry, font: 'Courier-Bold', rotation: -90,
+        x: bounds.x + entry.fontSize * 0.8, y: bounds.y + height, bounds, margin: margin.margin };
+    });
+    if (labels.some(label => !insidePage(label.bounds) || protectedBounds.some(rect => overlaps(label.bounds, rect)))) continue;
+    return labels;
   }
-  return null;
+  return [];
+}
+
+/** First stock sheet only, preserving the full pinned order number. */
+export function stockSheetLabel(manifest, release, sheetId, side) {
+  if (manifest?.jobKind !== 'stock' || manifest.sheets?.[0]?.sheetId !== sheetId) return null;
+  const text = manifest.order?.orderNumber;
+  if (typeof text !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(text)) return null;
+  return placeSheetMarginText(manifest, release, sheetId, side, [{ text, fontSize: FONT_SIZE }])[0] ?? null;
 }
