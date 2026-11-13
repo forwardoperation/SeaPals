@@ -92,6 +92,26 @@ bytes (437 PNGs). All eight saved jobs and their complete releases were retained
 checkout; its plan, exact manifests, PNGs, and cleanup receipt support recovery.
 This is a local recovery archive, not a separate off-device backup.
 
+## November 13 final front adjustment: immutable V11 layout
+
+V11 follows Figma snapshot `2421423306561987610` /
+`2026-11-13T18:29:52Z`. It moves the Epson front grid and all nine saved card
+positions exactly 10 pixels upward: grid (55, 77.83999633789062), size
+2330 x 3170. The water moves from (53, 76) to (53, 66). Card sizes, horizontal
+positions, original Figma rounding, staple marks, and margin labels remain intact.
+Conditions' reviewed insets receive the same 10-pixel vertical translation.
+
+The front grid is empty. Sync validates its native geometry and independently
+derived cell centers against the saved V11 positions, rejecting added guides or
+a different grid. The front export remains native 2550 x 3300 background instance
+`4317:8435`, validated inside parent `4311:139557`.
+
+The Canon template and its existing PNG are unchanged from V10. Only the front
+PNG is replaced in the new release; the other 271 assets and their provenance
+are retained. New jobs use V11 after activation. Saved V1-V10 jobs and reprints
+keep their pinned geometry and artwork. The printer transport and stock/product
+workflow are unchanged.
+
 ## November 13 templates: immutable V10 layout
 
 V10 follows Page_Templates snapshot `2421344107286948694` /
@@ -1160,11 +1180,11 @@ export mode requires complete mappings for every eligible printing.
   Conditions, dice, and tokens. Standalone prepared accessory SKUs are supported.
   Existing packaging supplies are checked during packing; this integration
   does not generate new box/wrapper artwork or carrier labels.
-- New releases use the November 13 V10 shared templates: upright native Epson
+- New releases use the final November 13 V11 shared templates: upright native Epson
   cards centered in the measured grid, plus the complete Canon rear master
   with its white gutters. Standard and holo replenishment share the same pair;
   randomized packs retain named finished-holo pull instructions. Existing
-  V1-V9 jobs retain their original layouts and assets. See
+  V1-V10 jobs retain their original layouts and assets. See
   `manufacturing-workflow.md` for the measured references and margin labels.
   No automatic duplexing or separate alignment print is used.
 - Work tickets, fronts, and backs have separate durable attempt states. The

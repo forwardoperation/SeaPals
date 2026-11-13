@@ -1,0 +1,5552 @@
+{
+  "version": "2421423306561987610",
+  "lastModified": "2026-11-13T18:29:52Z",
+  "documents": {
+    "4311:139557": {
+      "id": "4311:139557",
+      "name": "die-cut-front-epson-template",
+      "type": "FRAME",
+      "blendMode": "PASS_THROUGH",
+      "clipsContent": true,
+      "size": {
+        "x": 2550,
+        "y": 3300
+      },
+      "relativeTransform": [
+        [
+          1,
+          0,
+          18648
+        ],
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "absoluteBoundingBox": {
+        "x": 18648,
+        "y": 0,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [
+        {
+          "blendMode": "NORMAL",
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "strokes": [],
+      "strokeWeight": 1,
+      "strokeAlign": "INSIDE",
+      "effects": [],
+      "children": [
+        {
+          "id": "4317:8435",
+          "name": "die-cut-front-epson",
+          "type": "INSTANCE",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "size": {
+            "x": 2550,
+            "y": 3300
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 18648,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "effects": [],
+          "componentId": "4317:8434",
+          "children": [
+            {
+              "id": "I4317:8435;4317:8421",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2326,
+                "y": 114
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  91
+                ],
+                [
+                  0,
+                  1,
+                  -68
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 18739,
+                "y": -68,
+                "width": 2326,
+                "height": 114
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "effects": []
+            },
+            {
+              "id": "I4317:8435;4317:8422",
+              "name": "sea-realm-background 1",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2337,
+                "y": 3182
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  53
+                ],
+                [
+                  0,
+                  1,
+                  66
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 18701,
+                "y": 66,
+                "width": 2337,
+                "height": 3182
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "IMAGE",
+                  "scaleMode": "TILE",
+                  "imageRef": "a45562f9a6bafe875347ee77a9dca6d7f264beb9",
+                  "scalingFactor": 1.0685714483261108
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "effects": []
+            },
+            {
+              "id": "I4317:8435;4317:8424",
+              "name": "Rectangle 15",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2582,
+                "y": 10
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  -16
+                ],
+                [
+                  0,
+                  1,
+                  1117
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 18632,
+                "y": 1117,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "visible": false
+            },
+            {
+              "id": "I4317:8435;4317:8425",
+              "name": "Rectangle 16",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2582,
+                "y": 10
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  -16
+                ],
+                [
+                  0,
+                  1,
+                  2173
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 18632,
+                "y": 2173,
+                "width": 2582,
+                "height": 10
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "visible": false
+            },
+            {
+              "id": "I4317:8435;4642:106223",
+              "name": "Group 135",
+              "type": "GROUP",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "size": {
+                "x": 78,
+                "y": 231
+              },
+              "relativeTransform": [
+                [
+                  -1,
+                  0,
+                  2514
+                ],
+                [
+                  0,
+                  -1,
+                  2877
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 21084,
+                "y": 2646,
+                "width": 78,
+                "height": 231
+              },
+              "fills": [],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4317:8435;4642:106224",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 78,
+                    "y": 231
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      0
+                    ],
+                    [
+                      0,
+                      1,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 21084,
+                    "y": 2646,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokeWeight": 2,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "strokeDashes": [
+                    12,
+                    12
+                  ]
+                },
+                {
+                  "id": "I4317:8435;4642:106225",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 231,
+                    "y": 46
+                  },
+                  "relativeTransform": [
+                    [
+                      0,
+                      -1,
+                      62
+                    ],
+                    [
+                      1,
+                      0,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 21100,
+                    "y": 2646,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "OUTSIDE",
+                  "effects": [],
+                  "characters": "STAPLE",
+                  "style": {
+                    "fontFamily": "Inter",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontStyle": "Bold",
+                    "fontWeight": 700,
+                    "fontSize": 39,
+                    "textAlignHorizontal": "CENTER",
+                    "textAlignVertical": "CENTER",
+                    "letterSpacing": 0,
+                    "lineHeightPx": 47.1988639831543,
+                    "lineHeightPercent": 100,
+                    "lineHeightUnit": "INTRINSIC_%"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "I4317:8435;4642:106226",
+              "name": "Group 136",
+              "type": "GROUP",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "size": {
+                "x": 78,
+                "y": 231
+              },
+              "relativeTransform": [
+                [
+                  -1,
+                  0,
+                  2514
+                ],
+                [
+                  0,
+                  -1,
+                  699
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 21084,
+                "y": 468,
+                "width": 78,
+                "height": 231
+              },
+              "fills": [],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4317:8435;4642:106227",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 78,
+                    "y": 231
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      0
+                    ],
+                    [
+                      0,
+                      1,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 21084,
+                    "y": 468,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokeWeight": 2,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "strokeDashes": [
+                    12,
+                    12
+                  ]
+                },
+                {
+                  "id": "I4317:8435;4642:106228",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 231,
+                    "y": 46
+                  },
+                  "relativeTransform": [
+                    [
+                      0,
+                      -1,
+                      62
+                    ],
+                    [
+                      1,
+                      0,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 21100,
+                    "y": 468,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "OUTSIDE",
+                  "effects": [],
+                  "characters": "STAPLE",
+                  "style": {
+                    "fontFamily": "Inter",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontStyle": "Bold",
+                    "fontWeight": 700,
+                    "fontSize": 39,
+                    "textAlignHorizontal": "CENTER",
+                    "textAlignVertical": "CENTER",
+                    "letterSpacing": 0,
+                    "lineHeightPx": 47.1988639831543,
+                    "lineHeightPercent": 100,
+                    "lineHeightUnit": "INTRINSIC_%"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4311:139561",
+          "name": "card_backs",
+          "type": "FRAME",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "size": {
+            "x": 2330,
+            "y": 3170
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              55
+            ],
+            [
+              0,
+              1,
+              77.83999633789062
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 18703,
+            "y": 77.83999633789062,
+            "width": 2330,
+            "height": 3170
+          },
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 3,
+          "strokeAlign": "INSIDE",
+          "effects": [],
+          "strokeDashes": [
+            30,
+            30
+          ],
+          "layoutMode": "GRID",
+          "gridRowCount": 3,
+          "gridColumnCount": 3,
+          "gridRowGap": 0,
+          "gridColumnGap": 0,
+          "gridColumnsSizing": "repeat(3,minmax(0,1fr))",
+          "gridRowsSizing": "repeat(3,minmax(0,1fr))",
+          "children": []
+        }
+      ]
+    },
+    "4311:139076": {
+      "id": "4311:139076",
+      "name": "die-cut-rear-canon-template",
+      "type": "FRAME",
+      "blendMode": "PASS_THROUGH",
+      "clipsContent": true,
+      "size": {
+        "x": 2550,
+        "y": 3300
+      },
+      "relativeTransform": [
+        [
+          1,
+          0,
+          15770
+        ],
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "absoluteBoundingBox": {
+        "x": 15770,
+        "y": 0,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [
+        {
+          "blendMode": "NORMAL",
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          }
+        }
+      ],
+      "strokes": [],
+      "strokeWeight": 1,
+      "strokeAlign": "INSIDE",
+      "effects": [],
+      "children": [
+        {
+          "id": "4317:8409",
+          "name": "die-cut-rear-canon",
+          "type": "INSTANCE",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "size": {
+            "x": 2550,
+            "y": 3300
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 15770,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "effects": [],
+          "componentId": "4317:8408",
+          "children": [
+            {
+              "id": "I4317:8409;4317:7931",
+              "name": "Rectangle 14",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 2326,
+                "y": 114
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  107
+                ],
+                [
+                  0,
+                  1,
+                  -44.7998046875
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 15877,
+                "y": -44.7998046875,
+                "width": 2326,
+                "height": 114
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "visible": false
+            },
+            {
+              "id": "I4317:8409;4452:353766",
+              "name": "Group 135",
+              "type": "GROUP",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "size": {
+                "x": 78,
+                "y": 231
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  25
+                ],
+                [
+                  0,
+                  1,
+                  468
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 15795,
+                "y": 468,
+                "width": 78,
+                "height": 231
+              },
+              "fills": [],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4317:8409;4452:353767",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 78,
+                    "y": 231
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      0
+                    ],
+                    [
+                      0,
+                      1,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15795,
+                    "y": 468,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokeWeight": 2,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "strokeDashes": [
+                    12,
+                    12
+                  ]
+                },
+                {
+                  "id": "I4317:8409;4452:353768",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 231,
+                    "y": 46
+                  },
+                  "relativeTransform": [
+                    [
+                      0,
+                      -1,
+                      62
+                    ],
+                    [
+                      1,
+                      0,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15811,
+                    "y": 468,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "OUTSIDE",
+                  "effects": [],
+                  "characters": "STAPLE",
+                  "style": {
+                    "fontFamily": "Inter",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontStyle": "Bold",
+                    "fontWeight": 700,
+                    "fontSize": 39,
+                    "textAlignHorizontal": "CENTER",
+                    "textAlignVertical": "CENTER",
+                    "letterSpacing": 0,
+                    "lineHeightPx": 47.1988639831543,
+                    "lineHeightPercent": 100,
+                    "lineHeightUnit": "INTRINSIC_%"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "I4317:8409;4452:353769",
+              "name": "Group 136",
+              "type": "GROUP",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "size": {
+                "x": 78,
+                "y": 231
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  25
+                ],
+                [
+                  0,
+                  1,
+                  2646
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 15795,
+                "y": 2646,
+                "width": 78,
+                "height": 231
+              },
+              "fills": [],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "children": [
+                {
+                  "id": "I4317:8409;4452:353770",
+                  "name": "Rectangle 17",
+                  "type": "RECTANGLE",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 78,
+                    "y": 231
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      0
+                    ],
+                    [
+                      0,
+                      1,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15795,
+                    "y": 2646,
+                    "width": 78,
+                    "height": 231
+                  },
+                  "fills": [],
+                  "strokes": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokeWeight": 2,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "strokeDashes": [
+                    12,
+                    12
+                  ]
+                },
+                {
+                  "id": "I4317:8409;4452:353771",
+                  "name": "STAPLE",
+                  "type": "TEXT",
+                  "blendMode": "PASS_THROUGH",
+                  "size": {
+                    "x": 231,
+                    "y": 46
+                  },
+                  "relativeTransform": [
+                    [
+                      0,
+                      -1,
+                      62
+                    ],
+                    [
+                      1,
+                      0,
+                      0
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15811,
+                    "y": 2646,
+                    "width": 46,
+                    "height": 231
+                  },
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "OUTSIDE",
+                  "effects": [],
+                  "characters": "STAPLE",
+                  "style": {
+                    "fontFamily": "Inter",
+                    "fontPostScriptName": "Inter-Bold",
+                    "fontStyle": "Bold",
+                    "fontWeight": 700,
+                    "fontSize": 39,
+                    "textAlignHorizontal": "CENTER",
+                    "textAlignVertical": "CENTER",
+                    "letterSpacing": 0,
+                    "lineHeightPx": 47.1988639831543,
+                    "lineHeightPercent": 100,
+                    "lineHeightUnit": "INTRINSIC_%"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4311:139077",
+          "name": "card_backs",
+          "type": "FRAME",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "size": {
+            "x": 2310,
+            "y": 3170
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              158
+            ],
+            [
+              0,
+              1,
+              86
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 15928,
+            "y": 86,
+            "width": 2310,
+            "height": 3170
+          },
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "effects": [],
+          "layoutMode": "GRID",
+          "gridRowCount": 3,
+          "gridColumnCount": 3,
+          "gridRowGap": 0,
+          "gridColumnGap": 0,
+          "gridColumnsSizing": "repeat(3,minmax(0,1fr))",
+          "gridRowsSizing": "repeat(3,minmax(0,1fr))",
+          "children": [
+            {
+              "id": "4311:139078",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  15.70001220703125
+                ],
+                [
+                  0,
+                  1,
+                  11.31329345703125
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 15943.7001953125,
+                "y": 97.31329345703125,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "fills": [],
+              "strokes": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "componentId": "540:2527",
+              "children": [
+                {
+                  "id": "I4311:139078;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15943.400390625,
+                    "y": 97.29330444335938,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "componentId": "3846:261608",
+                  "children": [
+                    {
+                      "id": "I4311:139078;3846:262045;3846:260019",
+                      "name": "Rectangle 847",
+                      "type": "RECTANGLE",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 1802.1839599609375,
+                        "y": 1802.1839599609375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0
+                        ],
+                        [
+                          0,
+                          1,
+                          -600.7279663085938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15943.400390625,
+                        "y": -503.4346618652344,
+                        "width": 1802.1839599609375,
+                        "height": 1802.1839599609375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.08627451211214066,
+                            "g": 0.42352941632270813,
+                            "b": 0.6509804129600525,
+                            "a": 1
+                          }
+                        },
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "IMAGE",
+                          "scaleMode": "TILE",
+                          "imageRef": "3f93ac05b5522b201442581c9a8069a8a05eda28",
+                          "scalingFactor": 0.511634349822998
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139078;3846:262045;3846:261576",
+                      "name": "Group 93",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 4116.6796875,
+                        "y": 2283.748779296875
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -1828.986083984375
+                        ],
+                        [
+                          0,
+                          1,
+                          -729.9588623046875
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 14114.4140625,
+                        "y": -632.66552734375,
+                        "width": 4116.6796875,
+                        "height": 2283.748779296875
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 9.847999572753906,
+                          "radius": 4.116463661193848,
+                          "clipToShape": false
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I4311:139078;3846:262045;3846:261595",
+                      "name": "Group 104",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 1843.9998779296875,
+                        "y": 1751.6312255859375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -789.3909912109375
+                        ],
+                        [
+                          0,
+                          1,
+                          -656.8639526367188
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15154.009765625,
+                        "y": -559.5706787109375,
+                        "width": 1843.9998779296875,
+                        "height": 1751.6312255859375
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 3.939199924468994,
+                          "radius": 3.939199924468994,
+                          "clipToShape": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "I4311:139078;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15970.537109375,
+                    "y": 521.2703857421875,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.25
+                      },
+                      "blendMode": "NORMAL",
+                      "offset": {
+                        "x": 0,
+                        "y": 3.5452799797058105
+                      },
+                      "radius": 3.5452799797058105,
+                      "showShadowBehindNode": false
+                    }
+                  ],
+                  "componentId": "3105:577256",
+                  "children": [
+                    {
+                      "id": "I4311:139078;3846:269482;3105:576931",
+                      "name": "TRADING CARD GAME",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 683.4590454101562,
+                        "y": 74.6635971069336
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0.32363298535346985
+                        ],
+                        [
+                          0,
+                          1,
+                          111.83578491210938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15970.8603515625,
+                        "y": 633.106201171875,
+                        "width": 683.4590454101562,
+                        "height": 74.6635971069336
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 1.1486706733703613,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TRADING CARD GAME",
+                      "style": {
+                        "fontFamily": "Roboto",
+                        "fontPostScriptName": "Roboto-Bold",
+                        "fontStyle": "Bold",
+                        "fontWeight": 700,
+                        "fontSize": 52.83885192871094,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 61.920528411865234,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    },
+                    {
+                      "id": "I4311:139078;3846:269482;3105:576932",
+                      "name": "Group 36",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 562.1904296875,
+                        "y": 117.90829467773438
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          60.762142181396484
+                        ],
+                        [
+                          0,
+                          1,
+                          0
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16031.298828125,
+                        "y": 521.2703857421875,
+                        "width": 562.1904296875,
+                        "height": 117.90829467773438
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.34275656938552856,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139078;3846:269482;3846:324922",
+                      "name": "TM",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 39.8843994140625,
+                        "y": 54.065521240234375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          586.743896484375
+                        ],
+                        [
+                          0,
+                          1,
+                          -9.306360244750977
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16557.28125,
+                        "y": 511.9640197753906,
+                        "width": 39.8843994140625,
+                        "height": 54.065521240234375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.8863199949264526,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TM",
+                      "style": {
+                        "fontFamily": "Inter",
+                        "fontPostScriptName": null,
+                        "fontStyle": "Regular",
+                        "fontWeight": 400,
+                        "fontSize": 23.85973358154297,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 28.875699996948242,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139079",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  785.7000122070312
+                ],
+                [
+                  0,
+                  1,
+                  11.31329345703125
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 16713.69921875,
+                "y": 97.31329345703125,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "fills": [],
+              "strokes": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "componentId": "540:2527",
+              "children": [
+                {
+                  "id": "I4311:139079;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16713.3984375,
+                    "y": 97.29330444335938,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "componentId": "3846:261608",
+                  "children": [
+                    {
+                      "id": "I4311:139079;3846:262045;3846:260019",
+                      "name": "Rectangle 847",
+                      "type": "RECTANGLE",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 1802.1839599609375,
+                        "y": 1802.1839599609375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0
+                        ],
+                        [
+                          0,
+                          1,
+                          -600.7279663085938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16713.3984375,
+                        "y": -503.4346618652344,
+                        "width": 1802.1839599609375,
+                        "height": 1802.1839599609375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.08627451211214066,
+                            "g": 0.42352941632270813,
+                            "b": 0.6509804129600525,
+                            "a": 1
+                          }
+                        },
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "IMAGE",
+                          "scaleMode": "TILE",
+                          "imageRef": "3f93ac05b5522b201442581c9a8069a8a05eda28",
+                          "scalingFactor": 0.511634349822998
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139079;3846:262045;3846:261576",
+                      "name": "Group 93",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 4116.6796875,
+                        "y": 2283.748779296875
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -1828.985107421875
+                        ],
+                        [
+                          0,
+                          1,
+                          -729.9588623046875
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 14884.4130859375,
+                        "y": -632.66552734375,
+                        "width": 4116.6796875,
+                        "height": 2283.748779296875
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 9.847999572753906,
+                          "radius": 4.116463661193848,
+                          "clipToShape": false
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I4311:139079;3846:262045;3846:261595",
+                      "name": "Group 104",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 1843.9989013671875,
+                        "y": 1751.630859375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -789.3909912109375
+                        ],
+                        [
+                          0,
+                          1,
+                          -656.8639526367188
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15924.0078125,
+                        "y": -559.5706787109375,
+                        "width": 1843.9989013671875,
+                        "height": 1751.630859375
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 3.939199924468994,
+                          "radius": 3.939199924468994,
+                          "clipToShape": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "I4311:139079;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16740.537109375,
+                    "y": 521.2703857421875,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.25
+                      },
+                      "blendMode": "NORMAL",
+                      "offset": {
+                        "x": 0,
+                        "y": 3.5452799797058105
+                      },
+                      "radius": 3.5452799797058105,
+                      "showShadowBehindNode": false
+                    }
+                  ],
+                  "componentId": "3105:577256",
+                  "children": [
+                    {
+                      "id": "I4311:139079;3846:269482;3105:576931",
+                      "name": "TRADING CARD GAME",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 683.4590454101562,
+                        "y": 74.6635971069336
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0.32363298535346985
+                        ],
+                        [
+                          0,
+                          1,
+                          111.83578491210938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16740.861328125,
+                        "y": 633.106201171875,
+                        "width": 683.4590454101562,
+                        "height": 74.6635971069336
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 1.1486706733703613,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TRADING CARD GAME",
+                      "style": {
+                        "fontFamily": "Roboto",
+                        "fontPostScriptName": "Roboto-Bold",
+                        "fontStyle": "Bold",
+                        "fontWeight": 700,
+                        "fontSize": 52.83885192871094,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 61.920528411865234,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    },
+                    {
+                      "id": "I4311:139079;3846:269482;3105:576932",
+                      "name": "Group 36",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 562.1904296875,
+                        "y": 117.90829467773438
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          60.763118743896484
+                        ],
+                        [
+                          0,
+                          1,
+                          0
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16801.30078125,
+                        "y": 521.2703857421875,
+                        "width": 562.1904296875,
+                        "height": 117.90829467773438
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.34275656938552856,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139079;3846:269482;3846:324922",
+                      "name": "TM",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 39.8843994140625,
+                        "y": 54.065521240234375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          586.743896484375
+                        ],
+                        [
+                          0,
+                          1,
+                          -9.306360244750977
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17327.28125,
+                        "y": 511.9640197753906,
+                        "width": 39.8843994140625,
+                        "height": 54.065521240234375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.8863199949264526,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TM",
+                      "style": {
+                        "fontFamily": "Inter",
+                        "fontPostScriptName": null,
+                        "fontStyle": "Regular",
+                        "fontWeight": 400,
+                        "fontSize": 23.85973358154297,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 28.875699996948242,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139080",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  1555.699951171875
+                ],
+                [
+                  0,
+                  1,
+                  11.31329345703125
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 17483.69921875,
+                "y": 97.31329345703125,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "fills": [],
+              "strokes": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "componentId": "540:2527",
+              "children": [
+                {
+                  "id": "I4311:139080;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17483.3984375,
+                    "y": 97.29330444335938,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "componentId": "3846:261608",
+                  "children": [
+                    {
+                      "id": "I4311:139080;3846:262045;3846:260019",
+                      "name": "Rectangle 847",
+                      "type": "RECTANGLE",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 1802.1839599609375,
+                        "y": 1802.1839599609375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0
+                        ],
+                        [
+                          0,
+                          1,
+                          -600.7279663085938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17483.3984375,
+                        "y": -503.4346618652344,
+                        "width": 1802.1839599609375,
+                        "height": 1802.1839599609375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.08627451211214066,
+                            "g": 0.42352941632270813,
+                            "b": 0.6509804129600525,
+                            "a": 1
+                          }
+                        },
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "IMAGE",
+                          "scaleMode": "TILE",
+                          "imageRef": "3f93ac05b5522b201442581c9a8069a8a05eda28",
+                          "scalingFactor": 0.511634349822998
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139080;3846:262045;3846:261576",
+                      "name": "Group 93",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 4116.6796875,
+                        "y": 2283.748779296875
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -1828.985107421875
+                        ],
+                        [
+                          0,
+                          1,
+                          -729.9588623046875
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15654.4130859375,
+                        "y": -632.66552734375,
+                        "width": 4116.6796875,
+                        "height": 2283.748779296875
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 9.847999572753906,
+                          "radius": 4.116463661193848,
+                          "clipToShape": false
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I4311:139080;3846:262045;3846:261595",
+                      "name": "Group 104",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 1843.9989013671875,
+                        "y": 1751.630859375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -789.3909912109375
+                        ],
+                        [
+                          0,
+                          1,
+                          -656.8639526367188
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16694.0078125,
+                        "y": -559.5706787109375,
+                        "width": 1843.9989013671875,
+                        "height": 1751.630859375
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 3.939199924468994,
+                          "radius": 3.939199924468994,
+                          "clipToShape": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "I4311:139080;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17510.537109375,
+                    "y": 521.2703857421875,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.25
+                      },
+                      "blendMode": "NORMAL",
+                      "offset": {
+                        "x": 0,
+                        "y": 3.5452799797058105
+                      },
+                      "radius": 3.5452799797058105,
+                      "showShadowBehindNode": false
+                    }
+                  ],
+                  "componentId": "3105:577256",
+                  "children": [
+                    {
+                      "id": "I4311:139080;3846:269482;3105:576931",
+                      "name": "TRADING CARD GAME",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 683.4590454101562,
+                        "y": 74.6635971069336
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0.32363298535346985
+                        ],
+                        [
+                          0,
+                          1,
+                          111.83578491210938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17510.861328125,
+                        "y": 633.106201171875,
+                        "width": 683.4590454101562,
+                        "height": 74.6635971069336
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 1.1486706733703613,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TRADING CARD GAME",
+                      "style": {
+                        "fontFamily": "Roboto",
+                        "fontPostScriptName": "Roboto-Bold",
+                        "fontStyle": "Bold",
+                        "fontWeight": 700,
+                        "fontSize": 52.83885192871094,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 61.920528411865234,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    },
+                    {
+                      "id": "I4311:139080;3846:269482;3105:576932",
+                      "name": "Group 36",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 562.1904296875,
+                        "y": 117.90829467773438
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          60.763118743896484
+                        ],
+                        [
+                          0,
+                          1,
+                          0
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17571.30078125,
+                        "y": 521.2703857421875,
+                        "width": 562.1904296875,
+                        "height": 117.90829467773438
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.34275656938552856,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139080;3846:269482;3846:324922",
+                      "name": "TM",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 39.8843994140625,
+                        "y": 54.065521240234375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          586.743896484375
+                        ],
+                        [
+                          0,
+                          1,
+                          -9.306360244750977
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 18097.28125,
+                        "y": 511.9640197753906,
+                        "width": 39.8843994140625,
+                        "height": 54.065521240234375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.8863199949264526,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TM",
+                      "style": {
+                        "fontFamily": "Inter",
+                        "fontPostScriptName": null,
+                        "fontStyle": "Regular",
+                        "fontWeight": 400,
+                        "fontSize": 23.85973358154297,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 28.875699996948242,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139081",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  15.70001220703125
+                ],
+                [
+                  0,
+                  1,
+                  1067.97998046875
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 15943.7001953125,
+                "y": 1153.97998046875,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "fills": [],
+              "strokes": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "componentId": "540:2527",
+              "children": [
+                {
+                  "id": "I4311:139081;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15943.400390625,
+                    "y": 1153.9599609375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "componentId": "3846:261608",
+                  "children": [
+                    {
+                      "id": "I4311:139081;3846:262045;3846:260019",
+                      "name": "Rectangle 847",
+                      "type": "RECTANGLE",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 1802.1839599609375,
+                        "y": 1802.1839599609375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0
+                        ],
+                        [
+                          0,
+                          1,
+                          -600.7279663085938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15943.400390625,
+                        "y": 553.2319946289062,
+                        "width": 1802.1839599609375,
+                        "height": 1802.1839599609375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.08627451211214066,
+                            "g": 0.42352941632270813,
+                            "b": 0.6509804129600525,
+                            "a": 1
+                          }
+                        },
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "IMAGE",
+                          "scaleMode": "TILE",
+                          "imageRef": "3f93ac05b5522b201442581c9a8069a8a05eda28",
+                          "scalingFactor": 0.511634349822998
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139081;3846:262045;3846:261576",
+                      "name": "Group 93",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 4116.6796875,
+                        "y": 2283.748779296875
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -1828.986083984375
+                        ],
+                        [
+                          0,
+                          1,
+                          -729.958984375
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 14114.4140625,
+                        "y": 424.0009765625,
+                        "width": 4116.6796875,
+                        "height": 2283.748779296875
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 9.847999572753906,
+                          "radius": 4.116463661193848,
+                          "clipToShape": false
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I4311:139081;3846:262045;3846:261595",
+                      "name": "Group 104",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 1843.9998779296875,
+                        "y": 1751.6312255859375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -789.3909912109375
+                        ],
+                        [
+                          0,
+                          1,
+                          -656.8639526367188
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15154.009765625,
+                        "y": 497.09600830078125,
+                        "width": 1843.9998779296875,
+                        "height": 1751.6312255859375
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 3.939199924468994,
+                          "radius": 3.939199924468994,
+                          "clipToShape": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "I4311:139081;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15970.537109375,
+                    "y": 1577.93701171875,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.25
+                      },
+                      "blendMode": "NORMAL",
+                      "offset": {
+                        "x": 0,
+                        "y": 3.5452799797058105
+                      },
+                      "radius": 3.5452799797058105,
+                      "showShadowBehindNode": false
+                    }
+                  ],
+                  "componentId": "3105:577256",
+                  "children": [
+                    {
+                      "id": "I4311:139081;3846:269482;3105:576931",
+                      "name": "TRADING CARD GAME",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 683.4590454101562,
+                        "y": 74.6635971069336
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0.32363298535346985
+                        ],
+                        [
+                          0,
+                          1,
+                          111.83578491210938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15970.8603515625,
+                        "y": 1689.7728271484375,
+                        "width": 683.4590454101562,
+                        "height": 74.6635971069336
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 1.1486706733703613,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TRADING CARD GAME",
+                      "style": {
+                        "fontFamily": "Roboto",
+                        "fontPostScriptName": "Roboto-Bold",
+                        "fontStyle": "Bold",
+                        "fontWeight": 700,
+                        "fontSize": 52.83885192871094,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 61.920528411865234,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    },
+                    {
+                      "id": "I4311:139081;3846:269482;3105:576932",
+                      "name": "Group 36",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 562.1904296875,
+                        "y": 117.90829467773438
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          60.762142181396484
+                        ],
+                        [
+                          0,
+                          1,
+                          0
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16031.298828125,
+                        "y": 1577.93701171875,
+                        "width": 562.1904296875,
+                        "height": 117.90829467773438
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.34275656938552856,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139081;3846:269482;3846:324922",
+                      "name": "TM",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 39.8843994140625,
+                        "y": 54.065521240234375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          586.743896484375
+                        ],
+                        [
+                          0,
+                          1,
+                          -9.306360244750977
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16557.28125,
+                        "y": 1568.630615234375,
+                        "width": 39.8843994140625,
+                        "height": 54.065521240234375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.8863199949264526,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TM",
+                      "style": {
+                        "fontFamily": "Inter",
+                        "fontPostScriptName": null,
+                        "fontStyle": "Regular",
+                        "fontWeight": 400,
+                        "fontSize": 23.85973358154297,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 28.875699996948242,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139082",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  785.7000122070312
+                ],
+                [
+                  0,
+                  1,
+                  1067.97998046875
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 16713.69921875,
+                "y": 1153.97998046875,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "fills": [],
+              "strokes": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "componentId": "540:2527",
+              "children": [
+                {
+                  "id": "I4311:139082;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16713.3984375,
+                    "y": 1153.9599609375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "componentId": "3846:261608",
+                  "children": [
+                    {
+                      "id": "I4311:139082;3846:262045;3846:260019",
+                      "name": "Rectangle 847",
+                      "type": "RECTANGLE",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 1802.1839599609375,
+                        "y": 1802.1839599609375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0
+                        ],
+                        [
+                          0,
+                          1,
+                          -600.7279663085938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16713.3984375,
+                        "y": 553.2319946289062,
+                        "width": 1802.1839599609375,
+                        "height": 1802.1839599609375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.08627451211214066,
+                            "g": 0.42352941632270813,
+                            "b": 0.6509804129600525,
+                            "a": 1
+                          }
+                        },
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "IMAGE",
+                          "scaleMode": "TILE",
+                          "imageRef": "3f93ac05b5522b201442581c9a8069a8a05eda28",
+                          "scalingFactor": 0.511634349822998
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139082;3846:262045;3846:261576",
+                      "name": "Group 93",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 4116.6796875,
+                        "y": 2283.748779296875
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -1828.985107421875
+                        ],
+                        [
+                          0,
+                          1,
+                          -729.958984375
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 14884.4130859375,
+                        "y": 424.0009765625,
+                        "width": 4116.6796875,
+                        "height": 2283.748779296875
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 9.847999572753906,
+                          "radius": 4.116463661193848,
+                          "clipToShape": false
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I4311:139082;3846:262045;3846:261595",
+                      "name": "Group 104",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 1843.9989013671875,
+                        "y": 1751.6309814453125
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -789.3909912109375
+                        ],
+                        [
+                          0,
+                          1,
+                          -656.8639526367188
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15924.0078125,
+                        "y": 497.09600830078125,
+                        "width": 1843.9989013671875,
+                        "height": 1751.6309814453125
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 3.939199924468994,
+                          "radius": 3.939199924468994,
+                          "clipToShape": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "I4311:139082;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16740.537109375,
+                    "y": 1577.93701171875,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.25
+                      },
+                      "blendMode": "NORMAL",
+                      "offset": {
+                        "x": 0,
+                        "y": 3.5452799797058105
+                      },
+                      "radius": 3.5452799797058105,
+                      "showShadowBehindNode": false
+                    }
+                  ],
+                  "componentId": "3105:577256",
+                  "children": [
+                    {
+                      "id": "I4311:139082;3846:269482;3105:576931",
+                      "name": "TRADING CARD GAME",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 683.4590454101562,
+                        "y": 74.6635971069336
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0.32363298535346985
+                        ],
+                        [
+                          0,
+                          1,
+                          111.83578491210938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16740.861328125,
+                        "y": 1689.7728271484375,
+                        "width": 683.4590454101562,
+                        "height": 74.6635971069336
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 1.1486706733703613,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TRADING CARD GAME",
+                      "style": {
+                        "fontFamily": "Roboto",
+                        "fontPostScriptName": "Roboto-Bold",
+                        "fontStyle": "Bold",
+                        "fontWeight": 700,
+                        "fontSize": 52.83885192871094,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 61.920528411865234,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    },
+                    {
+                      "id": "I4311:139082;3846:269482;3105:576932",
+                      "name": "Group 36",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 562.1904296875,
+                        "y": 117.90829467773438
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          60.763118743896484
+                        ],
+                        [
+                          0,
+                          1,
+                          0
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16801.30078125,
+                        "y": 1577.93701171875,
+                        "width": 562.1904296875,
+                        "height": 117.90829467773438
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.34275656938552856,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139082;3846:269482;3846:324922",
+                      "name": "TM",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 39.8843994140625,
+                        "y": 54.065521240234375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          586.743896484375
+                        ],
+                        [
+                          0,
+                          1,
+                          -9.306360244750977
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17327.28125,
+                        "y": 1568.630615234375,
+                        "width": 39.8843994140625,
+                        "height": 54.065521240234375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.8863199949264526,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TM",
+                      "style": {
+                        "fontFamily": "Inter",
+                        "fontPostScriptName": null,
+                        "fontStyle": "Regular",
+                        "fontWeight": 400,
+                        "fontSize": 23.85973358154297,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 28.875699996948242,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139083",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  1555.699951171875
+                ],
+                [
+                  0,
+                  1,
+                  1067.97998046875
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 17483.69921875,
+                "y": 1153.97998046875,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "fills": [],
+              "strokes": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "componentId": "540:2527",
+              "children": [
+                {
+                  "id": "I4311:139083;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17483.3984375,
+                    "y": 1153.9599609375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "componentId": "3846:261608",
+                  "children": [
+                    {
+                      "id": "I4311:139083;3846:262045;3846:260019",
+                      "name": "Rectangle 847",
+                      "type": "RECTANGLE",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 1802.1839599609375,
+                        "y": 1802.1839599609375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0
+                        ],
+                        [
+                          0,
+                          1,
+                          -600.7279663085938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17483.3984375,
+                        "y": 553.2319946289062,
+                        "width": 1802.1839599609375,
+                        "height": 1802.1839599609375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.08627451211214066,
+                            "g": 0.42352941632270813,
+                            "b": 0.6509804129600525,
+                            "a": 1
+                          }
+                        },
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "IMAGE",
+                          "scaleMode": "TILE",
+                          "imageRef": "3f93ac05b5522b201442581c9a8069a8a05eda28",
+                          "scalingFactor": 0.511634349822998
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139083;3846:262045;3846:261576",
+                      "name": "Group 93",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 4116.6796875,
+                        "y": 2283.748779296875
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -1828.985107421875
+                        ],
+                        [
+                          0,
+                          1,
+                          -729.958984375
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15654.4130859375,
+                        "y": 424.0009765625,
+                        "width": 4116.6796875,
+                        "height": 2283.748779296875
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 9.847999572753906,
+                          "radius": 4.116463661193848,
+                          "clipToShape": false
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I4311:139083;3846:262045;3846:261595",
+                      "name": "Group 104",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 1843.9989013671875,
+                        "y": 1751.6309814453125
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -789.3909912109375
+                        ],
+                        [
+                          0,
+                          1,
+                          -656.8639526367188
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16694.0078125,
+                        "y": 497.09600830078125,
+                        "width": 1843.9989013671875,
+                        "height": 1751.6309814453125
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 3.939199924468994,
+                          "radius": 3.939199924468994,
+                          "clipToShape": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "I4311:139083;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17510.537109375,
+                    "y": 1577.93701171875,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.25
+                      },
+                      "blendMode": "NORMAL",
+                      "offset": {
+                        "x": 0,
+                        "y": 3.5452799797058105
+                      },
+                      "radius": 3.5452799797058105,
+                      "showShadowBehindNode": false
+                    }
+                  ],
+                  "componentId": "3105:577256",
+                  "children": [
+                    {
+                      "id": "I4311:139083;3846:269482;3105:576931",
+                      "name": "TRADING CARD GAME",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 683.4590454101562,
+                        "y": 74.6635971069336
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0.32363298535346985
+                        ],
+                        [
+                          0,
+                          1,
+                          111.83578491210938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17510.861328125,
+                        "y": 1689.7728271484375,
+                        "width": 683.4590454101562,
+                        "height": 74.6635971069336
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 1.1486706733703613,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TRADING CARD GAME",
+                      "style": {
+                        "fontFamily": "Roboto",
+                        "fontPostScriptName": "Roboto-Bold",
+                        "fontStyle": "Bold",
+                        "fontWeight": 700,
+                        "fontSize": 52.83885192871094,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 61.920528411865234,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    },
+                    {
+                      "id": "I4311:139083;3846:269482;3105:576932",
+                      "name": "Group 36",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 562.1904296875,
+                        "y": 117.90829467773438
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          60.763118743896484
+                        ],
+                        [
+                          0,
+                          1,
+                          0
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17571.30078125,
+                        "y": 1577.93701171875,
+                        "width": 562.1904296875,
+                        "height": 117.90829467773438
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.34275656938552856,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139083;3846:269482;3846:324922",
+                      "name": "TM",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 39.8843994140625,
+                        "y": 54.065521240234375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          586.743896484375
+                        ],
+                        [
+                          0,
+                          1,
+                          -9.306360244750977
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 18097.28125,
+                        "y": 1568.630615234375,
+                        "width": 39.8843994140625,
+                        "height": 54.065521240234375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.8863199949264526,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TM",
+                      "style": {
+                        "fontFamily": "Inter",
+                        "fontPostScriptName": null,
+                        "fontStyle": "Regular",
+                        "fontWeight": 400,
+                        "fontSize": 23.85973358154297,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 28.875699996948242,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139084",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  15.70001220703125
+                ],
+                [
+                  0,
+                  1,
+                  2124.646484375
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 15943.7001953125,
+                "y": 2210.646484375,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "fills": [],
+              "strokes": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "componentId": "540:2527",
+              "children": [
+                {
+                  "id": "I4311:139084;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15943.400390625,
+                    "y": 2210.62646484375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "componentId": "3846:261608",
+                  "children": [
+                    {
+                      "id": "I4311:139084;3846:262045;3846:260019",
+                      "name": "Rectangle 847",
+                      "type": "RECTANGLE",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 1802.1839599609375,
+                        "y": 1802.1839599609375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0
+                        ],
+                        [
+                          0,
+                          1,
+                          -600.7279663085938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15943.400390625,
+                        "y": 1609.8984375,
+                        "width": 1802.1839599609375,
+                        "height": 1802.1839599609375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.08627451211214066,
+                            "g": 0.42352941632270813,
+                            "b": 0.6509804129600525,
+                            "a": 1
+                          }
+                        },
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "IMAGE",
+                          "scaleMode": "TILE",
+                          "imageRef": "3f93ac05b5522b201442581c9a8069a8a05eda28",
+                          "scalingFactor": 0.511634349822998
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139084;3846:262045;3846:261576",
+                      "name": "Group 93",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 4116.6796875,
+                        "y": 2283.748779296875
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -1828.986083984375
+                        ],
+                        [
+                          0,
+                          1,
+                          -729.9589233398438
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 14114.4140625,
+                        "y": 1480.66748046875,
+                        "width": 4116.6796875,
+                        "height": 2283.748779296875
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 9.847999572753906,
+                          "radius": 4.116463661193848,
+                          "clipToShape": false
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I4311:139084;3846:262045;3846:261595",
+                      "name": "Group 104",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 1843.9998779296875,
+                        "y": 1751.6312255859375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -789.3909912109375
+                        ],
+                        [
+                          0,
+                          1,
+                          -656.8639526367188
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15154.009765625,
+                        "y": 1553.762451171875,
+                        "width": 1843.9998779296875,
+                        "height": 1751.6312255859375
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 3.939199924468994,
+                          "radius": 3.939199924468994,
+                          "clipToShape": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "I4311:139084;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 15970.537109375,
+                    "y": 2634.603515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.25
+                      },
+                      "blendMode": "NORMAL",
+                      "offset": {
+                        "x": 0,
+                        "y": 3.5452799797058105
+                      },
+                      "radius": 3.5452799797058105,
+                      "showShadowBehindNode": false
+                    }
+                  ],
+                  "componentId": "3105:577256",
+                  "children": [
+                    {
+                      "id": "I4311:139084;3846:269482;3105:576931",
+                      "name": "TRADING CARD GAME",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 683.4590454101562,
+                        "y": 74.6635971069336
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0.32363298535346985
+                        ],
+                        [
+                          0,
+                          1,
+                          111.83578491210938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15970.8603515625,
+                        "y": 2746.439208984375,
+                        "width": 683.4590454101562,
+                        "height": 74.6635971069336
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 1.1486706733703613,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TRADING CARD GAME",
+                      "style": {
+                        "fontFamily": "Roboto",
+                        "fontPostScriptName": "Roboto-Bold",
+                        "fontStyle": "Bold",
+                        "fontWeight": 700,
+                        "fontSize": 52.83885192871094,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 61.920528411865234,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    },
+                    {
+                      "id": "I4311:139084;3846:269482;3105:576932",
+                      "name": "Group 36",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 562.1904296875,
+                        "y": 117.90829467773438
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          60.762142181396484
+                        ],
+                        [
+                          0,
+                          1,
+                          0
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16031.298828125,
+                        "y": 2634.603515625,
+                        "width": 562.1904296875,
+                        "height": 117.90829467773438
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.34275656938552856,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139084;3846:269482;3846:324922",
+                      "name": "TM",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 39.8843994140625,
+                        "y": 54.065521240234375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          586.743896484375
+                        ],
+                        [
+                          0,
+                          1,
+                          -9.306360244750977
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16557.28125,
+                        "y": 2625.297119140625,
+                        "width": 39.8843994140625,
+                        "height": 54.065521240234375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.8863199949264526,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TM",
+                      "style": {
+                        "fontFamily": "Inter",
+                        "fontPostScriptName": null,
+                        "fontStyle": "Regular",
+                        "fontWeight": 400,
+                        "fontSize": 23.85973358154297,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 28.875699996948242,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139085",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  785.7000122070312
+                ],
+                [
+                  0,
+                  1,
+                  2124.646484375
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 16713.69921875,
+                "y": 2210.646484375,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "fills": [],
+              "strokes": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "componentId": "540:2527",
+              "children": [
+                {
+                  "id": "I4311:139085;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16713.3984375,
+                    "y": 2210.62646484375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "componentId": "3846:261608",
+                  "children": [
+                    {
+                      "id": "I4311:139085;3846:262045;3846:260019",
+                      "name": "Rectangle 847",
+                      "type": "RECTANGLE",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 1802.1839599609375,
+                        "y": 1802.1839599609375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0
+                        ],
+                        [
+                          0,
+                          1,
+                          -600.7279663085938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16713.3984375,
+                        "y": 1609.8984375,
+                        "width": 1802.1839599609375,
+                        "height": 1802.1839599609375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.08627451211214066,
+                            "g": 0.42352941632270813,
+                            "b": 0.6509804129600525,
+                            "a": 1
+                          }
+                        },
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "IMAGE",
+                          "scaleMode": "TILE",
+                          "imageRef": "3f93ac05b5522b201442581c9a8069a8a05eda28",
+                          "scalingFactor": 0.511634349822998
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139085;3846:262045;3846:261576",
+                      "name": "Group 93",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 4116.6796875,
+                        "y": 2283.748779296875
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -1828.985107421875
+                        ],
+                        [
+                          0,
+                          1,
+                          -729.9589233398438
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 14884.4130859375,
+                        "y": 1480.66748046875,
+                        "width": 4116.6796875,
+                        "height": 2283.748779296875
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 9.847999572753906,
+                          "radius": 4.116463661193848,
+                          "clipToShape": false
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I4311:139085;3846:262045;3846:261595",
+                      "name": "Group 104",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 1843.9989013671875,
+                        "y": 1751.630859375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -789.3909912109375
+                        ],
+                        [
+                          0,
+                          1,
+                          -656.8639526367188
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15924.0078125,
+                        "y": 1553.762451171875,
+                        "width": 1843.9989013671875,
+                        "height": 1751.630859375
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 3.939199924468994,
+                          "radius": 3.939199924468994,
+                          "clipToShape": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "I4311:139085;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 16740.537109375,
+                    "y": 2634.603515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.25
+                      },
+                      "blendMode": "NORMAL",
+                      "offset": {
+                        "x": 0,
+                        "y": 3.5452799797058105
+                      },
+                      "radius": 3.5452799797058105,
+                      "showShadowBehindNode": false
+                    }
+                  ],
+                  "componentId": "3105:577256",
+                  "children": [
+                    {
+                      "id": "I4311:139085;3846:269482;3105:576931",
+                      "name": "TRADING CARD GAME",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 683.4590454101562,
+                        "y": 74.6635971069336
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0.32363298535346985
+                        ],
+                        [
+                          0,
+                          1,
+                          111.83578491210938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16740.861328125,
+                        "y": 2746.439208984375,
+                        "width": 683.4590454101562,
+                        "height": 74.6635971069336
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 1.1486706733703613,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TRADING CARD GAME",
+                      "style": {
+                        "fontFamily": "Roboto",
+                        "fontPostScriptName": "Roboto-Bold",
+                        "fontStyle": "Bold",
+                        "fontWeight": 700,
+                        "fontSize": 52.83885192871094,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 61.920528411865234,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    },
+                    {
+                      "id": "I4311:139085;3846:269482;3105:576932",
+                      "name": "Group 36",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 562.1904296875,
+                        "y": 117.90829467773438
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          60.763118743896484
+                        ],
+                        [
+                          0,
+                          1,
+                          0
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16801.30078125,
+                        "y": 2634.603515625,
+                        "width": 562.1904296875,
+                        "height": 117.90829467773438
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.34275656938552856,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139085;3846:269482;3846:324922",
+                      "name": "TM",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 39.8843994140625,
+                        "y": 54.065521240234375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          586.743896484375
+                        ],
+                        [
+                          0,
+                          1,
+                          -9.306360244750977
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17327.28125,
+                        "y": 2625.297119140625,
+                        "width": 39.8843994140625,
+                        "height": 54.065521240234375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.8863199949264526,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TM",
+                      "style": {
+                        "fontFamily": "Inter",
+                        "fontPostScriptName": null,
+                        "fontStyle": "Regular",
+                        "fontWeight": 400,
+                        "fontSize": 23.85973358154297,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 28.875699996948242,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "4311:139086",
+              "name": "sea-realm-background",
+              "type": "INSTANCE",
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "size": {
+                "x": 738.5999755859375,
+                "y": 1034.0400390625
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  1555.699951171875
+                ],
+                [
+                  0,
+                  1,
+                  2124.646484375
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 17483.69921875,
+                "y": 2210.646484375,
+                "width": 738.5999755859375,
+                "height": 1034.0400390625
+              },
+              "fills": [],
+              "strokes": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokeWeight": 59.08799743652344,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "componentId": "540:2527",
+              "children": [
+                {
+                  "id": "I4311:139086;3846:262045",
+                  "name": "card-back",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "size": {
+                    "x": 738.5999755859375,
+                    "y": 1034.0400390625
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      -0.2999929189682007
+                    ],
+                    [
+                      0,
+                      1,
+                      -0.019990086555480957
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17483.3984375,
+                    "y": 2210.62646484375,
+                    "width": 738.5999755859375,
+                    "height": 1034.0400390625
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.9847999811172485,
+                  "strokeAlign": "INSIDE",
+                  "effects": [],
+                  "componentId": "3846:261608",
+                  "children": [
+                    {
+                      "id": "I4311:139086;3846:262045;3846:260019",
+                      "name": "Rectangle 847",
+                      "type": "RECTANGLE",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 1802.1839599609375,
+                        "y": 1802.1839599609375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0
+                        ],
+                        [
+                          0,
+                          1,
+                          -600.7279663085938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17483.3984375,
+                        "y": 1609.8984375,
+                        "width": 1802.1839599609375,
+                        "height": 1802.1839599609375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.08627451211214066,
+                            "g": 0.42352941632270813,
+                            "b": 0.6509804129600525,
+                            "a": 1
+                          }
+                        },
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "IMAGE",
+                          "scaleMode": "TILE",
+                          "imageRef": "3f93ac05b5522b201442581c9a8069a8a05eda28",
+                          "scalingFactor": 0.511634349822998
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139086;3846:262045;3846:261576",
+                      "name": "Group 93",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 4116.6796875,
+                        "y": 2283.748779296875
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -1828.985107421875
+                        ],
+                        [
+                          0,
+                          1,
+                          -729.9589233398438
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 15654.4130859375,
+                        "y": 1480.66748046875,
+                        "width": 4116.6796875,
+                        "height": 2283.748779296875
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 9.847999572753906,
+                          "radius": 4.116463661193848,
+                          "clipToShape": false
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I4311:139086;3846:262045;3846:261595",
+                      "name": "Group 104",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 1843.9989013671875,
+                        "y": 1751.630859375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          -789.3909912109375
+                        ],
+                        [
+                          0,
+                          1,
+                          -656.8639526367188
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 16694.0078125,
+                        "y": 1553.762451171875,
+                        "width": 1843.9989013671875,
+                        "height": 1751.630859375
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.9847999811172485,
+                      "strokeAlign": "INSIDE",
+                      "effects": [
+                        {
+                          "type": "LAYER_BLUR",
+                          "visible": true,
+                          "radius": 80.75360107421875
+                        },
+                        {
+                          "type": "TEXTURE",
+                          "visible": true,
+                          "noiseSize": 3.939199924468994,
+                          "radius": 3.939199924468994,
+                          "clipToShape": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "I4311:139086;3846:269482",
+                  "name": "searealm-tcg-logo",
+                  "type": "INSTANCE",
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "size": {
+                    "x": 683.4590454101562,
+                    "y": 186.49937438964844
+                  },
+                  "relativeTransform": [
+                    [
+                      1,
+                      0,
+                      26.837053298950195
+                    ],
+                    [
+                      0,
+                      1,
+                      423.95709228515625
+                    ]
+                  ],
+                  "absoluteBoundingBox": {
+                    "x": 17510.537109375,
+                    "y": 2634.603515625,
+                    "width": 683.4590454101562,
+                    "height": 186.49937438964844
+                  },
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 0.4431599974632263,
+                  "strokeAlign": "INSIDE",
+                  "effects": [
+                    {
+                      "type": "DROP_SHADOW",
+                      "visible": true,
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.25
+                      },
+                      "blendMode": "NORMAL",
+                      "offset": {
+                        "x": 0,
+                        "y": 3.5452799797058105
+                      },
+                      "radius": 3.5452799797058105,
+                      "showShadowBehindNode": false
+                    }
+                  ],
+                  "componentId": "3105:577256",
+                  "children": [
+                    {
+                      "id": "I4311:139086;3846:269482;3105:576931",
+                      "name": "TRADING CARD GAME",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 683.4590454101562,
+                        "y": 74.6635971069336
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          0.32363298535346985
+                        ],
+                        [
+                          0,
+                          1,
+                          111.83578491210938
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17510.861328125,
+                        "y": 2746.439208984375,
+                        "width": 683.4590454101562,
+                        "height": 74.6635971069336
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 1.1486706733703613,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TRADING CARD GAME",
+                      "style": {
+                        "fontFamily": "Roboto",
+                        "fontPostScriptName": "Roboto-Bold",
+                        "fontStyle": "Bold",
+                        "fontWeight": 700,
+                        "fontSize": 52.83885192871094,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 61.920528411865234,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    },
+                    {
+                      "id": "I4311:139086;3846:269482;3105:576932",
+                      "name": "Group 36",
+                      "type": "GROUP",
+                      "blendMode": "PASS_THROUGH",
+                      "clipsContent": false,
+                      "size": {
+                        "x": 562.1904296875,
+                        "y": 117.90829467773438
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          60.763118743896484
+                        ],
+                        [
+                          0,
+                          1,
+                          0
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 17571.30078125,
+                        "y": 2634.603515625,
+                        "width": 562.1904296875,
+                        "height": 117.90829467773438
+                      },
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0.34275656938552856,
+                      "strokeAlign": "INSIDE",
+                      "effects": []
+                    },
+                    {
+                      "id": "I4311:139086;3846:269482;3846:324922",
+                      "name": "TM",
+                      "type": "TEXT",
+                      "blendMode": "PASS_THROUGH",
+                      "size": {
+                        "x": 39.8843994140625,
+                        "y": 54.065521240234375
+                      },
+                      "relativeTransform": [
+                        [
+                          1,
+                          0,
+                          586.743896484375
+                        ],
+                        [
+                          0,
+                          1,
+                          -9.306360244750977
+                        ]
+                      ],
+                      "absoluteBoundingBox": {
+                        "x": 18097.28125,
+                        "y": 2625.297119140625,
+                        "width": 39.8843994140625,
+                        "height": 54.065521240234375
+                      },
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 1,
+                            "g": 1,
+                            "b": 1,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0.8863199949264526,
+                      "strokeAlign": "OUTSIDE",
+                      "effects": [],
+                      "characters": "TM",
+                      "style": {
+                        "fontFamily": "Inter",
+                        "fontPostScriptName": null,
+                        "fontStyle": "Regular",
+                        "fontWeight": 400,
+                        "fontSize": 23.85973358154297,
+                        "textAlignHorizontal": "CENTER",
+                        "textAlignVertical": "CENTER",
+                        "letterSpacing": 0,
+                        "lineHeightPx": 28.875699996948242,
+                        "lineHeightPercent": 100,
+                        "lineHeightUnit": "INTRINSIC_%"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "4459:12836",
+          "name": "Rectangle 14",
+          "type": "RECTANGLE",
+          "blendMode": "PASS_THROUGH",
+          "size": {
+            "x": 2326,
+            "y": 20
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              107
+            ],
+            [
+              0,
+              1,
+              51
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 15877,
+            "y": 51,
+            "width": 2326,
+            "height": 20
+          },
+          "fills": [
+            {
+              "blendMode": "NORMAL",
+              "type": "SOLID",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              }
+            }
+          ],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "effects": []
+        },
+        {
+          "id": "4643:106728",
+          "name": "Line 1",
+          "type": "LINE",
+          "blendMode": "PASS_THROUGH",
+          "size": {
+            "x": 87,
+            "y": 0
+          },
+          "relativeTransform": [
+            [
+              -4.3711285258041244e-8,
+              -1,
+              1309
+            ],
+            [
+              1,
+              -4.3711285258041244e-8,
+              0
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 17078.99999619712,
+            "y": 0,
+            "width": 0.000003802881110459566,
+            "height": 87
+          },
+          "fills": [],
+          "strokes": [
+            {
+              "blendMode": "NORMAL",
+              "type": "SOLID",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              }
+            }
+          ],
+          "strokeWeight": 9,
+          "strokeAlign": "CENTER",
+          "effects": []
+        }
+      ]
+    },
+    "4317:8435": {
+      "id": "4317:8435",
+      "name": "die-cut-front-epson",
+      "type": "INSTANCE",
+      "blendMode": "PASS_THROUGH",
+      "clipsContent": true,
+      "size": {
+        "x": 2550,
+        "y": 3300
+      },
+      "relativeTransform": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ]
+      ],
+      "absoluteBoundingBox": {
+        "x": 18648,
+        "y": 0,
+        "width": 2550,
+        "height": 3300
+      },
+      "fills": [],
+      "strokes": [],
+      "strokeWeight": 1,
+      "strokeAlign": "INSIDE",
+      "effects": [],
+      "componentId": "4317:8434",
+      "children": [
+        {
+          "id": "I4317:8435;4317:8421",
+          "name": "Rectangle 14",
+          "type": "RECTANGLE",
+          "blendMode": "PASS_THROUGH",
+          "size": {
+            "x": 2326,
+            "y": 114
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              91
+            ],
+            [
+              0,
+              1,
+              -68
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 18739,
+            "y": -68,
+            "width": 2326,
+            "height": 114
+          },
+          "fills": [
+            {
+              "blendMode": "NORMAL",
+              "visible": false,
+              "type": "SOLID",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              }
+            }
+          ],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "effects": []
+        },
+        {
+          "id": "I4317:8435;4317:8422",
+          "name": "sea-realm-background 1",
+          "type": "RECTANGLE",
+          "blendMode": "PASS_THROUGH",
+          "size": {
+            "x": 2337,
+            "y": 3182
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              53
+            ],
+            [
+              0,
+              1,
+              66
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 18701,
+            "y": 66,
+            "width": 2337,
+            "height": 3182
+          },
+          "fills": [
+            {
+              "blendMode": "NORMAL",
+              "type": "IMAGE",
+              "scaleMode": "TILE",
+              "imageRef": "a45562f9a6bafe875347ee77a9dca6d7f264beb9",
+              "scalingFactor": 1.0685714483261108
+            }
+          ],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "effects": []
+        },
+        {
+          "id": "I4317:8435;4317:8424",
+          "name": "Rectangle 15",
+          "type": "RECTANGLE",
+          "blendMode": "PASS_THROUGH",
+          "size": {
+            "x": 2582,
+            "y": 10
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              -16
+            ],
+            [
+              0,
+              1,
+              1117
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 18632,
+            "y": 1117,
+            "width": 2582,
+            "height": 10
+          },
+          "fills": [
+            {
+              "blendMode": "NORMAL",
+              "type": "SOLID",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              }
+            }
+          ],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "effects": [],
+          "visible": false
+        },
+        {
+          "id": "I4317:8435;4317:8425",
+          "name": "Rectangle 16",
+          "type": "RECTANGLE",
+          "blendMode": "PASS_THROUGH",
+          "size": {
+            "x": 2582,
+            "y": 10
+          },
+          "relativeTransform": [
+            [
+              1,
+              0,
+              -16
+            ],
+            [
+              0,
+              1,
+              2173
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 18632,
+            "y": 2173,
+            "width": 2582,
+            "height": 10
+          },
+          "fills": [
+            {
+              "blendMode": "NORMAL",
+              "type": "SOLID",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              }
+            }
+          ],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "effects": [],
+          "visible": false
+        },
+        {
+          "id": "I4317:8435;4642:106223",
+          "name": "Group 135",
+          "type": "GROUP",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": false,
+          "size": {
+            "x": 78,
+            "y": 231
+          },
+          "relativeTransform": [
+            [
+              -1,
+              0,
+              2514
+            ],
+            [
+              0,
+              -1,
+              2877
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 21084,
+            "y": 2646,
+            "width": 78,
+            "height": 231
+          },
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "effects": [],
+          "children": [
+            {
+              "id": "I4317:8435;4642:106224",
+              "name": "Rectangle 17",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 78,
+                "y": 231
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  0
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 21084,
+                "y": 2646,
+                "width": 78,
+                "height": 231
+              },
+              "fills": [],
+              "strokes": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokeWeight": 2,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "strokeDashes": [
+                12,
+                12
+              ]
+            },
+            {
+              "id": "I4317:8435;4642:106225",
+              "name": "STAPLE",
+              "type": "TEXT",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 231,
+                "y": 46
+              },
+              "relativeTransform": [
+                [
+                  0,
+                  -1,
+                  62
+                ],
+                [
+                  1,
+                  0,
+                  0
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 21100,
+                "y": 2646,
+                "width": 46,
+                "height": 231
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "OUTSIDE",
+              "effects": [],
+              "characters": "STAPLE",
+              "style": {
+                "fontFamily": "Inter",
+                "fontPostScriptName": "Inter-Bold",
+                "fontStyle": "Bold",
+                "fontWeight": 700,
+                "fontSize": 39,
+                "textAlignHorizontal": "CENTER",
+                "textAlignVertical": "CENTER",
+                "letterSpacing": 0,
+                "lineHeightPx": 47.1988639831543,
+                "lineHeightPercent": 100,
+                "lineHeightUnit": "INTRINSIC_%"
+              }
+            }
+          ]
+        },
+        {
+          "id": "I4317:8435;4642:106226",
+          "name": "Group 136",
+          "type": "GROUP",
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": false,
+          "size": {
+            "x": 78,
+            "y": 231
+          },
+          "relativeTransform": [
+            [
+              -1,
+              0,
+              2514
+            ],
+            [
+              0,
+              -1,
+              699
+            ]
+          ],
+          "absoluteBoundingBox": {
+            "x": 21084,
+            "y": 468,
+            "width": 78,
+            "height": 231
+          },
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "effects": [],
+          "children": [
+            {
+              "id": "I4317:8435;4642:106227",
+              "name": "Rectangle 17",
+              "type": "RECTANGLE",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 78,
+                "y": 231
+              },
+              "relativeTransform": [
+                [
+                  1,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  0
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 21084,
+                "y": 468,
+                "width": 78,
+                "height": 231
+              },
+              "fills": [],
+              "strokes": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokeWeight": 2,
+              "strokeAlign": "INSIDE",
+              "effects": [],
+              "strokeDashes": [
+                12,
+                12
+              ]
+            },
+            {
+              "id": "I4317:8435;4642:106228",
+              "name": "STAPLE",
+              "type": "TEXT",
+              "blendMode": "PASS_THROUGH",
+              "size": {
+                "x": 231,
+                "y": 46
+              },
+              "relativeTransform": [
+                [
+                  0,
+                  -1,
+                  62
+                ],
+                [
+                  1,
+                  0,
+                  0
+                ]
+              ],
+              "absoluteBoundingBox": {
+                "x": 21100,
+                "y": 468,
+                "width": 46,
+                "height": 231
+              },
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "OUTSIDE",
+              "effects": [],
+              "characters": "STAPLE",
+              "style": {
+                "fontFamily": "Inter",
+                "fontPostScriptName": "Inter-Bold",
+                "fontStyle": "Bold",
+                "fontWeight": 700,
+                "fontSize": 39,
+                "textAlignHorizontal": "CENTER",
+                "textAlignVertical": "CENTER",
+                "letterSpacing": 0,
+                "lineHeightPx": 47.1988639831543,
+                "lineHeightPercent": 100,
+                "lineHeightUnit": "INTRINSIC_%"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

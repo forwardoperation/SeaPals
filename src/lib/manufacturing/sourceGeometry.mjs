@@ -1,4 +1,4 @@
-import { CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10 } from "./backdrops.mjs";
+import { CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11 } from "./backdrops.mjs";
 
 // Source crops measured across all 51 fixed sheets at Figma version
 // 2409981651040810260. These are independent of the cutter's output geometry.
@@ -281,7 +281,7 @@ export function fixedSheetOutputPositions(asset, layout) {
     ? asset.sourceGeometry.outputReferenceBounds : asset.sourceGeometry?.sourceBounds;
   return asset.outputPositions?.toSorted((a, b) =>
     Math.abs(a.y - b.y) < 1 ? a.x - b.x : a.y - b.y,
-  ).map(position => [CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10].includes(layout.version) ? {
+  ).map(position => [CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11].includes(layout.version) ? {
     ...position,
     x: position.x + layout.grid.x - reference.x,
     y: position.y + layout.grid.y - reference.y,

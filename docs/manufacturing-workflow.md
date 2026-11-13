@@ -79,7 +79,22 @@ status, artwork eligibility, deployment steps, and commands.
 
 ## Source artwork and sheet geometry
 
-Current V10 releases use the shared Page_Templates pair measured on November 13,
+Current V11 releases apply the final November 13 front adjustment. The Epson
+grid starts at (55, 77.83999633789062), size 2330 x 3170. All nine card positions
+and the Conditions insets move exactly 10 pixels up from V10, preserving their
+sizes and horizontal positions. The water starts at (53, 66). The empty parent
+grid `4311:139557` is validated; the native 2550 x 3300 PNG still exports only
+background instance `4317:8435` with its water and staple marks.
+
+The Canon geometry and native rear PNG are unchanged: parent `4311:139076`,
+grid (158, 86), size 2310 x 3170. Only the front PNG changes in this release.
+Card artwork, fixed sheets, flyers, labels, and printer transport remain intact.
+New jobs use V11 after activation; saved V1-V10 jobs and reprints retain their
+original geometry and release.
+
+### Historical V10 geometry (November 13)
+
+V10 releases use the shared Page_Templates pair measured on November 13,
 2026. Front parent `4311:139557` uses the saved positions of its original nine
 calibration rectangles, sized 738.5999755859375 x 1034.4000244140625. The grid
 can now be empty; the sync checks its derived centers against the saved positions

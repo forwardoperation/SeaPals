@@ -22,7 +22,9 @@ import {
   CUTTER_LAYOUT_V8,
   CUTTER_LAYOUT_V9,
   CUTTER_LAYOUT_V10,
+  CUTTER_LAYOUT_V11,
   PRINT_BACKGROUNDS_V10,
+  PRINT_BACKGROUNDS_V11,
   PRINT_BACKGROUNDS_V8,
   PRINT_BACKGROUNDS_V9,
   PRINT_BACKGROUNDS_V5,
@@ -414,8 +416,21 @@ export const V10_BACK_TEMPLATE = Object.freeze({
 ].map(Object.freeze)),
   background: PRINT_BACKGROUNDS_V10.backs,
 });
-export const PRINT_LAYOUT = V10_PRINT_LAYOUT;
-export const BACK_TEMPLATE = V10_BACK_TEMPLATE;
+// Final November 13 tuning translates the approved front exactly 10 px up.
+// Preserve every V10 coordinate and its Figma rounding for pinned jobs.
+export const V11_PRINT_LAYOUT = Object.freeze({
+  ...V10_PRINT_LAYOUT,
+  version: CUTTER_LAYOUT_V11,
+  top: V10_PRINT_LAYOUT.top - 10,
+  grid: Object.freeze({ ...V10_PRINT_LAYOUT.grid, y: V10_PRINT_LAYOUT.grid.y - 10 }),
+  positions: Object.freeze(V10_PRINT_LAYOUT.positions.map(position => Object.freeze({
+    ...position, y: position.y - 10,
+  }))),
+  background: PRINT_BACKGROUNDS_V11.fronts,
+});
+export const V11_BACK_TEMPLATE = V10_BACK_TEMPLATE;
+export const PRINT_LAYOUT = V11_PRINT_LAYOUT;
+export const BACK_TEMPLATE = V11_BACK_TEMPLATE;
 export const HOLO_PRINT_LAYOUT = PRINT_LAYOUT;
 export const HOLO_BACK_TEMPLATE = BACK_TEMPLATE;
 
@@ -437,14 +452,15 @@ export function resolvePrintTemplates(templates) {
     };
   if (!isCutterLayout(templates?.version))
     throw new Error("Unsupported versioned print templates.");
-  if ([CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10].includes(templates.version) &&
+  if ([CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11].includes(templates.version) &&
       (templates.holoFronts !== undefined || templates.holoBacks !== undefined))
     throw new Error("Shared print templates cannot contain separate holo front or back sources.");
-  const sharedHolo = [CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10].includes(templates.version),
+  const sharedHolo = [CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11].includes(templates.version),
     dedicatedHolo = [CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7].includes(templates.version),
     expectedHoloFront = templates.version === CUTTER_LAYOUT_V7 ? V7_HOLO_PRINT_LAYOUT
       : templates.version === CUTTER_LAYOUT_V6 ? V6_HOLO_PRINT_LAYOUT : V5_HOLO_PRINT_LAYOUT;
-  const expectedFront = templates.version === CUTTER_LAYOUT_V10 ? V10_PRINT_LAYOUT
+  const expectedFront = templates.version === CUTTER_LAYOUT_V11 ? V11_PRINT_LAYOUT
+      : templates.version === CUTTER_LAYOUT_V10 ? V10_PRINT_LAYOUT
       : templates.version === CUTTER_LAYOUT_V9 ? V9_PRINT_LAYOUT
       : templates.version === CUTTER_LAYOUT_V8 ? V8_PRINT_LAYOUT
       : templates.version === CUTTER_LAYOUT_V7 ? V7_PRINT_LAYOUT
@@ -452,7 +468,8 @@ export function resolvePrintTemplates(templates) {
       : templates.version === CUTTER_LAYOUT_V5 ? V5_PRINT_LAYOUT
       : templates.version === CUTTER_LAYOUT_V4 ? V4_PRINT_LAYOUT
         : templates.version === CUTTER_LAYOUT_V3 ? V3_PRINT_LAYOUT : LEGACY_PRINT_LAYOUT,
-    expectedBack = templates.version === CUTTER_LAYOUT_V10 ? V10_BACK_TEMPLATE
+    expectedBack = templates.version === CUTTER_LAYOUT_V11 ? V11_BACK_TEMPLATE
+      : templates.version === CUTTER_LAYOUT_V10 ? V10_BACK_TEMPLATE
       : templates.version === CUTTER_LAYOUT_V9 ? V9_BACK_TEMPLATE
       : templates.version === CUTTER_LAYOUT_V8 ? V8_BACK_TEMPLATE
       : templates.version === CUTTER_LAYOUT_V7 ? V7_BACK_TEMPLATE
@@ -837,7 +854,7 @@ export function preflightPrintAssets(manifest, release) {
   if (manifest.flyerVersion !== undefined && manifest.flyerVersion !== release.flyerVersion)
     errors.push("The saved flyers require their matching pinned artwork recipe.");
   if (
-    [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10].includes(release.printTemplates?.version) &&
+    [CUTTER_LAYOUT_V4, CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V7, CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11].includes(release.printTemplates?.version) &&
     manifest.layout.version !== release.printTemplates.version
   )
     errors.push("The full-page Canon artwork requires its matching versioned release templates; it cannot be cropped as a legacy back.");

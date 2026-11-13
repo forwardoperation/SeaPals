@@ -1,5 +1,5 @@
-import { CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10 } from "../../src/lib/manufacturing/backdrops.mjs";
-import { V10_PRINT_LAYOUT } from "../../src/lib/manufacturing/printPlan.mjs";
+import { CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11 } from "../../src/lib/manufacturing/backdrops.mjs";
+import { V10_PRINT_LAYOUT, V11_PRINT_LAYOUT } from "../../src/lib/manufacturing/printPlan.mjs";
 
 // V5-V9 use empty centered front grids; V10 also supports its original nine
 // calibration rectangles but exports only the background instance. Canon rears stay native
@@ -86,8 +86,8 @@ function checkSharedBackground(node, saved, invalid, version) {
   const children = visible(node.children);
   if (!saved.rear) {
     const [unusedBar, water] = children;
-    if (children.length !== (version === CUTTER_LAYOUT_V10 ? 4 : 2) || unusedBar?.id !== 'I4317:8435;4317:8421' || water?.id !== 'I4317:8435;4317:8422')
-      invalid(version === CUTTER_LAYOUT_V10
+    if (children.length !== ([CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11].includes(version) ? 4 : 2) || unusedBar?.id !== 'I4317:8435;4317:8421' || water?.id !== 'I4317:8435;4317:8422')
+      invalid([CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11].includes(version)
         ? 'the shared front background needs its water, unpainted guide, and two staple markers'
         : 'the shared front must contain only its water and unpainted guide');
     clean(unusedBar, invalid, 'unpainted front guide');
@@ -97,9 +97,9 @@ function checkSharedBackground(node, saved, invalid, version) {
     if (water.type !== 'RECTANGLE' || !onePaint(water, paint => paint.type === 'IMAGE' &&
         (paint.opacity ?? 1) === 1 && (paint.blendMode ?? 'NORMAL') === 'NORMAL' && paint.scaleMode === 'TILE'))
       invalid('the shared ocean background must retain its visible tiled image');
-    translation(water, invalid, 'shared ocean background', version === CUTTER_LAYOUT_V10 ? 53 : version === CUTTER_LAYOUT_V9 ? 83 : 68, version === CUTTER_LAYOUT_V10 ? 76 : 61);
+    translation(water, invalid, 'shared ocean background', [CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11].includes(version) ? 53 : version === CUTTER_LAYOUT_V9 ? 83 : 68, version === CUTTER_LAYOUT_V11 ? 66 : version === CUTTER_LAYOUT_V10 ? 76 : 61);
     dimensions(water, 2337, 3182, invalid, 'shared ocean background');
-    if (version === CUTTER_LAYOUT_V10) checkFrontStaples(children.slice(2), invalid);
+    if ([CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11].includes(version)) checkFrontStaples(children.slice(2), invalid);
     return;
   }
   if (children.length !== 2) invalid('the shared rear background needs only its two staple markers');
@@ -217,7 +217,7 @@ function checkSharedCardArtwork(card, invalid) {
 }
 export function validateGridTemplate(document, template) {
   const invalid = detail => { throw new Error(`Cutter template ${template.name}: ${detail}. Review the Figma template and saved print geometry before syncing; the active artwork release is unchanged.`); };
-  const saved = ([CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10].includes(template.version) ? sharedSources : sources)[template.nodeId], expected = template.grid;
+  const saved = ([CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11].includes(template.version) ? sharedSources : sources)[template.nodeId], expected = template.grid;
   if (!saved || !expected || !document || document.type !== 'FRAME' || document.id !== template.nodeId || document.name !== template.name)
     invalid('the expected template frame is missing or renamed');
   clean(document, invalid, 'page');
@@ -228,7 +228,7 @@ export function validateGridTemplate(document, template) {
     invalid('the page must be clipped to 2550 x 3300 pixels');
   const fills = visible(document.fills);
   if (fills.length !== 1 || !whitePaint(fills[0])) invalid('the page needs its opaque white paper fill');
-  const children = visible(document.children), grid = saved.shared ? children[1] : children.at(-1), measured = template.version === CUTTER_LAYOUT_V10;
+  const children = visible(document.children), grid = saved.shared ? children[1] : children.at(-1), measured = [CUTTER_LAYOUT_V10, CUTTER_LAYOUT_V11].includes(template.version);
   if (children.length !== (saved.shared && saved.rear ? (measured ? 4 : 3) : saved.background ? 2 : 1) || grid?.type !== 'FRAME' || grid.name !== 'card_backs' || grid.id !== expected.nodeId)
     invalid('the saved card_backs grid and background layers are required');
   if (saved.shared) {
@@ -252,14 +252,16 @@ export function validateGridTemplate(document, template) {
       ['gridColumnsSizing', 'gridRowsSizing'].some(key => grid[key]?.replaceAll(' ', '') !== 'repeat(3,minmax(0,1fr))'))
     invalid('the grid must contain three equal rows and columns without gaps or padding');
   const emptyMeasuredFront = !saved.rear && measured && Array.isArray(grid.children) && grid.children.length === 0;
+  if (!saved.rear && template.version === CUTTER_LAYOUT_V11 && !emptyMeasuredFront)
+    invalid('the V11 front grid must remain completely empty');
   let positions;
   if (emptyMeasuredFront) {
     // The owner removed the guides after tuning. Independently derive centers
-    // from the validated native grid and immutable V10 card dimensions before
+    // from the validated native grid and immutable versioned card dimensions before
     // accepting the saved positions with their original Figma float rounding.
-    const { cardWidth, cardHeight } = V10_PRINT_LAYOUT.grid;
+    const { cardWidth, cardHeight } = (template.version === CUTTER_LAYOUT_V11 ? V11_PRINT_LAYOUT : V10_PRINT_LAYOUT).grid;
     if (!close(expected.cardWidth, cardWidth) || !close(expected.cardHeight, cardHeight))
-      invalid('the empty front grid must retain the reviewed V10 card dimensions');
+      invalid('the empty front grid must retain the reviewed versioned card dimensions');
     const cellWidth = grid.size.x / grid.gridColumnCount, cellHeight = grid.size.y / grid.gridRowCount;
     positions = Array.from({ length: 9 }, (_, i) => ({
       x: gridOrigin.x + (i % 3) * cellWidth + (cellWidth - cardWidth) / 2,

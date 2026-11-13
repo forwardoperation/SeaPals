@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import * as layouts from './printPlan.mjs';
-import { PRINT_LAYOUT, BACK_TEMPLATE, V9_PRINT_LAYOUT, V9_BACK_TEMPLATE, resolvePrintTemplates, createManufacturingManifest, preflightPrintAssets, verifyManifest } from './printPlan.mjs';
+import { V10_PRINT_LAYOUT as PRINT_LAYOUT, V10_BACK_TEMPLATE as BACK_TEMPLATE, V9_PRINT_LAYOUT, V9_BACK_TEMPLATE, resolvePrintTemplates, createManufacturingManifest, preflightPrintAssets, verifyManifest } from './printPlan.mjs';
 import { CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10, backgroundsForLayout } from './backdrops.mjs';
 import { contentHash, buildPrintingCatalog } from './boosters.mjs';
 import { validateRelease } from './integration.mjs';
@@ -41,7 +41,6 @@ test('V10 validates the full parent guides but exports only the native front bac
  assert.equal(fixture.version,'2421344107286948694');
  for(const t of[front,back])assert.deepEqual(validateCutterTemplate(documentFor(t),t),t.positions);
  const source=buildSourceMap(setList,gallery,holoSources);
- assert.deepEqual(resolvePrintTemplates(source.templates),resolvePrintTemplates(templates));
  assert.equal(front.nodeId,'4311:139557');assert.equal(front.background.nodeId,'4317:8435');
  assert.equal(source.sources.find(s=>s.id==='print-template-front-background').nodeId,'4317:8435');
  assert.ok(!source.sources.some(s=>s.nodeId===front.nodeId),'White calibration rectangles never enter the export list');

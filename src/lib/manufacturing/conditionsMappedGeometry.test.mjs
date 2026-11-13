@@ -83,6 +83,15 @@ test('V10 Conditions follows the updated front grid while retaining reviewed nat
   }
 });
 
+test('V11 Conditions moves exactly 10 pixels up without altering its reviewed insets', () => {
+  for (const source of sources) {
+    const asset = {nodeId:source.nodeId,...normalized.get(source.id)};
+    const old = fixedSheetOutputPositions(asset,{version:'figma-cutter-nine-up-v10',grid:{x:55,y:87.83999633789062}});
+    const current = fixedSheetOutputPositions(asset,{version:'figma-cutter-nine-up-v11',grid:{x:55,y:77.83999633789062}});
+    assert.deepEqual(current,old.map(position=>({...position,y:position.y-10})));
+  }
+});
+
 test('Pre-inset original Conditions releases retain their standard-layout reprint behavior', () => {
   assert.equal(current.historicFullSheetReleaseId,'decks-2415421149796541083-8661fb89145b');
   for (const [id,asset] of Object.entries(current.historicFullSheetAssets)) {
