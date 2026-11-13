@@ -103,12 +103,14 @@ rear frame `4311:139076`, with these measured grids:
 | Epson front | (55, 87.83999633789062) | 2330 x 3170 | 738.5999755859375 x 1034.4000244140625 |
 | Canon rear | (158, 86) | 2310 x 3170 | 738.5999755859375 x 1034.0400390625 |
 
-The front now contains nine white calibration rectangles with black borders.
-Their actual native bounds determine the nine output positions; they are not
+V10 was calibrated with nine white rectangles with black borders. Their measured
+native bounds remain the saved output positions. The front grid may now be empty;
+the sync independently checks its cell centers against those saved positions.
+A partial or unexpected set of guides is rejected. Calibration guides are never
 printed. The front PNG comes from full-size background instance `4317:8435`,
 containing the shifted water at (53, 76) and the two rotated right-side staple
-markers. The sync still validates the parent frame and all nine guides before
-exporting that child. The Canon PNG remains the complete native rear frame,
+markers. The sync validates the parent frame and either the empty grid or complete
+nine-guide set before exporting that child. The Canon PNG remains the complete native rear frame,
 including its narrower grid, white gutters, left staples, top bar, and new
 registration line `4643:106728`. Both PNGs are 2550 x 3300.
 

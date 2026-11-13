@@ -80,9 +80,10 @@ status, artwork eligibility, deployment steps, and commands.
 ## Source artwork and sheet geometry
 
 Current V10 releases use the shared Page_Templates pair measured on November 13,
-2026. Front parent `4311:139557` contains nine calibration rectangles; their
-exact positions and 738.5999755859375 x 1034.4000244140625 dimensions determine
-card placement. Its grid starts at (55, 87.83999633789062), size 2330 x 3170.
+2026. Front parent `4311:139557` uses the saved positions of its original nine
+calibration rectangles, sized 738.5999755859375 x 1034.4000244140625. The grid
+can now be empty; the sync checks its derived centers against the saved positions
+and still rejects partial or unexpected guides. Its grid starts at (55, 87.83999633789062), size 2330 x 3170.
 Only full-page background instance `4317:8435` is exported, so the printed page
 includes water and right-side staple marks without the white guide rectangles.
 

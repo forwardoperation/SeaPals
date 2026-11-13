@@ -62,6 +62,47 @@ test('V10 source validation pins the snapshot and reads parent guides before nat
  const shuffled=documentFor(front);shuffled.children[1].children.reverse();assert.deepEqual(validateCutterTemplate(shuffled,front),front.positions);
 });
 
+
+test('V10 accepts the fully empty front grid without changing its saved Figma-rounded positions',()=>{
+ const node=documentFor(front),before=JSON.stringify(front);node.children[1].children=[];
+ const output=validateCutterTemplate(node,front);
+ assert.deepEqual(output,front.positions);assert.equal(JSON.stringify(front),before);
+ assert.notEqual(output,front.positions);assert.notEqual(output[0],front.positions[0]);
+ const grid=node.children[1],cw=grid.size.x/3,ch=grid.size.y/3;
+ for(let i=0;i<9;i++){
+   const x=grid.relativeTransform[0][2]+(i%3)*cw+(cw-front.grid.cardWidth)/2;
+   const y=grid.relativeTransform[1][2]+Math.floor(i/3)*ch+(ch-front.grid.cardHeight)/2;
+   assert.ok(Math.abs(output[i].x-x)<0.01);assert.ok(Math.abs(output[i].y-y)<0.01);
+ }
+ assert.notEqual(output[0].x,grid.relativeTransform[0][2]+(cw-front.grid.cardWidth)/2,'Keep observed Figma rounding');
+});
+
+test('V10 empty front validation rejects source drift and forged saved positions',()=>{
+ for(const mutate of[
+   (n,t)=>{t.positions[0].x+=1;},(n,t)=>{t.positions[8].y+=1;},
+   (n,t)=>{t.positions[0].height+=1;},(n,t)=>{t.positions[0].rotation=0.01;},
+   (n,t)=>{t.positions[0].x=NaN;},(n,t)=>{t.positions.pop();},
+   (n,t)=>{t.grid.cardWidth+=1;t.positions.forEach(p=>p.width+=1);},
+   n=>{n.children[1].relativeTransform[0][2]+=1;},n=>{n.children[1].size.x+=1;},
+   n=>{n.children[1].gridColumnGap=1;},n=>{n.children[1].paddingLeft=1;},
+   n=>{n.children[1].gridColumnsSizing='1fr 2fr 1fr';},
+   n=>{n.children[0].children[1].relativeTransform[0][2]+=1;},
+   n=>{n.children[0].children[4].visible=false;},
+ ]){const node=documentFor(front),t=structuredClone(front);node.children[1].children=[];mutate(node,t);
+   assert.throws(()=>validateCutterTemplate(node,t),/Cutter template/);}
+});
+
+test('V10 distinguishes an empty grid from hidden, incomplete, or unexpected guides',()=>{
+ for(const mutate of[
+   n=>{delete n.children[1].children;},
+   n=>{n.children[1].children.forEach(c=>{c.visible=false;});},
+   n=>{n.children[1].children=[{id:'unexpected',type:'RECTANGLE',visible:false}];},
+   n=>{n.children[1].children.push({id:'unexpected',type:'RECTANGLE',visible:false});},
+   n=>{n.children[1].children=[{id:'unexpected',type:'FRAME'}];},
+   n=>{n.children[1].children.splice(0,8);},
+ ]){const node=documentFor(front);mutate(node);assert.throws(()=>validateCutterTemplate(node,front),/Cutter template/);}
+});
+
 const frontStaples=n=>n.children[0].children.filter(c=>c.type==='GROUP');
 for(const [label,t,mutate]of[
  ['old front grid',front,n=>{n.children[1].relativeTransform[0][2]=85;}],

@@ -1,7 +1,8 @@
 import { CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10 } from "../../src/lib/manufacturing/backdrops.mjs";
+import { V10_PRINT_LAYOUT } from "../../src/lib/manufacturing/printPlan.mjs";
 
-// V5-V9 use empty centered front grids; V10 measures visible calibration
-// rectangles but exports only the background instance. Canon rears stay native
+// V5-V9 use empty centered front grids; V10 also supports its original nine
+// calibration rectangles but exports only the background instance. Canon rears stay native
 // complete pages. Keep this validation separate from V4's rotated guides.
 const visible = (nodes = []) => nodes.filter(node => node.visible !== false);
 const close = (a, b, tolerance = 0.01) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= tolerance;
@@ -163,7 +164,7 @@ function checkRearRegistrationLine(node, invalid) {
 function measuredFrontPositions(grid, origin, expected, invalid) {
   const ids = new Set(['4642:106214', '4642:106242', '4642:106243', '4642:106244', '4642:106245', '4642:106246', '4642:106247', '4642:106248', '4642:106249']);
   const guides = visible(grid.children);
-  if (guides.length !== 9 || new Set(guides.map(node => node.id)).size !== 9)
+  if (!Array.isArray(grid.children) || grid.children.length !== 9 || guides.length !== 9 || new Set(guides.map(node => node.id)).size !== 9)
     invalid('the front needs its nine measured calibration rectangles');
   return guides.map(node => {
     clean(node, invalid, 'front calibration rectangle', true);
@@ -250,8 +251,22 @@ export function validateGridTemplate(document, template) {
       ['paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom'].some(key => (grid[key] ?? 0) !== 0) ||
       ['gridColumnsSizing', 'gridRowsSizing'].some(key => grid[key]?.replaceAll(' ', '') !== 'repeat(3,minmax(0,1fr))'))
     invalid('the grid must contain three equal rows and columns without gaps or padding');
+  const emptyMeasuredFront = !saved.rear && measured && Array.isArray(grid.children) && grid.children.length === 0;
   let positions;
-  if (!saved.rear && measured) {
+  if (emptyMeasuredFront) {
+    // The owner removed the guides after tuning. Independently derive centers
+    // from the validated native grid and immutable V10 card dimensions before
+    // accepting the saved positions with their original Figma float rounding.
+    const { cardWidth, cardHeight } = V10_PRINT_LAYOUT.grid;
+    if (!close(expected.cardWidth, cardWidth) || !close(expected.cardHeight, cardHeight))
+      invalid('the empty front grid must retain the reviewed V10 card dimensions');
+    const cellWidth = grid.size.x / grid.gridColumnCount, cellHeight = grid.size.y / grid.gridRowCount;
+    positions = Array.from({ length: 9 }, (_, i) => ({
+      x: gridOrigin.x + (i % 3) * cellWidth + (cellWidth - cardWidth) / 2,
+      y: gridOrigin.y + Math.floor(i / 3) * cellHeight + (cellHeight - cardHeight) / 2,
+      width: cardWidth, height: cardHeight, rotation: 0,
+    }));
+  } else if (!saved.rear && measured) {
     positions = measuredFrontPositions(grid, gridOrigin, expected, invalid);
   } else if (!saved.rear) {
     if (visible(grid.children).length) invalid('the front grid must be empty; guides and cards must not enter its background export');
@@ -285,5 +300,5 @@ export function validateGridTemplate(document, template) {
   if (template.positions?.length !== 9 || positions.some((position, index) =>
     ['x', 'y', 'width', 'height', 'rotation'].some(key => !close(position[key], template.positions[index][key], key === 'rotation' ? 0.000001 : 0.01))))
     invalid('the card positions differ from the saved geometry');
-  return positions;
+  return emptyMeasuredFront ? template.positions.map(position => ({ ...position })) : positions;
 }
