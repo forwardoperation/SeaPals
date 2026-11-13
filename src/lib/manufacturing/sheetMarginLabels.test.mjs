@@ -6,7 +6,7 @@ import path from 'node:path';
 import { PNG } from 'pngjs';
 import { PDFDocument, PDFName, PDFArray, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 import { sheetIdentityText, sheetMarginLabels } from './sheetMarginLabels.mjs';
-import { PRINT_LAYOUT, BACK_TEMPLATE, V8_PRINT_LAYOUT, V8_BACK_TEMPLATE, createManufacturingManifest } from './printPlan.mjs';
+import { PRINT_LAYOUT, BACK_TEMPLATE, V8_PRINT_LAYOUT, V8_BACK_TEMPLATE, V9_PRINT_LAYOUT, V9_BACK_TEMPLATE, createManufacturingManifest } from './printPlan.mjs';
 import { createHoloBatch } from './holoBatch.mjs';
 import { fixedSheetAssets, FLYER_RECIPE_VERSION } from './recipes.mjs';
 import { conditionOutputMapping } from './sourceGeometry.mjs';
@@ -49,10 +49,13 @@ test('Starter Kit pages identify their component deck and copy; flyers have no l
   assert.equal(JSON.stringify({ manifest, release }), before);
 });
 
-test('every V9 card page places complete readable labels in white margins clear of cards, water and staple marks', () => {
+test('V9 and V10 labels clear actual card bounds, water and both front/rear staple positions', () => {
+  for (const printTemplates of [
+    { version: V9_PRINT_LAYOUT.version, fronts: V9_PRINT_LAYOUT, backs: V9_BACK_TEMPLATE }, templates,
+  ]) {
   const { manifest, release } = fixture([
     { productId: 'stinging-fortress', quantity: 2 }, { productId: 'conditions-deck', quantity: 1 },
-  ]);
+  ], 'stock', printTemplates);
   for (const id of fixedSheetAssets('conditions-deck')) {
     const mapping = conditionOutputMapping(id);
     release.assets[id] = { outputPositions: mapping.outputPositions,
@@ -68,13 +71,31 @@ test('every V9 card page places complete readable labels in white margins clear 
       assert.equal(label.margin, side === 'fronts' ? 'right' : 'left');
       const grid = side === 'fronts' ? manifest.layout.grid : release.printTemplates.backs.grid;
       assert.ok(separated(label.bounds, grid, 16));
-      if (side === 'fronts') assert.ok(label.bounds.x > 2420, 'outside the water background');
-      else for (const y of [468, 2646]) assert.ok(separated(label.bounds, { x: 25, y, width: 78, height: 231 }, 16));
+      const v10 = printTemplates.version === 'figma-cutter-nine-up-v10';
+      if (side === 'fronts') assert.ok(label.bounds.x > (v10 ? 2390 : 2420), 'outside the water background');
+      if (side === 'backs' || v10) for (const y of [468, 2646])
+        assert.ok(separated(label.bounds, { x: side === 'fronts' ? 2436 : 25, y, width: 78, height: 231 }, 16));
+      for (const card of side === 'fronts' ? manifest.layout.positions : sheet.backs.template.positions)
+        assert.ok(separated(label.bounds, card, 16));
     }
     if (labels.length === 2) {
       assert.equal(labels[0].text, stockNumber);
       assert.ok(separated(labels[0].bounds, labels[1].bounds, 40));
     }
+  }
+  }
+});
+
+test('saved V9 first-stock labels retain their exact earlier placement', () => {
+  const printTemplates = { version: V9_PRINT_LAYOUT.version, fronts: V9_PRINT_LAYOUT, backs: V9_BACK_TEMPLATE };
+  const { manifest, release } = fixture([{ productId: 'reef-dive-pack', quantity: 1 }], 'stock', printTemplates);
+  for (const [side, stockX, identityX] of [['fronts', 2440.5, 2442.5], ['backs', 79.19999694824219, 81.19999694824219]]) {
+    const labels = sheetMarginLabels(manifest, release, manifest.sheets[0].sheetId, side);
+    assert.deepEqual(labels.map(label => label.text), [stockNumber, 'Reef Dive Pack | Page 1 of 1']);
+    assert.deepEqual(labels.map(label => label.bounds), [
+      { x: stockX, y: 950.8, width: 36, height: 820.8 },
+      { x: identityX, y: 1811.6, width: 32, height: 537.6 },
+    ]);
   }
 });
 

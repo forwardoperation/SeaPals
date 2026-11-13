@@ -1,7 +1,8 @@
-import { CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9 } from "../../src/lib/manufacturing/backdrops.mjs";
+import { CUTTER_LAYOUT_V5, CUTTER_LAYOUT_V6, CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10 } from "../../src/lib/manufacturing/backdrops.mjs";
 
-// V5 and later use empty centered front grids and native, complete Canon rear pages.
-// Its validation is deliberately separate from V4's rotated guide rectangles.
+// V5-V9 use empty centered front grids; V10 measures visible calibration
+// rectangles but exports only the background instance. Canon rears stay native
+// complete pages. Keep this validation separate from V4's rotated guides.
 const visible = (nodes = []) => nodes.filter(node => node.visible !== false);
 const close = (a, b, tolerance = 0.01) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= tolerance;
 const identity = [[1, 0], [0, 1]];
@@ -84,8 +85,10 @@ function checkSharedBackground(node, saved, invalid, version) {
   const children = visible(node.children);
   if (!saved.rear) {
     const [unusedBar, water] = children;
-    if (children.length !== 2 || unusedBar?.id !== 'I4317:8435;4317:8421' || water?.id !== 'I4317:8435;4317:8422')
-      invalid('the shared front must contain only its water and unpainted guide');
+    if (children.length !== (version === CUTTER_LAYOUT_V10 ? 4 : 2) || unusedBar?.id !== 'I4317:8435;4317:8421' || water?.id !== 'I4317:8435;4317:8422')
+      invalid(version === CUTTER_LAYOUT_V10
+        ? 'the shared front background needs its water, unpainted guide, and two staple markers'
+        : 'the shared front must contain only its water and unpainted guide');
     clean(unusedBar, invalid, 'unpainted front guide');
     if (unusedBar.type !== 'RECTANGLE' || visible(unusedBar.fills).length)
       invalid('the retired front guide must remain unpainted');
@@ -93,8 +96,9 @@ function checkSharedBackground(node, saved, invalid, version) {
     if (water.type !== 'RECTANGLE' || !onePaint(water, paint => paint.type === 'IMAGE' &&
         (paint.opacity ?? 1) === 1 && (paint.blendMode ?? 'NORMAL') === 'NORMAL' && paint.scaleMode === 'TILE'))
       invalid('the shared ocean background must retain its visible tiled image');
-    translation(water, invalid, 'shared ocean background', version === CUTTER_LAYOUT_V9 ? 83 : 68, 61);
+    translation(water, invalid, 'shared ocean background', version === CUTTER_LAYOUT_V10 ? 53 : version === CUTTER_LAYOUT_V9 ? 83 : 68, version === CUTTER_LAYOUT_V10 ? 76 : 61);
     dimensions(water, 2337, 3182, invalid, 'shared ocean background');
+    if (version === CUTTER_LAYOUT_V10) checkFrontStaples(children.slice(2), invalid);
     return;
   }
   if (children.length !== 2) invalid('the shared rear background needs only its two staple markers');
@@ -121,6 +125,56 @@ function checkSharedBackground(node, saved, invalid, version) {
         !matrixMatches(label, [[0, -1, 62], [1, 0, 0]]) || label.style?.fontSize !== 39 || label.style?.fontWeight !== 700)
       invalid('the rotated staple label changed');
   }
+}
+function checkFrontStaples(groups, invalid) {
+  const ids = ['I4317:8435;4642:106223', 'I4317:8435;4642:106226'];
+  for (const [index, group] of groups.entries()) {
+    clean(group, invalid, 'front staple marker');
+    if (group.type !== 'GROUP' || group.id !== ids[index] || visible(group.fills).length || group.clipsContent !== false ||
+        !matrixMatches(group, [[-1, 0, 2514], [0, -1, index === 0 ? 2877 : 699]]))
+      invalid('the rotated front staple marker changed');
+    dimensions(group, 78, 231, invalid, 'front staple marker');
+    const parts = visible(group.children), [box, label] = parts;
+    if (parts.length !== 2 || box?.type !== 'RECTANGLE' || label?.type !== 'TEXT')
+      invalid('the front staple marker needs its dashed box and text');
+    clean(box, invalid, 'front staple box', true);
+    dimensions(box, 78, 231, invalid, 'front staple box');
+    translation(box, invalid, 'front staple box', 0, 0);
+    const border = visible(box.strokes);
+    if (visible(box.fills).length || border.length !== 1 || !blackPaint(border[0]) || box.strokeWeight !== 2 ||
+        box.strokeAlign !== 'INSIDE' || JSON.stringify(box.strokeDashes) !== '[12,12]')
+      invalid('the front staple box must retain its black dashed border');
+    clean(label, invalid, 'front staple label');
+    dimensions(label, 231, 46, invalid, 'front staple label');
+    if (label.characters !== 'STAPLE' || !onePaint(label, blackPaint) ||
+        !matrixMatches(label, [[0, -1, 62], [1, 0, 0]]) || label.style?.fontSize !== 39 || label.style?.fontWeight !== 700)
+      invalid('the rotated front staple label changed');
+  }
+}
+function checkRearRegistrationLine(node, invalid) {
+  clean(node, invalid, 'rear registration line', true);
+  const strokes = visible(node.strokes);
+  if (node.type !== 'LINE' || node.id !== '4643:106728' || visible(node.fills).length ||
+      strokes.length !== 1 || !blackPaint(strokes[0]) || node.strokeWeight !== 9 || node.strokeAlign !== 'CENTER' ||
+      (node.strokeDashes?.length ?? 0) !== 0 || !matrixMatches(node, [[0, -1, 1309], [1, 0, 0]]))
+    invalid('the rear registration line changed');
+  dimensions(node, 87, 0, invalid, 'rear registration line');
+}
+function measuredFrontPositions(grid, origin, expected, invalid) {
+  const ids = new Set(['4642:106214', '4642:106242', '4642:106243', '4642:106244', '4642:106245', '4642:106246', '4642:106247', '4642:106248', '4642:106249']);
+  const guides = visible(grid.children);
+  if (guides.length !== 9 || new Set(guides.map(node => node.id)).size !== 9)
+    invalid('the front needs its nine measured calibration rectangles');
+  return guides.map(node => {
+    clean(node, invalid, 'front calibration rectangle', true);
+    const strokes = visible(node.strokes);
+    if (!ids.has(node.id) || node.type !== 'RECTANGLE' || !onePaint(node, whitePaint) || visible(node.children).length ||
+        strokes.length !== 1 || !blackPaint(strokes[0]) || node.strokeWeight !== 15 || node.strokeAlign !== 'INSIDE')
+      invalid('the front calibration rectangle artwork changed');
+    dimensions(node, expected.cardWidth, expected.cardHeight, invalid, 'front calibration rectangle');
+    const point = translation(node, invalid, 'front calibration rectangle');
+    return { x: origin.x + point.x, y: origin.y + point.y, width: node.size.x, height: node.size.y, rotation: 0 };
+  }).sort((a, b) => Math.abs(a.y - b.y) < 0.01 ? a.x - b.x : a.y - b.y);
 }
 function checkSharedTopBar(node, invalid) {
   clean(node, invalid, 'rear top bar');
@@ -162,7 +216,7 @@ function checkSharedCardArtwork(card, invalid) {
 }
 export function validateGridTemplate(document, template) {
   const invalid = detail => { throw new Error(`Cutter template ${template.name}: ${detail}. Review the Figma template and saved print geometry before syncing; the active artwork release is unchanged.`); };
-  const saved = ([CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9].includes(template.version) ? sharedSources : sources)[template.nodeId], expected = template.grid;
+  const saved = ([CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10].includes(template.version) ? sharedSources : sources)[template.nodeId], expected = template.grid;
   if (!saved || !expected || !document || document.type !== 'FRAME' || document.id !== template.nodeId || document.name !== template.name)
     invalid('the expected template frame is missing or renamed');
   clean(document, invalid, 'page');
@@ -173,12 +227,16 @@ export function validateGridTemplate(document, template) {
     invalid('the page must be clipped to 2550 x 3300 pixels');
   const fills = visible(document.fills);
   if (fills.length !== 1 || !whitePaint(fills[0])) invalid('the page needs its opaque white paper fill');
-  const children = visible(document.children), grid = saved.shared ? children[1] : children.at(-1);
-  if (children.length !== (saved.shared && saved.rear ? 3 : saved.background ? 2 : 1) || grid?.type !== 'FRAME' || grid.name !== 'card_backs' || grid.id !== expected.nodeId)
+  const children = visible(document.children), grid = saved.shared ? children[1] : children.at(-1), measured = template.version === CUTTER_LAYOUT_V10;
+  if (children.length !== (saved.shared && saved.rear ? (measured ? 4 : 3) : saved.background ? 2 : 1) || grid?.type !== 'FRAME' || grid.name !== 'card_backs' || grid.id !== expected.nodeId)
     invalid('the saved card_backs grid and background layers are required');
   if (saved.shared) {
     checkSharedBackground(children[0], saved, invalid, template.version);
-    if (saved.rear) checkSharedTopBar(children[2], invalid);
+    if (saved.rear) {
+      checkSharedTopBar(children[2], invalid);
+      if (measured) checkRearRegistrationLine(children[3], invalid);
+    } else if (measured && template.background?.nodeId !== saved.background)
+      invalid('the front export must use its full-page background instance without calibration rectangles');
   } else if (saved.background) checkBackground(children[0], { ...saved,
     waterX: template.version === CUTTER_LAYOUT_V5 ? saved.legacyWaterX
       : template.version === CUTTER_LAYOUT_V6 ? saved.v6WaterX : saved.waterX,
@@ -193,7 +251,9 @@ export function validateGridTemplate(document, template) {
       ['gridColumnsSizing', 'gridRowsSizing'].some(key => grid[key]?.replaceAll(' ', '') !== 'repeat(3,minmax(0,1fr))'))
     invalid('the grid must contain three equal rows and columns without gaps or padding');
   let positions;
-  if (!saved.rear) {
+  if (!saved.rear && measured) {
+    positions = measuredFrontPositions(grid, gridOrigin, expected, invalid);
+  } else if (!saved.rear) {
     if (visible(grid.children).length) invalid('the front grid must be empty; guides and cards must not enter its background export');
     // Center native card dimensions in each of the nine equal cells, exactly
     // as the visible rear instances are centered in the corresponding grid.

@@ -69,6 +69,20 @@ test('V9 translates both Conditions mappings with the new shared grids without c
   }
 });
 
+test('V10 Conditions follows the updated front grid while retaining reviewed native insets', () => {
+  for (const source of sources) {
+    const fresh = {nodeId:source.nodeId,...normalized.get(source.id)}, before = JSON.stringify(fresh.outputPositions);
+    const previous = fixedSheetOutputPositions(fresh,{version:'figma-cutter-nine-up-v9',grid:{x:85,y:62.84000015258789}});
+    const current = fixedSheetOutputPositions(fresh,{version:'figma-cutter-nine-up-v10',grid:{x:55,y:87.83999633789062}});
+    for (let i=0;i<9;i++) {
+      assert.ok(Math.abs(current[i].x-previous[i].x+30)<1e-10);
+      assert.ok(Math.abs(current[i].y-previous[i].y-(87.83999633789062-62.84000015258789))<1e-10);
+      assert.deepEqual({...current[i],x:previous[i].x,y:previous[i].y},previous[i]);
+    }
+    assert.equal(JSON.stringify(fresh.outputPositions),before);
+  }
+});
+
 test('Pre-inset original Conditions releases retain their standard-layout reprint behavior', () => {
   assert.equal(current.historicFullSheetReleaseId,'decks-2415421149796541083-8661fb89145b');
   for (const [id,asset] of Object.entries(current.historicFullSheetAssets)) {

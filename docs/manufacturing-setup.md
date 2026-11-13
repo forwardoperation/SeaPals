@@ -92,6 +92,36 @@ bytes (437 PNGs). All eight saved jobs and their complete releases were retained
 checkout; its plan, exact manifests, PNGs, and cleanup receipt support recovery.
 This is a local recovery archive, not a separate off-device backup.
 
+## November 13 templates: immutable V10 layout
+
+V10 follows Page_Templates snapshot `2421344107286948694` /
+`2026-11-13T14:03:42Z`. It keeps the shared front parent `4311:139557` and
+rear frame `4311:139076`, with these measured grids:
+
+| Page | Grid origin | Grid size | Card dimensions |
+|---|---|---|---|
+| Epson front | (55, 87.83999633789062) | 2330 x 3170 | 738.5999755859375 x 1034.4000244140625 |
+| Canon rear | (158, 86) | 2310 x 3170 | 738.5999755859375 x 1034.0400390625 |
+
+The front now contains nine white calibration rectangles with black borders.
+Their actual native bounds determine the nine output positions; they are not
+printed. The front PNG comes from full-size background instance `4317:8435`,
+containing the shifted water at (53, 76) and the two rotated right-side staple
+markers. The sync still validates the parent frame and all nine guides before
+exporting that child. The Canon PNG remains the complete native rear frame,
+including its narrower grid, white gutters, left staples, top bar, and new
+registration line `4643:106728`. Both PNGs are 2550 x 3300.
+
+The release replaces only the two template PNGs. Existing card artwork, fixed
+sheets, Conditions crops and insets, catalog restrictions, and Starter Kit flyers
+are retained. Conditions insets move with the new front grid without resizing.
+V10 keeps the per-page set/deck labels in the clear middle margin and the first
+stock sheet's stock number; flyers stay unmarked. Printer transport is unchanged.
+
+New jobs use V10 after activation. Every earlier version, including V9, retains
+its literal geometry and pinned artwork for saved jobs and reprints. The refresh
+does not rewrite saved manifests or send a physical test print.
+
 ## November 11 template alignment: immutable V9 layout
 
 V9 follows Page_Templates snapshot `2420571525357308443` /
@@ -1128,11 +1158,11 @@ export mode requires complete mappings for every eligible printing.
   Conditions, dice, and tokens. Standalone prepared accessory SKUs are supported.
   Existing packaging supplies are checked during packing; this integration
   does not generate new box/wrapper artwork or carrier labels.
-- New releases use the November 11 V9 shared templates: upright native Epson
+- New releases use the November 13 V10 shared templates: upright native Epson
   cards centered in the measured grid, plus the complete Canon rear master
   with its white gutters. Standard and holo replenishment share the same pair;
   randomized packs retain named finished-holo pull instructions. Existing
-  V1-V8 jobs retain their original layouts and assets. See
+  V1-V9 jobs retain their original layouts and assets. See
   `manufacturing-workflow.md` for the measured references and margin labels.
   No automatic duplexing or separate alignment print is used.
 - Work tickets, fronts, and backs have separate durable attempt states. The

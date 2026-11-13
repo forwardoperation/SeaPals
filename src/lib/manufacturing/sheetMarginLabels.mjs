@@ -1,4 +1,4 @@
-import { CUTTER_LAYOUT_V9 } from './backdrops.mjs';
+import { CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10 } from './backdrops.mjs';
 import { placeSheetMarginText, stockSheetLabel } from './stockSheetLabel.mjs';
 
 const deckNames = Object.freeze({
@@ -49,10 +49,10 @@ export function sheetMarginLabels(manifest, release, sheetId, side) {
     ...(stock ? [{ kind: 'stock', text: stock.text, fontSize: 36 }] : []),
     { kind: 'identity', text: identity, fontSize: stock ? 32 : 36 },
   ];
-  // V9's source was reviewed with staple marks at y468..699 and y2646..2877.
-  // Only this version may use the larger middle band. Earlier saved templates
-  // keep their previously audited band and stock number if both labels won't fit.
-  const options = manifest.layout?.version === CUTTER_LAYOUT_V9
+  // V9 rear and V10 front/rear staple marks occupy y468..699 and y2646..2877.
+  // These reviewed versions may use the larger middle band. Earlier saved
+  // templates keep their audited band and stock number if both labels won't fit.
+  const options = [CUTTER_LAYOUT_V9, CUTTER_LAYOUT_V10].includes(manifest.layout?.version)
     ? { bandTop: 800, bandBottom: 2500, gap: 40 } : undefined;
   const labels = placeSheetMarginText(manifest, release, sheetId, side, entries, options);
   if (labels.length) return labels;

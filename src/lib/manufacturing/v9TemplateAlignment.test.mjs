@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { PRINT_LAYOUT, BACK_TEMPLATE, V8_PRINT_LAYOUT, V8_BACK_TEMPLATE, resolvePrintTemplates, createManufacturingManifest, preflightPrintAssets, verifyManifest } from './printPlan.mjs';
+import { V9_PRINT_LAYOUT as PRINT_LAYOUT, V9_BACK_TEMPLATE as BACK_TEMPLATE, V8_PRINT_LAYOUT, V8_BACK_TEMPLATE, resolvePrintTemplates, createManufacturingManifest, preflightPrintAssets, verifyManifest } from './printPlan.mjs';
 import { CUTTER_LAYOUT_V8, CUTTER_LAYOUT_V9, backgroundsForLayout } from './backdrops.mjs';
 import { contentHash, buildPrintingCatalog } from './boosters.mjs';
 import { validateRelease } from './integration.mjs';
 import { createHoloBatch, verifyHoloBatch } from './holoBatch.mjs';
-import { buildSourceMap, checkCutterTemplates, validateCutterTemplate } from '../../../scripts/manufacturing/sync-figma.mjs';
+import { checkCutterTemplates, validateCutterTemplate } from '../../../scripts/manufacturing/sync-figma.mjs';
 
 const fixture = JSON.parse(await readFile(new URL('../../../scripts/manufacturing/fixtures/grid-template-nov11.json', import.meta.url), 'utf8'));
 const templates = { version: CUTTER_LAYOUT_V9, fronts: PRINT_LAYOUT, backs: BACK_TEMPLATE };
@@ -14,7 +14,6 @@ const front = { ...PRINT_LAYOUT, version: CUTTER_LAYOUT_V9 }, back = { ...BACK_T
 const documentFor = template => structuredClone(fixture.documents[template.nodeId]);
 const data = async name => JSON.parse(await readFile(new URL('../../data/' + name, import.meta.url), 'utf8'));
 const setList = await data('gallery-set-list.json'), gallery = await data('gallery-images.json');
-const holoSources = JSON.parse(await readFile(new URL('../../../scripts/manufacturing/figma-holo-sources.json',import.meta.url),'utf8'));
 const catalog = buildPrintingCatalog(setList,gallery);
 const mockAsset = (nodeId,width=2550,height=3300) => ({nodeId,width,height,sha256:'b'.repeat(64),path:'manufacturing/sha256/'+'b'.repeat(64)+'.png'});
 const releaseFor = selected => validateRelease({releaseId:'v9-alignment-test',figmaVersion:'fixture',catalog,printTemplates:selected,assets:{
@@ -33,7 +32,6 @@ test('V9 records the November 11 shared grids and retains immutable V8 template 
  }
  const resolved=resolvePrintTemplates(templates);
  assert.deepEqual(resolved.holoLayout,resolved.layout); assert.deepEqual(resolved.holoBackTemplate,resolved.backTemplate);
- assert.deepEqual(resolvePrintTemplates(buildSourceMap(setList,gallery,holoSources).templates),resolvePrintTemplates(templates));
 });
 
 test('V9 native REST capture validates full measured shared fronts and rear interiors', () => {

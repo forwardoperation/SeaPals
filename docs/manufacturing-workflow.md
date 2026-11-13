@@ -79,7 +79,28 @@ status, artwork eligibility, deployment steps, and commands.
 
 ## Source artwork and sheet geometry
 
-Current V9 releases use the shared Page_Templates pair measured on November 11,
+Current V10 releases use the shared Page_Templates pair measured on November 13,
+2026. Front parent `4311:139557` contains nine calibration rectangles; their
+exact positions and 738.5999755859375 x 1034.4000244140625 dimensions determine
+card placement. Its grid starts at (55, 87.83999633789062), size 2330 x 3170.
+Only full-page background instance `4317:8435` is exported, so the printed page
+includes water and right-side staple marks without the white guide rectangles.
+
+The Canon source remains the whole frame `4311:139076`. Its grid starts at
+(158, 86), size 2310 x 3170, with 738.5999755859375 x 1034.0400390625 backs.
+The native PNG includes its white gutters, staple marks, top bar, and registration
+line. Both exports are 2550 x 3300. Standard cards and separate holo batches use
+the same pair. Conditions keeps its reviewed native insets translated to the
+new front grid. Other card artwork, fixed-sheet crops, and flyers are retained.
+
+V10 preserves set/deck and page labels in the white side margin, with the stock
+number on the first stock sheet. Flyers stay unmarked. The preview and PDF use
+the same geometry, and printer placement settings do not change. New jobs use
+V10 after release activation; existing jobs and reprints keep their saved version.
+
+### Historical V9 geometry (November 11)
+
+V9 releases use the shared Page_Templates pair measured on November 11,
 2026. Both are full native 2550 x 3300 PNGs for Letter at 300 DPI:
 
 | Use | Source frame | Grid origin (Figma pixels) |
