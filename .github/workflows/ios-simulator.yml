@@ -34,8 +34,6 @@ jobs:
     timeout-minutes: 35
     env:
       CI: true
-      SEAREALM_SIMULATOR_APP: ${{ runner.temp }}/searealm-derived/Build/Products/Debug-iphonesimulator/App.app
-      SEAREALM_IOS_OUTPUT: ${{ runner.temp }}/searealm-ios-output
     steps:
       - name: Check out app source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -53,7 +51,9 @@ jobs:
           sw_vers
           xcodebuild -version
           xcrun --sdk iphonesimulator --show-sdk-version
-          mkdir -p "$SEAREALM_IOS_OUTPUT"
+          printf 'SEAREALM_SIMULATOR_APP=%s/searealm-derived/Build/Products/Debug-iphonesimulator/App.app\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          printf 'SEAREALM_IOS_OUTPUT=%s/searealm-ios-output\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/searealm-ios-output"
 
       - name: Install shared dependencies
         run: npm ci --no-audit --no-fund
@@ -103,6 +103,6 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: searealm-ios-simulator-${{ github.run_number }}
-          path: ${{ env.SEAREALM_IOS_OUTPUT }}
+          path: ${{ runner.temp }}/searealm-ios-output
           if-no-files-found: warn
           retention-days: 3
