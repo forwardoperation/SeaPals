@@ -4644,7 +4644,9 @@ export default function Simulator({
   accessibilitySettings = null,
   onOpenAccessibilitySettings = null,
   onStartTutorial = null,
+  appRuntime = null,
 } = {}) {
+  const simulatorStorage = appRuntime?.storage ?? (typeof window !== "undefined" ? window.localStorage : null);
   const isStoryMode = Boolean(storyMode);
   const tutorialRuntime = storyMode?.tutorial ?? null;
   const embeddedLesson = previewExperience ? tutorialRuntime?.lesson ?? null : null;
@@ -4690,7 +4692,7 @@ export default function Simulator({
     ? embeddedLesson.randomSeed >>> 0
     : 0x5EA9A15;
   const simulatorResumeEnabled = Boolean(previewExperience && !isStoryMode && !tutorialRuntime);
-  const simulatorAnalyticsEnabled = Boolean(previewExperience && !isStoryMode && !tutorialRuntime);
+  const simulatorAnalyticsEnabled = Boolean(previewExperience && !isStoryMode && !tutorialRuntime && !appRuntime);
   const simulatorAnalyticsRef = useRef(null);
   const simulatorAnalyticsLegacyResumeRef = useRef(false);
   const simulatorAnalyticsEventsRef = useRef(new WeakSet());
@@ -5216,7 +5218,7 @@ export default function Simulator({
 
   useEffect(() => {
     if (!simulatorResumeEnabled) return;
-    let checkpoint = readSimulatorResumeCheckpoint(window.localStorage, {
+    let checkpoint = readSimulatorResumeCheckpoint(simulatorStorage, {
       isKnownCardId: (cardId) => Boolean(cardsById[cardId]),
     });
     if (
@@ -5226,7 +5228,7 @@ export default function Simulator({
         || !getPlayableDeckById(checkpoint.state.selectedOpponentDeckId)
       )
     ) {
-      clearSimulatorResumeCheckpoint(window.localStorage);
+      clearSimulatorResumeCheckpoint(simulatorStorage);
       checkpoint = null;
     }
     setResumeCheckpoint(checkpoint);
@@ -21227,7 +21229,7 @@ export default function Simulator({
     setStartingPlayer(chosenStarter);
     setOpeningOpponentTurn(false);
     if (simulatorResumeEnabled) {
-      writeSimulatorResumeCheckpoint(window.localStorage, {
+      writeSimulatorResumeCheckpoint(simulatorStorage, {
         ...getCurrentSimulatorResumeState(),
         startingPlayer: chosenStarter,
         openingOpponentTurn: false,
@@ -21389,7 +21391,7 @@ export default function Simulator({
   }
 
   function startNewGameFromResumePrompt() {
-    if (simulatorResumeEnabled) clearSimulatorResumeCheckpoint(window.localStorage);
+    if (simulatorResumeEnabled) clearSimulatorResumeCheckpoint(simulatorStorage);
     resolveResumeDecision();
   }
 
@@ -21555,7 +21557,7 @@ export default function Simulator({
   }
 
   function restartGame(deckId = selectedDeckId, opponentDeckId = selectedOpponentDeckId, nextVictoryTarget = pendingVictoryTarget, nextOpponentDifficulty = pendingOpponentDifficulty) {
-    if (simulatorResumeEnabled) clearSimulatorResumeCheckpoint(window.localStorage);
+    if (simulatorResumeEnabled) clearSimulatorResumeCheckpoint(simulatorStorage);
     turnAdvanceRequestedRef.current = false;
     resolveResumeDecision();
     cancelOpeningCoinFlip();
@@ -21814,9 +21816,13 @@ export default function Simulator({
       exitStoryMode();
       return;
     }
+    if (appRuntime?.onHome) {
+      appRuntime.onHome();
+      return;
+    }
     if (simulatorResumeEnabled) {
       resumeSaveSuppressedRef.current = true;
-      clearSimulatorResumeCheckpoint(window.localStorage);
+      clearSimulatorResumeCheckpoint(simulatorStorage);
     }
     window.location.assign("/");
   }
@@ -22064,7 +22070,7 @@ export default function Simulator({
     if (!simulatorResumeCheckpointStable) return undefined;
     const saveCheckpoint = () => {
       if (resumeSaveSuppressedRef.current) return;
-      writeSimulatorResumeCheckpoint(window.localStorage, getCurrentSimulatorResumeState());
+      writeSimulatorResumeCheckpoint(simulatorStorage, getCurrentSimulatorResumeState());
     };
     const saveWhenHidden = () => {
       if (document.visibilityState === "hidden") saveCheckpoint();
@@ -22082,7 +22088,7 @@ export default function Simulator({
   useEffect(() => {
     if (!simulatorResumeEnabled || !resumeCheckpointReady || !gameResult) return;
     resumeSaveSuppressedRef.current = true;
-    clearSimulatorResumeCheckpoint(window.localStorage);
+    clearSimulatorResumeCheckpoint(simulatorStorage);
   }, [gameResult, resumeCheckpointReady, simulatorResumeEnabled]);
   const resumeCheckpointPhaseLabel = resumeCheckpoint?.state.gamePhase === "setup"
     ? "Setup round"
@@ -26837,7 +26843,7 @@ export default function Simulator({
                     </div>
                   ) : null}
                   <button type="button" onClick={openNewGameSetup} className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">{isStoryMode ? "Restart Duel" : "Start New Game"}</button>
-                  <button type="button" onClick={() => setBugReportOpen(true)} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-amber-100 hover:bg-amber-300/10">Report a bug</button>
+                  {!appRuntime ? <button type="button" onClick={() => setBugReportOpen(true)} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-amber-100 hover:bg-amber-300/10">Report a bug</button> : null}
                   {accessibilitySettingsAvailable ? (
                     <button
                       type="button"
@@ -26853,7 +26859,7 @@ export default function Simulator({
                     <button type="button" onClick={requestSimulatorExit} className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Return to {storyReturnLabel}</button>
                   ) : (
                     <>
-                      <a href="/adventure" className="mt-1 block rounded-lg bg-cyan-400/10 px-3 py-2 text-sm font-bold text-cyan-100 hover:bg-cyan-300/20">Play Reefbound Story</a>
+                      {!appRuntime ? <a href="/adventure" className="mt-1 block rounded-lg bg-cyan-400/10 px-3 py-2 text-sm font-bold text-cyan-100 hover:bg-cyan-300/20">Play Reefbound Story</a> : null}
                       <button type="button" onClick={requestSimulatorExit} className="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm font-bold text-slate-200 hover:bg-white/10">Exit to Home</button>
                     </>
                   )}
@@ -29099,7 +29105,7 @@ export default function Simulator({
             <div className="text-xs font-black uppercase tracking-[0.22em] text-cyan-300">Game Saved</div>
             <h2 id="simulator-resume-title" className="mt-2 text-2xl font-black sm:text-3xl">Resume your previous game?</h2>
             <p id="simulator-resume-description" className="mt-4 text-base leading-relaxed text-slate-200">
-              Continue the unfinished match saved in this browser, or clear it and return to game setup.
+              {appRuntime ? "Continue the unfinished match saved on this device, or start a new game." : "Continue the unfinished match saved in this browser, or clear it and return to game setup."}
             </p>
             <div className="mt-5 rounded-2xl border border-emerald-300/30 bg-emerald-300/10 px-4 py-3">
               <strong className="block text-base text-emerald-100">{resumeCheckpointPhaseLabel}</strong>
@@ -29142,14 +29148,14 @@ export default function Simulator({
       {simulatorExitConfirmationOpen ? (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="simulator-exit-title" aria-describedby="simulator-exit-description">
           <div className="w-full max-w-md rounded-[2rem] border border-cyan-300/45 bg-slate-900 p-6 text-white shadow-2xl sm:p-8">
-            <div className="text-xs font-black uppercase tracking-[0.22em] text-cyan-300">Quit Game</div>
-            <h2 id="simulator-exit-title" className="mt-2 text-2xl font-black sm:text-3xl">Are you sure you want to quit the game?</h2>
+            <div className="text-xs font-black uppercase tracking-[0.22em] text-cyan-300">{appRuntime ? "Back to your reef" : "Quit Game"}</div>
+            <h2 id="simulator-exit-title" className="mt-2 text-2xl font-black sm:text-3xl">{appRuntime ? "Return to home?" : "Are you sure you want to quit the game?"}</h2>
             <p id="simulator-exit-description" className="mt-4 text-base leading-relaxed text-slate-200">
-              Your current game will end and its board progress will be lost.
+              {appRuntime ? "You can continue this match from its last saved checkpoint." : "Your current game will end and its board progress will be lost."}
             </p>
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={confirmSimulatorExit} className="min-h-11 rounded-full border border-rose-300/50 px-6 py-2.5 text-sm font-black text-rose-100 transition hover:bg-rose-300/10">
-                Quit Game
+                {appRuntime ? "Return home" : "Quit Game"}
               </button>
               <button type="button" autoFocus onClick={() => setSimulatorExitConfirmationOpen(false)} className="min-h-11 rounded-full bg-emerald-400 px-7 py-2.5 text-sm font-black text-slate-950 shadow-lg transition hover:bg-emerald-300">
                 Keep Playing
@@ -29161,6 +29167,8 @@ export default function Simulator({
 
       {v2NewGameSetupActive ? (
         <SimulatorV2NewGameSetup
+          standalone={Boolean(appRuntime)}
+          onHome={appRuntime?.onHome ?? null}
           decks={prebuiltDecks}
           initialPlayerDeckId={selectedDeckId}
           initialOpponentDeckId={selectedOpponentDeckId}

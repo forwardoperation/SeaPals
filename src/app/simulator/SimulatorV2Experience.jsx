@@ -15,7 +15,7 @@ const {
 } = lessonCurriculum;
 const SIMULATOR_V2_LESSON_MODULES = lessonCurriculum.SIMULATOR_V2_LESSON_MODULES ?? [];
 
-export default function SimulatorV2Experience({ initialDeckId, initialTutorial = false, onExitTutorial = null }) {
+export default function SimulatorV2Experience({ initialDeckId, initialTutorial = false, onExitTutorial = null, appRuntime = null }) {
   const [lessonId, setLessonId] = useState(null);
   const [attempt, setAttempt] = useState(0);
   const [panel, setPanel] = useState(initialTutorial ? "chooser" : null);
@@ -25,10 +25,10 @@ export default function SimulatorV2Experience({ initialDeckId, initialTutorial =
 
   useEffect(() => {
     try {
-      const saved = parseSimulatorV2LessonProgress(window.localStorage.getItem(SIMULATOR_V2_LESSON_PROGRESS_KEY));
+      const saved = parseSimulatorV2LessonProgress((appRuntime?.storage ?? window.localStorage).getItem(SIMULATOR_V2_LESSON_PROGRESS_KEY));
       setCompletedLessonIds(saved.completedLessonIds);
     } catch { /* Lessons also work when browser storage is unavailable. */ }
-  }, []);
+  }, [appRuntime?.storage]);
 
   const selectLesson = useCallback((id) => {
     if (!getSimulatorV2Lesson(id)) return;
@@ -41,10 +41,11 @@ export default function SimulatorV2Experience({ initialDeckId, initialTutorial =
     if (!lessonId) return;
     setCompletedLessonIds((current) => {
       const next = recordSimulatorV2LessonCompletion({ version: 4, completedLessonIds: current }, lessonId);
-      try { window.localStorage.setItem(SIMULATOR_V2_LESSON_PROGRESS_KEY, JSON.stringify(next)); } catch { /* Optional persistence. */ }
+      try { (appRuntime?.storage ?? window.localStorage).setItem(SIMULATOR_V2_LESSON_PROGRESS_KEY, JSON.stringify(next)); } catch { /* Optional persistence. */ }
       return next.completedLessonIds;
     });
-  }, [lessonId]);
+    appRuntime?.onLessonComplete?.(lessonId);
+  }, [lessonId, appRuntime]);
 
   const beginLesson = useCallback(() => {
     setAttempt((current) => current + 1);
@@ -72,6 +73,8 @@ export default function SimulatorV2Experience({ initialDeckId, initialTutorial =
         <Simulator
           key={lesson ? `${lesson.id}:${attempt}` : `match:${returnDeckId ?? "default"}`}
           initialDeckId={returnDeckId}
+          appRuntime={appRuntime}
+          accessibilitySettings={appRuntime?.accessibilitySettings ?? null}
           previewExperience
           onStartTutorial={(deckId) => { setReturnDeckId(deckId); setPanel("chooser"); }}
           storyMode={lesson ? {
@@ -88,6 +91,8 @@ export default function SimulatorV2Experience({ initialDeckId, initialTutorial =
       </div>
       {panel ? (
         <SimulatorV2LessonPanel
+          textSpeed={appRuntime?.accessibilitySettings?.textSpeed ?? "normal"}
+          reducedMotion={appRuntime?.accessibilitySettings?.reducedMotion === true}
           mode={panel}
           lessons={SIMULATOR_V2_LESSONS}
           lessonModules={SIMULATOR_V2_LESSON_MODULES}

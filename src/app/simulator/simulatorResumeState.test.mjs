@@ -568,12 +568,12 @@ test("decline, replacement games, completed games, and confirmed quit clear the 
     "function startNewGameFromResumePrompt()",
     "function restoreSimulatorResumeCheckpoint(",
   );
-  assert.match(decline, /clearSimulatorResumeCheckpoint\(window\.localStorage\)/);
+  assert.match(decline, /clearSimulatorResumeCheckpoint\(simulatorStorage\)/);
   assert.match(decline, /resolveResumeDecision\(\)/);
 
   const restart = sourceSection(simulatorSource, "function restartGame(", "function restartStoryGame(");
   assert.ok(
-    restart.indexOf("clearSimulatorResumeCheckpoint(window.localStorage)")
+    restart.indexOf("clearSimulatorResumeCheckpoint(simulatorStorage)")
       < restart.indexOf("createInitialGameState("),
     "a replacement match must clear the old save before creating a new game",
   );
@@ -581,17 +581,17 @@ test("decline, replacement games, completed games, and confirmed quit clear the 
   const quit = sourceSection(simulatorSource, "function confirmSimulatorExit()", "function confirmTutorialExit()");
   assert.ok(
     quit.indexOf("resumeSaveSuppressedRef.current = true")
-      < quit.indexOf("clearSimulatorResumeCheckpoint(window.localStorage)"),
+      < quit.indexOf("clearSimulatorResumeCheckpoint(simulatorStorage)"),
     "confirmed quit must suppress pagehide writes before clearing",
   );
   assert.ok(
-    quit.indexOf("clearSimulatorResumeCheckpoint(window.localStorage)")
+    quit.indexOf("clearSimulatorResumeCheckpoint(simulatorStorage)")
       < quit.indexOf('window.location.assign("/")'),
     "confirmed quit must clear before navigation",
   );
   assert.match(
     simulatorSource,
-    /if \(!simulatorResumeEnabled \|\| !resumeCheckpointReady \|\| !gameResult\) return;\n\s*resumeSaveSuppressedRef\.current = true;\n\s*clearSimulatorResumeCheckpoint\(window\.localStorage\);/,
+    /if \(!simulatorResumeEnabled \|\| !resumeCheckpointReady \|\| !gameResult\) return;\n\s*resumeSaveSuppressedRef\.current = true;\n\s*clearSimulatorResumeCheckpoint\(simulatorStorage\);/,
   );
   assert.match(simulatorSource, /const saveCheckpoint = \(\) => \{\n\s*if \(resumeSaveSuppressedRef\.current\) return;/);
 });

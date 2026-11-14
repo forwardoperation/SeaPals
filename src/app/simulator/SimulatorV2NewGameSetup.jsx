@@ -22,6 +22,8 @@ export default function SimulatorV2NewGameSetup({
   onStart,
   onCancel = null,
   onTutorial = null,
+  standalone = false,
+  onHome = null,
 }) {
   const screenRef = useRef(null);
   const restoreFocusRef = useRef(false);
@@ -120,6 +122,7 @@ export default function SimulatorV2NewGameSetup({
 
       <div className={styles.layout}>
         <section className={styles.panel}>
+          {!onCancel && onHome ? <button type="button" onClick={onHome} className={styles.cancelButton}>← Home</button> : null}
           {onCancel ? (
             <button type="button" onClick={cancelSetup} className={styles.cancelButton}>
               <span aria-hidden="true">&#8592;</span> Back to game
@@ -259,10 +262,10 @@ export default function SimulatorV2NewGameSetup({
               </Link>}
             </div>
           </form>
-          <p className={styles.analyticsLink}>
+          {!standalone ? <p className={styles.analyticsLink}>
             Completed matches contribute anonymous game statistics.
             {" "}<Link href="/simulator-v2/analytics">Explore simulator analytics &#8599;</Link>
-          </p>
+          </p> : null}
         </section>
       </div>
     </div>

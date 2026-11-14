@@ -149,7 +149,7 @@ test("embedded lesson progress is saved at the real VP victory", () => {
     simulatorSource,
     /if \(!embeddedLessonReadyToComplete \|\| embeddedLessonCompletedRef\.current\) return;[\s\S]*?notifyTutorialCallback\("onComplete"\)/,
   );
-  const completionCallback = experienceSource.match(/const completeLesson = useCallback\(\(\) => \{[\s\S]*?\n  \}, \[lessonId\]\);/)?.[0] ?? "";
+  const completionCallback = experienceSource.match(/const completeLesson = useCallback\(\(\) => \{[\s\S]*?\n  \}, \[lessonId, appRuntime\]\);/)?.[0] ?? "";
   assert.match(completionCallback, /recordSimulatorV2LessonCompletion/);
   assert.doesNotMatch(completionCallback, /setPanel\("complete"\)/, "saving progress must leave the victory celebration visible");
   assert.match(lessonPanelSource, /data-v2-lesson-vp-target=\{activeLesson\?\.victoryTarget \|\| undefined\}/);

@@ -1,0 +1,12 @@
+{
+  "appId": "com.searealm.simulator",
+  "appName": "SeaRealm",
+  "webDir": "dist",
+  "backgroundColor": "#061b2b",
+  "ios": {
+    "contentInset": "automatic",
+    "scrollEnabled": true,
+    "preferredContentMode": "mobile",
+    "backgroundColor": "#061b2b"
+  }
+}

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.vite/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml
+ios/App/Pods/
+ios/App/build/
+**/xcuserdata/
+*.xcuserstate
+*.mobileprovision
+*.p12
+*.ipa
+*.xcarchive
+test-results/
+playwright-report/

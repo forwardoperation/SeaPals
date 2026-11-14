@@ -58,7 +58,7 @@ test("lesson completion writes the current version 4 progress schema", () => {
   );
   assert.match(
     completion,
-    /window\.localStorage\.setItem\(SIMULATOR_V2_LESSON_PROGRESS_KEY, JSON\.stringify\(next\)\)/,
+    /\(appRuntime\?\.storage \?\? window\.localStorage\)\.setItem\(SIMULATOR_V2_LESSON_PROGRESS_KEY, JSON\.stringify\(next\)\)/,
   );
 });
 

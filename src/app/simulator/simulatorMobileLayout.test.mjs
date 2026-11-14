@@ -1188,8 +1188,8 @@ test("every simulator exit asks for confirmation before leaving the game", () =>
   assert.match(requestExit, /setSimulatorExitConfirmationOpen\(true\)/);
   assert.match(confirmExit, /setSimulatorExitConfirmationOpen\(false\)[\s\S]*?window\.location\.assign\("\/"\)/);
   assert.match(exitDialog, /role="dialog"[\s\S]*?aria-modal="true"/);
-  assert.match(exitDialog, />Are you sure you want to quit the game\?<\/h2>/);
-  assert.match(exitDialog, /onClick=\{confirmSimulatorExit\}[\s\S]*?>\s*Quit Game\s*<\/button>/);
+  assert.match(exitDialog, /appRuntime \? "Return to home\?" : "Are you sure you want to quit the game\?"/);
+  assert.match(exitDialog, /onClick=\{confirmSimulatorExit\}[\s\S]*?appRuntime \? "Return home" : "Quit Game"/);
   assert.match(exitDialog, /onClick=\{\(\) => setSimulatorExitConfirmationOpen\(false\)\}[\s\S]*?>\s*Keep Playing\s*<\/button>/);
 });
 

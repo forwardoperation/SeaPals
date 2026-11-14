@@ -66,7 +66,7 @@ test("Reefbound uses the V2 board while retaining its campaign duel and tutorial
   assert.match(duel, /onExit: \(\) => exitDuel\(activeTrainerId\)/);
   assert.match(duel, /onResult: \(result\) => recordDuelResult\(activeTrainerId, result\)/);
   assert.match(simulator, /simulatorResumeEnabled = Boolean\(previewExperience && !isStoryMode && !tutorialRuntime\)/);
-  assert.match(simulator, /simulatorAnalyticsEnabled = Boolean\(previewExperience && !isStoryMode && !tutorialRuntime\)/);
+  assert.match(simulator, /simulatorAnalyticsEnabled = Boolean\(previewExperience && !isStoryMode && !tutorialRuntime && !appRuntime\)/);
 });
 
 test("instructions retains guided tutorial access and legacy tutorial links redirect", async () => {
