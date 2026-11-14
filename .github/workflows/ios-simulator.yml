@@ -21,6 +21,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ios-simulator-${{ github.ref }}
   cancel-in-progress: true
@@ -85,18 +89,18 @@ jobs:
           # This uses no Apple account and does not enable device installation.
           codesign --force --deep --sign - "$SEAREALM_SIMULATOR_APP"
 
-      - name: Launch on iPhone and iPad simulators
-        run: node apps/mobile/scripts/ios-simulator-smoke.mjs
-
       - name: Package simulator application
         run: |
           ditto -c -k --sequesterRsrc --keepParent \
             "$SEAREALM_SIMULATOR_APP" "$SEAREALM_IOS_OUTPUT/SeaRealm-simulator.zip"
           printf '%s\n' \
-            'Built and launched SeaRealm on iPhone and iPad simulators.' \
+            'Compiled SeaRealm for Apple simulators.' \
             'The artifact is a simulator app, not a device-installable IPA or TestFlight build.' \
             'Apple Developer signing is still required for device distribution.' \
             >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Launch on iPhone and iPad simulators
+        run: node apps/mobile/scripts/ios-simulator-smoke.mjs
 
       - name: Save build and simulator screenshots
         if: always()

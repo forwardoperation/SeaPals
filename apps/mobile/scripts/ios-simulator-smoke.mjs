@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 if (process.platform !== "darwin") {
@@ -16,7 +16,7 @@ mkdirSync(outputPath, { recursive: true });
 function command(executable, args, timeout = 120_000) {
   const result = spawnSync(executable, args, { encoding: "utf8", timeout });
   if (result.error || result.status !== 0) {
-    throw new Error(`${executable} ${args.join(" ")} failed: ${result.error?.message ?? result.stderr ?? result.stdout}`);
+    throw new Error(`${executable} ${args.join(" ")} failed: ${result.error?.message ?? ""}\n${result.stderr ?? ""}\n${result.stdout ?? ""}`);
   }
   return result.stdout.trim();
 }
@@ -37,7 +37,10 @@ for (const family of ["iPhone", "iPad"]) {
   console.log(`Launching SeaRealm on ${match.name} (${match.runtime}).`);
   try {
     if (match.state !== "Booted") simctl("boot", match.udid);
-    simctl("bootstatus", match.udid, "-b");
+    // First boot on a fresh hosted Mac includes iOS data migration and can
+    // exceed two minutes. Stream that progress into the job log.
+    const boot = spawnSync("xcrun", ["simctl", "bootstatus", match.udid, "-b"], { stdio: "inherit", timeout: 480_000 });
+    if (boot.error || boot.status !== 0) throw new Error(`Simulator boot failed: ${boot.error?.message ?? boot.status}`);
     simctl("status_bar", match.udid, "override", "--time", "9:41", "--batteryState", "charged", "--batteryLevel", "100");
     simctl("install", match.udid, appPath);
     const launch = simctl("launch", "--terminate-running-process", match.udid, bundleId);
@@ -59,3 +62,6 @@ for (const family of ["iPhone", "iPad"]) {
   }
 }
 console.log("Both native simulator launches passed. Inspect the screenshots for rendering problems.");
+if (process.env.GITHUB_STEP_SUMMARY) {
+  appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\nNative launch checks passed: ${results.map((result) => result.device).join(", ")}. Screenshots are included in the artifact.\n`);
+}
