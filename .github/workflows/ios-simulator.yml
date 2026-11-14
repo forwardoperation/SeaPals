@@ -10,7 +10,7 @@ on:
       - .github/workflows/ios-simulator.yml
       - apps/mobile/**
       - src/app/simulator/**
-      - src/app/globals.css
+      - src/styles/**
       - src/components/**
       - src/data/**
       - src/lib/**
@@ -102,11 +102,24 @@ jobs:
       - name: Launch on iPhone and iPad simulators
         run: node apps/mobile/scripts/ios-simulator-smoke.mjs
 
-      - name: Save build and simulator screenshots
+      - name: Save compiled app and build log
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: searealm-ios-simulator-${{ github.run_number }}
-          path: ${{ runner.temp }}/searealm-ios-output
+          path: |
+            ${{ runner.temp }}/searealm-ios-output/SeaRealm-simulator.zip
+            ${{ runner.temp }}/searealm-ios-output/xcodebuild.log
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Save simulator screenshots and readiness checks
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: searealm-ios-preview-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/searealm-ios-output/*.png
+            ${{ runner.temp }}/searealm-ios-output/*.json
           if-no-files-found: warn
           retention-days: 3

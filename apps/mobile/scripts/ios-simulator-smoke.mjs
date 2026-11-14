@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 if (process.platform !== "darwin") {
   throw new Error("This smoke check requires a Mac with Xcode and an iOS simulator runtime.");
@@ -22,6 +23,8 @@ function command(executable, args, timeout = 120_000) {
 }
 
 const simctl = (...args) => command("xcrun", ["simctl", ...args]);
+const screenReader = path.join(process.env.RUNNER_TEMP ?? outputPath, "searealm-screen-text");
+command("xcrun", ["swiftc", "-O", fileURLToPath(new URL("read-simulator-screen.swift", import.meta.url)), "-o", screenReader]);
 const bundleId = command("/usr/libexec/PlistBuddy", ["-c", "Print CFBundleIdentifier", path.join(appPath, "Info.plist")]);
 const available = JSON.parse(simctl("list", "devices", "available", "--json")).devices;
 const runtimeEntries = Object.entries(available)
@@ -52,8 +55,22 @@ for (const family of ["iPhone", "iPad"]) {
     const processLine = processes.split("\n").find((line) => line.includes(bundleId) && /^\d+\s/.test(line));
     if (!processLine) throw new Error(`SeaRealm exited after launch on ${match.name}.`);
     const screenshot = `${family.toLowerCase()}-home.png`;
-    simctl("io", match.udid, "screenshot", path.join(outputPath, screenshot));
-    results.push({ family, device: match.name, runtime: match.runtime, bundleId, launch, screenshot });
+    let homeScreenVerified = false;
+    for (let attempt = 1; attempt <= 12; attempt += 1) {
+      simctl("io", match.udid, "screenshot", path.join(outputPath, screenshot));
+      const screenText = JSON.parse(command(screenReader, [path.join(outputPath, screenshot)]));
+      writeFileSync(path.join(outputPath, `${family.toLowerCase()}-screen-text.json`), JSON.stringify(screenText, null, 2));
+      const normalized = screenText.join(" ").toLowerCase().replace(/[^a-z0-9]/g, "");
+      homeScreenVerified = normalized.includes("letsplay")
+        && normalized.includes("discoveranocean")
+        && !normalized.includes("preparingyourreef");
+      if (homeScreenVerified) break;
+      console.log(`Waiting for the complete SeaRealm home screen on ${match.name} (${attempt}/12).`);
+      await new Promise((resolve) => setTimeout(resolve, 5_000));
+    }
+    if (!homeScreenVerified) throw new Error(`SeaRealm did not render its home screen on ${match.name}; inspect the screenshot and recognized text.`);
+    console.log(`Verified the rendered home screen on ${match.name}.`);
+    results.push({ family, device: match.name, runtime: match.runtime, bundleId, launch, screenshot, homeScreenVerified });
     writeFileSync(path.join(outputPath, "simulator-launches.json"), JSON.stringify(results, null, 2));
   } finally {
     // These are disposable CI simulators, shut down between families to leave
@@ -61,7 +78,7 @@ for (const family of ["iPhone", "iPad"]) {
     spawnSync("xcrun", ["simctl", "shutdown", match.udid], { encoding: "utf8", timeout: 30_000 });
   }
 }
-console.log("Both native simulator launches passed. Inspect the screenshots for rendering problems.");
+console.log("Both native simulator home screens passed visual text checks. Inspect the screenshots for layout details.");
 if (process.env.GITHUB_STEP_SUMMARY) {
   appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\nNative launch checks passed: ${results.map((result) => result.device).join(", ")}. Screenshots are included in the artifact.\n`);
 }

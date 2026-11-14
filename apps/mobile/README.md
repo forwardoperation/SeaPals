@@ -45,7 +45,7 @@ Signing identities, provisioning profiles, and developer credentials are not sto
 
 ## Cloud Mac build
 
-The `iOS Simulator Build` GitHub Actions workflow uses a standard `macos-26` hosted Mac with Xcode. It installs the locked dependencies, runs the app and simulator checks, bundles the offline game, compiles the shared `App` scheme, and launches the native app on an iPhone and an iPad simulator. Its artifact contains the simulator `.app` as a ZIP, screenshots, launch details, and the Xcode build log. Artifacts expire after three days.
+The `iOS Simulator Build` GitHub Actions workflow uses a standard `macos-26` hosted Mac with Xcode. It installs the locked dependencies, runs the app and simulator checks, bundles the offline game, compiles the shared `App` scheme, and launches the native app on an iPhone and an iPad simulator. Local Apple Vision text recognition waits for the actual home screen to render and rejects captures that still show the loading message. One artifact contains the simulator `.app` as a ZIP and the Xcode build log; a smaller preview artifact contains screenshots, recognized text, and launch details. Artifacts expire after three days. Fresh hosted simulators can spend several minutes on initial iOS data migration.
 
 It runs on relevant pushes to `main` and the initial `codex/searealm-ios-cloud` branch, or manually once the workflow is present on the default branch. Standard Mac runner compute is free while this repository is public; the workflow skips private repositories pending a billing review. Artifact storage has separate account allowances. No Apple credentials or application secrets are used by this job.
 
