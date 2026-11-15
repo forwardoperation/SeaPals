@@ -1,3 +1,5 @@
+import { STORE_BINDER_PRODUCT_ID, STORE_BINDER_SHIPPING_CENTS } from "./binder.js";
+
 export const STORE_BASE_SHIPPING_MAX_WEIGHT_OUNCES = 16;
 export const STORE_MAX_SHIPPING_WEIGHT_OUNCES = 128;
 export const STORE_DIVE_PACK_PRODUCT_CATEGORY = "dive-packs";
@@ -93,7 +95,7 @@ export const defaultStoreShippingOptionId = "standard";
 export function resolveStoreShippingRateTier(
   option,
   weightOunces,
-  { productCategories = [] } = {}
+  { productCategories = [], productIds = [] } = {}
 ) {
   const optionId = String(option?.id ?? "").trim().toLowerCase();
   const definition = storeShippingOptionDefinitions.find(
@@ -107,6 +109,15 @@ export function resolveStoreShippingRateTier(
       id: "pickup",
       maxWeightOunces: null,
       amountCents: 0,
+    });
+  }
+
+  if (productIds.includes(STORE_BINDER_PRODUCT_ID)) {
+    if (optionId !== "standard" || !productIds.every((id) => id === STORE_BINDER_PRODUCT_ID)) return null;
+    return Object.freeze({
+      id: "binder-flat",
+      maxWeightOunces: null,
+      amountCents: STORE_BINDER_SHIPPING_CENTS,
     });
   }
 

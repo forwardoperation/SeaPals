@@ -258,6 +258,8 @@ begin
            case
              when orders.production_option_id = 'expedited-production'
                then orders.production_due_date
+             when orders.production_max_business_days = 25
+               then (orders.paid_at at time zone 'America/New_York')::date + 35
              else public.add_store_business_days(
                (orders.paid_at at time zone 'America/New_York')::date,
                orders.production_max_business_days
@@ -322,6 +324,8 @@ begin
            case
              when orders.production_option_id = 'expedited-production'
                then orders.production_due_date
+             when orders.production_max_business_days = 25
+               then (orders.paid_at at time zone 'America/New_York')::date + 35
              else public.add_store_business_days(
                (orders.paid_at at time zone 'America/New_York')::date,
                orders.production_max_business_days

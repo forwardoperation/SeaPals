@@ -201,7 +201,15 @@ export default function TermsPage() {
           ready. Expedited production does not apply to pre-orders.
         </p>
         <p>
-          For items that are not pre-orders, production timing is separate from
+          SeaRealm Binders cost $40 each, with a $9.99 flat shipping charge per
+          binder order or free scheduled local pickup in Elverson, Pennsylvania.
+          Binders have a five-week lead time after payment before shipping or
+          pickup; carrier transit time is additional. Expedited shipping and
+          expedited production are unavailable. Order binders separately from
+          cards and accessories.
+        </p>
+        <p>
+          For other items that are not pre-orders, production timing is separate from
           carrier transit. Standard
           production means we hand mailed orders to the carrier, or mark pickup
           orders ready, within five business days after payment. If purchased,

@@ -3,6 +3,11 @@ import {
   storeProductionOptionDefinitions,
 } from "../../data/store/production.js";
 import {
+  cartContainsStoreBinder,
+  STORE_BINDER_PRODUCT_ID,
+  storeBinderProductionOption,
+} from "../../data/store/binder.js";
+import {
   cartContainsPreorders,
   getStorePreorderCampaign,
   getStoreOrderFulfillmentType,
@@ -201,9 +206,11 @@ function getQuotedProductionOption(quote) {
   )
     .trim()
     .toLowerCase();
-  const definition = storeProductionOptionDefinitions.find(
-    (option) => option.id === optionId
-  );
+  const definition = cartContainsStoreBinder(quote?.items ?? []) && optionId === "standard-production"
+    ? storeBinderProductionOption
+    : storeProductionOptionDefinitions.find(
+        (option) => option.id === optionId
+      );
 
   if (!definition) {
     throw new StripeApiError("The production option is not valid.", {
@@ -437,6 +444,17 @@ export async function createStripeCheckoutSession({
     deliveryEstimateMinDays: configuration.shippingEstimateMinDays ?? null,
     deliveryEstimateMaxDays: configuration.shippingEstimateMaxDays ?? null,
   };
+  const containsBinder = cartContainsStoreBinder(quote.items);
+  if (containsBinder && (
+    quote.items.some((item) => item.productId !== STORE_BINDER_PRODUCT_ID) ||
+    productionOption.expedited ||
+    !["standard", "pickup-elverson-pa"].includes(fulfillmentOption.id)
+  )) {
+    throw new StripeApiError("Binders require a separate order with standard production and Standard shipping or local pickup.", {
+      status: 400,
+      code: "binder_fulfillment_invalid",
+    });
+  }
   const taxConfiguration = getCheckoutTaxConfiguration(
     configuration,
     fulfillmentOption
@@ -557,6 +575,15 @@ export async function createStripeCheckoutSession({
     );
   }
 
+  if (containsBinder) {
+    for (const prefix of ["metadata", "payment_intent_data[metadata]"]) {
+      form.set(`${prefix}[production_lead_time_weeks]`, String(storeBinderProductionOption.leadTimeWeeks));
+    }
+    form.set("custom_text[submit][message]", fulfillmentOption.fulfillmentMethod === "pickup"
+      ? "SeaRealm binders have a 5-week lead time after payment. Local pickup is free; we will email to arrange pickup when ready. No expedited production or shipping."
+      : "SeaRealm binders have a 5-week lead time after payment before shipping. Shipping is $9.99 per order; carrier transit is additional. No expedited production or shipping.");
+  }
+
   quote.items.forEach((item, index) =>
     appendCheckoutLineItem(form, item, index, currency, taxConfiguration)
   );
@@ -579,7 +606,7 @@ export async function createStripeCheckoutSession({
     });
   }
   appendShippingOption(form, fulfillmentOption, currency, configuration);
-  if (!containsPreorders) {
+  if (!containsPreorders && !containsBinder) {
     appendShippingEstimate(form, fulfillmentOption, productionOption);
   }
 

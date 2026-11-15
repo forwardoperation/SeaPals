@@ -98,6 +98,7 @@ function getProductionDetails(session) {
         ? "Expedited production"
         : "Standard production"),
     maxBusinessDays,
+    leadTimeWeeks: firstNonNegativeInteger(metadata.production_lead_time_weeks),
     amountCents,
   };
 }
@@ -219,7 +220,9 @@ export default async function StoreSuccessPage({ searchParams }) {
                   <dd className="text-right font-black text-white">
                     {production.optionName}
                     <span className="mt-1 block text-xs font-semibold text-cyan-100/70">
-                      {production.maxBusinessDays
+                      {production.leadTimeWeeks
+                        ? `${production.leadTimeWeeks}-week lead time after payment before ${localPickup ? "pickup" : "shipping"}. `
+                        : production.maxBusinessDays
                         ? `${localPickup ? "Built" : "Built and dispatched"} within ${production.maxBusinessDays} business ${production.maxBusinessDays === 1 ? "day" : "days"}. `
                         : ""}
                       {formatProductionAmount(

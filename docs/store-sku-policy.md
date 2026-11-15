@@ -1,5 +1,17 @@
 # Store SKU policy
 
+## SeaRealm Binder release - November 14, 2026
+
+`SP-MERCH-CARD-BINDER` is now the sellable SKU for the single SeaRealm Binder
+shown in the supplied product image. Keep product ID `card-binder`; no color or
+size selector is offered. The approved price is $40, with $9.99 flat Standard
+shipping per binder order or free scheduled local pickup. Outsourced production
+has a five-calendar-week lead time and no finite inventory/ATP cap. Do not add a
+stock row or reuse another product's capacity. Expedited shipping and production
+are unavailable, and binder orders are separate from other products. The earlier
+launch and proposed-product tables below are historical.
+
+
 SeaPals uses stable, human-readable SKUs for inventory reservations, order
 history, fulfillment, and reporting. A SKU represents one sellable
 configuration. It never represents an individual copy, customer order, or

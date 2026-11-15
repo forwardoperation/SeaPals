@@ -954,6 +954,8 @@ function OrderCard({ order, onSave, saving }) {
                 <p className="mt-1 text-sm leading-6 text-slate-600">
                   {orderContainsStorePreorders(order) ? (
                     "Items in this order ship together when the pre-order is ready."
+                  ) : order.store_order_items?.some((item) => item.product_id === "card-binder") ? (
+                    <>5-week lead time after payment before shipping or pickup. Outsourced production; no expedited service.</>
                   ) : (
                     <>
                   {pickupOrder ? "Build and mark ready" : "Build and dispatch"}{" "}

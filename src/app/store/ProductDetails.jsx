@@ -70,6 +70,9 @@ export default function ProductDetails({
             <p className="mt-4 text-3xl font-black text-cyan-100">
               {product.priceCents == null ? "Price TBA" : formatMoney(product.priceCents, currency)}
             </p>
+            {product.fulfillmentNote ? (
+              <p className="mt-3 text-sm leading-6 text-cyan-100">{product.fulfillmentNote}</p>
+            ) : null}
             {product.details ? (
               <p className="mt-3 text-sm leading-6 text-cyan-100">{product.details}</p>
             ) : null}
@@ -160,7 +163,7 @@ export default function ProductDetails({
             ) : (
               <div className="mt-3 space-y-2 text-sm leading-6 text-cyan-100">
                 {product.madeToOrder ? (
-                  <p><strong className="font-bold text-cyan-100">Made to order.</strong>{hasDispatchWindow ? ` Standard production is included, with dispatch within ${dispatchDays} business ${dispatchDays === 1 ? "day" : "days"} after payment.` : " Production timing is shown in your cart."}</p>
+                  <p><strong className="font-bold text-cyan-100">Made to order.</strong>{product.leadTimeWeeks ? ` ${product.leadTimeWeeks}-week lead time after payment before shipping or pickup. No expedited shipping or production.` : hasDispatchWindow ? ` Standard production is included, with dispatch within ${dispatchDays} business ${dispatchDays === 1 ? "day" : "days"} after payment.` : " Production timing is shown in your cart."}</p>
                 ) : null}
                 <p>Available delivery choices are shown in your cart. Carrier transit time is separate from production.</p>
                 {product.category === "dive-packs" ? (

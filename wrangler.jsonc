@@ -40,10 +40,14 @@
 		"SITE_LEGACY_REDIRECT_PERMANENT": "true",
 		"STORE_CURRENCY": "usd",
 		// The live catalog is the $50 Starter Kit, seven $25 decks, three $10
-		// Dive Packs, and the $12 Accessories Kit. The Dive Pack inventory rows
+		// Dive Packs, the $12 Accessories Kit, and the $40 outsourced binder.
+		// Binders ship for $9.99 per order or have free local pickup, with a
+		// five-week lead time and no finite inventory cap or expedited option.
+		// Apply supabase/store-binders.sql before deploying.
+		// The Dive Pack inventory rows
 		// and offline twelve-product launch readiness were verified during the
 		// 2026-08-25 cutover.
-		"STORE_AVAILABLE_PRODUCT_IDS": "starter-kit,blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,oceanic-dive-pack,reef-dive-pack,deep-dive-pack,accessory-set",
+		"STORE_AVAILABLE_PRODUCT_IDS": "starter-kit,blue-water,disruption,coral-garden,darkness-shroud,open-ocean-hunt,murky-water,stinging-fortress,oceanic-dive-pack,reef-dive-pack,deep-dive-pack,accessory-set,card-binder",
 		"STORE_CATALOG_CONFIRMED": "true",
 		"STORE_EXPEDITED_PRODUCTION_ENABLED": "true",
 		"STORE_EXPEDITED_PRODUCTION_CENTS": "1000",
@@ -68,6 +72,7 @@
 		"STRIPE_PICKUP_TAX_RATE_ID": "txr_1U4VO4E82MgJzjAxjYT88WGQ",
 		"STRIPE_AUTOMATIC_TAX": "true",
 		"STRIPE_GAME_PRODUCT_TAX_CODE": "txcd_99999999",
+		"STRIPE_STORAGE_TAX_CODE": "txcd_99999999",
 		"STRIPE_SHIPPING_TAX_CODE": "txcd_92010000",
 		"STRIPE_ALLOW_PROMOTION_CODES": "false",
 		"STRIPE_PAYMENT_METHOD_CONFIGURATION_ID": "pmc_1U47FJE82MgJzjAx30GeH09c",

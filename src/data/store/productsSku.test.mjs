@@ -42,11 +42,11 @@ const EXPECTED_LAUNCH_PRODUCT_IDS = Object.freeze([
   "reef-dive-pack",
   "deep-dive-pack",
   "accessory-set",
+  "card-binder",
 ]);
 
 const EXPECTED_FUTURE_PRODUCT_IDS = Object.freeze([
   "backpack",
-  "card-binder",
   "conditions-deck",
   "custom-t-shirt",
   "dice-pack",
@@ -67,6 +67,7 @@ const EXPECTED_PRODUCT_PHOTOS = Object.freeze({
   "reef-dive-pack": "dive-pack-reef.png",
   "deep-dive-pack": "dive-pack-deep.png",
   "accessory-set": "accessories-dice.png",
+  "card-binder": "searealm-binder.png",
 });
 
 const CANONICAL_SKU_PATTERN = /^SP-[A-Z0-9]+-[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
@@ -114,7 +115,7 @@ test("retail photo titles and descriptions remain complete without simulator dec
   }
 });
 
-test("the catalog remains partitioned into twelve launch products and seven prepared future products", () => {
+test("the catalog contains thirteen public products and six future products", () => {
   const launchProductIds = new Set(storeLaunchProductIds);
   const futureProductIds = storeProductDefinitions
     .map(({ id }) => id)
@@ -125,7 +126,7 @@ test("the catalog remains partitioned into twelve launch products and seven prep
     [...storeLaunchProductIds].sort(),
     [...EXPECTED_LAUNCH_PRODUCT_IDS].sort()
   );
-  assert.equal(launchProductIds.size, 12);
+  assert.equal(launchProductIds.size, 13);
   assert.deepEqual(futureProductIds, EXPECTED_FUTURE_PRODUCT_IDS);
 
   for (const productId of EXPECTED_FUTURE_PRODUCT_IDS) {
@@ -158,6 +159,10 @@ test("Starter Kits and expansion decks are preorders while Dive Packs and access
       assert.equal(product.preorder, true);
       assert.equal(product.madeToOrder, undefined);
       assert.equal(product.buildDispatchMaxBusinessDays, undefined);
+    } else if (productId === "card-binder") {
+      assert.equal(product.madeToOrder, true);
+      assert.equal(product.leadTimeWeeks, 5);
+      assert.equal(product.inventoryTracked, false);
     } else {
       assert.equal(product.preorder, undefined);
       assert.equal(product.madeToOrder, true);
@@ -166,7 +171,7 @@ test("Starter Kits and expansion decks are preorders while Dive Packs and access
   }
 });
 
-test("all twelve public products use the corresponding product photo assets", () => {
+test("all public products use the corresponding product photo assets", () => {
   assert.deepEqual(
     Object.keys(EXPECTED_PRODUCT_PHOTOS).sort(),
     [...storeLaunchProductIds].sort()

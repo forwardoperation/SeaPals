@@ -69,13 +69,15 @@ export const storeLaunchProductIds = Object.freeze([
   "reef-dive-pack",
   "deep-dive-pack",
   "accessory-set",
+  "card-binder",
 ]);
 
 // These inventory-backed products are already prepared operationally even
 // when a narrower public allowlist is used. Keep this distinct from the launch
 // IDs so retaining a private ATP row never makes a product purchasable.
 export const storePreparedProductIds = Object.freeze([
-  ...storeLaunchProductIds,
+  // Outsourced binders have no finite inventory/ATP row.
+  ...storeLaunchProductIds.filter((id) => id !== "card-binder"),
   "conditions-deck",
   "dice-pack",
   "reef-point-tokens",
@@ -419,16 +421,21 @@ export const storeProductDefinitions = [
   {
     id: "card-binder",
     sku: "SP-MERCH-CARD-BINDER",
+    madeToOrder: true,
+    leadTimeWeeks: 5,
+    inventoryTracked: false,
     category: "storage",
-    name: "SeaRealm Card Binder",
-    shortName: "Card Binder",
+    name: "SeaRealm Binder",
+    shortName: "SeaRealm Binder",
     productLabel: "Card storage",
     description:
       "A SeaRealm binder designed to keep decks, favorites, and trades organized.",
-    details: "Protective card storage coming soon",
-    checkoutDescription: "SeaRealm card storage binder.",
-    image: "/images/store/card-binder.svg",
-    defaultPriceCents: null,
+    details: "1 SeaRealm Binder",
+    fulfillmentNote: "$9.99 flat shipping per binder order, or free scheduled local pickup in Elverson, PA. 5-week lead time after payment. No expedited shipping or production. Order separately from cards and accessories.",
+    checkoutDescription: "One SeaRealm Binder. 5-week lead time after payment before shipping or free local pickup. Shipping is additional; no expedited shipping or production.",
+    image: `${PRODUCT_PHOTO_DIRECTORY}/searealm-binder.png`,
+    imageAlt: "SeaRealm Binder with underwater whale artwork, black cover, and elastic closure",
+    defaultPriceCents: 4000,
     priceEnvKey: "STORE_PRICE_CARD_BINDER_CENTS",
     taxCodeEnvKey: "STRIPE_STORAGE_TAX_CODE",
     featured: false,

@@ -196,7 +196,7 @@ alter table public.store_orders
       (
         production_option_id = 'standard-production'
         and production_option_name = 'Standard production'
-        and production_max_business_days = 5
+        and production_max_business_days in (5, 25)
         and production_cents = 0
       )
       or (
@@ -644,7 +644,7 @@ begin
        (
          p_production_option_id = 'standard-production'
          and p_production_option_name = 'Standard production'
-         and p_production_max_business_days = 5
+         and p_production_max_business_days in (5, 25)
          and p_production_cents = 0
        )
        or (
@@ -676,6 +676,31 @@ begin
      or jsonb_array_length(p_items) < 1
      or jsonb_array_length(p_items) > 8 then
     raise exception 'Invalid store order items.';
+  end if;
+
+  -- Outsourced binders have their own flat rate, calendar-week lead time,
+  -- and no finite inventory pool. Never let another SKU use this exception.
+  if exists (
+    select 1 from jsonb_array_elements(p_items) as item
+    where item->>'product_id' = 'card-binder'
+       or item->>'sku' = 'SP-MERCH-CARD-BINDER'
+  ) then
+    if exists (
+      select 1 from jsonb_array_elements(p_items) as item
+      where item->>'product_id' is distinct from 'card-binder'
+         or item->>'sku' is distinct from 'SP-MERCH-CARD-BINDER'
+         or coalesce(item->>'fulfillment_type', 'regular') <> 'regular'
+    ) or p_production_option_id <> 'standard-production'
+      or p_production_max_business_days <> 25
+      or not (
+        (p_fulfillment_option_id = 'standard' and p_fulfillment_method = 'shipping' and p_shipping_cents = 999)
+        or (p_fulfillment_option_id = 'pickup-elverson-pa' and p_fulfillment_method = 'pickup' and p_shipping_cents = 0)
+      ) then
+      raise exception 'store_binder_fulfillment_invalid';
+    end if;
+  elsif p_production_option_id = 'standard-production'
+    and p_production_max_business_days <> 5 then
+    raise exception 'Invalid store order production option.';
   end if;
 
   select count(*), count(distinct item.product_id), count(distinct item.sku)
@@ -856,6 +881,7 @@ begin
   for v_item in
     select item.sku, sum(item.quantity)::integer as quantity
       from jsonb_to_recordset(p_items) as item(sku text, quantity integer)
+     where item.sku <> 'SP-MERCH-CARD-BINDER'
      group by item.sku
      order by item.sku
   loop
@@ -877,6 +903,7 @@ begin
   for v_item in
     select item.sku, sum(item.quantity)::integer as quantity
       from jsonb_to_recordset(p_items) as item(sku text, quantity integer)
+     where item.sku <> 'SP-MERCH-CARD-BINDER'
      group by item.sku
      order by item.sku
   loop
@@ -1091,6 +1118,7 @@ begin
     select items.sku, sum(items.quantity)::integer as quantity
       from public.store_order_items as items
      where items.order_id = p_order_id
+       and items.sku <> 'SP-MERCH-CARD-BINDER'
      group by items.sku
      order by items.sku
   loop
@@ -1109,6 +1137,7 @@ begin
     select items.sku, sum(items.quantity)::integer as quantity
       from public.store_order_items as items
      where items.order_id = p_order_id
+       and items.sku <> 'SP-MERCH-CARD-BINDER'
      group by items.sku
      order by items.sku
   loop
@@ -1402,6 +1431,8 @@ begin
            case
              when orders.production_option_id = 'expedited-production'
                then orders.production_due_date
+             when orders.production_max_business_days = 25
+               then (orders.paid_at at time zone 'America/New_York')::date + 35
              else public.add_store_business_days(
                (orders.paid_at at time zone 'America/New_York')::date,
                orders.production_max_business_days
@@ -1466,6 +1497,8 @@ begin
            case
              when orders.production_option_id = 'expedited-production'
                then orders.production_due_date
+             when orders.production_max_business_days = 25
+               then (orders.paid_at at time zone 'America/New_York')::date + 35
              else public.add_store_business_days(
                (orders.paid_at at time zone 'America/New_York')::date,
                orders.production_max_business_days
@@ -2299,6 +2332,7 @@ begin
         select items.sku, sum(items.quantity)::integer as quantity
           from public.store_order_items as items
          where items.order_id = v_order.id
+           and items.sku <> 'SP-MERCH-CARD-BINDER'
          group by items.sku
          order by items.sku
       loop
@@ -2319,6 +2353,7 @@ begin
         select items.sku, sum(items.quantity)::integer as quantity
           from public.store_order_items as items
          where items.order_id = v_order.id
+           and items.sku <> 'SP-MERCH-CARD-BINDER'
          group by items.sku
          order by items.sku
       loop
@@ -2334,6 +2369,7 @@ begin
       select items.sku, sum(items.quantity)::integer as quantity
         from public.store_order_items as items
        where items.order_id = v_order.id
+         and items.sku <> 'SP-MERCH-CARD-BINDER'
        group by items.sku
        order by items.sku
     loop
@@ -2352,6 +2388,7 @@ begin
       select items.sku, sum(items.quantity)::integer as quantity
         from public.store_order_items as items
        where items.order_id = v_order.id
+         and items.sku <> 'SP-MERCH-CARD-BINDER'
        group by items.sku
        order by items.sku
     loop
@@ -2872,6 +2909,7 @@ begin
       select items.sku, sum(items.quantity)::integer as quantity
         from public.store_order_items as items
        where items.order_id = v_order.id
+         and items.sku <> 'SP-MERCH-CARD-BINDER'
        group by items.sku
        order by items.sku
     loop
@@ -2893,6 +2931,7 @@ begin
       select items.sku, sum(items.quantity)::integer as quantity
         from public.store_order_items as items
        where items.order_id = v_order.id
+         and items.sku <> 'SP-MERCH-CARD-BINDER'
        group by items.sku
        order by items.sku
     loop
@@ -3180,6 +3219,7 @@ begin
       select items.sku, sum(items.quantity)::integer as quantity
         from public.store_order_items as items
        where items.order_id = v_order.id
+         and items.sku <> 'SP-MERCH-CARD-BINDER'
        group by items.sku
        order by items.sku
     loop
@@ -3201,6 +3241,7 @@ begin
       select items.sku, sum(items.quantity)::integer as quantity
         from public.store_order_items as items
        where items.order_id = v_order.id
+         and items.sku <> 'SP-MERCH-CARD-BINDER'
        group by items.sku
        order by items.sku
     loop

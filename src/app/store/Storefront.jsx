@@ -9,6 +9,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveStoreShippingRateTier } from "@/data/store/shipping.js";
 import { getStorePreorderCampaign } from "@/data/store/preorders.js";
 import {
+  cartContainsStoreBinder,
+  STORE_BINDER_PRODUCT_ID,
+  storeBinderProductionOption,
+} from "@/data/store/binder.js";
+import {
   STORE_MAX_CART_QUANTITY,
   STORE_MAX_PER_PRODUCT_QUANTITY,
 } from "@/lib/store/cart.mjs";
@@ -76,7 +81,7 @@ const CATEGORY_META = {
       "Custom apparel is previewed here while size, color, design, and pricing choices are prepared.",
   },
   storage: {
-    label: "Binders & Backpacks",
+    label: "Card Storage",
     eyebrow: "Carry the reef",
     description:
       "SeaRealm storage gear for organizing cards and bringing a full play setup along.",
@@ -432,6 +437,13 @@ export default function Storefront({
     [cart, productById]
   );
   const cartHasPreorders = cartItems.some(({ product }) => product.preorder);
+  const cartHasBinder = cartContainsStoreBinder(cartItems);
+  const cartFulfillmentOptions = cartHasBinder
+    ? fulfillmentOptions.filter((option) => option.id !== "priority")
+    : fulfillmentOptions;
+  const cartProductionChoices = cartHasBinder
+    ? [storeBinderProductionOption]
+    : productionChoices;
 
   useEffect(() => {
     if (!cartReady) return;
@@ -486,14 +498,15 @@ export default function Storefront({
     0
   );
   const cartProductCategories = cartItems.map(({ product }) => product.category);
+  const cartProductIds = cartItems.map(({ product }) => product.id);
   const selectedFulfillmentOption =
-    fulfillmentOptions.find(
+    cartFulfillmentOptions.find(
       (option) => option.id === selectedFulfillmentOptionId
-    ) ?? fulfillmentOptions[0];
+    ) ?? cartFulfillmentOptions[0];
   const selectedShippingRateTier = resolveStoreShippingRateTier(
     selectedFulfillmentOption,
     Math.max(1, cartShippingWeightOunces),
-    { productCategories: cartProductCategories }
+    { productCategories: cartProductCategories, productIds: cartProductIds }
   );
   const normalizedShippingCents =
     selectedFulfillmentOption.fulfillmentMethod === "pickup"
@@ -508,9 +521,9 @@ export default function Storefront({
   const selectedProductionOption = cartHasPreorders
     ? productionChoices.find((option) => option.id === "standard-production") ??
       productionChoices.find((option) => !option.expedited) ?? productionChoices[0]
-    : productionChoices.find(
+    : cartProductionChoices.find(
         (option) => option.id === selectedProductionOptionId
-      ) ?? productionChoices[0];
+      ) ?? cartProductionChoices[0];
   const normalizedProductionCents = Math.max(
     0,
     Number(selectedProductionOption.amountCents)
@@ -520,6 +533,12 @@ export default function Storefront({
 
   function addToCart(product) {
     if (!checkoutEnabled || !product.available || isCheckingOut) return;
+
+    if (cartItems.length && cartHasBinder !== (product.id === STORE_BINDER_PRODUCT_ID)) {
+      setCheckoutError("Please order SeaRealm binders separately from cards and accessories. Binders have a 5-week lead time and their own flat shipping rate.");
+      cartSummaryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
 
     const currentTotal = Object.values(cart).reduce(
       (total, quantity) => total + Number(quantity || 0),
@@ -880,6 +899,10 @@ export default function Storefront({
                                 </p>
                               </div>
 
+                              {product.fulfillmentNote ? (
+                                <p className="mt-3 text-sm leading-6 text-cyan-100">{product.fulfillmentNote}</p>
+                              ) : null}
+
                               {product.trialDecks?.length ? (
                                 <div className="mt-auto flex flex-wrap gap-2 pt-4" aria-label={`Preview ${product.name} decks in the simulator`}>
                                   {product.trialDecks.map((deck) => {
@@ -1021,6 +1044,11 @@ export default function Storefront({
                               {preorderCampaign.fulfillmentLabel}
                             </p>
                           ) : null}
+                          {product.leadTimeWeeks ? (
+                            <p className="mt-1 text-xs font-bold leading-5 text-amber-200">
+                              {product.leadTimeWeeks}-week lead time before shipping or pickup
+                            </p>
+                          ) : null}
                           <div className="mt-3 flex items-center justify-between gap-3">
                             <div
                               role="group"
@@ -1081,7 +1109,7 @@ export default function Storefront({
                   <legend className="text-sm font-black text-white">
                     Production speed
                   </legend>
-                  {productionChoices.map((option) => {
+                  {cartProductionChoices.map((option) => {
                     const selected = option.id === selectedProductionOption.id;
                     return (
                       <label
@@ -1129,7 +1157,7 @@ export default function Storefront({
                     carrier or a pickup order is marked ready. It is not a
                     delivery estimate.
                   </p>
-                  {expeditedProductionOption ? (
+                  {expeditedProductionOption && !cartHasBinder ? (
                     <p className="rounded-lg border border-amber-200/40 bg-amber-950/45 px-3 py-2 text-xs font-semibold leading-5 text-amber-100">
                       Expedited production is limited to{" "}
                       {hasExpeditedDailyOrderLimit
@@ -1150,12 +1178,12 @@ export default function Storefront({
                   <legend className="text-sm font-black text-white">
                     Shipping or pickup
                   </legend>
-                  {fulfillmentOptions.map((option) => {
+                  {cartFulfillmentOptions.map((option) => {
                     const selected = option.id === selectedFulfillmentOption.id;
                     const rateTier = resolveStoreShippingRateTier(
                       option,
                       Math.max(1, cartShippingWeightOunces),
-                      { productCategories: cartProductCategories }
+                      { productCategories: cartProductCategories, productIds: cartProductIds }
                     );
                     const displayedAmountCents =
                       option.fulfillmentMethod === "pickup"
@@ -1203,7 +1231,9 @@ export default function Storefront({
                           ) : option.description ? (
                             <span className="mt-1 block text-xs leading-5 text-cyan-100/85">
                               {option.description}{" "}
-                              {rateTier?.id === "large"
+                              {rateTier?.id === "binder-flat"
+                                ? "Flat rate per binder order."
+                                : rateTier?.id === "large"
                                 ? "Large-parcel rate applies above 1 lb through 8 lb."
                                 : rateTier?.id === "dive-pack-base"
                                   ? "Dive Pack-only rate applies through 1 lb."

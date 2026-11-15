@@ -48,6 +48,7 @@ const APPROVED_LAUNCH_PRICE_CENTS_BY_PRODUCT_ID = Object.freeze({
   "reef-dive-pack": 1000,
   "deep-dive-pack": 1000,
   "accessory-set": 1200,
+  "card-binder": 4000,
 });
 
 function addCheck(label, passed, detail, required = true) {
@@ -157,6 +158,7 @@ const invalidProductIds = availableProducts.filter(
   (productId) => !productTaxEnvironment.has(productId)
 );
 const expectedInventoryProducts = availableProducts
+  .filter((productId) => productDefinitions.get(productId)?.inventoryTracked !== false)
   .map((productId) => ({
     productId,
     sku: productDefinitions.get(productId)?.sku ?? null,
@@ -406,6 +408,7 @@ addCheck(
   true
 );
 const invalidShippingWeightProducts = availableProducts.filter((productId) => {
+  if (productId === "card-binder") return false; // Approved $9.99 flat rate.
   const ounces = productDefinitions.get(productId)?.shippingWeightOunces;
   return !Number.isSafeInteger(ounces) || ounces < 1 || ounces > 16;
 });
@@ -414,7 +417,7 @@ addCheck(
   invalidShippingWeightProducts.length === 0,
   invalidShippingWeightProducts.length
     ? `Set a conservative one-to-sixteen-ounce shipping weight for: ${invalidShippingWeightProducts.join(", ")}.`
-    : "Every allowlisted product has a conservative shipping weight for the one- and eight-pound rate tiers."
+    : "Weight-rated products have conservative shipping weights; outsourced binders use their approved $9.99 flat rate."
 );
 addCheck(
   "Mailed-order cart limits",

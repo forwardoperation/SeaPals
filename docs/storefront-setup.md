@@ -1,5 +1,32 @@
 # SeaPals storefront setup
 
+## SeaRealm Binder - owner-approved November 14, 2026
+
+The public catalog now includes **SeaRealm Binder** (`card-binder`,
+`SP-MERCH-CARD-BINDER`) at **$40 each**. Use the supplied whale-cover image.
+Binder-only orders have **$9.99 flat Standard shipping per order** or **free
+scheduled pickup in Elverson, PA**. The lead time is **five calendar weeks after
+payment**, followed by carrier transit for shipped orders. There is no Priority
+shipping or expedited production. Binders are ordered separately from cards and
+accessories so their delivery promises and shipping charges remain distinct.
+
+Production is outsourced with **no finite stock/ATP cap**. Do not seed a dummy
+inventory quantity for the binder. The existing eight-item per-checkout limit
+still applies; there is no overall limit across orders. The order ledger retains
+its existing payment, reservation, refund, and dispute lifecycle, while stock
+mutations exclude only the canonical binder SKU. Deadline reminders use payment
+date plus 35 calendar days (including weekend orders). The legacy
+`production_max_business_days` snapshot is 25; customer copy uses five weeks.
+
+Deployment: apply `supabase/store-binders.sql` to the existing store database
+before deploying the storefront. This focused migration retains holiday
+pre-order reminders and excludes outsourced binders from local printer jobs. No inventory seed is required. The Worker
+allowlist now includes `card-binder`, and `STRIPE_STORAGE_TAX_CODE` uses the same
+general physical-goods category as the existing merchandise. Verify the binder
+with the store tests and a browser check before publication. The historical
+launch records below describe the earlier twelve-product catalog.
+
+
 The storefront is prepared through the payment-account handoff and is safe by
 default. Visitors can browse the catalog, but no item can enter the cart and no
 payment can start until its product ID is explicitly allowlisted, the private

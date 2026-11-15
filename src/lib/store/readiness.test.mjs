@@ -167,6 +167,7 @@ function readLiveCatalogConfiguration(overrides = {}) {
         STORE_EXPEDITED_PRODUCTION_CAPACITY_CONFIRMED: "true",
         STRIPE_AUTOMATIC_TAX: "true",
         STRIPE_GAME_PRODUCT_TAX_CODE: "txcd_99999999",
+        STRIPE_STORAGE_TAX_CODE: "txcd_99999999",
         STRIPE_SHIPPING_TAX_CODE: "txcd_92010001",
         ...overrides,
       },

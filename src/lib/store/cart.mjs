@@ -3,6 +3,11 @@ import {
   storeProductionOptionDefinitions,
 } from "../../data/store/production.js";
 import {
+  cartContainsStoreBinder,
+  STORE_BINDER_PRODUCT_ID,
+  storeBinderProductionOption,
+} from "../../data/store/binder.js";
+import {
   cartContainsPreorders,
   getStorePreorderCampaign,
   getStorePreorderFulfillmentLabel,
@@ -102,7 +107,8 @@ function normalizeShippingOption(
   value,
   fallbackShippingCents,
   weightOunces,
-  productCategories
+  productCategories,
+  productIds
 ) {
   const id = String(value?.id ?? "standard").trim().toLowerCase();
   const definition = storeShippingOptionDefinitions.find(
@@ -174,7 +180,7 @@ function normalizeShippingOption(
         : {}),
     },
     weightOunces,
-    { productCategories }
+    { productCategories, productIds }
   );
 
   if (!rateTier) {
@@ -231,6 +237,14 @@ export function quoteCart(
     throw new CartValidationError("Add at least one item before checking out.");
   }
 
+  const containsBinder = cartContainsStoreBinder(items);
+  if (containsBinder && items.some((item) => item.productId !== STORE_BINDER_PRODUCT_ID)) {
+    throw new CartValidationError(
+      "Please order SeaRealm binders separately from cards and accessories. Binders have a 5-week lead time and their own flat shipping rate.",
+      "binder_separate_order_required"
+    );
+  }
+
   const productsById = new Map(products.map((product) => [product.id, product]));
   const effectiveMaxPerProduct = Math.min(
     STORE_MAX_PER_PRODUCT_QUANTITY,
@@ -272,9 +286,12 @@ export function quoteCart(
       );
     }
 
+    // Binders have an owner-approved flat rate; no estimated weight is used.
+    const unitShippingWeightOunces = containsBinder ? 0 : product.shippingWeightOunces;
     if (
-      !Number.isSafeInteger(product.shippingWeightOunces) ||
-      product.shippingWeightOunces < 1
+      !containsBinder &&
+      (!Number.isSafeInteger(unitShippingWeightOunces) ||
+        unitShippingWeightOunces < 1)
     ) {
       throw new CartValidationError(
         `${product.name} does not have a valid shipping weight.`,
@@ -283,7 +300,7 @@ export function quoteCart(
     }
 
     const lineTotalCents = product.priceCents * quantity;
-    const lineShippingWeightOunces = product.shippingWeightOunces * quantity;
+    const lineShippingWeightOunces = unitShippingWeightOunces * quantity;
     if (
       !Number.isSafeInteger(lineTotalCents) ||
       !Number.isSafeInteger(lineShippingWeightOunces)
@@ -309,7 +326,7 @@ export function quoteCart(
       image: product.image,
       taxCode: product.taxCode ?? null,
       unitAmountCents: product.priceCents,
-      shippingWeightOunces: product.shippingWeightOunces,
+      shippingWeightOunces: unitShippingWeightOunces,
       quantity,
       lineTotalCents,
       lineShippingWeightOunces,
@@ -333,14 +350,30 @@ export function quoteCart(
     );
   }
 
+  if (containsBinder && (fulfillmentOption ?? shippingOption)?.id === "priority") {
+    throw new CartValidationError(
+      "Expedited shipping is unavailable for SeaRealm binders. Choose Standard shipping or free local pickup.",
+      "binder_expedited_shipping_unavailable"
+    );
+  }
   const normalizedShippingOption = normalizeShippingOption(
     fulfillmentOption ?? shippingOption,
     shippingCents,
     shippingWeightOunces,
-    quotedItems.map((item) => item.category)
+    quotedItems.map((item) => item.category),
+    quotedItems.map((item) => item.productId)
   );
   const normalizedShipping = normalizedShippingOption.amountCents;
-  const normalizedProductionOption = normalizeProductionOption(productionOption);
+  let normalizedProductionOption = normalizeProductionOption(productionOption);
+  if (containsBinder) {
+    if (normalizedProductionOption.expedited) {
+      throw new CartValidationError(
+        "Expedited production is unavailable for SeaRealm binders. The lead time is 5 weeks.",
+        "binder_expedited_production_unavailable"
+      );
+    }
+    normalizedProductionOption = storeBinderProductionOption;
+  }
   const containsPreorders = cartContainsPreorders(quotedItems);
   if (containsPreorders && normalizedProductionOption.expedited) {
     throw new CartValidationError(

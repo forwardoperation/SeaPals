@@ -346,6 +346,9 @@ export function getStoreConfiguration() {
       sku: definition.sku,
       preorder: Boolean(definition.preorder),
       madeToOrder: Boolean(definition.madeToOrder),
+      leadTimeWeeks: definition.leadTimeWeeks ?? null,
+      inventoryTracked: definition.inventoryTracked !== false,
+      fulfillmentNote: definition.fulfillmentNote ?? null,
       buildDispatchMaxBusinessDays:
         Number.isSafeInteger(definition.buildDispatchMaxBusinessDays) &&
         definition.buildDispatchMaxBusinessDays > 0

@@ -145,6 +145,8 @@ end $$;
 create or replace function public.manufacturing_order_changed() returns trigger
 language plpgsql security definer set search_path=public,pg_temp as $$
 begin
+  -- Outsourced binders are fulfilled through Orders, never the local printers.
+  if exists(select 1 from store_order_items where order_id=new.id and sku='SP-MERCH-CARD-BINDER') then return new; end if;
   if new.payment_status='paid' and (tg_op='INSERT' or old.payment_status is distinct from 'paid') then
     insert into manufacturing_orders(order_id,customer_order_id,display_number,release_id)
       select new.id,new.id,new.order_number,active_release from manufacturing_settings where id on conflict do nothing;

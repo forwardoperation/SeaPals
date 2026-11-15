@@ -122,7 +122,8 @@ function productionDescription(order) {
   }
   const name = safeText(order?.production_option_name, "Standard production");
   const days = safeInteger(order?.production_max_business_days, 5);
-  const window = days === 1 ? "1 business day" : `up to ${days} business days`;
+  const containsBinder = order?.store_order_items?.some((item) => item.product_id === "card-binder");
+  const window = containsBinder ? "5-week lead time after payment" : days === 1 ? "1 business day" : `up to ${days} business days`;
   const amount = formatMoney(order?.production_cents, order?.currency);
   const due = formatDate(order?.production_due_date);
   return `${name} — ${amount} — ${window}${due ? ` — due ${due}` : ""}`;

@@ -275,11 +275,11 @@ test("checkout preserves quoted fixed shipping and each item's tax code", async 
         },
         items: [
           {
-            productId: "card-binder",
-            sku: "SP-MERCH-CARD-BINDER",
+            productId: "backpack",
+            sku: "SP-MERCH-BACKPACK",
             category: "storage",
-            name: "SeaPals Card Binder",
-            checkoutDescription: "SeaPals card storage binder.",
+            name: "SeaRealm Backpack",
+            checkoutDescription: "SeaRealm backpack.",
             unitAmountCents: 2500,
             quantity: 1,
             taxCode: "txcd_99999999",
@@ -317,7 +317,7 @@ test("checkout preserves quoted fixed shipping and each item's tax code", async 
     assert.equal(form.get("payment_method_types[0]"), null);
     assert.equal(form.get("automatic_tax[enabled]"), "true");
     assert.equal(form.get("line_items[0][tax_rates][0]"), null);
-    assert.equal(form.get(`${prefix}[name]`), "SeaPals — SeaPals Card Binder");
+    assert.equal(form.get(`${prefix}[name]`), "SeaPals — SeaRealm Backpack");
     assert.equal(form.get(`${prefix}[tax_code]`), "txcd_99999999");
     assert.equal(form.get(`${prefix}[metadata][category]`), "storage");
     assert.equal(form.get("line_items[0][metadata][category]"), null);

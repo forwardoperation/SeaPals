@@ -6,12 +6,14 @@ import { PGlite } from "@electric-sql/pglite";
 
 const schema = await readFile(new URL("../../../supabase/store-orders.sql", import.meta.url), "utf8");
 const migration = await readFile(new URL("../../../supabase/store-preorders.sql", import.meta.url), "utf8");
+const binderMigration = await readFile(new URL("../../../supabase/store-binders.sql", import.meta.url), "utf8");
 
 const catalog = {
   starter: ["starter-kit", "SP-KIT-STARTER", 4400],
   deck: ["coral-garden", "SP-DECK-CORAL-GARDEN", 2200],
   pack: ["deep-dive-pack", "SP-PACK-DEEP", 1000],
   dice: ["accessory-set", "SP-ACC-SET", 1200],
+  binder: ["card-binder", "SP-MERCH-CARD-BINDER", 4000],
 };
 function item(key, quantity = 1) {
   const [product_id, sku, unit_amount_cents] = catalog[key];
@@ -29,7 +31,7 @@ async function fixture({ legacy = false, manufacturing = false } = {}) {
   await db.exec("create role anon; create role authenticated; create role service_role;");
   // PGlite provides gen_random_uuid in core, but cannot load Supabase's extension.
   await db.exec(schema.replace("create extension if not exists pgcrypto;", ""));
-  await db.query("insert into store_inventory(sku,on_hand_quantity,reserved_quantity) select x,10,0 from unnest($1::text[]) as x", [Object.values(catalog).map(([, sku]) => sku)]);
+  await db.query("insert into store_inventory(sku,on_hand_quantity,reserved_quantity) select x,10,0 from unnest($1::text[]) as x", [Object.values(catalog).filter(([id]) => id !== "card-binder").map(([, sku]) => sku)]);
   if (manufacturing) {
     for (const file of ["manufacturing.sql", "manufacturing-inventory.sql", "manufacturing-dispatch.sql"]) {
       await db.exec(await readFile(new URL(`../../../supabase/${file}`, import.meta.url), "utf8"));
@@ -47,17 +49,20 @@ async function fixture({ legacy = false, manufacturing = false } = {}) {
   const reserve = async (items, options = {}) => {
     const id = options.id ?? randomUUID();
     const subtotal = items.reduce((sum, row) => sum + row.line_total_cents, 0);
+    const binder = items.some((row) => row.product_id === "card-binder");
+    const shippingCents = options.pickup ? 0 : binder ? 999 : 1000;
     const args = {
       p_order_id: id, p_checkout_request_id: options.requestId ?? randomUUID(),
       p_order_number: `SP-${id}`, p_currency: "usd", p_payment_livemode: true,
       p_subtotal_cents: subtotal, p_production_option_id: options.expedited ? "expedited-production" : "standard-production",
       p_production_option_name: options.expedited ? "Expedited production" : "Standard production",
-      p_production_max_business_days: options.expedited ? 1 : 5,
+      p_production_max_business_days: options.expedited ? 1 : binder ? 25 : 5,
       p_production_cents: options.expedited ? 1000 : 0,
-      p_fulfillment_method: "shipping", p_fulfillment_option_id: "standard",
-      p_fulfillment_option_name: "Standard Shipping & Handling", p_pickup_location: null,
-      p_shipping_cents: 1000, p_total_cents: subtotal + 1000 + (options.expedited ? 1000 : 0),
+      p_fulfillment_method: options.pickup ? "pickup" : "shipping", p_fulfillment_option_id: options.pickup ? "pickup-elverson-pa" : "standard",
+      p_fulfillment_option_name: options.pickup ? "Scheduled pickup" : "Standard Shipping & Handling", p_pickup_location: options.pickup ? "Elverson, PA" : null,
+      p_shipping_cents: shippingCents, p_total_cents: subtotal + shippingCents + (options.expedited ? 1000 : 0),
       p_inventory_reserved_until: new Date(Date.now() + 3600000).toISOString(), p_items: JSON.stringify(items),
+      ...options.args,
     };
     const [row] = await rpc(options.legacy ? "reserve_store_order_inventory" : "reserve_store_order_with_preorders", args);
     return { ...row, args };
@@ -74,12 +79,51 @@ async function fixture({ legacy = false, manufacturing = false } = {}) {
       p_customer_name: "SQL Test", p_shipping_address: JSON.stringify({ country: "US" }), p_currency: "usd",
       p_subtotal_cents: row.args.p_subtotal_cents, p_production_option_id: row.args.p_production_option_id,
       p_production_option_name: row.args.p_production_option_name, p_production_max_business_days: row.args.p_production_max_business_days,
-      p_production_cents: row.args.p_production_cents, p_shipping_cents: 1000, p_tax_cents: 0, p_total_cents: row.args.p_total_cents,
+      p_production_cents: row.args.p_production_cents, p_shipping_cents: row.args.p_shipping_cents, p_tax_cents: 0, p_total_cents: row.args.p_total_cents,
       p_receipt_url: null, p_receipt_number: null, p_payment_livemode: true,
     });
   };
   return { db, rpc, reserve, order, stock, pay };
 }
+
+test("SQL outsourced binders accept orders without a stock cap and keep a five-calendar-week deadline", async () => {
+  const f = await fixture();
+  try {
+    assert.equal(await f.stock("binder"), undefined);
+    // More than the usual ten-unit ATP capacity, without any binder stock row.
+    const first = await f.reserve([item("binder", 8)]);
+    const second = await f.reserve([item("binder", 8)], { pickup: true });
+    const third = await f.reserve([item("binder", 8)]);
+    assert.equal(first.fulfillment_type, "regular");
+    assert.equal(first.expedited_capacity_state, "not_applicable");
+    await f.pay(first, "2026-11-14T15:00:00Z"); // Saturday, exactly five weeks to Dec 19.
+    await f.pay(second, "2026-11-14T15:00:00Z");
+    assert.equal((await f.order(first.id)).inventory_state, "committed");
+    assert.equal((await f.order(second.id)).shipping_cents, 0);
+    assert.equal(await f.stock("binder"), undefined);
+    assert.deepEqual(await f.rpc("prepare_store_fulfillment_due_notifications", { p_limit: 25, p_now: "2026-11-20T15:00:00Z" }), []);
+    const reminders = await f.rpc("prepare_store_fulfillment_due_notifications", { p_limit: 25, p_now: "2026-12-18T14:00:00Z" });
+    assert.equal(reminders.length, 2);
+    assert.ok(reminders.every((row) => row.due_date === "2026-12-19"));
+    await f.rpc("fail_store_order_checkout_and_release_inventory", { p_order_id: third.id, p_reason: "Checkout session creation failed" });
+    assert.equal((await f.order(third.id)).inventory_state, "released");
+    assert.equal((await f.stock("pack")).on_hand_quantity, 10);
+    assert.equal((await f.stock("pack")).reserved_quantity, 0);
+  } finally { await f.db.close(); }
+});
+
+test("SQL rejects binder rush service, mixed orders, wrong shipping and a false five-day promise", async () => {
+  const f = await fixture();
+  try {
+    await assert.rejects(f.reserve([item("binder")], { expedited: true }), /store_binder_fulfillment_invalid/);
+    await assert.rejects(f.reserve([item("binder"), item("pack")]), /store_binder_fulfillment_invalid/);
+    await assert.rejects(f.reserve([item("binder")], { args: { p_production_max_business_days: 5 } }), /store_binder_fulfillment_invalid/);
+    await assert.rejects(f.reserve([item("binder")], { args: { p_fulfillment_option_id: "priority" } }), /store_binder_fulfillment_invalid/);
+    await assert.rejects(f.reserve([item("binder")], { args: { p_shipping_cents: 1000, p_total_cents: 5000 } }), /store_binder_fulfillment_invalid/);
+    await assert.rejects(f.reserve([item("pack")], { args: { p_production_max_business_days: 25 } }), /Invalid store order production option/);
+    await assert.rejects(f.reserve([{ ...item("pack"), sku: "SP-MERCH-CARD-BINDER" }]), /store_binder_fulfillment_invalid/);
+  } finally { await f.db.close(); }
+});
 
 test("SQL preorders persist item policy and mixed-cart holiday scheduling without replenishing ATP", async () => {
   const f = await fixture();
@@ -300,5 +344,21 @@ test("SQL preorders preserve physical stock reservations and the explicit manufa
     assert.equal(released.on_hand, 3);
     assert.equal(released.reserved, 0);
     assert.equal((await f.stock("starter")).on_hand_quantity, 9);
+  } finally { await f.db.close(); }
+});
+
+test("SQL binder migration is repeatable and outsourced orders bypass local printers", async () => {
+  const f = await fixture({ manufacturing: true });
+  try {
+    await f.db.exec(binderMigration);
+    const r = await f.reserve([item("binder")], { pickup: true });
+    await f.pay(r, "2026-11-14T15:00:00Z");
+    await f.db.exec(binderMigration);
+    assert.equal((await f.order(r.id)).payment_status, "paid");
+    assert.equal((await f.db.query("select * from manufacturing_orders where order_id=$1", [r.id])).rows.length, 0);
+    assert.equal((await f.db.query("select manufacturing_eligible(o) as eligible from store_orders o where id=$1", [r.id])).rows[0].eligible, false);
+    await f.db.query("update store_orders set fulfillment_status='ready_for_pickup' where id=$1", [r.id]);
+    assert.equal((await f.order(r.id)).fulfillment_status, "ready_for_pickup");
+    assert.equal((await f.db.query("select * from manufacturing_notifications where order_id=$1", [r.id])).rows.length, 0);
   } finally { await f.db.close(); }
 });

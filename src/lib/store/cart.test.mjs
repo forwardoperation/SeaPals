@@ -160,7 +160,6 @@ test("the catalog definitions use the established cash prices", () => {
 
   for (const productId of [
     "custom-t-shirt",
-    "card-binder",
     "backpack",
     "plush-toy",
   ]) {
@@ -176,7 +175,7 @@ test("the catalog definitions use the established cash prices", () => {
   }
 });
 
-test("the default storefront is limited to the twelve approved launch products", () => {
+test("the default storefront is limited to the thirteen approved products", () => {
   withStoreEnvironment({}, () => {
     const configuration = getStoreConfiguration();
 
@@ -184,7 +183,7 @@ test("the default storefront is limited to the twelve approved launch products",
       configuration.products.map((product) => product.id),
       storeLaunchProductIds
     );
-    assert.equal(configuration.products.length, 12);
+    assert.equal(configuration.products.length, 13);
     assert.equal(
       configuration.products.some((product) => product.id === "starter-kit"),
       true
@@ -496,7 +495,7 @@ test("game accessories retain their server-controlled source prices", () => {
   );
 });
 
-test("the twelve-product launch catalog preserves the eight-item cart limit", () => {
+test("the public catalog preserves the eight-item cart limit", () => {
   withStoreEnvironment(
     {
       ...infrastructureEnvironment,
@@ -513,8 +512,8 @@ test("the twelve-product launch catalog preserves the eight-item cart limit", ()
       const decks = configuration.products.filter((product) => product.deckId);
 
       assert.deepEqual(ids, storeLaunchProductIds);
-      assert.equal(new Set(ids).size, 12);
-      assert.equal(new Set(skus).size, 12);
+      assert.equal(new Set(ids).size, 13);
+      assert.equal(new Set(skus).size, 13);
       assert.equal(decks.length, 7);
       assert.ok(configuration.products.every((product) => product.preorder || product.madeToOrder));
       assert.equal(
@@ -524,9 +523,9 @@ test("the twelve-product launch catalog preserves the eight-item cart limit", ()
       );
       assert.ok(
         configuration.products.every(
-          (product) => product.preorder
+          (product) => product.leadTimeWeeks === 5 || (product.preorder
             ? product.buildDispatchMaxBusinessDays === null
-            : product.buildDispatchMaxBusinessDays === 5
+            : product.buildDispatchMaxBusinessDays === 5)
         )
       );
       assert.ok(
@@ -563,7 +562,7 @@ test("the twelve-product launch catalog preserves the eight-item cart limit", ()
       assert.throws(
         () =>
           quoteCart(
-            storeLaunchProductIds.map((productId) => ({
+            storeLaunchProductIds.filter((productId) => productId !== "card-binder").map((productId) => ({
               productId,
               quantity: 1,
             })),
