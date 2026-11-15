@@ -1,0 +1,7095 @@
+{
+  "fileKey": "xeol2YE0jCE0N5vAD6tjzx",
+  "readAt": "2026-11-15",
+  "method": "Official Figma Plugin API observations of outermost card slots on all 49 native deck source sheets/grids. Visible Name/Habitat Name and stage text are recorded; instance mainComponent IDs are joined to canonical gallery sources. Reference inserts and known empty frames are excluded from the 60 playable cards.",
+  "pages": [
+    {
+      "id": "coral-garden",
+      "pageId": "2310:498819",
+      "pageName": "Decks - Coral Garden",
+      "observedAt": "2026-11-15T13:49:37.411Z",
+      "sourceObservationSha256": "6cb01d5cdcbfc07b763011b5eee7c6a0e02ff00f74fb5d3745b20df292e25c95",
+      "excludedReferenceNodeIds": [
+        "4316:334151",
+        "4316:334201"
+      ],
+      "excludedEmptyNodeIds": [],
+      "sheets": [
+        {
+          "nodeId": "4316:271763",
+          "name": "card_backs",
+          "bounds": {
+            "x": 135,
+            "y": 7557.6435546875,
+            "width": 2330,
+            "height": 3170
+          },
+          "playableNodeIds": [
+            "4316:271809",
+            "4316:271810",
+            "4316:271811",
+            "4316:271812",
+            "4316:271813",
+            "4316:271814",
+            "4316:271815",
+            "4316:271816",
+            "4316:271817"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "4316:271771",
+          "name": "card_backs",
+          "bounds": {
+            "x": 2725,
+            "y": 7557.6435546875,
+            "width": 2330,
+            "height": 3170
+          },
+          "playableNodeIds": [
+            "4316:272688",
+            "4316:272689",
+            "4316:272690",
+            "4316:272691",
+            "4316:272692",
+            "4316:272693",
+            "4316:272694",
+            "4316:272695",
+            "4316:272696"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "4316:271778",
+          "name": "card_backs",
+          "bounds": {
+            "x": 5315,
+            "y": 7557.6435546875,
+            "width": 2330,
+            "height": 3170
+          },
+          "playableNodeIds": [
+            "4316:280677",
+            "4316:280678",
+            "4316:280679",
+            "4316:280680",
+            "4316:280681",
+            "4316:280682",
+            "4316:280683",
+            "4316:280684",
+            "4316:280685"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "4316:271785",
+          "name": "card_backs",
+          "bounds": {
+            "x": 7905,
+            "y": 7557.6435546875,
+            "width": 2330,
+            "height": 3170
+          },
+          "playableNodeIds": [
+            "4316:286753",
+            "4316:286754",
+            "4316:286755",
+            "4316:286756",
+            "4316:286757",
+            "4316:286758",
+            "4316:286759",
+            "4316:286760",
+            "4316:286761"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "4316:271792",
+          "name": "card_backs",
+          "bounds": {
+            "x": 10505,
+            "y": 7557.6435546875,
+            "width": 2330,
+            "height": 3170
+          },
+          "playableNodeIds": [
+            "4316:299765",
+            "4316:299766",
+            "4316:299767",
+            "4316:299768",
+            "4316:299769",
+            "4316:299770",
+            "4316:299771",
+            "4316:299772",
+            "4316:299773"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "4316:271799",
+          "name": "card_backs",
+          "bounds": {
+            "x": 13085,
+            "y": 7557.6435546875,
+            "width": 2330,
+            "height": 3170
+          },
+          "playableNodeIds": [
+            "4316:317451",
+            "4316:317452",
+            "4316:317453",
+            "4316:317454",
+            "4316:317455",
+            "4316:317456",
+            "4316:317457",
+            "4316:317458",
+            "4316:317459"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "4316:271806",
+          "name": "card_backs",
+          "bounds": {
+            "x": 15675,
+            "y": 7557.6435546875,
+            "width": 2330,
+            "height": 3170
+          },
+          "playableNodeIds": [
+            "4316:334145",
+            "4316:334146",
+            "4316:334147",
+            "4316:334148",
+            "4316:334149",
+            "4316:334150"
+          ],
+          "referenceNodeIds": [
+            "4316:334151",
+            "4316:334201"
+          ],
+          "omittedNodeIds": []
+        }
+      ],
+      "cards": [
+        {
+          "cardId": "coral-gardener",
+          "title": "Coral Nursery",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:271809",
+            "4316:271810"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:271809",
+              "sheetNodeId": "4316:271763",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            },
+            {
+              "nodeId": "4316:271810",
+              "sheetNodeId": "4316:271763",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "coral-cement",
+          "title": "Coral Cement",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "4316:271817"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:271817",
+              "sheetNodeId": "4316:271763",
+              "sourceNodeId": "672:4828",
+              "collectorNumbers": [
+                "89/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "scientist-jes",
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:271815",
+            "4316:271816"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:271815",
+              "sheetNodeId": "4316:271763",
+              "sourceNodeId": "396:8478",
+              "collectorNumbers": [
+                "56/102"
+              ]
+            },
+            {
+              "nodeId": "4316:271816",
+              "sheetNodeId": "4316:271763",
+              "sourceNodeId": "396:8478",
+              "collectorNumbers": [
+                "56/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "dr-evans",
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "4316:271811"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:271811",
+              "sheetNodeId": "4316:271763",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "restocking",
+          "title": "Restocking",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "4316:271812",
+            "4316:271813",
+            "4316:271814"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:271812",
+              "sheetNodeId": "4316:271763",
+              "sourceNodeId": "259:698",
+              "collectorNumbers": [
+                "87/102"
+              ]
+            },
+            {
+              "nodeId": "4316:271813",
+              "sheetNodeId": "4316:271763",
+              "sourceNodeId": "259:698",
+              "collectorNumbers": [
+                "87/102"
+              ]
+            },
+            {
+              "nodeId": "4316:271814",
+              "sheetNodeId": "4316:271763",
+              "sourceNodeId": "259:698",
+              "collectorNumbers": [
+                "87/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "remote-search",
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:272688",
+            "4316:272689"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:272688",
+              "sheetNodeId": "4316:271771",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            },
+            {
+              "nodeId": "4316:272689",
+              "sheetNodeId": "4316:271771",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "fishing",
+          "title": "Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:272690",
+            "4316:272691"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:272690",
+              "sheetNodeId": "4316:271771",
+              "sourceNodeId": "672:4831",
+              "collectorNumbers": [
+                "91/102"
+              ]
+            },
+            {
+              "nodeId": "4316:272691",
+              "sheetNodeId": "4316:271771",
+              "sourceNodeId": "672:4831",
+              "collectorNumbers": [
+                "91/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "recovery",
+          "title": "Recovery",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "4316:272692"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:272692",
+              "sheetNodeId": "4316:271771",
+              "sourceNodeId": "672:4833",
+              "collectorNumbers": [
+                "92/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "manta-ray",
+          "title": "Reef Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "4316:272693"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:272693",
+              "sheetNodeId": "4316:271771",
+              "sourceNodeId": "3402:607522",
+              "collectorNumbers": [
+                "16/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "bottlenose-dolphin",
+          "title": "Bottlenose Dolphin",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "4316:272694"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:272694",
+              "sheetNodeId": "4316:271771",
+              "sourceNodeId": "745:139303",
+              "collectorNumbers": [
+                "21/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "spinner-dolphins",
+          "title": "Spinner Dolphin",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:272695",
+            "4316:272696"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:272695",
+              "sheetNodeId": "4316:271771",
+              "sourceNodeId": "745:139302",
+              "collectorNumbers": [
+                "23/102"
+              ]
+            },
+            {
+              "nodeId": "4316:272696",
+              "sheetNodeId": "4316:271771",
+              "sourceNodeId": "745:139302",
+              "collectorNumbers": [
+                "23/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "cleaner-shrimp",
+          "title": "Cleaner Shrimp",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "4316:280679",
+            "4316:280680",
+            "4316:280681"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:280679",
+              "sheetNodeId": "4316:271778",
+              "sourceNodeId": "241:854",
+              "collectorNumbers": [
+                "74/102"
+              ]
+            },
+            {
+              "nodeId": "4316:280680",
+              "sheetNodeId": "4316:271778",
+              "sourceNodeId": "241:854",
+              "collectorNumbers": [
+                "74/102"
+              ]
+            },
+            {
+              "nodeId": "4316:280681",
+              "sheetNodeId": "4316:271778",
+              "sourceNodeId": "241:854",
+              "collectorNumbers": [
+                "74/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "emerald-crab",
+          "title": "Emerald Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "4316:280682"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:280682",
+              "sheetNodeId": "4316:271778",
+              "sourceNodeId": "241:849",
+              "collectorNumbers": [
+                "75/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "goliath-grouper",
+          "title": "Goliath Grouper",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:280677",
+            "4316:280678"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:280677",
+              "sheetNodeId": "4316:271778",
+              "sourceNodeId": "241:858",
+              "collectorNumbers": [
+                "22/102"
+              ]
+            },
+            {
+              "nodeId": "4316:280678",
+              "sheetNodeId": "4316:271778",
+              "sourceNodeId": "241:858",
+              "collectorNumbers": [
+                "22/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "arrow-crab",
+          "title": "Arrow Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:280683",
+            "4316:280684"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:280683",
+              "sheetNodeId": "4316:271778",
+              "sourceNodeId": "241:851",
+              "collectorNumbers": [
+                "72/102"
+              ]
+            },
+            {
+              "nodeId": "4316:280684",
+              "sheetNodeId": "4316:271778",
+              "sourceNodeId": "241:851",
+              "collectorNumbers": [
+                "72/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "blue-crab",
+          "title": "Blue Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "4316:280685"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:280685",
+              "sheetNodeId": "4316:271778",
+              "sourceNodeId": "241:850",
+              "collectorNumbers": [
+                "73/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "spectacled-parrotfish",
+          "title": "Parrotfish (Spectacled)",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:286760",
+            "4316:286761"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:286760",
+              "sheetNodeId": "4316:271785",
+              "sourceNodeId": "1397:91313",
+              "collectorNumbers": [
+                "42/102"
+              ]
+            },
+            {
+              "nodeId": "4316:286761",
+              "sheetNodeId": "4316:271785",
+              "sourceNodeId": "1397:91313",
+              "collectorNumbers": [
+                "42/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "french-angelfish",
+          "title": "French Angelfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:286756",
+            "4316:286757"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:286756",
+              "sheetNodeId": "4316:271785",
+              "sourceNodeId": "241:1501",
+              "collectorNumbers": [
+                "40/102"
+              ]
+            },
+            {
+              "nodeId": "4316:286757",
+              "sheetNodeId": "4316:271785",
+              "sourceNodeId": "241:1501",
+              "collectorNumbers": [
+                "40/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "bluestriped-grunt",
+          "title": "Bluestriped Grunt",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "4316:286753",
+            "4316:286754",
+            "4316:286755"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:286753",
+              "sheetNodeId": "4316:271785",
+              "sourceNodeId": "432:8203",
+              "collectorNumbers": [
+                "64/102"
+              ]
+            },
+            {
+              "nodeId": "4316:286754",
+              "sheetNodeId": "4316:271785",
+              "sourceNodeId": "432:8203",
+              "collectorNumbers": [
+                "64/102"
+              ]
+            },
+            {
+              "nodeId": "4316:286755",
+              "sheetNodeId": "4316:271785",
+              "sourceNodeId": "432:8203",
+              "collectorNumbers": [
+                "64/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "spotfin-butterflyfish",
+          "title": "Spotfin Butterflyfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:286758",
+            "4316:286759"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:286758",
+              "sheetNodeId": "4316:271785",
+              "sourceNodeId": "434:9041",
+              "collectorNumbers": [
+                "61/102"
+              ]
+            },
+            {
+              "nodeId": "4316:286759",
+              "sheetNodeId": "4316:271785",
+              "sourceNodeId": "434:9041",
+              "collectorNumbers": [
+                "61/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "boulder-star-coral-base",
+          "title": "Boulder Star",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "4316:299765",
+            "4316:299766",
+            "4316:299767"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:299765",
+              "sheetNodeId": "4316:271792",
+              "sourceNodeId": "354:5016",
+              "collectorNumbers": [
+                "79/102"
+              ]
+            },
+            {
+              "nodeId": "4316:299766",
+              "sheetNodeId": "4316:271792",
+              "sourceNodeId": "354:5016",
+              "collectorNumbers": [
+                "79/102"
+              ]
+            },
+            {
+              "nodeId": "4316:299767",
+              "sheetNodeId": "4316:271792",
+              "sourceNodeId": "354:5016",
+              "collectorNumbers": [
+                "79/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "boulder-star-coral-stage-1",
+          "title": "Boulder Star",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:299768",
+            "4316:299769"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:299768",
+              "sheetNodeId": "4316:271792",
+              "sourceNodeId": "354:5015",
+              "collectorNumbers": [
+                "48/102"
+              ]
+            },
+            {
+              "nodeId": "4316:299769",
+              "sheetNodeId": "4316:271792",
+              "sourceNodeId": "354:5015",
+              "collectorNumbers": [
+                "48/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "boulder-star-coral-stage-2",
+          "title": "Boulder Star",
+          "stage": "Stage 2",
+          "quantity": 1,
+          "nodeIds": [
+            "4316:299770"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:299770",
+              "sheetNodeId": "4316:271792",
+              "sourceNodeId": "354:5014",
+              "collectorNumbers": [
+                "28/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "elkhorn-coral-base",
+          "title": "Elkhorn Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "4316:299771",
+            "4316:299772",
+            "4316:299773"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:299771",
+              "sheetNodeId": "4316:271792",
+              "sourceNodeId": "354:5011",
+              "collectorNumbers": [
+                "82/102"
+              ]
+            },
+            {
+              "nodeId": "4316:299772",
+              "sheetNodeId": "4316:271792",
+              "sourceNodeId": "354:5011",
+              "collectorNumbers": [
+                "82/102"
+              ]
+            },
+            {
+              "nodeId": "4316:299773",
+              "sheetNodeId": "4316:271792",
+              "sourceNodeId": "354:5011",
+              "collectorNumbers": [
+                "82/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "elkhorn-coral-stage-1",
+          "title": "Elkhorn Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:317451",
+            "4316:317452"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:317451",
+              "sheetNodeId": "4316:271799",
+              "sourceNodeId": "354:5012",
+              "collectorNumbers": [
+                "51/102"
+              ]
+            },
+            {
+              "nodeId": "4316:317452",
+              "sheetNodeId": "4316:271799",
+              "sourceNodeId": "354:5012",
+              "collectorNumbers": [
+                "51/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "elkhorn-coral-stage-2",
+          "title": "Elkhorn Coral",
+          "stage": "Stage 2",
+          "quantity": 1,
+          "nodeIds": [
+            "4316:317453"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:317453",
+              "sheetNodeId": "4316:271799",
+              "sourceNodeId": "354:5013",
+              "collectorNumbers": [
+                "30/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "title": "Lettuce Coral",
+          "stage": "Base",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:317454",
+            "4316:317455"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:317454",
+              "sheetNodeId": "4316:271799",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            },
+            {
+              "nodeId": "4316:317455",
+              "sheetNodeId": "4316:271799",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "title": "Lettuce Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:317456",
+            "4316:317457"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:317456",
+              "sheetNodeId": "4316:271799",
+              "sourceNodeId": "354:5021",
+              "collectorNumbers": [
+                "52/102"
+              ]
+            },
+            {
+              "nodeId": "4316:317457",
+              "sheetNodeId": "4316:271799",
+              "sourceNodeId": "354:5021",
+              "collectorNumbers": [
+                "52/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "clubfinger-coral-base",
+          "title": "Clubfinger Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "4316:317458",
+            "4316:317459",
+            "4316:334145"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:317458",
+              "sheetNodeId": "4316:271799",
+              "sourceNodeId": "354:5025",
+              "collectorNumbers": [
+                "81/102"
+              ]
+            },
+            {
+              "nodeId": "4316:317459",
+              "sheetNodeId": "4316:271799",
+              "sourceNodeId": "354:5025",
+              "collectorNumbers": [
+                "81/102"
+              ]
+            },
+            {
+              "nodeId": "4316:334145",
+              "sheetNodeId": "4316:271806",
+              "sourceNodeId": "354:5025",
+              "collectorNumbers": [
+                "81/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "title": "Mustard Hill Coral",
+          "stage": "Base",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:334148",
+            "4316:334149"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:334148",
+              "sheetNodeId": "4316:271806",
+              "sourceNodeId": "354:5026",
+              "collectorNumbers": [
+                "31/102"
+              ]
+            },
+            {
+              "nodeId": "4316:334149",
+              "sheetNodeId": "4316:271806",
+              "sourceNodeId": "354:5026",
+              "collectorNumbers": [
+                "31/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "coral-reef",
+          "title": "Coral Reef",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "4316:334150"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:334150",
+              "sheetNodeId": "4316:271806",
+              "sourceNodeId": "434:8921",
+              "collectorNumbers": [
+                "102/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "clubfinger-coral-stage-1",
+          "title": "Clubfinger Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "4316:334146",
+            "4316:334147"
+          ],
+          "slots": [
+            {
+              "nodeId": "4316:334146",
+              "sheetNodeId": "4316:271806",
+              "sourceNodeId": "354:5024",
+              "collectorNumbers": [
+                "50/102"
+              ]
+            },
+            {
+              "nodeId": "4316:334147",
+              "sheetNodeId": "4316:271806",
+              "sourceNodeId": "354:5024",
+              "collectorNumbers": [
+                "50/102"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "blue-water",
+      "pageId": "2224:257782",
+      "pageName": "Decks - Drop Off",
+      "observedAt": "2026-11-15T13:48:37.677Z",
+      "sourceObservationSha256": "faf79795bcb8a85fe84f408f99ca54aa4a6d7566c76a0599f23cb878e395a912",
+      "excludedReferenceNodeIds": [
+        "2224:353016",
+        "2849:131779",
+        "4499:508123"
+      ],
+      "excludedEmptyNodeIds": [],
+      "sheets": [
+        {
+          "nodeId": "2224:257783",
+          "name": "drop-off-1",
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2224:310887",
+            "2224:310908",
+            "2224:311125",
+            "2224:311207",
+            "3143:610849",
+            "2224:311166",
+            "3143:614043",
+            "3143:613884",
+            "3578:366983"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2224:312429",
+          "name": "drop-off-2",
+          "bounds": {
+            "x": 2590,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2224:312981",
+            "2224:313338",
+            "2224:315665",
+            "2577:446775",
+            "2224:326426",
+            "2224:322783",
+            "2409:596503",
+            "3416:465077",
+            "3578:366601"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2224:312942",
+          "name": "drop-off-3",
+          "bounds": {
+            "x": 5180,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3550:781651",
+            "3550:782352",
+            "2224:331859",
+            "3578:266178",
+            "3578:266810",
+            "3578:267442",
+            "2224:331919",
+            "3578:267495",
+            "3578:268526"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2224:312944",
+          "name": "drop-off-4",
+          "bounds": {
+            "x": 7770,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3577:153452",
+            "3578:257730",
+            "3577:164063",
+            "3577:148565",
+            "3578:259170",
+            "3577:148566",
+            "3578:269557",
+            "3578:269558",
+            "3578:269559"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2224:312946",
+          "name": "drop-off-5",
+          "bounds": {
+            "x": 10360,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3138:576304",
+            "3143:610601",
+            "3577:154893",
+            "3577:156860",
+            "3138:571220",
+            "3578:262269",
+            "3578:317435",
+            "3578:346935",
+            "3578:356768"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2224:312948",
+          "name": "drop-off-6",
+          "bounds": {
+            "x": 12950,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3134:553430",
+            "3134:553431",
+            "3134:553432",
+            "3134:561566",
+            "3134:561567",
+            "3134:561568",
+            "3577:158826",
+            "3143:610602",
+            "3577:160793"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2224:312950",
+          "name": "drop-off-7",
+          "bounds": {
+            "x": 15540,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2231:163932",
+            "2224:353014",
+            "2224:353013",
+            "3134:544828",
+            "3134:544829",
+            "3134:544830"
+          ],
+          "referenceNodeIds": [
+            "2224:353016",
+            "2849:131779",
+            "4499:508123"
+          ],
+          "omittedNodeIds": []
+        }
+      ],
+      "cards": [
+        {
+          "cardId": "coral-gardener",
+          "title": "Coral Nursery",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:310887",
+            "2224:310908"
+          ],
+          "slots": [
+            {
+              "nodeId": "2224:310887",
+              "sheetNodeId": "2224:257783",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            },
+            {
+              "nodeId": "2224:310908",
+              "sheetNodeId": "2224:257783",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "capt-dani",
+          "title": "Whale Watcher Dani",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2224:311125"
+          ],
+          "slots": [
+            {
+              "nodeId": "2224:311125",
+              "sheetNodeId": "2224:257783",
+              "sourceNodeId": "259:694",
+              "collectorNumbers": [
+                "54/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "title": "Deep Sea Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:311207",
+            "3143:610849"
+          ],
+          "slots": [
+            {
+              "nodeId": "2224:311207",
+              "sheetNodeId": "2224:257783",
+              "sourceNodeId": "259:700",
+              "collectorNumbers": [
+                "57/102"
+              ]
+            },
+            {
+              "nodeId": "3143:610849",
+              "sheetNodeId": "2224:257783",
+              "sourceNodeId": "259:700",
+              "collectorNumbers": [
+                "57/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "dr-evans",
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:311166",
+            "3578:366983"
+          ],
+          "slots": [
+            {
+              "nodeId": "2224:311166",
+              "sheetNodeId": "2224:257783",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            },
+            {
+              "nodeId": "3578:366983",
+              "sheetNodeId": "2224:257783",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "robotic-survey",
+          "title": "Robotic Survey",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3143:614043",
+            "3143:613884"
+          ],
+          "slots": [
+            {
+              "nodeId": "3143:614043",
+              "sheetNodeId": "2224:257783",
+              "sourceNodeId": "259:699",
+              "collectorNumbers": [
+                "88/102"
+              ]
+            },
+            {
+              "nodeId": "3143:613884",
+              "sheetNodeId": "2224:257783",
+              "sourceNodeId": "259:699",
+              "collectorNumbers": [
+                "88/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "coral-cement",
+          "title": "Coral Cement",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2224:312981"
+          ],
+          "slots": [
+            {
+              "nodeId": "2224:312981",
+              "sheetNodeId": "2224:312429",
+              "sourceNodeId": "672:4828",
+              "collectorNumbers": [
+                "89/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "remote-search",
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:313338",
+            "2224:315665"
+          ],
+          "slots": [
+            {
+              "nodeId": "2224:313338",
+              "sheetNodeId": "2224:312429",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            },
+            {
+              "nodeId": "2224:315665",
+              "sheetNodeId": "2224:312429",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "scientist-jes",
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2577:446775"
+          ],
+          "slots": [
+            {
+              "nodeId": "2577:446775",
+              "sheetNodeId": "2224:312429",
+              "sourceNodeId": "396:8478",
+              "collectorNumbers": [
+                "56/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "crab-trap",
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:326426",
+            "2224:322783"
+          ],
+          "slots": [
+            {
+              "nodeId": "2224:326426",
+              "sheetNodeId": "2224:312429",
+              "sourceNodeId": "672:4832",
+              "collectorNumbers": [
+                "59/102"
+              ]
+            },
+            {
+              "nodeId": "2224:322783",
+              "sheetNodeId": "2224:312429",
+              "sourceNodeId": "672:4832",
+              "collectorNumbers": [
+                "59/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "tiger-shark",
+          "title": "Tiger Shark",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2409:596503"
+          ],
+          "slots": [
+            {
+              "nodeId": "2409:596503",
+              "sheetNodeId": "2224:312429",
+              "sourceNodeId": "241:1127",
+              "collectorNumbers": [
+                "18/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "manta-ray",
+          "title": "Reef Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3416:465077"
+          ],
+          "slots": [
+            {
+              "nodeId": "3416:465077",
+              "sheetNodeId": "2224:312429",
+              "sourceNodeId": "3402:607522",
+              "collectorNumbers": [
+                "16/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "poison-heal",
+          "title": "Poison Heal",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3578:366601"
+          ],
+          "slots": [
+            {
+              "nodeId": "3578:366601",
+              "sheetNodeId": "2224:312429",
+              "sourceNodeId": "672:4830",
+              "collectorNumbers": [
+                "90/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "green-moray-eel",
+          "title": "Green Moray Eel",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3550:781651",
+            "3550:782352"
+          ],
+          "slots": [
+            {
+              "nodeId": "3550:781651",
+              "sheetNodeId": "2224:312942",
+              "sourceNodeId": "241:860",
+              "collectorNumbers": [
+                "33/102"
+              ]
+            },
+            {
+              "nodeId": "3550:782352",
+              "sheetNodeId": "2224:312942",
+              "sourceNodeId": "241:860",
+              "collectorNumbers": [
+                "33/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "arrow-crab",
+          "title": "Arrow Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:331859",
+            "2224:331919"
+          ],
+          "slots": [
+            {
+              "nodeId": "2224:331859",
+              "sheetNodeId": "2224:312942",
+              "sourceNodeId": "241:851",
+              "collectorNumbers": [
+                "72/102"
+              ]
+            },
+            {
+              "nodeId": "2224:331919",
+              "sheetNodeId": "2224:312942",
+              "sourceNodeId": "241:851",
+              "collectorNumbers": [
+                "72/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "octopus",
+          "title": "Day Octopus",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3578:266178",
+            "3578:266810"
+          ],
+          "slots": [
+            {
+              "nodeId": "3578:266178",
+              "sheetNodeId": "2224:312942",
+              "sourceNodeId": "746:146691",
+              "collectorNumbers": [
+                "46/102"
+              ]
+            },
+            {
+              "nodeId": "3578:266810",
+              "sheetNodeId": "2224:312942",
+              "sourceNodeId": "746:146691",
+              "collectorNumbers": [
+                "46/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "oysters",
+          "title": "Oysters",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3578:267442"
+          ],
+          "slots": [
+            {
+              "nodeId": "3578:267442",
+              "sheetNodeId": "2224:312942",
+              "sourceNodeId": "746:147861",
+              "collectorNumbers": [
+                "27/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "blue-crab",
+          "title": "Blue Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3578:267495",
+            "3578:268526"
+          ],
+          "slots": [
+            {
+              "nodeId": "3578:267495",
+              "sheetNodeId": "2224:312942",
+              "sourceNodeId": "241:850",
+              "collectorNumbers": [
+                "73/102"
+              ]
+            },
+            {
+              "nodeId": "3578:268526",
+              "sheetNodeId": "2224:312942",
+              "sourceNodeId": "241:850",
+              "collectorNumbers": [
+                "73/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "spanish-hogfish",
+          "title": "Spanish Hogfish",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3577:153452",
+            "3578:257730",
+            "3577:164063"
+          ],
+          "slots": [
+            {
+              "nodeId": "3577:153452",
+              "sheetNodeId": "2224:312944",
+              "sourceNodeId": "193:26",
+              "collectorNumbers": [
+                "69/102"
+              ]
+            },
+            {
+              "nodeId": "3578:257730",
+              "sheetNodeId": "2224:312944",
+              "sourceNodeId": "193:26",
+              "collectorNumbers": [
+                "69/102"
+              ]
+            },
+            {
+              "nodeId": "3577:164063",
+              "sheetNodeId": "2224:312944",
+              "sourceNodeId": "193:26",
+              "collectorNumbers": [
+                "69/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "picasso-triggerfish",
+          "title": "Triggerfish (Picasso)",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3577:148565",
+            "3578:259170",
+            "3577:148566"
+          ],
+          "slots": [
+            {
+              "nodeId": "3577:148565",
+              "sheetNodeId": "2224:312944",
+              "sourceNodeId": "241:1495",
+              "collectorNumbers": [
+                "70/102"
+              ]
+            },
+            {
+              "nodeId": "3578:259170",
+              "sheetNodeId": "2224:312944",
+              "sourceNodeId": "241:1495",
+              "collectorNumbers": [
+                "70/102"
+              ]
+            },
+            {
+              "nodeId": "3577:148566",
+              "sheetNodeId": "2224:312944",
+              "sourceNodeId": "241:1495",
+              "collectorNumbers": [
+                "70/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "winter-flounder",
+          "title": "Winter Flounder",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3578:269557",
+            "3578:269558",
+            "3578:269559"
+          ],
+          "slots": [
+            {
+              "nodeId": "3578:269557",
+              "sheetNodeId": "2224:312944",
+              "sourceNodeId": "193:27",
+              "collectorNumbers": [
+                "68/102"
+              ]
+            },
+            {
+              "nodeId": "3578:269558",
+              "sheetNodeId": "2224:312944",
+              "sourceNodeId": "193:27",
+              "collectorNumbers": [
+                "68/102"
+              ]
+            },
+            {
+              "nodeId": "3578:269559",
+              "sheetNodeId": "2224:312944",
+              "sourceNodeId": "193:27",
+              "collectorNumbers": [
+                "68/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "fairy-parrotfish",
+          "title": "Fairy Parrotfish",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3138:576304",
+            "3138:571220",
+            "3578:262269"
+          ],
+          "slots": [
+            {
+              "nodeId": "3138:576304",
+              "sheetNodeId": "2224:312946",
+              "sourceNodeId": "241:1493",
+              "collectorNumbers": [
+                "65/102"
+              ]
+            },
+            {
+              "nodeId": "3138:571220",
+              "sheetNodeId": "2224:312946",
+              "sourceNodeId": "241:1493",
+              "collectorNumbers": [
+                "65/102"
+              ]
+            },
+            {
+              "nodeId": "3578:262269",
+              "sheetNodeId": "2224:312946",
+              "sourceNodeId": "241:1493",
+              "collectorNumbers": [
+                "65/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "title": "Lettuce Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "3143:610601",
+            "3577:154893",
+            "3577:156860",
+            "3577:158826"
+          ],
+          "slots": [
+            {
+              "nodeId": "3143:610601",
+              "sheetNodeId": "2224:312946",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            },
+            {
+              "nodeId": "3577:154893",
+              "sheetNodeId": "2224:312946",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            },
+            {
+              "nodeId": "3577:156860",
+              "sheetNodeId": "2224:312946",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            },
+            {
+              "nodeId": "3577:158826",
+              "sheetNodeId": "2224:312948",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "blue-tang",
+          "title": "Atlantic Blue Tang",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3578:317435",
+            "3578:346935",
+            "3578:356768"
+          ],
+          "slots": [
+            {
+              "nodeId": "3578:317435",
+              "sheetNodeId": "2224:312946",
+              "sourceNodeId": "434:9000",
+              "collectorNumbers": [
+                "62/102"
+              ]
+            },
+            {
+              "nodeId": "3578:346935",
+              "sheetNodeId": "2224:312946",
+              "sourceNodeId": "434:9000",
+              "collectorNumbers": [
+                "62/102"
+              ]
+            },
+            {
+              "nodeId": "3578:356768",
+              "sheetNodeId": "2224:312946",
+              "sourceNodeId": "434:9000",
+              "collectorNumbers": [
+                "62/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "boulder-star-coral-base",
+          "title": "Boulder Star",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "3134:553430",
+            "3134:561566",
+            "3134:561567",
+            "3134:561568"
+          ],
+          "slots": [
+            {
+              "nodeId": "3134:553430",
+              "sheetNodeId": "2224:312948",
+              "sourceNodeId": "354:5016",
+              "collectorNumbers": [
+                "79/102"
+              ]
+            },
+            {
+              "nodeId": "3134:561566",
+              "sheetNodeId": "2224:312948",
+              "sourceNodeId": "354:5016",
+              "collectorNumbers": [
+                "79/102"
+              ]
+            },
+            {
+              "nodeId": "3134:561567",
+              "sheetNodeId": "2224:312948",
+              "sourceNodeId": "354:5016",
+              "collectorNumbers": [
+                "79/102"
+              ]
+            },
+            {
+              "nodeId": "3134:561568",
+              "sheetNodeId": "2224:312948",
+              "sourceNodeId": "354:5016",
+              "collectorNumbers": [
+                "79/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "boulder-star-coral-stage-1",
+          "title": "Boulder Star",
+          "stage": "Stage 1",
+          "quantity": 3,
+          "nodeIds": [
+            "3134:553431",
+            "3134:553432",
+            "3134:544828"
+          ],
+          "slots": [
+            {
+              "nodeId": "3134:553431",
+              "sheetNodeId": "2224:312948",
+              "sourceNodeId": "354:5015",
+              "collectorNumbers": [
+                "48/102"
+              ]
+            },
+            {
+              "nodeId": "3134:553432",
+              "sheetNodeId": "2224:312948",
+              "sourceNodeId": "354:5015",
+              "collectorNumbers": [
+                "48/102"
+              ]
+            },
+            {
+              "nodeId": "3134:544828",
+              "sheetNodeId": "2224:312950",
+              "sourceNodeId": "354:5015",
+              "collectorNumbers": [
+                "48/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "title": "Lettuce Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "3143:610602",
+            "3577:160793"
+          ],
+          "slots": [
+            {
+              "nodeId": "3143:610602",
+              "sheetNodeId": "2224:312948",
+              "sourceNodeId": "354:5021",
+              "collectorNumbers": [
+                "52/102"
+              ]
+            },
+            {
+              "nodeId": "3577:160793",
+              "sheetNodeId": "2224:312948",
+              "sourceNodeId": "354:5021",
+              "collectorNumbers": [
+                "52/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "coral-reef",
+          "title": "Coral Reef",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2231:163932"
+          ],
+          "slots": [
+            {
+              "nodeId": "2231:163932",
+              "sheetNodeId": "2224:312950",
+              "sourceNodeId": "434:8921",
+              "collectorNumbers": [
+                "102/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "title": "Mustard Hill Coral",
+          "stage": "Base",
+          "quantity": 2,
+          "nodeIds": [
+            "2224:353014",
+            "2224:353013"
+          ],
+          "slots": [
+            {
+              "nodeId": "2224:353014",
+              "sheetNodeId": "2224:312950",
+              "sourceNodeId": "354:5026",
+              "collectorNumbers": [
+                "31/102"
+              ]
+            },
+            {
+              "nodeId": "2224:353013",
+              "sheetNodeId": "2224:312950",
+              "sourceNodeId": "354:5026",
+              "collectorNumbers": [
+                "31/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "boulder-star-coral-stage-2",
+          "title": "Boulder Star",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "3134:544829",
+            "3134:544830"
+          ],
+          "slots": [
+            {
+              "nodeId": "3134:544829",
+              "sheetNodeId": "2224:312950",
+              "sourceNodeId": "354:5014",
+              "collectorNumbers": [
+                "28/102"
+              ]
+            },
+            {
+              "nodeId": "3134:544830",
+              "sheetNodeId": "2224:312950",
+              "sourceNodeId": "354:5014",
+              "collectorNumbers": [
+                "28/102"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "darkness-shroud",
+      "pageId": "2068:245383",
+      "pageName": "Decks - Darkness Shroud",
+      "observedAt": "2026-11-15T13:48:38.252Z",
+      "sourceObservationSha256": "9b79c834c0bd7ed6cb5ac76e3d0f484fb0c8181be2597264db2a01976f15cd45",
+      "excludedReferenceNodeIds": [
+        "2074:53602",
+        "4499:549976"
+      ],
+      "excludedEmptyNodeIds": [
+        "2893:234348"
+      ],
+      "sheets": [
+        {
+          "nodeId": "2298:446032",
+          "name": "darkness shroud 1",
+          "bounds": {
+            "x": 0,
+            "y": 3593,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2677:511507",
+            "2068:318874",
+            "2642:61708",
+            "3994:529777",
+            "3994:752641",
+            "3994:753190"
+          ],
+          "referenceNodeIds": [
+            "2074:53602",
+            "4499:549976"
+          ],
+          "omittedNodeIds": [
+            "2893:234348"
+          ]
+        },
+        {
+          "nodeId": "2298:446827",
+          "name": "darkness shroud 2",
+          "bounds": {
+            "x": 2590,
+            "y": 3593,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2068:318249",
+            "3994:753738",
+            "2068:316184",
+            "2068:316629",
+            "3994:754647",
+            "3994:755102",
+            "2068:315543",
+            "3994:756025",
+            "3994:756479"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2298:449309",
+          "name": "darkness shroud 3",
+          "bounds": {
+            "x": 5180,
+            "y": 3593,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2068:312901",
+            "3994:755556",
+            "3994:756934",
+            "2068:314901",
+            "2068:311848",
+            "2068:314404",
+            "2068:312375",
+            "2068:313907",
+            "3994:757402"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2298:449311",
+          "name": "darkness shroud 4",
+          "bounds": {
+            "x": 7770,
+            "y": 3593,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2068:311096",
+            "2068:310515",
+            "2068:309707",
+            "3994:758038",
+            "2068:310224",
+            "2068:311472",
+            "2068:309329",
+            "2068:250148",
+            "3994:767298"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2298:449313",
+          "name": "darkness shroud 5",
+          "bounds": {
+            "x": 10360,
+            "y": 3593,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2068:263222",
+            "2068:293337",
+            "2068:250672",
+            "2068:250671",
+            "2068:256813",
+            "2068:295664",
+            "2068:301847",
+            "2068:302043",
+            "3994:758773"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2298:449315",
+          "name": "darkness shroud 6",
+          "bounds": {
+            "x": 12950,
+            "y": 3593,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2068:287679",
+            "2068:286859",
+            "2068:287269",
+            "2068:286449",
+            "2068:285102",
+            "2068:285551",
+            "2068:281063",
+            "2068:288528",
+            "3994:758673"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2298:449317",
+          "name": "darkness shroud 7",
+          "bounds": {
+            "x": 15540,
+            "y": 3593,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2068:284478",
+            "2068:288089",
+            "2068:280634",
+            "2068:280224",
+            "2068:284068",
+            "2068:279759",
+            "2068:275035",
+            "2068:283423",
+            "2068:252238"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        }
+      ],
+      "cards": [
+        {
+          "cardId": "abyss",
+          "title": "Abyss",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2677:511507"
+          ],
+          "slots": [
+            {
+              "nodeId": "2677:511507",
+              "sheetNodeId": "2298:446032",
+              "sourceNodeId": "2073:26295",
+              "collectorNumbers": [
+                "59/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "chimera",
+          "title": "Chimera",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:318874",
+            "3994:529777"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:318874",
+              "sheetNodeId": "2298:446032",
+              "sourceNodeId": "1885:181563",
+              "collectorNumbers": [
+                "41/62"
+              ]
+            },
+            {
+              "nodeId": "3994:529777",
+              "sheetNodeId": "2298:446032",
+              "sourceNodeId": "1885:181563",
+              "collectorNumbers": [
+                "41/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "giant-squid",
+          "title": "Giant Squid",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2642:61708"
+          ],
+          "slots": [
+            {
+              "nodeId": "2642:61708",
+              "sheetNodeId": "2298:446032",
+              "sourceNodeId": "1811:12856",
+              "collectorNumbers": [
+                "20/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "goblin-shark",
+          "title": "Goblin Shark",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:752641",
+            "3994:753190"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:752641",
+              "sheetNodeId": "2298:446032",
+              "sourceNodeId": "1756:258533",
+              "collectorNumbers": [
+                "39/62"
+              ]
+            },
+            {
+              "nodeId": "3994:753190",
+              "sheetNodeId": "2298:446032",
+              "sourceNodeId": "1756:258533",
+              "collectorNumbers": [
+                "39/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "cookie-cutter-shark",
+          "title": "Cookie Cutter",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:318249",
+            "3994:753738"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:318249",
+              "sheetNodeId": "2298:446827",
+              "sourceNodeId": "1885:182154",
+              "collectorNumbers": [
+                "42/62"
+              ]
+            },
+            {
+              "nodeId": "3994:753738",
+              "sheetNodeId": "2298:446827",
+              "sourceNodeId": "1885:182154",
+              "collectorNumbers": [
+                "42/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "giant-red-shrimp",
+          "title": "Giant Red Shrimp",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:316184",
+            "2068:316629"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:316184",
+              "sheetNodeId": "2298:446827",
+              "sourceNodeId": "1916:16625",
+              "collectorNumbers": [
+                "56/62"
+              ]
+            },
+            {
+              "nodeId": "2068:316629",
+              "sheetNodeId": "2298:446827",
+              "sourceNodeId": "1916:16625",
+              "collectorNumbers": [
+                "56/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "giant-isopod",
+          "title": "Giant Isopod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:754647",
+            "3994:755102"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:754647",
+              "sheetNodeId": "2298:446827",
+              "sourceNodeId": "1916:16631",
+              "collectorNumbers": [
+                "24/62"
+              ]
+            },
+            {
+              "nodeId": "3994:755102",
+              "sheetNodeId": "2298:446827",
+              "sourceNodeId": "1916:16631",
+              "collectorNumbers": [
+                "24/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "deep-cucumber",
+          "title": "Deep Cucumber",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:315543",
+            "3994:756025"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:315543",
+              "sheetNodeId": "2298:446827",
+              "sourceNodeId": "1916:16624",
+              "collectorNumbers": [
+                "54/62"
+              ]
+            },
+            {
+              "nodeId": "3994:756025",
+              "sheetNodeId": "2298:446827",
+              "sourceNodeId": "1916:16624",
+              "collectorNumbers": [
+                "54/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "deep-sea-jelly",
+          "title": "Deep Sea Jelly",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:756479",
+            "2068:314901"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:756479",
+              "sheetNodeId": "2298:446827",
+              "sourceNodeId": "1916:16627",
+              "collectorNumbers": [
+                "55/62"
+              ]
+            },
+            {
+              "nodeId": "2068:314901",
+              "sheetNodeId": "2298:449309",
+              "sourceNodeId": "1916:16627",
+              "collectorNumbers": [
+                "55/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "fangtooth-fish",
+          "title": "Fangtooth Fish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:312901",
+            "3994:757402"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:312901",
+              "sheetNodeId": "2298:449309",
+              "sourceNodeId": "1901:9375",
+              "collectorNumbers": [
+                "49/62"
+              ]
+            },
+            {
+              "nodeId": "3994:757402",
+              "sheetNodeId": "2298:449309",
+              "sourceNodeId": "1901:9375",
+              "collectorNumbers": [
+                "49/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "vampire-squid",
+          "title": "Vampire Squid",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:755556",
+            "3994:756934"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:755556",
+              "sheetNodeId": "2298:449309",
+              "sourceNodeId": "1916:16630",
+              "collectorNumbers": [
+                "25/62"
+              ]
+            },
+            {
+              "nodeId": "3994:756934",
+              "sheetNodeId": "2298:449309",
+              "sourceNodeId": "1916:16630",
+              "collectorNumbers": [
+                "25/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "humpback-anglerfish",
+          "title": "Anglerfish (Humpback)",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:311848",
+            "2068:312375"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:311848",
+              "sheetNodeId": "2298:449309",
+              "sourceNodeId": "1901:9373",
+              "collectorNumbers": [
+                "28/62"
+              ]
+            },
+            {
+              "nodeId": "2068:312375",
+              "sheetNodeId": "2298:449309",
+              "sourceNodeId": "1901:9373",
+              "collectorNumbers": [
+                "28/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "black-swallower",
+          "title": "Black Swallower",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:314404",
+            "2068:313907"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:314404",
+              "sheetNodeId": "2298:449309",
+              "sourceNodeId": "1901:9376",
+              "collectorNumbers": [
+                "47/62"
+              ]
+            },
+            {
+              "nodeId": "2068:313907",
+              "sheetNodeId": "2298:449309",
+              "sourceNodeId": "1901:9376",
+              "collectorNumbers": [
+                "47/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "bristlemouth",
+          "title": "Bristlemouth",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:311096",
+            "2068:311472"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:311096",
+              "sheetNodeId": "2298:449311",
+              "sourceNodeId": "1901:9369",
+              "collectorNumbers": [
+                "48/62"
+              ]
+            },
+            {
+              "nodeId": "2068:311472",
+              "sheetNodeId": "2298:449311",
+              "sourceNodeId": "1901:9369",
+              "collectorNumbers": [
+                "48/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "barrel-eye-fish",
+          "title": "Barrel Eye Fish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:310515",
+            "2068:310224"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:310515",
+              "sheetNodeId": "2298:449311",
+              "sourceNodeId": "1901:9374",
+              "collectorNumbers": [
+                "26/62"
+              ]
+            },
+            {
+              "nodeId": "2068:310224",
+              "sheetNodeId": "2298:449311",
+              "sourceNodeId": "1901:9374",
+              "collectorNumbers": [
+                "26/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "owlfish",
+          "title": "Owlfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:309707",
+            "3994:758038"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:309707",
+              "sheetNodeId": "2298:449311",
+              "sourceNodeId": "1901:9370",
+              "collectorNumbers": [
+                "50/62"
+              ]
+            },
+            {
+              "nodeId": "3994:758038",
+              "sheetNodeId": "2298:449311",
+              "sourceNodeId": "1901:9370",
+              "collectorNumbers": [
+                "50/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "fishing",
+          "title": "Fishing Rod",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2068:309329"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:309329",
+              "sheetNodeId": "2298:449311",
+              "sourceNodeId": "672:4831",
+              "collectorNumbers": [
+                "91/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "dr-evans",
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:250148",
+            "3994:767298"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:250148",
+              "sheetNodeId": "2298:449311",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            },
+            {
+              "nodeId": "3994:767298",
+              "sheetNodeId": "2298:449311",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "title": "Deep Sea Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:263222",
+            "2068:301847"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:263222",
+              "sheetNodeId": "2298:449313",
+              "sourceNodeId": "259:700",
+              "collectorNumbers": [
+                "57/102"
+              ]
+            },
+            {
+              "nodeId": "2068:301847",
+              "sheetNodeId": "2298:449313",
+              "sourceNodeId": "259:700",
+              "collectorNumbers": [
+                "57/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "remote-search",
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2068:293337",
+            "2068:256813",
+            "2068:295664"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:293337",
+              "sheetNodeId": "2298:449313",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            },
+            {
+              "nodeId": "2068:256813",
+              "sheetNodeId": "2298:449313",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            },
+            {
+              "nodeId": "2068:295664",
+              "sheetNodeId": "2298:449313",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "coral-gardener",
+          "title": "Coral Nursery",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:250672",
+            "2068:250671"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:250672",
+              "sheetNodeId": "2298:449313",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            },
+            {
+              "nodeId": "2068:250671",
+              "sheetNodeId": "2298:449313",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "crab-trap",
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:302043",
+            "3994:758773"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:302043",
+              "sheetNodeId": "2298:449313",
+              "sourceNodeId": "672:4832",
+              "collectorNumbers": [
+                "59/102"
+              ]
+            },
+            {
+              "nodeId": "3994:758773",
+              "sheetNodeId": "2298:449313",
+              "sourceNodeId": "672:4832",
+              "collectorNumbers": [
+                "59/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "bamboo_coral_base",
+          "title": "Bamboo Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2068:287679",
+            "2068:286859",
+            "2068:287269",
+            "2068:286449"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:287679",
+              "sheetNodeId": "2298:449315",
+              "sourceNodeId": "1929:17146",
+              "collectorNumbers": [
+                "44/62"
+              ]
+            },
+            {
+              "nodeId": "2068:286859",
+              "sheetNodeId": "2298:449315",
+              "sourceNodeId": "1929:17146",
+              "collectorNumbers": [
+                "44/62"
+              ]
+            },
+            {
+              "nodeId": "2068:287269",
+              "sheetNodeId": "2298:449315",
+              "sourceNodeId": "1929:17146",
+              "collectorNumbers": [
+                "44/62"
+              ]
+            },
+            {
+              "nodeId": "2068:286449",
+              "sheetNodeId": "2298:449315",
+              "sourceNodeId": "1929:17146",
+              "collectorNumbers": [
+                "44/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "bamboo_coral_stage1",
+          "title": "Bamboo Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:285102",
+            "2068:285551"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:285102",
+              "sheetNodeId": "2298:449315",
+              "sourceNodeId": "1929:17147",
+              "collectorNumbers": [
+                "33/62"
+              ]
+            },
+            {
+              "nodeId": "2068:285551",
+              "sheetNodeId": "2298:449315",
+              "sourceNodeId": "1929:17147",
+              "collectorNumbers": [
+                "33/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "bamboo_coral_stage2",
+          "title": "Bamboo Coral",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:281063",
+            "2068:284478"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:281063",
+              "sheetNodeId": "2298:449315",
+              "sourceNodeId": "1929:17148",
+              "collectorNumbers": [
+                "30/62"
+              ]
+            },
+            {
+              "nodeId": "2068:284478",
+              "sheetNodeId": "2298:449317",
+              "sourceNodeId": "1929:17148",
+              "collectorNumbers": [
+                "30/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "scientist-jes",
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:288528",
+            "3994:758673"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:288528",
+              "sheetNodeId": "2298:449315",
+              "sourceNodeId": "396:8478",
+              "collectorNumbers": [
+                "56/102"
+              ]
+            },
+            {
+              "nodeId": "3994:758673",
+              "sheetNodeId": "2298:449315",
+              "sourceNodeId": "396:8478",
+              "collectorNumbers": [
+                "56/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "deep_mushroom_base",
+          "title": "Deep Mushroom",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2068:288089",
+            "2068:280634",
+            "2068:280224",
+            "2068:284068"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:288089",
+              "sheetNodeId": "2298:449317",
+              "sourceNodeId": "1929:17143",
+              "collectorNumbers": [
+                "46/62"
+              ]
+            },
+            {
+              "nodeId": "2068:280634",
+              "sheetNodeId": "2298:449317",
+              "sourceNodeId": "1929:17143",
+              "collectorNumbers": [
+                "46/62"
+              ]
+            },
+            {
+              "nodeId": "2068:280224",
+              "sheetNodeId": "2298:449317",
+              "sourceNodeId": "1929:17143",
+              "collectorNumbers": [
+                "46/62"
+              ]
+            },
+            {
+              "nodeId": "2068:284068",
+              "sheetNodeId": "2298:449317",
+              "sourceNodeId": "1929:17143",
+              "collectorNumbers": [
+                "46/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "deep_mushroom_stage1",
+          "title": "Deep Mushroom",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:279759",
+            "2068:275035"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:279759",
+              "sheetNodeId": "2298:449317",
+              "sourceNodeId": "1929:17144",
+              "collectorNumbers": [
+                "35/62"
+              ]
+            },
+            {
+              "nodeId": "2068:275035",
+              "sheetNodeId": "2298:449317",
+              "sourceNodeId": "1929:17144",
+              "collectorNumbers": [
+                "35/62"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "deep_mushroom_stage2",
+          "title": "Deep Mushroom",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2068:283423",
+            "2068:252238"
+          ],
+          "slots": [
+            {
+              "nodeId": "2068:283423",
+              "sheetNodeId": "2298:449317",
+              "sourceNodeId": "1929:17145",
+              "collectorNumbers": [
+                "32/62"
+              ]
+            },
+            {
+              "nodeId": "2068:252238",
+              "sheetNodeId": "2298:449317",
+              "sourceNodeId": "1929:17145",
+              "collectorNumbers": [
+                "32/62"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "open-ocean-hunt",
+      "pageId": "2296:82568",
+      "pageName": "Decks - Open Ocean",
+      "observedAt": "2026-11-15T13:49:37.608Z",
+      "sourceObservationSha256": "668a7c110a06405d7939ded85a0be990d6926faa6faf5cec34383f25153ea616",
+      "excludedReferenceNodeIds": [
+        "2296:218512",
+        "4499:644600"
+      ],
+      "excludedEmptyNodeIds": [
+        "2779:45793"
+      ],
+      "sheets": [
+        {
+          "nodeId": "2296:82569",
+          "name": "open ocean 1",
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2296:262001",
+            "2749:175980",
+            "2296:262527",
+            "2296:262331",
+            "2297:286038",
+            "2297:286059"
+          ],
+          "referenceNodeIds": [
+            "2296:218512",
+            "4499:644600"
+          ],
+          "omittedNodeIds": [
+            "2779:45793"
+          ]
+        },
+        {
+          "nodeId": "2296:82830",
+          "name": "open ocean 2",
+          "bounds": {
+            "x": 2590,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2296:267415",
+            "2296:265089",
+            "2569:175373",
+            "3994:798918",
+            "2779:42137",
+            "2296:262723",
+            "2769:37930",
+            "2296:254509",
+            "3994:864555"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2296:82832",
+          "name": "open ocean 3",
+          "bounds": {
+            "x": 5180,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2749:172154",
+            "2749:172360",
+            "2749:172565",
+            "2749:172770",
+            "2749:172975",
+            "2749:173282",
+            "2746:420473",
+            "2749:173588",
+            "3994:864963"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2296:82834",
+          "name": "open ocean 4",
+          "bounds": {
+            "x": 7770,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3994:797866",
+            "2297:272078",
+            "2746:420679",
+            "2297:278319",
+            "2297:272077",
+            "2746:421309",
+            "2297:278114",
+            "2746:420267",
+            "3994:864647"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2296:82836",
+          "name": "open ocean 5",
+          "bounds": {
+            "x": 10360,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2749:174008",
+            "2297:283572",
+            "3994:787477",
+            "2298:422149",
+            "2297:283574",
+            "3994:797632",
+            "2746:419647",
+            "2746:419855",
+            "3994:798362"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2296:82838",
+          "name": "open ocean 6",
+          "bounds": {
+            "x": 12950,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2297:277288",
+            "3994:796681",
+            "3994:796454",
+            "2297:285294",
+            "2746:412340",
+            "3994:797388",
+            "3994:797144",
+            "3994:795223",
+            "3994:914416"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2296:82840",
+          "name": "open ocean 7",
+          "bounds": {
+            "x": 15540,
+            "y": 0,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3994:793638",
+            "2297:280388",
+            "3994:793866",
+            "2297:283209",
+            "2297:278946",
+            "2297:278948",
+            "3994:794310",
+            "3994:794311",
+            "3994:798125"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        }
+      ],
+      "cards": [
+        {
+          "cardId": "cast-net",
+          "title": "Cast Net",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2296:262001",
+            "2749:175980"
+          ],
+          "slots": [
+            {
+              "nodeId": "2296:262001",
+              "sheetNodeId": "2296:82569",
+              "sourceNodeId": "2296:251503",
+              "collectorNumbers": [
+                "63/64"
+              ]
+            },
+            {
+              "nodeId": "2749:175980",
+              "sheetNodeId": "2296:82569",
+              "sourceNodeId": "2296:251503",
+              "collectorNumbers": [
+                "63/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "title": "Deep Sea Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2296:262527",
+            "2296:262331"
+          ],
+          "slots": [
+            {
+              "nodeId": "2296:262527",
+              "sheetNodeId": "2296:82569",
+              "sourceNodeId": "259:700",
+              "collectorNumbers": [
+                "57/102"
+              ]
+            },
+            {
+              "nodeId": "2296:262331",
+              "sheetNodeId": "2296:82569",
+              "sourceNodeId": "259:700",
+              "collectorNumbers": [
+                "57/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "fishing",
+          "title": "Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2297:286038",
+            "2297:286059"
+          ],
+          "slots": [
+            {
+              "nodeId": "2297:286038",
+              "sheetNodeId": "2296:82569",
+              "sourceNodeId": "672:4831",
+              "collectorNumbers": [
+                "91/102"
+              ]
+            },
+            {
+              "nodeId": "2297:286059",
+              "sheetNodeId": "2296:82569",
+              "sourceNodeId": "672:4831",
+              "collectorNumbers": [
+                "91/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "remote-search",
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2296:267415",
+            "2296:265089",
+            "2296:262723"
+          ],
+          "slots": [
+            {
+              "nodeId": "2296:267415",
+              "sheetNodeId": "2296:82830",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            },
+            {
+              "nodeId": "2296:265089",
+              "sheetNodeId": "2296:82830",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            },
+            {
+              "nodeId": "2296:262723",
+              "sheetNodeId": "2296:82830",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "spearfishing",
+          "title": "Spearfishing",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2569:175373",
+            "3994:798918"
+          ],
+          "slots": [
+            {
+              "nodeId": "2569:175373",
+              "sheetNodeId": "2296:82830",
+              "sourceNodeId": "259:691",
+              "collectorNumbers": [
+                "85/102"
+              ]
+            },
+            {
+              "nodeId": "3994:798918",
+              "sheetNodeId": "2296:82830",
+              "sourceNodeId": "259:691",
+              "collectorNumbers": [
+                "85/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "crab-trap",
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2779:42137",
+            "2769:37930"
+          ],
+          "slots": [
+            {
+              "nodeId": "2779:42137",
+              "sheetNodeId": "2296:82830",
+              "sourceNodeId": "672:4832",
+              "collectorNumbers": [
+                "59/102"
+              ]
+            },
+            {
+              "nodeId": "2769:37930",
+              "sheetNodeId": "2296:82830",
+              "sourceNodeId": "672:4832",
+              "collectorNumbers": [
+                "59/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "scientist-jes",
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2296:254509"
+          ],
+          "slots": [
+            {
+              "nodeId": "2296:254509",
+              "sheetNodeId": "2296:82830",
+              "sourceNodeId": "396:8478",
+              "collectorNumbers": [
+                "56/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "dr-evans",
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:864555"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:864555",
+              "sheetNodeId": "2296:82830",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "sardine-ball-base",
+          "title": "Sardine Ball",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2749:172154",
+            "2749:172360",
+            "2749:172565",
+            "2749:172770"
+          ],
+          "slots": [
+            {
+              "nodeId": "2749:172154",
+              "sheetNodeId": "2296:82832",
+              "sourceNodeId": "2279:17421",
+              "collectorNumbers": [
+                "58/64"
+              ]
+            },
+            {
+              "nodeId": "2749:172360",
+              "sheetNodeId": "2296:82832",
+              "sourceNodeId": "2279:17421",
+              "collectorNumbers": [
+                "58/64"
+              ]
+            },
+            {
+              "nodeId": "2749:172565",
+              "sheetNodeId": "2296:82832",
+              "sourceNodeId": "2279:17421",
+              "collectorNumbers": [
+                "58/64"
+              ]
+            },
+            {
+              "nodeId": "2749:172770",
+              "sheetNodeId": "2296:82832",
+              "sourceNodeId": "2279:17421",
+              "collectorNumbers": [
+                "58/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "sardine-ball-stage1",
+          "title": "Sardine Ball",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2749:172975",
+            "2749:173282"
+          ],
+          "slots": [
+            {
+              "nodeId": "2749:172975",
+              "sheetNodeId": "2296:82832",
+              "sourceNodeId": "2279:17425",
+              "collectorNumbers": [
+                "39/64"
+              ]
+            },
+            {
+              "nodeId": "2749:173282",
+              "sheetNodeId": "2296:82832",
+              "sourceNodeId": "2279:17425",
+              "collectorNumbers": [
+                "39/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "herring-ball-base",
+          "title": "Herring Ball",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2746:420473",
+            "2297:278114",
+            "2746:420267",
+            "3994:864647"
+          ],
+          "slots": [
+            {
+              "nodeId": "2746:420473",
+              "sheetNodeId": "2296:82832",
+              "sourceNodeId": "2279:17433",
+              "collectorNumbers": [
+                "61/64"
+              ]
+            },
+            {
+              "nodeId": "2297:278114",
+              "sheetNodeId": "2296:82834",
+              "sourceNodeId": "2279:17433",
+              "collectorNumbers": [
+                "61/64"
+              ]
+            },
+            {
+              "nodeId": "2746:420267",
+              "sheetNodeId": "2296:82834",
+              "sourceNodeId": "2279:17433",
+              "collectorNumbers": [
+                "61/64"
+              ]
+            },
+            {
+              "nodeId": "3994:864647",
+              "sheetNodeId": "2296:82834",
+              "sourceNodeId": "2279:17433",
+              "collectorNumbers": [
+                "61/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "sardine-ball-stage2",
+          "title": "Sardine Ball",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2749:173588",
+            "3994:864963"
+          ],
+          "slots": [
+            {
+              "nodeId": "2749:173588",
+              "sheetNodeId": "2296:82832",
+              "sourceNodeId": "2279:17426",
+              "collectorNumbers": [
+                "20/64"
+              ]
+            },
+            {
+              "nodeId": "3994:864963",
+              "sheetNodeId": "2296:82832",
+              "sourceNodeId": "2279:17426",
+              "collectorNumbers": [
+                "20/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "remora",
+          "title": "Remora",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:797866"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:797866",
+              "sheetNodeId": "2296:82834",
+              "sourceNodeId": "2285:31378",
+              "collectorNumbers": [
+                "18/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "herring-ball-stage2",
+          "title": "Herring Ball",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2297:272078",
+            "2746:420679"
+          ],
+          "slots": [
+            {
+              "nodeId": "2297:272078",
+              "sheetNodeId": "2296:82834",
+              "sourceNodeId": "2279:17435",
+              "collectorNumbers": [
+                "23/64"
+              ]
+            },
+            {
+              "nodeId": "2746:420679",
+              "sheetNodeId": "2296:82834",
+              "sourceNodeId": "2279:17435",
+              "collectorNumbers": [
+                "23/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "herring-ball-stage1",
+          "title": "Herring Ball",
+          "stage": "Stage 1",
+          "quantity": 3,
+          "nodeIds": [
+            "2297:278319",
+            "2297:272077",
+            "2746:421309"
+          ],
+          "slots": [
+            {
+              "nodeId": "2297:278319",
+              "sheetNodeId": "2296:82834",
+              "sourceNodeId": "2279:17434",
+              "collectorNumbers": [
+                "42/64"
+              ]
+            },
+            {
+              "nodeId": "2297:272077",
+              "sheetNodeId": "2296:82834",
+              "sourceNodeId": "2279:17434",
+              "collectorNumbers": [
+                "42/64"
+              ]
+            },
+            {
+              "nodeId": "2746:421309",
+              "sheetNodeId": "2296:82834",
+              "sourceNodeId": "2279:17434",
+              "collectorNumbers": [
+                "42/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "halfbeak",
+          "title": "Halfbeak",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2749:174008",
+            "2746:419647",
+            "2746:419855"
+          ],
+          "slots": [
+            {
+              "nodeId": "2749:174008",
+              "sheetNodeId": "2296:82836",
+              "sourceNodeId": "2285:31389",
+              "collectorNumbers": [
+                "51/64"
+              ]
+            },
+            {
+              "nodeId": "2746:419647",
+              "sheetNodeId": "2296:82836",
+              "sourceNodeId": "2285:31389",
+              "collectorNumbers": [
+                "51/64"
+              ]
+            },
+            {
+              "nodeId": "2746:419855",
+              "sheetNodeId": "2296:82836",
+              "sourceNodeId": "2285:31389",
+              "collectorNumbers": [
+                "51/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "bluefin-tuna-juvenile",
+          "title": "Bluefin Tuna (Juvenile)",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2297:283572"
+          ],
+          "slots": [
+            {
+              "nodeId": "2297:283572",
+              "sheetNodeId": "2296:82836",
+              "sourceNodeId": "2285:31385",
+              "collectorNumbers": [
+                "46/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "ocean-triggerfish",
+          "title": "Ocean Triggerfish",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:787477"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:787477",
+              "sheetNodeId": "2296:82836",
+              "sourceNodeId": "2285:31393",
+              "collectorNumbers": [
+                "55/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "frigate-tuna",
+          "title": "Frigate Tuna",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2298:422149"
+          ],
+          "slots": [
+            {
+              "nodeId": "2298:422149",
+              "sheetNodeId": "2296:82836",
+              "sourceNodeId": "2285:31390",
+              "collectorNumbers": [
+                "52/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "bonito-tuna",
+          "title": "Bonito Tuna",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2297:283574",
+            "3994:797632"
+          ],
+          "slots": [
+            {
+              "nodeId": "2297:283574",
+              "sheetNodeId": "2296:82836",
+              "sourceNodeId": "2285:31387",
+              "collectorNumbers": [
+                "49/64"
+              ]
+            },
+            {
+              "nodeId": "3994:797632",
+              "sheetNodeId": "2296:82836",
+              "sourceNodeId": "2285:31387",
+              "collectorNumbers": [
+                "49/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "pompano",
+          "title": "Pompano",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:798362"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:798362",
+              "sheetNodeId": "2296:82836",
+              "sourceNodeId": "2285:31392",
+              "collectorNumbers": [
+                "54/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "mahi-mahi",
+          "title": "Mahi Mahi",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2297:277288",
+            "3994:796681",
+            "3994:796454"
+          ],
+          "slots": [
+            {
+              "nodeId": "2297:277288",
+              "sheetNodeId": "2296:82838",
+              "sourceNodeId": "2285:31380",
+              "collectorNumbers": [
+                "33/64"
+              ]
+            },
+            {
+              "nodeId": "3994:796681",
+              "sheetNodeId": "2296:82838",
+              "sourceNodeId": "2285:31380",
+              "collectorNumbers": [
+                "33/64"
+              ]
+            },
+            {
+              "nodeId": "3994:796454",
+              "sheetNodeId": "2296:82838",
+              "sourceNodeId": "2285:31380",
+              "collectorNumbers": [
+                "33/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "market-squid",
+          "title": "Market Squid",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2297:285294",
+            "2746:412340",
+            "3994:798125"
+          ],
+          "slots": [
+            {
+              "nodeId": "2297:285294",
+              "sheetNodeId": "2296:82838",
+              "sourceNodeId": "2294:52505",
+              "collectorNumbers": [
+                "56/64"
+              ]
+            },
+            {
+              "nodeId": "2746:412340",
+              "sheetNodeId": "2296:82838",
+              "sourceNodeId": "2294:52505",
+              "collectorNumbers": [
+                "56/64"
+              ]
+            },
+            {
+              "nodeId": "3994:798125",
+              "sheetNodeId": "2296:82840",
+              "sourceNodeId": "2294:52505",
+              "collectorNumbers": [
+                "56/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "man-o-war",
+          "title": "Man O’ War",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:797388",
+            "3994:797144"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:797388",
+              "sheetNodeId": "2296:82838",
+              "sourceNodeId": "2285:31376",
+              "collectorNumbers": [
+                "37/64"
+              ]
+            },
+            {
+              "nodeId": "3994:797144",
+              "sheetNodeId": "2296:82838",
+              "sourceNodeId": "2285:31376",
+              "collectorNumbers": [
+                "37/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "blue-sea-dragon",
+          "title": "Blue Sea Dragon",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:795223",
+            "3994:914416"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:795223",
+              "sheetNodeId": "2296:82838",
+              "sourceNodeId": "2285:31377",
+              "collectorNumbers": [
+                "36/64"
+              ]
+            },
+            {
+              "nodeId": "3994:914416",
+              "sheetNodeId": "2296:82838",
+              "sourceNodeId": "2285:31377",
+              "collectorNumbers": [
+                "36/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "oceanic-manta-ray",
+          "title": "Oceanic Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:793638"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:793638",
+              "sheetNodeId": "2296:82840",
+              "sourceNodeId": "241:1612",
+              "collectorNumbers": [
+                "2/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "killer-whale-oceanic",
+          "title": "Killer Whale",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2297:280388"
+          ],
+          "slots": [
+            {
+              "nodeId": "2297:280388",
+              "sheetNodeId": "2296:82840",
+              "sourceNodeId": "745:139304",
+              "collectorNumbers": [
+                "6/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "yellowfin-tuna",
+          "title": "Yellowfin Tuna",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3994:793866"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:793866",
+              "sheetNodeId": "2296:82840",
+              "sourceNodeId": "2265:227327",
+              "collectorNumbers": [
+                "28/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "open-ocean",
+          "title": "Open Ocean",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2297:283209"
+          ],
+          "slots": [
+            {
+              "nodeId": "2297:283209",
+              "sheetNodeId": "2296:82840",
+              "sourceNodeId": "2297:283208",
+              "collectorNumbers": [
+                "62/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "silky-shark",
+          "title": "Silky Shark",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2297:278946"
+          ],
+          "slots": [
+            {
+              "nodeId": "2297:278946",
+              "sheetNodeId": "2296:82840",
+              "sourceNodeId": "2261:223207",
+              "collectorNumbers": [
+                "25/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "sailfish",
+          "title": "Sailfish",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2297:278948"
+          ],
+          "slots": [
+            {
+              "nodeId": "2297:278948",
+              "sheetNodeId": "2296:82840",
+              "sourceNodeId": "2265:227326",
+              "collectorNumbers": [
+                "29/64"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "loggerhead-sea-turtle",
+          "title": "Loggerhead",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3994:794310",
+            "3994:794311"
+          ],
+          "slots": [
+            {
+              "nodeId": "3994:794310",
+              "sheetNodeId": "2296:82840",
+              "sourceNodeId": "2561:175116",
+              "collectorNumbers": [
+                "31/64"
+              ]
+            },
+            {
+              "nodeId": "3994:794311",
+              "sheetNodeId": "2296:82840",
+              "sourceNodeId": "2561:175116",
+              "collectorNumbers": [
+                "31/64"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "murky-water",
+      "pageId": "2241:259772",
+      "pageName": "Decks - Murky Water",
+      "observedAt": "2026-11-15T13:48:38.452Z",
+      "sourceObservationSha256": "fbbb9e9f60823d1f2eacc5ec24304963c54a99b7b8a4b4612ec1cd6175f60f98",
+      "excludedReferenceNodeIds": [
+        "2241:486929",
+        "4500:191287"
+      ],
+      "excludedEmptyNodeIds": [],
+      "sheets": [
+        {
+          "nodeId": "2241:428141",
+          "name": "murky water 1",
+          "bounds": {
+            "x": 0,
+            "y": 3682,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2241:430477",
+            "2241:430478",
+            "2241:430479",
+            "2241:430480",
+            "2241:430481",
+            "2241:430485",
+            "3578:476019",
+            "2241:430484",
+            "2241:430483"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2241:430736",
+          "name": "murky water 2",
+          "bounds": {
+            "x": 2590,
+            "y": 3682,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2241:430996",
+            "2241:430997",
+            "2241:430999",
+            "2241:431000",
+            "2241:431001",
+            "2241:431002",
+            "2241:431003",
+            "2241:431004",
+            "2587:230901"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2241:440007",
+          "name": "murky water 3",
+          "bounds": {
+            "x": 5180,
+            "y": 3682,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2241:449019",
+            "3416:378787",
+            "2656:298567",
+            "3578:479858",
+            "3578:479859",
+            "3578:479860",
+            "2241:449025",
+            "3578:491971",
+            "3578:490753"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2241:450735",
+          "name": "murky water 4",
+          "bounds": {
+            "x": 7770,
+            "y": 3682,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3578:492926",
+            "3578:493957",
+            "3578:494987",
+            "3578:495931",
+            "3578:496874",
+            "2241:452452",
+            "3580:497817",
+            "3581:504463",
+            "3581:505656"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2241:465888",
+          "name": "murky water 5",
+          "bounds": {
+            "x": 10360,
+            "y": 3682,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2241:479331",
+            "2241:479332",
+            "2241:479333",
+            "2241:479330",
+            "3580:497867",
+            "3581:506252",
+            "3581:512527",
+            "3581:518207",
+            "3581:523886"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2241:481901",
+          "name": "murky water 6",
+          "bounds": {
+            "x": 12950,
+            "y": 3682,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2241:484478",
+            "2241:484479",
+            "2241:484480",
+            "2241:484481",
+            "2241:484482",
+            "2241:484483",
+            "2241:484484",
+            "2241:484485",
+            "2241:484486"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2241:485700",
+          "name": "murky water 7",
+          "bounds": {
+            "x": 15540,
+            "y": 3682,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2241:486923",
+            "2241:486924",
+            "2241:486925",
+            "2241:486926",
+            "2241:486927",
+            "2241:486928"
+          ],
+          "referenceNodeIds": [
+            "2241:486929",
+            "4500:191287"
+          ],
+          "omittedNodeIds": []
+        }
+      ],
+      "cards": [
+        {
+          "cardId": "spearfishing",
+          "title": "Spearfishing",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:430477",
+            "2241:430478"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:430477",
+              "sheetNodeId": "2241:428141",
+              "sourceNodeId": "259:691",
+              "collectorNumbers": [
+                "85/102"
+              ]
+            },
+            {
+              "nodeId": "2241:430478",
+              "sheetNodeId": "2241:428141",
+              "sourceNodeId": "259:691",
+              "collectorNumbers": [
+                "85/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "coral-gardener",
+          "title": "Coral Nursery",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2241:430479",
+            "2241:430480",
+            "2241:430481"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:430479",
+              "sheetNodeId": "2241:428141",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            },
+            {
+              "nodeId": "2241:430480",
+              "sheetNodeId": "2241:428141",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            },
+            {
+              "nodeId": "2241:430481",
+              "sheetNodeId": "2241:428141",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "robotic-survey",
+          "title": "Robotic Survey",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:430485",
+            "3578:476019"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:430485",
+              "sheetNodeId": "2241:428141",
+              "sourceNodeId": "259:699",
+              "collectorNumbers": [
+                "88/102"
+              ]
+            },
+            {
+              "nodeId": "3578:476019",
+              "sheetNodeId": "2241:428141",
+              "sourceNodeId": "259:699",
+              "collectorNumbers": [
+                "88/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "dr-evans",
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:430484",
+            "2241:430483"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:430484",
+              "sheetNodeId": "2241:428141",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            },
+            {
+              "nodeId": "2241:430483",
+              "sheetNodeId": "2241:428141",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "deep-sea-fishing",
+          "title": "Deep Sea Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:430996",
+            "2241:430997"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:430996",
+              "sheetNodeId": "2241:430736",
+              "sourceNodeId": "259:700",
+              "collectorNumbers": [
+                "57/102"
+              ]
+            },
+            {
+              "nodeId": "2241:430997",
+              "sheetNodeId": "2241:430736",
+              "sourceNodeId": "259:700",
+              "collectorNumbers": [
+                "57/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "remote-search",
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:430999",
+            "2241:431000"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:430999",
+              "sheetNodeId": "2241:430736",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            },
+            {
+              "nodeId": "2241:431000",
+              "sheetNodeId": "2241:430736",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "poison-heal",
+          "title": "Poison Heal",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:431001",
+            "2241:431002"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:431001",
+              "sheetNodeId": "2241:430736",
+              "sourceNodeId": "672:4830",
+              "collectorNumbers": [
+                "90/102"
+              ]
+            },
+            {
+              "nodeId": "2241:431002",
+              "sheetNodeId": "2241:430736",
+              "sourceNodeId": "672:4830",
+              "collectorNumbers": [
+                "90/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "crab-trap",
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2241:431003"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:431003",
+              "sheetNodeId": "2241:430736",
+              "sourceNodeId": "672:4832",
+              "collectorNumbers": [
+                "59/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "recovery",
+          "title": "Recovery",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:431004",
+            "2241:449019"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:431004",
+              "sheetNodeId": "2241:430736",
+              "sourceNodeId": "672:4833",
+              "collectorNumbers": [
+                "92/102"
+              ]
+            },
+            {
+              "nodeId": "2241:449019",
+              "sheetNodeId": "2241:440007",
+              "sourceNodeId": "672:4833",
+              "collectorNumbers": [
+                "92/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "scientist-jes",
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2587:230901"
+          ],
+          "slots": [
+            {
+              "nodeId": "2587:230901",
+              "sheetNodeId": "2241:430736",
+              "sourceNodeId": "396:8478",
+              "collectorNumbers": [
+                "56/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "manta-ray",
+          "title": "Reef Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3416:378787"
+          ],
+          "slots": [
+            {
+              "nodeId": "3416:378787",
+              "sheetNodeId": "2241:440007",
+              "sourceNodeId": "3402:607522",
+              "collectorNumbers": [
+                "16/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "bull-shark",
+          "title": "Bull Shark",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2656:298567"
+          ],
+          "slots": [
+            {
+              "nodeId": "2656:298567",
+              "sheetNodeId": "2241:440007",
+              "sourceNodeId": "241:1126",
+              "collectorNumbers": [
+                "19/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "reef-shark",
+          "title": "Reef Shark (Blacktip)",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3578:479858",
+            "3578:479859"
+          ],
+          "slots": [
+            {
+              "nodeId": "3578:479858",
+              "sheetNodeId": "2241:440007",
+              "sourceNodeId": "241:861",
+              "collectorNumbers": [
+                "35/102"
+              ]
+            },
+            {
+              "nodeId": "3578:479859",
+              "sheetNodeId": "2241:440007",
+              "sourceNodeId": "241:861",
+              "collectorNumbers": [
+                "35/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "great-barracuda",
+          "title": "Great Barracuda",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3578:479860",
+            "3578:490753"
+          ],
+          "slots": [
+            {
+              "nodeId": "3578:479860",
+              "sheetNodeId": "2241:440007",
+              "sourceNodeId": "241:863",
+              "collectorNumbers": [
+                "32/102"
+              ]
+            },
+            {
+              "nodeId": "3578:490753",
+              "sheetNodeId": "2241:440007",
+              "sourceNodeId": "241:863",
+              "collectorNumbers": [
+                "32/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "arrow-crab",
+          "title": "Arrow Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:449025",
+            "3578:491971"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:449025",
+              "sheetNodeId": "2241:440007",
+              "sourceNodeId": "241:851",
+              "collectorNumbers": [
+                "72/102"
+              ]
+            },
+            {
+              "nodeId": "3578:491971",
+              "sheetNodeId": "2241:440007",
+              "sourceNodeId": "241:851",
+              "collectorNumbers": [
+                "72/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "blue-crab",
+          "title": "Blue Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3578:492926",
+            "3578:493957"
+          ],
+          "slots": [
+            {
+              "nodeId": "3578:492926",
+              "sheetNodeId": "2241:450735",
+              "sourceNodeId": "241:850",
+              "collectorNumbers": [
+                "73/102"
+              ]
+            },
+            {
+              "nodeId": "3578:493957",
+              "sheetNodeId": "2241:450735",
+              "sourceNodeId": "241:850",
+              "collectorNumbers": [
+                "73/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "sea-urchin",
+          "title": "Sea Urchin",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3578:494987",
+            "3578:495931",
+            "3578:496874"
+          ],
+          "slots": [
+            {
+              "nodeId": "3578:494987",
+              "sheetNodeId": "2241:450735",
+              "sourceNodeId": "241:847",
+              "collectorNumbers": [
+                "78/102"
+              ]
+            },
+            {
+              "nodeId": "3578:495931",
+              "sheetNodeId": "2241:450735",
+              "sourceNodeId": "241:847",
+              "collectorNumbers": [
+                "78/102"
+              ]
+            },
+            {
+              "nodeId": "3578:496874",
+              "sheetNodeId": "2241:450735",
+              "sourceNodeId": "241:847",
+              "collectorNumbers": [
+                "78/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "giant-triton",
+          "title": "Giant Triton",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:452452",
+            "3580:497817"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:452452",
+              "sheetNodeId": "2241:450735",
+              "sourceNodeId": "241:856",
+              "collectorNumbers": [
+                "26/102"
+              ]
+            },
+            {
+              "nodeId": "3580:497817",
+              "sheetNodeId": "2241:450735",
+              "sourceNodeId": "241:856",
+              "collectorNumbers": [
+                "26/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "cleaner-wrasse",
+          "title": "Wrasse (Cleaner)",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3581:504463",
+            "3581:505656",
+            "3581:506252"
+          ],
+          "slots": [
+            {
+              "nodeId": "3581:504463",
+              "sheetNodeId": "2241:450735",
+              "sourceNodeId": "241:1494",
+              "collectorNumbers": [
+                "71/102"
+              ]
+            },
+            {
+              "nodeId": "3581:505656",
+              "sheetNodeId": "2241:450735",
+              "sourceNodeId": "241:1494",
+              "collectorNumbers": [
+                "71/102"
+              ]
+            },
+            {
+              "nodeId": "3581:506252",
+              "sheetNodeId": "2241:465888",
+              "sourceNodeId": "241:1494",
+              "collectorNumbers": [
+                "71/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "pillar-coral-base",
+          "title": "Pillar Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2241:479331",
+            "2241:479332",
+            "2241:479330",
+            "3580:497867"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:479331",
+              "sheetNodeId": "2241:465888",
+              "sourceNodeId": "354:5017",
+              "collectorNumbers": [
+                "53/102"
+              ]
+            },
+            {
+              "nodeId": "2241:479332",
+              "sheetNodeId": "2241:465888",
+              "sourceNodeId": "354:5017",
+              "collectorNumbers": [
+                "53/102"
+              ]
+            },
+            {
+              "nodeId": "2241:479330",
+              "sheetNodeId": "2241:465888",
+              "sourceNodeId": "354:5017",
+              "collectorNumbers": [
+                "53/102"
+              ]
+            },
+            {
+              "nodeId": "3580:497867",
+              "sheetNodeId": "2241:465888",
+              "sourceNodeId": "354:5017",
+              "collectorNumbers": [
+                "53/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "brain-coral-base",
+          "title": "Brain Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2241:479333",
+            "2241:484478",
+            "2241:484479",
+            "2241:484480"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:479333",
+              "sheetNodeId": "2241:465888",
+              "sourceNodeId": "354:5020",
+              "collectorNumbers": [
+                "80/102"
+              ]
+            },
+            {
+              "nodeId": "2241:484478",
+              "sheetNodeId": "2241:481901",
+              "sourceNodeId": "354:5020",
+              "collectorNumbers": [
+                "80/102"
+              ]
+            },
+            {
+              "nodeId": "2241:484479",
+              "sheetNodeId": "2241:481901",
+              "sourceNodeId": "354:5020",
+              "collectorNumbers": [
+                "80/102"
+              ]
+            },
+            {
+              "nodeId": "2241:484480",
+              "sheetNodeId": "2241:481901",
+              "sourceNodeId": "354:5020",
+              "collectorNumbers": [
+                "80/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "sargeant-major",
+          "title": "Sergeant Major",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3581:512527",
+            "3581:518207",
+            "3581:523886"
+          ],
+          "slots": [
+            {
+              "nodeId": "3581:512527",
+              "sheetNodeId": "2241:465888",
+              "sourceNodeId": "241:1500",
+              "collectorNumbers": [
+                "67/102"
+              ]
+            },
+            {
+              "nodeId": "3581:518207",
+              "sheetNodeId": "2241:465888",
+              "sourceNodeId": "241:1500",
+              "collectorNumbers": [
+                "67/102"
+              ]
+            },
+            {
+              "nodeId": "3581:523886",
+              "sheetNodeId": "2241:465888",
+              "sourceNodeId": "241:1500",
+              "collectorNumbers": [
+                "67/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "brain-coral-stage-1",
+          "title": "Brain Coral",
+          "stage": "Stage 1",
+          "quantity": 3,
+          "nodeIds": [
+            "2241:484481",
+            "2241:484482",
+            "2241:484483"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:484481",
+              "sheetNodeId": "2241:481901",
+              "sourceNodeId": "354:5019",
+              "collectorNumbers": [
+                "49/102"
+              ]
+            },
+            {
+              "nodeId": "2241:484482",
+              "sheetNodeId": "2241:481901",
+              "sourceNodeId": "354:5019",
+              "collectorNumbers": [
+                "49/102"
+              ]
+            },
+            {
+              "nodeId": "2241:484483",
+              "sheetNodeId": "2241:481901",
+              "sourceNodeId": "354:5019",
+              "collectorNumbers": [
+                "49/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "brain-coral-stage-2",
+          "title": "Brain Coral",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:484484",
+            "2241:484485"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:484484",
+              "sheetNodeId": "2241:481901",
+              "sourceNodeId": "354:5018",
+              "collectorNumbers": [
+                "29/102"
+              ]
+            },
+            {
+              "nodeId": "2241:484485",
+              "sheetNodeId": "2241:481901",
+              "sourceNodeId": "354:5018",
+              "collectorNumbers": [
+                "29/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "title": "Lettuce Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "2241:484486",
+            "2241:486923",
+            "2241:486924"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:484486",
+              "sheetNodeId": "2241:481901",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            },
+            {
+              "nodeId": "2241:486923",
+              "sheetNodeId": "2241:485700",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            },
+            {
+              "nodeId": "2241:486924",
+              "sheetNodeId": "2241:485700",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "title": "Lettuce Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2241:486925",
+            "2241:486926"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:486925",
+              "sheetNodeId": "2241:485700",
+              "sourceNodeId": "354:5021",
+              "collectorNumbers": [
+                "52/102"
+              ]
+            },
+            {
+              "nodeId": "2241:486926",
+              "sheetNodeId": "2241:485700",
+              "sourceNodeId": "354:5021",
+              "collectorNumbers": [
+                "52/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "title": "Mustard Hill Coral",
+          "stage": "Base",
+          "quantity": 1,
+          "nodeIds": [
+            "2241:486927"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:486927",
+              "sheetNodeId": "2241:485700",
+              "sourceNodeId": "354:5026",
+              "collectorNumbers": [
+                "31/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "coral-reef",
+          "title": "Coral Reef",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2241:486928"
+          ],
+          "slots": [
+            {
+              "nodeId": "2241:486928",
+              "sheetNodeId": "2241:485700",
+              "sourceNodeId": "434:8921",
+              "collectorNumbers": [
+                "102/102"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stinging-fortress",
+      "pageId": "2363:215185",
+      "pageName": "Decks - Stinging Fortress",
+      "observedAt": "2026-11-15T13:50:08.676Z",
+      "sourceObservationSha256": "d287395be8094bf0e4236f0782e80a401e96968a6371bd635263efeae887c38e",
+      "sourceCorrections": [
+        {
+          "removedNodeId": "3581:647599",
+          "replacementNodeId": "4672:156184",
+          "observedAt": "2026-11-15T13:58:55.883Z",
+          "receiptSha256": "15ddb0e17ae2d9742b48961a0144a49bd19248e8c464b94c4d1adcaac9b128e6"
+        }
+      ],
+      "excludedReferenceNodeIds": [
+        "2363:295083",
+        "4500:301084"
+      ],
+      "excludedEmptyNodeIds": [],
+      "sheets": [
+        {
+          "nodeId": "2363:239642",
+          "name": "stinging fortress 1",
+          "bounds": {
+            "x": 0,
+            "y": 3622,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2363:240255",
+            "2363:240256",
+            "2363:240257",
+            "2363:240258",
+            "2363:240259",
+            "2363:240260",
+            "2363:240261",
+            "2363:240262",
+            "2363:240263"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2363:245048",
+          "name": "stinging fortress 2",
+          "bounds": {
+            "x": 2590,
+            "y": 3622,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2363:273812",
+            "2363:273813",
+            "2363:273814",
+            "2363:273815",
+            "2363:273816",
+            "2363:273817",
+            "3483:142368",
+            "3524:656552",
+            "3524:663547"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2363:249823",
+          "name": "stinging fortress 3",
+          "bounds": {
+            "x": 5180,
+            "y": 3622,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3460:387910",
+            "3460:388958",
+            "3492:179340",
+            "3524:657066",
+            "3550:730473",
+            "3581:644210",
+            "2363:283085",
+            "3492:178819",
+            "4672:156184"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2363:254617",
+          "name": "stinging fortress 4",
+          "bounds": {
+            "x": 7770,
+            "y": 3622,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2363:285232",
+            "2363:285230",
+            "2363:285229",
+            "2363:285231",
+            "3550:722959",
+            "3460:380838",
+            "3550:728486",
+            "3581:648646",
+            "3581:648723"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2363:259411",
+          "name": "stinging fortress 5",
+          "bounds": {
+            "x": 10360,
+            "y": 3622,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2363:291392",
+            "2363:291393",
+            "3460:377938",
+            "2363:291394",
+            "3460:378209",
+            "2363:291387",
+            "3550:720290",
+            "2363:291386",
+            "3581:648799"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2363:264205",
+          "name": "stinging fortress 6",
+          "bounds": {
+            "x": 12950,
+            "y": 3622,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2363:293887",
+            "2363:293888",
+            "2363:293889",
+            "2363:293890",
+            "2363:293891",
+            "2363:293892",
+            "2363:293893",
+            "2363:293886",
+            "3460:378074"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2363:268999",
+          "name": "stinging fortress 7",
+          "bounds": {
+            "x": 15540,
+            "y": 3622,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2363:295077",
+            "2363:295078",
+            "2363:295079",
+            "2363:295080",
+            "2363:295081",
+            "3460:459862"
+          ],
+          "referenceNodeIds": [
+            "2363:295083",
+            "4500:301084"
+          ],
+          "omittedNodeIds": []
+        }
+      ],
+      "cards": [
+        {
+          "cardId": "coral-gardener",
+          "title": "Coral Nursery",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:240255",
+            "2363:240256",
+            "2363:240257"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:240255",
+              "sheetNodeId": "2363:239642",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            },
+            {
+              "nodeId": "2363:240256",
+              "sheetNodeId": "2363:239642",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            },
+            {
+              "nodeId": "2363:240257",
+              "sheetNodeId": "2363:239642",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "dr-evans",
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:240258",
+            "2363:240259",
+            "2363:240260"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:240258",
+              "sheetNodeId": "2363:239642",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            },
+            {
+              "nodeId": "2363:240259",
+              "sheetNodeId": "2363:239642",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            },
+            {
+              "nodeId": "2363:240260",
+              "sheetNodeId": "2363:239642",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "remote-search",
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2363:240261",
+            "2363:240262"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:240261",
+              "sheetNodeId": "2363:239642",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            },
+            {
+              "nodeId": "2363:240262",
+              "sheetNodeId": "2363:239642",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "fishing",
+          "title": "Fishing Rod",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:240263",
+            "2363:273812",
+            "2363:273813"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:240263",
+              "sheetNodeId": "2363:239642",
+              "sourceNodeId": "672:4831",
+              "collectorNumbers": [
+                "91/102"
+              ]
+            },
+            {
+              "nodeId": "2363:273812",
+              "sheetNodeId": "2363:245048",
+              "sourceNodeId": "672:4831",
+              "collectorNumbers": [
+                "91/102"
+              ]
+            },
+            {
+              "nodeId": "2363:273813",
+              "sheetNodeId": "2363:245048",
+              "sourceNodeId": "672:4831",
+              "collectorNumbers": [
+                "91/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "crab-trap",
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2363:273814",
+            "2363:273815"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:273814",
+              "sheetNodeId": "2363:245048",
+              "sourceNodeId": "672:4832",
+              "collectorNumbers": [
+                "59/102"
+              ]
+            },
+            {
+              "nodeId": "2363:273815",
+              "sheetNodeId": "2363:245048",
+              "sourceNodeId": "672:4832",
+              "collectorNumbers": [
+                "59/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "recovery",
+          "title": "Recovery",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2363:273816",
+            "2363:273817"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:273816",
+              "sheetNodeId": "2363:245048",
+              "sourceNodeId": "672:4833",
+              "collectorNumbers": [
+                "92/102"
+              ]
+            },
+            {
+              "nodeId": "2363:273817",
+              "sheetNodeId": "2363:245048",
+              "sourceNodeId": "672:4833",
+              "collectorNumbers": [
+                "92/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "yellow-lipped-sea-krait",
+          "title": "Sea Krait",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3483:142368",
+            "3524:663547"
+          ],
+          "slots": [
+            {
+              "nodeId": "3483:142368",
+              "sheetNodeId": "2363:245048",
+              "sourceNodeId": "3483:41046",
+              "collectorNumbers": [
+                "37/102"
+              ]
+            },
+            {
+              "nodeId": "3524:663547",
+              "sheetNodeId": "2363:245048",
+              "sourceNodeId": "3483:41046",
+              "collectorNumbers": [
+                "37/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "manta-ray",
+          "title": "Reef Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3524:656552"
+          ],
+          "slots": [
+            {
+              "nodeId": "3524:656552",
+              "sheetNodeId": "2363:245048",
+              "sourceNodeId": "3402:607522",
+              "collectorNumbers": [
+                "16/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "anemone",
+          "title": "Anemone",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3460:387910",
+            "3460:388958",
+            "4672:156184"
+          ],
+          "slots": [
+            {
+              "nodeId": "3460:387910",
+              "sheetNodeId": "2363:249823",
+              "sourceNodeId": "241:848",
+              "collectorNumbers": [
+                "43/102"
+              ]
+            },
+            {
+              "nodeId": "3460:388958",
+              "sheetNodeId": "2363:249823",
+              "sourceNodeId": "241:848",
+              "collectorNumbers": [
+                "43/102"
+              ]
+            },
+            {
+              "nodeId": "4672:156184",
+              "sheetNodeId": "2363:249823",
+              "sourceNodeId": "241:848",
+              "collectorNumbers": [
+                "43/102"
+              ],
+              "observedAt": "2026-11-15T13:58:55.883Z"
+            }
+          ]
+        },
+        {
+          "cardId": "box-jellyfish",
+          "title": "Box Jellyfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3492:179340",
+            "3492:178819"
+          ],
+          "slots": [
+            {
+              "nodeId": "3492:179340",
+              "sheetNodeId": "2363:249823",
+              "sourceNodeId": "3492:178297",
+              "collectorNumbers": [
+                "47/102"
+              ]
+            },
+            {
+              "nodeId": "3492:178819",
+              "sheetNodeId": "2363:249823",
+              "sourceNodeId": "3492:178297",
+              "collectorNumbers": [
+                "47/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "crown-of-thorns",
+          "title": "Crown of Thorns",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3524:657066",
+            "2363:283085"
+          ],
+          "slots": [
+            {
+              "nodeId": "3524:657066",
+              "sheetNodeId": "2363:249823",
+              "sourceNodeId": "241:853",
+              "collectorNumbers": [
+                "60/102"
+              ]
+            },
+            {
+              "nodeId": "2363:283085",
+              "sheetNodeId": "2363:249823",
+              "sourceNodeId": "241:853",
+              "collectorNumbers": [
+                "60/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "arrow-crab",
+          "title": "Arrow Crab",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3550:730473",
+            "3581:644210"
+          ],
+          "slots": [
+            {
+              "nodeId": "3550:730473",
+              "sheetNodeId": "2363:249823",
+              "sourceNodeId": "241:851",
+              "collectorNumbers": [
+                "72/102"
+              ]
+            },
+            {
+              "nodeId": "3581:644210",
+              "sheetNodeId": "2363:249823",
+              "sourceNodeId": "241:851",
+              "collectorNumbers": [
+                "72/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "clownfish",
+          "title": "Clownfish",
+          "stage": "",
+          "quantity": 4,
+          "nodeIds": [
+            "2363:285232",
+            "2363:285230",
+            "2363:285229",
+            "2363:285231"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:285232",
+              "sheetNodeId": "2363:254617",
+              "sourceNodeId": "241:1498",
+              "collectorNumbers": [
+                "63/102"
+              ]
+            },
+            {
+              "nodeId": "2363:285230",
+              "sheetNodeId": "2363:254617",
+              "sourceNodeId": "241:1498",
+              "collectorNumbers": [
+                "63/102"
+              ]
+            },
+            {
+              "nodeId": "2363:285229",
+              "sheetNodeId": "2363:254617",
+              "sourceNodeId": "241:1498",
+              "collectorNumbers": [
+                "63/102"
+              ]
+            },
+            {
+              "nodeId": "2363:285231",
+              "sheetNodeId": "2363:254617",
+              "sourceNodeId": "241:1498",
+              "collectorNumbers": [
+                "63/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lionfish",
+          "title": "Lionfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3550:722959",
+            "3460:380838"
+          ],
+          "slots": [
+            {
+              "nodeId": "3550:722959",
+              "sheetNodeId": "2363:254617",
+              "sourceNodeId": "657:45701",
+              "collectorNumbers": [
+                "39/102"
+              ]
+            },
+            {
+              "nodeId": "3460:380838",
+              "sheetNodeId": "2363:254617",
+              "sourceNodeId": "657:45701",
+              "collectorNumbers": [
+                "39/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "blue-crab",
+          "title": "Blue Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3550:728486"
+          ],
+          "slots": [
+            {
+              "nodeId": "3550:728486",
+              "sheetNodeId": "2363:254617",
+              "sourceNodeId": "241:850",
+              "collectorNumbers": [
+                "73/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "longhorn-cowfish",
+          "title": "Longhorn Cowfish",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3581:648646",
+            "3581:648723",
+            "3550:720290"
+          ],
+          "slots": [
+            {
+              "nodeId": "3581:648646",
+              "sheetNodeId": "2363:254617",
+              "sourceNodeId": "241:1497",
+              "collectorNumbers": [
+                "38/102"
+              ]
+            },
+            {
+              "nodeId": "3581:648723",
+              "sheetNodeId": "2363:254617",
+              "sourceNodeId": "241:1497",
+              "collectorNumbers": [
+                "38/102"
+              ]
+            },
+            {
+              "nodeId": "3550:720290",
+              "sheetNodeId": "2363:259411",
+              "sourceNodeId": "241:1497",
+              "collectorNumbers": [
+                "38/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "title": "Lettuce Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2363:291392",
+            "2363:291393",
+            "2363:291394",
+            "3460:378209"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:291392",
+              "sheetNodeId": "2363:259411",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            },
+            {
+              "nodeId": "2363:291393",
+              "sheetNodeId": "2363:259411",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            },
+            {
+              "nodeId": "2363:291394",
+              "sheetNodeId": "2363:259411",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            },
+            {
+              "nodeId": "3460:378209",
+              "sheetNodeId": "2363:259411",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "title": "Lettuce Coral",
+          "stage": "Stage 1",
+          "quantity": 3,
+          "nodeIds": [
+            "3460:377938",
+            "2363:293886",
+            "3460:378074"
+          ],
+          "slots": [
+            {
+              "nodeId": "3460:377938",
+              "sheetNodeId": "2363:259411",
+              "sourceNodeId": "354:5021",
+              "collectorNumbers": [
+                "52/102"
+              ]
+            },
+            {
+              "nodeId": "2363:293886",
+              "sheetNodeId": "2363:264205",
+              "sourceNodeId": "354:5021",
+              "collectorNumbers": [
+                "52/102"
+              ]
+            },
+            {
+              "nodeId": "3460:378074",
+              "sheetNodeId": "2363:264205",
+              "sourceNodeId": "354:5021",
+              "collectorNumbers": [
+                "52/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "porcupine-fish",
+          "title": "Porcupine Fish",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:291387",
+            "2363:291386",
+            "3581:648799"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:291387",
+              "sheetNodeId": "2363:259411",
+              "sourceNodeId": "241:1496",
+              "collectorNumbers": [
+                "66/102"
+              ]
+            },
+            {
+              "nodeId": "2363:291386",
+              "sheetNodeId": "2363:259411",
+              "sourceNodeId": "241:1496",
+              "collectorNumbers": [
+                "66/102"
+              ]
+            },
+            {
+              "nodeId": "3581:648799",
+              "sheetNodeId": "2363:259411",
+              "sourceNodeId": "241:1496",
+              "collectorNumbers": [
+                "66/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "staghorn-coral-base",
+          "title": "Staghorn Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "2363:293887",
+            "2363:293888",
+            "2363:293889",
+            "2363:293890"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:293887",
+              "sheetNodeId": "2363:264205",
+              "sourceNodeId": "354:5023",
+              "collectorNumbers": [
+                "84/102"
+              ]
+            },
+            {
+              "nodeId": "2363:293888",
+              "sheetNodeId": "2363:264205",
+              "sourceNodeId": "354:5023",
+              "collectorNumbers": [
+                "84/102"
+              ]
+            },
+            {
+              "nodeId": "2363:293889",
+              "sheetNodeId": "2363:264205",
+              "sourceNodeId": "354:5023",
+              "collectorNumbers": [
+                "84/102"
+              ]
+            },
+            {
+              "nodeId": "2363:293890",
+              "sheetNodeId": "2363:264205",
+              "sourceNodeId": "354:5023",
+              "collectorNumbers": [
+                "84/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "clubfinger-coral-base",
+          "title": "Clubfinger Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:293891",
+            "2363:293892",
+            "2363:293893"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:293891",
+              "sheetNodeId": "2363:264205",
+              "sourceNodeId": "354:5025",
+              "collectorNumbers": [
+                "81/102"
+              ]
+            },
+            {
+              "nodeId": "2363:293892",
+              "sheetNodeId": "2363:264205",
+              "sourceNodeId": "354:5025",
+              "collectorNumbers": [
+                "81/102"
+              ]
+            },
+            {
+              "nodeId": "2363:293893",
+              "sheetNodeId": "2363:264205",
+              "sourceNodeId": "354:5025",
+              "collectorNumbers": [
+                "81/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "clubfinger-coral-stage-1",
+          "title": "Clubfinger Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2363:295077",
+            "2363:295078"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:295077",
+              "sheetNodeId": "2363:268999",
+              "sourceNodeId": "354:5024",
+              "collectorNumbers": [
+                "50/102"
+              ]
+            },
+            {
+              "nodeId": "2363:295078",
+              "sheetNodeId": "2363:268999",
+              "sourceNodeId": "354:5024",
+              "collectorNumbers": [
+                "50/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "title": "Mustard Hill Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "2363:295079",
+            "2363:295080",
+            "2363:295081"
+          ],
+          "slots": [
+            {
+              "nodeId": "2363:295079",
+              "sheetNodeId": "2363:268999",
+              "sourceNodeId": "354:5026",
+              "collectorNumbers": [
+                "31/102"
+              ]
+            },
+            {
+              "nodeId": "2363:295080",
+              "sheetNodeId": "2363:268999",
+              "sourceNodeId": "354:5026",
+              "collectorNumbers": [
+                "31/102"
+              ]
+            },
+            {
+              "nodeId": "2363:295081",
+              "sheetNodeId": "2363:268999",
+              "sourceNodeId": "354:5026",
+              "collectorNumbers": [
+                "31/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "coral-reef",
+          "title": "Coral Reef",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3460:459862"
+          ],
+          "slots": [
+            {
+              "nodeId": "3460:459862",
+              "sheetNodeId": "2363:268999",
+              "sourceNodeId": "434:8921",
+              "collectorNumbers": [
+                "102/102"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "disruption",
+      "pageId": "2404:505077",
+      "pageName": "Decks - Disruption",
+      "observedAt": "2026-11-15T13:50:08.869Z",
+      "sourceObservationSha256": "c505546b2e1b030f0490d1089f8a4134bedd85971d776c78798b4e9274dda774",
+      "excludedReferenceNodeIds": [
+        "2404:556844",
+        "4500:398433"
+      ],
+      "excludedEmptyNodeIds": [],
+      "sheets": [
+        {
+          "nodeId": "2404:529168",
+          "name": "disruption 1",
+          "bounds": {
+            "x": 0,
+            "y": 3967,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2404:533975",
+            "2404:533976",
+            "2404:533977",
+            "2404:533978",
+            "2404:533979",
+            "2644:130534",
+            "2644:130505",
+            "3493:261766",
+            "3493:261767"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2404:533963",
+          "name": "disruption 2",
+          "bounds": {
+            "x": 2590,
+            "y": 3967,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3493:266693",
+            "2404:534174",
+            "3152:789516",
+            "2404:534176",
+            "3493:266852",
+            "3150:715865",
+            "3582:164874",
+            "3582:164875",
+            "3582:167911"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2404:533965",
+          "name": "disruption 3",
+          "bounds": {
+            "x": 5180,
+            "y": 3967,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3582:158430",
+            "3582:167151",
+            "2404:543580",
+            "2404:543583",
+            "2404:543581",
+            "2404:543586",
+            "3582:159252",
+            "3493:267011",
+            "3605:613125"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2404:533967",
+          "name": "disruption 4",
+          "bounds": {
+            "x": 7770,
+            "y": 3967,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3152:788693",
+            "2404:545921",
+            "3387:161203",
+            "3152:789242",
+            "3152:787434",
+            "3387:266442",
+            "3582:162486",
+            "3582:162487",
+            "3582:164077"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2404:533969",
+          "name": "disruption 5",
+          "bounds": {
+            "x": 10360,
+            "y": 3967,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "3152:778913",
+            "2404:553104",
+            "3581:748087",
+            "2404:553103",
+            "3152:779859",
+            "3152:781148",
+            "3152:782437",
+            "3152:784306",
+            "3152:786175"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2404:533971",
+          "name": "disruption 6",
+          "bounds": {
+            "x": 12950,
+            "y": 3967,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2404:555413",
+            "2404:555410",
+            "2404:555411",
+            "2404:555408",
+            "2404:555407",
+            "2404:555406",
+            "2404:555405",
+            "3152:777021",
+            "3152:777967"
+          ],
+          "referenceNodeIds": [],
+          "omittedNodeIds": []
+        },
+        {
+          "nodeId": "2404:533973",
+          "name": "disruption 7",
+          "bounds": {
+            "x": 15540,
+            "y": 3967,
+            "width": 2550,
+            "height": 3300
+          },
+          "playableNodeIds": [
+            "2404:556838",
+            "2404:556839",
+            "2404:556840",
+            "2404:556841",
+            "2404:556842",
+            "2404:556843"
+          ],
+          "referenceNodeIds": [
+            "2404:556844",
+            "4500:398433"
+          ],
+          "omittedNodeIds": []
+        }
+      ],
+      "cards": [
+        {
+          "cardId": "spearfishing",
+          "title": "Spearfishing",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:533975"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:533975",
+              "sheetNodeId": "2404:529168",
+              "sourceNodeId": "259:691",
+              "collectorNumbers": [
+                "85/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "coral-gardener",
+          "title": "Coral Nursery",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2404:533976",
+            "2404:533977",
+            "2404:533978"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:533976",
+              "sheetNodeId": "2404:529168",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            },
+            {
+              "nodeId": "2404:533977",
+              "sheetNodeId": "2404:529168",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            },
+            {
+              "nodeId": "2404:533978",
+              "sheetNodeId": "2404:529168",
+              "sourceNodeId": "259:692",
+              "collectorNumbers": [
+                "86/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "dr-evans",
+          "title": "Dr. Evans",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:533979"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:533979",
+              "sheetNodeId": "2404:529168",
+              "sourceNodeId": "259:695",
+              "collectorNumbers": [
+                "55/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "scientist-jes",
+          "title": "Scientist Jes",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2644:130534",
+            "2644:130505"
+          ],
+          "slots": [
+            {
+              "nodeId": "2644:130534",
+              "sheetNodeId": "2404:529168",
+              "sourceNodeId": "396:8478",
+              "collectorNumbers": [
+                "56/102"
+              ]
+            },
+            {
+              "nodeId": "2644:130505",
+              "sheetNodeId": "2404:529168",
+              "sourceNodeId": "396:8478",
+              "collectorNumbers": [
+                "56/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "remote-search",
+          "title": "Remote Search",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3493:261766",
+            "3493:261767"
+          ],
+          "slots": [
+            {
+              "nodeId": "3493:261766",
+              "sheetNodeId": "2404:529168",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            },
+            {
+              "nodeId": "3493:261767",
+              "sheetNodeId": "2404:529168",
+              "sourceNodeId": "672:4829",
+              "collectorNumbers": [
+                "58/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "fishing",
+          "title": "Fishing Rod",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3493:266693",
+            "2404:534174"
+          ],
+          "slots": [
+            {
+              "nodeId": "3493:266693",
+              "sheetNodeId": "2404:533963",
+              "sourceNodeId": "672:4831",
+              "collectorNumbers": [
+                "91/102"
+              ]
+            },
+            {
+              "nodeId": "2404:534174",
+              "sheetNodeId": "2404:533963",
+              "sourceNodeId": "672:4831",
+              "collectorNumbers": [
+                "91/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "crab-trap",
+          "title": "Crab Trap",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3152:789516",
+            "2404:534176"
+          ],
+          "slots": [
+            {
+              "nodeId": "3152:789516",
+              "sheetNodeId": "2404:533963",
+              "sourceNodeId": "672:4832",
+              "collectorNumbers": [
+                "59/102"
+              ]
+            },
+            {
+              "nodeId": "2404:534176",
+              "sheetNodeId": "2404:533963",
+              "sourceNodeId": "672:4832",
+              "collectorNumbers": [
+                "59/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "recovery",
+          "title": "Recovery",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3493:266852"
+          ],
+          "slots": [
+            {
+              "nodeId": "3493:266852",
+              "sheetNodeId": "2404:533963",
+              "sourceNodeId": "672:4833",
+              "collectorNumbers": [
+                "92/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "hammerhead",
+          "title": "Hammerhead",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3150:715865"
+          ],
+          "slots": [
+            {
+              "nodeId": "3150:715865",
+              "sheetNodeId": "2404:533963",
+              "sourceNodeId": "241:1125",
+              "collectorNumbers": [
+                "20/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "nurse-shark",
+          "title": "Nurse Shark",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3582:164874",
+            "3582:164875",
+            "3582:167151"
+          ],
+          "slots": [
+            {
+              "nodeId": "3582:164874",
+              "sheetNodeId": "2404:533963",
+              "sourceNodeId": "3387:42923",
+              "collectorNumbers": [
+                "36/102"
+              ]
+            },
+            {
+              "nodeId": "3582:164875",
+              "sheetNodeId": "2404:533963",
+              "sourceNodeId": "3387:42923",
+              "collectorNumbers": [
+                "36/102"
+              ]
+            },
+            {
+              "nodeId": "3582:167151",
+              "sheetNodeId": "2404:533965",
+              "sourceNodeId": "3387:42923",
+              "collectorNumbers": [
+                "36/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "manta-ray",
+          "title": "Reef Manta Ray",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3582:167911"
+          ],
+          "slots": [
+            {
+              "nodeId": "3582:167911",
+              "sheetNodeId": "2404:533963",
+              "sourceNodeId": "3402:607522",
+              "collectorNumbers": [
+                "16/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "mantis-shrimp",
+          "title": "Mantis Shrimp",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3582:158430",
+            "2404:543580",
+            "2404:543581"
+          ],
+          "slots": [
+            {
+              "nodeId": "3582:158430",
+              "sheetNodeId": "2404:533965",
+              "sourceNodeId": "241:852",
+              "collectorNumbers": [
+                "45/102"
+              ]
+            },
+            {
+              "nodeId": "2404:543580",
+              "sheetNodeId": "2404:533965",
+              "sourceNodeId": "241:852",
+              "collectorNumbers": [
+                "45/102"
+              ]
+            },
+            {
+              "nodeId": "2404:543581",
+              "sheetNodeId": "2404:533965",
+              "sourceNodeId": "241:852",
+              "collectorNumbers": [
+                "45/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "crown-of-thorns",
+          "title": "Crown of Thorns",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:543583"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:543583",
+              "sheetNodeId": "2404:533965",
+              "sourceNodeId": "241:853",
+              "collectorNumbers": [
+                "60/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "goliath-grouper",
+          "title": "Goliath Grouper",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:543586"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:543586",
+              "sheetNodeId": "2404:533965",
+              "sourceNodeId": "241:858",
+              "collectorNumbers": [
+                "22/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "arrow-crab",
+          "title": "Arrow Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3582:159252"
+          ],
+          "slots": [
+            {
+              "nodeId": "3582:159252",
+              "sheetNodeId": "2404:533965",
+              "sourceNodeId": "241:851",
+              "collectorNumbers": [
+                "72/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "blue-crab",
+          "title": "Blue Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3493:267011"
+          ],
+          "slots": [
+            {
+              "nodeId": "3493:267011",
+              "sheetNodeId": "2404:533965",
+              "sourceNodeId": "241:850",
+              "collectorNumbers": [
+                "73/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "emerald-crab",
+          "title": "Emerald Crab",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "3605:613125"
+          ],
+          "slots": [
+            {
+              "nodeId": "3605:613125",
+              "sheetNodeId": "2404:533965",
+              "sourceNodeId": "241:849",
+              "collectorNumbers": [
+                "75/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lionfish",
+          "title": "Lionfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3152:788693",
+            "3152:789242"
+          ],
+          "slots": [
+            {
+              "nodeId": "3152:788693",
+              "sheetNodeId": "2404:533967",
+              "sourceNodeId": "657:45701",
+              "collectorNumbers": [
+                "39/102"
+              ]
+            },
+            {
+              "nodeId": "3152:789242",
+              "sheetNodeId": "2404:533967",
+              "sourceNodeId": "657:45701",
+              "collectorNumbers": [
+                "39/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "picasso-triggerfish",
+          "title": "Triggerfish (Picasso)",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "2404:545921",
+            "3387:161203"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:545921",
+              "sheetNodeId": "2404:533967",
+              "sourceNodeId": "241:1495",
+              "collectorNumbers": [
+                "70/102"
+              ]
+            },
+            {
+              "nodeId": "3387:161203",
+              "sheetNodeId": "2404:533967",
+              "sourceNodeId": "241:1495",
+              "collectorNumbers": [
+                "70/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "frogfish",
+          "title": "Frogfish",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3152:787434",
+            "3387:266442",
+            "3152:786175"
+          ],
+          "slots": [
+            {
+              "nodeId": "3152:787434",
+              "sheetNodeId": "2404:533967",
+              "sourceNodeId": "241:1499",
+              "collectorNumbers": [
+                "41/102"
+              ]
+            },
+            {
+              "nodeId": "3387:266442",
+              "sheetNodeId": "2404:533967",
+              "sourceNodeId": "241:1499",
+              "collectorNumbers": [
+                "41/102"
+              ]
+            },
+            {
+              "nodeId": "3152:786175",
+              "sheetNodeId": "2404:533969",
+              "sourceNodeId": "241:1499",
+              "collectorNumbers": [
+                "41/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "nudibranch",
+          "title": "Nudibranch",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "3582:162486",
+            "3582:162487",
+            "3582:164077"
+          ],
+          "slots": [
+            {
+              "nodeId": "3582:162486",
+              "sheetNodeId": "2404:533967",
+              "sourceNodeId": "241:857",
+              "collectorNumbers": [
+                "77/102"
+              ]
+            },
+            {
+              "nodeId": "3582:162487",
+              "sheetNodeId": "2404:533967",
+              "sourceNodeId": "241:857",
+              "collectorNumbers": [
+                "77/102"
+              ]
+            },
+            {
+              "nodeId": "3582:164077",
+              "sheetNodeId": "2404:533967",
+              "sourceNodeId": "241:857",
+              "collectorNumbers": [
+                "77/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "elkhorn-coral-base",
+          "title": "Elkhorn Coral",
+          "stage": "Base",
+          "quantity": 4,
+          "nodeIds": [
+            "3152:778913",
+            "2404:555405",
+            "3152:777021",
+            "3152:777967"
+          ],
+          "slots": [
+            {
+              "nodeId": "3152:778913",
+              "sheetNodeId": "2404:533969",
+              "sourceNodeId": "354:5011",
+              "collectorNumbers": [
+                "82/102"
+              ]
+            },
+            {
+              "nodeId": "2404:555405",
+              "sheetNodeId": "2404:533971",
+              "sourceNodeId": "354:5011",
+              "collectorNumbers": [
+                "82/102"
+              ]
+            },
+            {
+              "nodeId": "3152:777021",
+              "sheetNodeId": "2404:533971",
+              "sourceNodeId": "354:5011",
+              "collectorNumbers": [
+                "82/102"
+              ]
+            },
+            {
+              "nodeId": "3152:777967",
+              "sheetNodeId": "2404:533971",
+              "sourceNodeId": "354:5011",
+              "collectorNumbers": [
+                "82/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "spectacled-parrotfish",
+          "title": "Parrotfish (Spectacled)",
+          "stage": "",
+          "quantity": 3,
+          "nodeIds": [
+            "2404:553104",
+            "3581:748087",
+            "2404:553103"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:553104",
+              "sheetNodeId": "2404:533969",
+              "sourceNodeId": "1397:91313",
+              "collectorNumbers": [
+                "42/102"
+              ]
+            },
+            {
+              "nodeId": "3581:748087",
+              "sheetNodeId": "2404:533969",
+              "sourceNodeId": "1397:91313",
+              "collectorNumbers": [
+                "42/102"
+              ]
+            },
+            {
+              "nodeId": "2404:553103",
+              "sheetNodeId": "2404:533969",
+              "sourceNodeId": "1397:91313",
+              "collectorNumbers": [
+                "42/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "french-angelfish",
+          "title": "French Angelfish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3152:779859",
+            "3152:781148"
+          ],
+          "slots": [
+            {
+              "nodeId": "3152:779859",
+              "sheetNodeId": "2404:533969",
+              "sourceNodeId": "241:1501",
+              "collectorNumbers": [
+                "40/102"
+              ]
+            },
+            {
+              "nodeId": "3152:781148",
+              "sheetNodeId": "2404:533969",
+              "sourceNodeId": "241:1501",
+              "collectorNumbers": [
+                "40/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "porcupine-fish",
+          "title": "Porcupine Fish",
+          "stage": "",
+          "quantity": 2,
+          "nodeIds": [
+            "3152:782437",
+            "3152:784306"
+          ],
+          "slots": [
+            {
+              "nodeId": "3152:782437",
+              "sheetNodeId": "2404:533969",
+              "sourceNodeId": "241:1496",
+              "collectorNumbers": [
+                "66/102"
+              ]
+            },
+            {
+              "nodeId": "3152:784306",
+              "sheetNodeId": "2404:533969",
+              "sourceNodeId": "241:1496",
+              "collectorNumbers": [
+                "66/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-base",
+          "title": "Lettuce Coral",
+          "stage": "Base",
+          "quantity": 3,
+          "nodeIds": [
+            "2404:555413",
+            "2404:556838",
+            "2404:556839"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:555413",
+              "sheetNodeId": "2404:533971",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            },
+            {
+              "nodeId": "2404:556838",
+              "sheetNodeId": "2404:533973",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            },
+            {
+              "nodeId": "2404:556839",
+              "sheetNodeId": "2404:533973",
+              "sourceNodeId": "354:5022",
+              "collectorNumbers": [
+                "83/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "elkhorn-coral-stage-2",
+          "title": "Elkhorn Coral",
+          "stage": "Stage 2",
+          "quantity": 2,
+          "nodeIds": [
+            "2404:555410",
+            "2404:555411"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:555410",
+              "sheetNodeId": "2404:533971",
+              "sourceNodeId": "354:5013",
+              "collectorNumbers": [
+                "30/102"
+              ]
+            },
+            {
+              "nodeId": "2404:555411",
+              "sheetNodeId": "2404:533971",
+              "sourceNodeId": "354:5013",
+              "collectorNumbers": [
+                "30/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "elkhorn-coral-stage-1",
+          "title": "Elkhorn Coral",
+          "stage": "Stage 1",
+          "quantity": 3,
+          "nodeIds": [
+            "2404:555408",
+            "2404:555407",
+            "2404:555406"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:555408",
+              "sheetNodeId": "2404:533971",
+              "sourceNodeId": "354:5012",
+              "collectorNumbers": [
+                "51/102"
+              ]
+            },
+            {
+              "nodeId": "2404:555407",
+              "sheetNodeId": "2404:533971",
+              "sourceNodeId": "354:5012",
+              "collectorNumbers": [
+                "51/102"
+              ]
+            },
+            {
+              "nodeId": "2404:555406",
+              "sheetNodeId": "2404:533971",
+              "sourceNodeId": "354:5012",
+              "collectorNumbers": [
+                "51/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "lettuce-coral-stage-1",
+          "title": "Lettuce Coral",
+          "stage": "Stage 1",
+          "quantity": 2,
+          "nodeIds": [
+            "2404:556840",
+            "2404:556841"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:556840",
+              "sheetNodeId": "2404:533973",
+              "sourceNodeId": "354:5021",
+              "collectorNumbers": [
+                "52/102"
+              ]
+            },
+            {
+              "nodeId": "2404:556841",
+              "sheetNodeId": "2404:533973",
+              "sourceNodeId": "354:5021",
+              "collectorNumbers": [
+                "52/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "mustard-hill-coral-base",
+          "title": "Mustard Hill Coral",
+          "stage": "Base",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:556842"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:556842",
+              "sheetNodeId": "2404:533973",
+              "sourceNodeId": "354:5026",
+              "collectorNumbers": [
+                "31/102"
+              ]
+            }
+          ]
+        },
+        {
+          "cardId": "coral-reef",
+          "title": "Coral Reef",
+          "stage": "",
+          "quantity": 1,
+          "nodeIds": [
+            "2404:556843"
+          ],
+          "slots": [
+            {
+              "nodeId": "2404:556843",
+              "sheetNodeId": "2404:533973",
+              "sourceNodeId": "434:8921",
+              "collectorNumbers": [
+                "102/102"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -12,8 +12,8 @@ const contents = buildPhysicalDeckContents(physical, images, master);
 const byId = new Map(contents.map((deck) => [deck.id, deck]));
 
 test("physical contents preserve saved Figma evidence and apply explicit current name overrides", () => {
-  const evidence = readJson("../../../artifacts/deck-sync/physical-decks-2026-10-16.json");
-  assert.equal(evidence.readAt, "2026-10-16");
+  const evidence = readJson("../../../artifacts/deck-sync/physical-decks-2026-11-15.json");
+  assert.equal(evidence.readAt, "2026-11-15");
   for (const deck of contents) {
     const page = evidence.pages.find((page) => page.id === deck.id);
     assert.equal(page.pageId, deck.pageId);
@@ -36,6 +36,64 @@ test("physical contents preserve saved Figma evidence and apply explicit current
     assert.ok(page.excludedReferenceNodeIds.every((id) => !nodeIds.includes(id)));
   }
 });
+
+test("November deck refresh preserves all 420 playable identities, quantities and stages", () => {
+  const before = readJson("../../../artifacts/deck-sync/physical-decks-2026-10-16.json");
+  const after = readJson("../../../artifacts/deck-sync/physical-decks-2026-11-15.json");
+  for (const page of after.pages) {
+    const old = before.pages.find((entry) => entry.id === page.id);
+    const composition = (entry) => entry.cards.map(({ cardId, quantity, stage }) => ({ cardId, quantity, stage }))
+      .sort((a, b) => a.cardId.localeCompare(b.cardId));
+    assert.deepEqual(composition(page), composition(old));
+    assert.equal(physical.decks.find((deck) => deck.id === page.id).evidenceFile,
+      "artifacts/deck-sync/physical-decks-2026-11-15.json");
+    assert.match(page.sourceObservationSha256, /^[a-f0-9]{64}$/);
+    assert.equal(page.sheets.length, 7);
+    const allObservedNodes = page.sheets.flatMap((sheet) => [
+      ...sheet.playableNodeIds, ...sheet.referenceNodeIds, ...sheet.omittedNodeIds,
+    ]);
+    assert.equal(new Set(allObservedNodes).size, allObservedNodes.length);
+    assert.deepEqual(new Set(page.sheets.flatMap((sheet) => sheet.playableNodeIds)),
+      new Set(page.cards.flatMap((card) => card.nodeIds)));
+    assert.deepEqual(new Set(page.sheets.flatMap((sheet) => sheet.referenceNodeIds)),
+      new Set(page.excludedReferenceNodeIds));
+    assert.deepEqual(new Set(page.sheets.flatMap((sheet) => sheet.omittedNodeIds)),
+      new Set(page.excludedEmptyNodeIds));
+    for (const card of page.cards) {
+      assert.equal(card.slots.length, card.quantity);
+      assert.deepEqual(card.slots.map((slot) => slot.nodeId), card.nodeIds);
+      const canonical = images.cards.find((entry) => entry.cardId === card.cardId);
+      assert.ok(card.slots.every((slot) => slot.sourceNodeId === canonical.nodeId), card.cardId);
+      assert.ok(card.slots.every((slot) => page.sheets.some((sheet) =>
+        sheet.nodeId === slot.sheetNodeId && sheet.playableNodeIds.includes(slot.nodeId))));
+    }
+  }
+  assert.equal(after.pages.flatMap((page) => page.cards.flatMap((card) => card.nodeIds)).length, 420);
+  assert.equal(after.pages.flatMap((page) => page.excludedReferenceNodeIds).length, 15);
+  assert.deepEqual(after.pages.flatMap((page) => page.excludedEmptyNodeIds).sort(),
+    ["2779:45793", "2893:234348"]);
+});
+
+test("current printed Nursery, Day Octopus and Anemone copies use their verified source identities", () => {
+  const evidence = readJson("../../../artifacts/deck-sync/physical-decks-2026-11-15.json");
+  const nursery = evidence.pages.flatMap((page) => page.cards.filter((card) => card.cardId === "coral-gardener"));
+  assert.equal(nursery.length, 6);
+  assert.equal(nursery.reduce((sum, card) => sum + card.quantity, 0), 15);
+  for (const card of nursery) {
+    assert.equal(card.title, "Coral Nursery");
+    assert.ok(card.slots.every((slot) => slot.sourceNodeId === "259:692"));
+    assert.ok(card.slots.every((slot) => slot.collectorNumbers.length === 1 && slot.collectorNumbers[0] === "86/102"));
+  }
+  const octopus = evidence.pages.find((page) => page.id === "blue-water").cards.find((card) => card.cardId === "octopus");
+  assert.equal(octopus.title, "Day Octopus");
+  assert.equal(octopus.quantity, 2);
+  assert.ok(octopus.slots.every((slot) => slot.sourceNodeId === "746:146691" && slot.collectorNumbers[0] === "46/102"));
+  const anemone = evidence.pages.find((page) => page.id === "stinging-fortress").cards.find((card) => card.cardId === "anemone");
+  assert.equal(anemone.quantity, 3);
+  assert.ok(anemone.slots.every((slot) => slot.sourceNodeId === "241:848" && slot.collectorNumbers[0] === "43/102"));
+  assert.ok(!anemone.nodeIds.includes("3581:647599"), "the stale detached Anemone is no longer a print source");
+});
+
 
 test("the seven physical contents lists preserve stable IDs, exact quantities and source provenance", () => {
   assert.deepEqual(contents.map((deck) => deck.id), [...PHYSICAL_DECK_IDS]);
@@ -119,7 +177,9 @@ test("Day Octopus keeps its physical card identity and historical printed-name e
   const card = deck.cards.find((entry) => entry.cardId === "octopus");
   const source = physical.decks.find((entry) => entry.id === deck.id)
     .cards.find((entry) => entry.cardId === "octopus");
-  assert.equal(source.printedName, "Octopus");
+  assert.equal(source.printedName, "Day Octopus");
+  const historical = readJson("../../../artifacts/deck-sync/physical-decks-2026-10-16.json");
+  assert.equal(historical.pages.find((page) => page.id === deck.id).cards.find((entry) => entry.cardId === "octopus").title, "Octopus");
   assert.equal(card.name, "Day Octopus");
   assert.equal(card.displayName, "Day Octopus");
   assert.equal(card.quantity, source.quantity);
